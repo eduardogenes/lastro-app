@@ -2681,3 +2681,454 @@ tempo o caso novo do cronômetro (a captura sem quadros) e o da corrida do hist�
 da peça 5 (decisão 20 dela; provavelmente o relógio do desenho atrasado, de 1 s,
 entrando antes do navegador sob carga — não verifiquei); sozinhos, os dois passam. A máquina esteve com carga de 1,5 a 10 durante a peça (o
 revisor gravando em paralelo).
+
+---
+
+## Peça 7 · O aviso curto
+
+Implementada em 20/10, sobre `b2d102a`, sem commit. Espec: o pedido em
+`_pedidos/peca-7.md`; `08-parecer.md` §4 (peça 7) e §5.1; as respostas do dono
+em `00-coordenacao.md` (16/10, 01h25) — pergunta 10 (o aviso sobe
+`--ins-sobe-aviso` e acende, sai apagando, em `--ins-dur-lugar` na `--ins-curva`,
+e fica o tempo do texto, de 3,6 s a ~8 s; o texto novo refaz a entrada) e
+pergunta 2 (sob "Reduzir movimento", só a opacidade, no máximo 160 ms); a
+entrada "19/10, 21h — peça 3 conferida" (o `translate` do `#toast` é do
+acompanhamento do cronômetro); `03-micro.md` §5.1; `05-acessibilidade.md` §3.2,
+§3.4 (regra 8) e M12; as seções das peças 0 a 6 deste documento; a linha da
+peça 7 do `07-revisao-base.md` §1.4 (fluxo 10).
+
+O implementador caiu no limite de uso logo depois da primeira passada no código
+(CSS, `main.jsx`, `index.html`, `palco.css`, já com `build` e `tipos` limpos) e
+antes de medir; retomado, conferiu o disco e seguiu dali.
+
+### Em uma página
+
+- **O que ele vê de diferente.** O aviso chega subindo 8 px e acendendo de 0 a
+  1, em 160 ms na curva do lugar; sai só apagando, no mesmo tempo, sem ir a lugar
+  nenhum. Um texto NOVO com o aviso na tela refaz a entrada — é outra mensagem;
+  o mesmo texto de novo não mexe em nada (só recomeça o tempo, como sempre). E
+  ele fica o tempo do texto: a curta fica os 3,6 s de antes, a de 50 caracteres
+  4,3 s, a do "Pular" com o nome dentro (101) 7,7 s, a mais longa do app (108)
+  8 s. Antes: aparecia, trocava e sumia, cada coisa num quadro, e toda mensagem
+  ficava 3,6 s.
+- **Sob "Reduzir movimento"** o aviso só acende (`ins-esmaece`, 120 ms), também
+  no texto novo, e sai de uma vez. O tempo pelo texto vale igual.
+- **A região viva nunca sai da árvore** (a precondição da 05 §3.2). `#toast` deixou
+  de usar `display: none`: fica sempre na página, VAZIO quando não há mensagem.
+  A mensagem é um nó dentro dele, posto por `toast()` e tirado quando o tempo
+  acaba. Medido: sem aviso, a região está na árvore de acessibilidade do
+  Chromium (`status`, não ignorada) e na do Playwright nos dois motores
+  (`- status`); antes ela não estava (`display: none`). Vazia, não sobra frase
+  velha para o leitor de tela achar, e nada para tocar.
+- **A composição com o acompanhamento** (o aviso da peça 3): duas caixas. O
+  `#toast` é o LUGAR — fixo, centrado pelo `translateX(-50%)`, acompanhando o
+  cronômetro pelo `translate` —, e a mensagem é a caixa de dentro
+  (`#toast > .aviso`), que é quem chega e sai. Os dois movimentos se somam: com o
+  cronômetro entrando ou saindo 40 ms depois do aviso, a mensagem continua
+  subindo os 8 px dela dentro do lugar que anda, e o maior passo dela num quadro
+  é 16 px (Chromium) e 15,8 (WebKit) — antes da peça 3 eram 82 de uma vez.
+- **Na troca de camada o aviso é só o vivo.** O lugar do aviso tem foto velha e
+  nova em toda troca; a velha (a mensagem parada no instante da foto) nunca
+  aparece, e a viva mostra a mensagem chegando, trocando ou apagando enquanto as
+  páginas passam. Sem isso, nos quadros do compositor, o aviso que apaga junto
+  com a troca ficava aceso ~10 quadros e sumia de estalo.
+- **Testes.** 12 casos novos: a guarda (j) em `estilo.test.ts` e um ajuste na
+  (h); 5 na árvore (`aviso.test.js`); 6 no motor (`acende.test.js`, Chromium e
+  WebKit). Plantei 21 violações e as 21 ficaram vermelhas; os dois controles,
+  verdes; todo arquivo voltou ao limpo, conferido por hash. Contra o build de
+  `b2d102a`, os 12 casos novos ficam vermelhos.
+- **`tipos` limpo, `build` ok, `vitest` 1675 de 1675 duas vezes seguidas** (a
+  segunda começando com carga 10,8). No WebKit, os arquivos de motor que tocam o
+  toast, um por vez: `acende` 6/6, `descanso` 5/5, `aba` 7/7, `troca` 11/11 em 3
+  de 5 rodadas — o vermelho das outras duas é o caso da corrida do histórico da
+  peça 5, que cai igual no build de antes (1 de 4, mesma carga; ver "O que ficou
+  de fora").
+
+### O que mudou, arquivo por arquivo
+
+| arquivo | o que mudou |
+|---|---|
+| `src/componentes.css` | **`#toast`** ficou só com o LUGAR: fixo, `transform: translateX(-50%)`, o `bottom`, o `translate` do acompanhamento, a largura, o z, e `pointer-events: none`; o `display: none` e o `#toast.on { display: block }` saíram. **`#toast > .aviso`** (novo): a caixa da mensagem — fundo, borda, tinta, fonte, `padding`, centro —, com `pointer-events: auto`. **`#toast > .aviso.sai`** (novo): `opacity: 0; pointer-events: none` fora do portão (o último quadro). No portão: `#toast > .aviso` com `ins-chega-aviso var(--ins-dur-lugar) var(--ins-curva) both` e `.sai` com `ins-apaga` no mesmo tempo e na mesma curva. Sob `reduce`: `#toast > .aviso` com `ins-esmaece var(--ins-dur-dissolve) var(--ins-curva) both`, e nada para `.sai`. Na "TROCA DE CAMADA": `::view-transition-old(aviso)` saiu da lista do `:only-child` e ganhou regra própria, `opacity: 0` sempre (decisão 5); o rodapé que muda de altura passou a valer para o aviso só com mensagem (`html[data-pe=…]:has(#toast > .aviso)::view-transition-image-pair(aviso)`, decisão 6). Os comentários do toast, do acompanhamento e da troca. |
+| `src/base.css` | `@keyframes ins-chega-aviso` (de `translate: 0 var(--ins-sobe-aviso)` e `opacity: 0` a `none` e `1`). Os comentários de `ins-esmaece` e `ins-apaga` dizem que o aviso os usa. |
+| `src/main.jsx` | `tempoDeLeitura(texto)`, com as quatro constantes da regra (decisão 2). `toast()` reescrito: um nó `.aviso` por mensagem NOVA dentro da região, o mesmo nó para o mesmo texto, e o relógio da leitura pelo tamanho do texto. `apagaAviso()` (novo): `.sai` e o nó tirado pelo tempo de `--ins-dur-lugar` lido na porta, ou na hora quando o tempo é 0. `toastT` saiu. |
+| `index.html` | Só o comentário da região: fica sempre, vazia sem mensagem. |
+| `src/palco.css` | Só o comentário da especificidade: o `#toast` não declara `display` desde esta peça; o `display: none` da bancada é o do documento de fora, onde o app não monta. |
+| `DESIGN.md` | Token `--ins-dur-lugar` (o aviso). Linha nova na tabela, "O aviso curto chega e sai"; a do acompanhamento diz que o `#toast` é o lugar; a do rodapé, que o aviso só muda de altura com mensagem. Em "o que fica sem movimento", a foto viva do aviso na troca. O parágrafo do centrado diz que a mensagem anda na caixa de dentro. Parágrafo novo: "a região viva nunca sai da árvore, e o tempo dele é de leitura". A guarda (j). |
+| `tests/dominio/estilo.test.ts` | Caso novo **(j)**; **(h)**: o rodapé do aviso com `:has(#toast > .aviso)`, o aviso fora da lista do `:only-child`, e a foto velha dele sempre escondida. |
+| `tests/fluxo/aviso.test.js` (novo) | A árvore, 5 casos. |
+| `tests/fluxo/acende.test.js` (novo) | O motor (Chromium; `LASTRO_MOTOR=webkit` os mesmos no WebKit), 6 casos. |
+
+### As decisões, com o porquê
+
+1. **Duas caixas: o lugar e a mensagem.** O pedido manda compor com o
+   acompanhamento "sem desfazer o acompanhamento nem o centramento
+   `translateX(-50%)`". As três formas que a peça 3 deixou escritas, pesadas:
+   (a) a entrada em `transform` — a guarda (c) a proíbe no centrado, e com razão:
+   desfaria o `-50%`; (b) quadros de `translate` no próprio `#toast`, partindo
+   de `calc(var(--ins-sobe-aviso) - var(--ins-timer-h))` — a mesma propriedade
+   teria dois donos (a animação e a transição do acompanhamento), e os quadros
+   com `var()` mudam na hora em que a altura do cronômetro muda: o aviso salta.
+   Plantei essa forma (P3) e o caso da composição fica vermelho nos dois motores;
+   (c) a entrada numa caixa à parte — a escolhida. O `#toast` continua o mesmo
+   lugar de antes (o mesmo `bottom`, o mesmo `transform`, o mesmo `translate`),
+   e a mensagem é o nó de dentro, com a caixa visual inteira (fundo, borda,
+   texto). O `translate` da caixa de dentro é só da entrada, o do lugar só do
+   acompanhamento, o `transform` do lugar só do centramento, e os três se somam.
+   O lugar mede o que a mensagem mede (ela é o único filho, em fluxo), então
+   `descanso.test.js`, que lê a caixa do `#toast`, continua medindo o mesmo.
+2. **O tempo: uma regra só, comentada, em `main.jsx` — não nos tokens.** Não é
+   movimento, é leitura (o pedido: "não é movimento: é leitura"), e vale igual
+   sob "Reduzir". `1 s + caracteres ÷ 15 por segundo`, com piso de 3,6 s (os de
+   antes: nenhuma mensagem fica menos, e até 39 caracteres fica igual) e teto de
+   8 s. Os 15 caracteres por segundo são o passo mais lento da faixa que a 03
+   §5.1 usa (15 a 20), porque quem lê está de pé, entre séries; o segundo a mais
+   é o olho sair do que fazia e achar o aviso no rodapé. Com isso a mensagem de
+   ~105 caracteres que a 03 citava chega exatamente no teto. Conta o texto como
+   aparece (`trim`). Das 57 mensagens literais distintas do app, 42 ficam nos
+   3,6 s de antes e 15 ganham tempo; a mais longa (108) para no teto. As que
+   levam um nome dentro (o exercício, a data) seguem a mesma regra pelo tamanho
+   que tiverem.
+3. **Um nó por mensagem nova é o que refaz a entrada.** A animação de entrada é
+   do nó que nasce (`animation` com `both`), e um nó novo começa do quadro zero
+   sem nenhum truque — sem tirar e pôr a classe, sem forçar estilo no meio do
+   toque (`offsetWidth`), sem relógio. O mesmo texto com o aviso na tela não é
+   "outra mensagem": o nó fica, nada se mexe, e o tempo recomeça, como antes. O
+   mesmo texto sobre uma mensagem que já está APAGANDO chega de novo (é uma
+   aparição nova). Para o leitor de tela, o nó novo é uma adição na região viva
+   — anunciada —, e a troca tira o velho na mesma tarefa: nunca há duas
+   mensagens na região, nada lido duas vezes. O mesmo texto repetido continua
+   sem ser reanunciado, como antes.
+4. **A saída: `.sai` e o relógio da porta; sob "Reduzir", de uma vez.** Como o
+   cronômetro da peça 3: a classe apaga (e tira o toque, decisão 7), e quem tira
+   o nó é um relógio com `tempo('--ins-dur-lugar')` — 0 sob "Reduzir" e onde a
+   porta não sabe, e aí o nó sai na mesma tarefa. Nada escuta fim de animação. A
+   guarda (j) cobra que o relógio lê o MESMO token da animação de saída. Sob
+   "Reduzir", a saída é de uma vez, e não um esmaecer: é a regra do revisor para
+   toda saída (07 §1.3, princípio 5, "qualquer animação numa saída" reprova) e a
+   do coordenador para a resposta 2 ("sai de uma vez"); a entrada esmaece em
+   `--ins-dur-dissolve` (120 ms ≤ 160), que é o "só a opacidade".
+5. **A foto velha do aviso nunca aparece na troca de camada.** Antes, sem
+   mensagem o toast era `display: none` e nem tinha foto; agora o lugar está
+   sempre lá, e tem foto velha e nova em toda troca. A nova é viva; a velha é a
+   mensagem parada no instante da foto. Por baixo da viva, ela fazia o aviso que
+   apaga durante a troca ficar aceso ~10 quadros e sumir de estalo — visto nos
+   quadros do compositor do Chromium com a velha forçada visível
+   (`scratchpad/peca7/vt-fantasma-apaga-junto.jpg`) —, e a mensagem que chega
+   durante a troca nasceria sobre a anterior. Com a velha escondida, nos dois
+   motores: o aviso na tela continua visível do primeiro ao último quadro da
+   troca (descendo os 52 px da barra junto, peça 6), o que chega acende dentro da
+   troca, e o que apaga apaga dentro dela. Diferente da barra de abas (peça 6,
+   decisão 5), onde a velha ficou por baixo da viva como rede: a barra não muda
+   durante a troca, e o aviso muda — a rede viraria o defeito. Risco dito: se
+   algum caminho de desenho não pintar a foto viva (o `page.screenshot` do
+   WebKit desta máquina não pinta), o aviso some daquela captura durante a
+   troca; nos quadros do compositor, os dois motores pintam.
+6. **O rodapé que muda de altura vale só para o aviso com mensagem.** Pela mesma
+   razão do cronômetro fora de cena (peça 6, decisão 12): o lugar vazio também
+   tem foto, e moveria o que ninguém vê. `:has(#toast > .aviso)` pega a mensagem
+   chegando, na tela e apagando.
+7. **O toque.** O lugar tem `pointer-events: none` e a mensagem `auto`: na tela, a
+   mensagem pega o toque como sempre pegou (o toast visível sempre esteve por
+   cima do que tinha embaixo); apagando, o toque passa por ela, como passava
+   quando ela sumia de estalo — medido: o `elementFromPoint` no centro da
+   mensagem que apaga acha o que está embaixo, nos dois motores. Sem o
+   `pointer-events` no lugar, o vazio de altura zero não pegaria nada, mas a
+   mensagem apagando ainda estaria dentro dele e o lugar a pegaria (visto na
+   exploração; plantio P21).
+8. **`ins-chega-aviso` parte de opacidade 0, e não de .4 como o pouso.** O pouso
+   é um número que tem de ser legível em todo quadro; o aviso é algo que acabou
+   de acontecer, e o que diz isso é aparecer (03 §5.1: "acende, opacidade 0 →
+   1"). A curva é a `--ins-curva`, a do lugar, na entrada e na saída, como a
+   resposta 10 diz.
+9. **`ins-apaga` e `ins-esmaece` foram reaproveitados**, e não nasceu quadro
+   novo para apagar ou acender: são exatamente esses gestos, com outro tempo.
+
+### Os números, antes e depois
+
+Chromium 1234 e WebKit 26.5 (Playwright), 414 × 896 a ×2. O antes é o build de
+`b2d102a` (`index-B3-7Hevd.js`, copiado para `scratchpad/peca7/dist-antes` antes
+da primeira mudança); o depois, o final. Os dois servidos da porta 4729, um de
+cada vez, desligada no fim. Scripts em `scratchpad/peca7/` (`antes-depois.mjs`,
+`explora.mjs`, `vt-quadros.mjs`, `folha.mjs`). Nenhum erro de página. Os dois
+motores deram os mesmos números, menos onde a tabela separa.
+
+| medida | antes | depois |
+|---|---|---|
+| tempo na tela: "Foto apagada." (13 caracteres) | 3608 ms | 3614 ms (o piso: igual) |
+| … "Desconectado. O histórico continua neste aparelho." (50) | 3607 | **4349** |
+| … "Guardei como pulado hoje: Remada. Não volta…" (101) | 3606 | **7747** |
+| … "O registro deste aparelho não pôde ser lido…" (108, a mais longa) | 3606 | **8003** (o teto) |
+| a chegada: quadros com o aviso entre apagado e aceso · deslocamento | 0 · 0 (aparece num quadro) | 6 · 8 px (sobe e acende em 160 ms, `cubic-bezier(0.2, 0.8, 0.2, 1)`) |
+| a saída | some num quadro | só apaga em 160 ms, nove quadros amostrados de 1 a 0,004 (Chromium); o nó sai aos ~164 ms |
+| o texto novo com o aviso na tela | troca no mesmo nó, num quadro | nó novo: de novo apagado e 8 px abaixo no primeiro quadro, e acende |
+| o mesmo texto de novo | nada muda (o tempo recomeça) | igual |
+| a região sem aviso, na árvore de acessibilidade | fora: `display: none`; a do Playwright vazia; no Chromium só a série dita é `status` | **dentro**: `- status`, vazia; no Chromium as duas regiões `status`, nenhuma ignorada |
+| a região com aviso | `- status: …` | `- status: …` (igual) |
+| o dedo sobre o aviso que some | (sumia de uma vez) | apagando, o toque passa e acha o que está embaixo |
+| o aviso entrando com o descanso começando 40 ms depois, no modo: a mensagem dentro do lugar | — | 8,0 → 0 sem voltar, nos dois motores (Chromium 8,0 4,7 2,4 1,3 0,7 0,4 0,1 …; WebKit 8,0 6,6 5,2 3,1 1,8 1,0 …) |
+| … o maior passo da mensagem num quadro (o descanso começa · para) | — (antes da peça 3, 82 px de uma vez) | Chromium 16,0 · 15,7; WebKit 15,8 · 15,2 |
+| sob "Reduzir": a chegada | num quadro | só `ins-esmaece` 120 ms, 0 px; nenhum deslocamento |
+| sob "Reduzir": a saída | num quadro | num quadro (o nó sai na mesma tarefa) |
+| troca de camada com o aviso na tela (abrir os Ajustes): fotos do aviso que andam · a foto velha | o par desce 52 px (peça 6) · visível | o par desce 52 px · **opacidade 0**; nos quadros do compositor o aviso fica visível em todos, nos dois motores |
+| … sem aviso | nenhuma (não havia foto) | nenhuma (o lugar vazio tem foto e não anda) |
+| o aviso que chega ou apaga junto com a troca | (aparecia e sumia de estalo) | acende ou apaga dentro da troca, na foto viva (quadros do compositor, nos dois motores); com a foto velha visível (forçada), o que apaga ficava aceso ~10 quadros e sumia de estalo |
+
+### Os testes, e como provei que reprovam
+
+**`tests/dominio/estilo.test.ts`, caso (j)** — de fonte. A região viva: nenhuma
+regra do app (fora o documento de fora da bancada) dá `display: none`,
+`visibility: hidden` ou `content-visibility` ao `#toast`, à mensagem dele ou à
+série dita; no `index.html` a região nasce vazia e sem `hidden`, `aria-hidden` ou
+`inert`. O lugar: no `#toast` só o acompanhamento (`transition: translate` no
+tempo e na curva da camada) e nenhuma animação, `pointer-events: none`, o
+`translateX(-50%)` intacto; a mensagem com `pointer-events: auto`. A entrada:
+`#toast > .aviso` com uma animação só, `ins-chega-aviso` em `--ins-dur-lugar` na
+`--ins-curva`, e os quadros de `translate: 0 var(--ins-sobe-aviso)` e `opacity: 0`
+a `none` e `1`. A saída: `.sai` com `ins-apaga` no mesmo tempo e na mesma curva,
+movendo só opacidade, e `pointer-events: none`. Sob "Reduzir": a mensagem só com
+`ins-esmaece` em `--ins-dur-dissolve`, e nada para `.sai`. Nenhuma outra regra
+move a mensagem. No `main.jsx`: `apagaAviso` lê `tempoDoMovimento('--ins-dur-lugar')`
+— o mesmo token da animação de saída — e põe `.sai`; `toast()` cria o nó
+`.aviso`, e nenhum dos dois acende ou apaga a região por classe ou `display`.
+**(h)**, ajustado: o rodapé do aviso só com mensagem; o aviso fora da lista do
+`:only-child`; a foto velha dele sempre com `opacity: 0`, fora do portão.
+
+**`tests/fluxo/aviso.test.js`** (árvore, 5 casos; com `matchMedia` de mentira
+onde o caso pede movimento ou "Reduzir"):
+
+- *o tempo do texto*: com mensagens de verdade do app — "Foto apagada." fica os
+  3,6 s de antes; a de 50 caracteres mais que antes e menos que a longa; a do
+  "Pular" (101) o bastante para ler a 15 por segundo e no máximo o teto; a mais
+  longa (108) entre a longa e o teto; um texto de 400 caracteres, no teto. As 57
+  mensagens literais do `main.jsx`, lidas do fonte: todas entre o piso e o teto,
+  e texto maior nunca fica menos. Sob "Reduzir", os mesmos tempos.
+- *a saída pelo relógio da leitura* (tempo real, três aparelhos num relógio só):
+  a curta sai nos 3,6 s e deixa a região vazia; a longa continua depois dos 3,6 s
+  e sai no fim do tempo dela; a curta repetida 2 s depois recomeça o tempo.
+- *o texto novo é um nó novo*: outra mensagem, outro nó, e só ele na região; o
+  mesmo texto com o aviso na tela, o mesmo nó; o mesmo texto sobre a que apaga,
+  nó novo.
+- *a saída*: com movimento pedido, `.sai` e o nó tirado depois de
+  `--ins-dur-lugar` (o jsdom nunca dispara fim de animação); sob "Reduzir" e sem
+  `matchMedia`, vazia no mesmo tique.
+- *a região*: a mesma região sempre, `role="status"`, `aria-live="polite"`, nada
+  que a esconda, `display` nunca `none`, `visibility` nunca `hidden`, nada
+  focável; vazia antes, com o texto durante, vazia depois.
+
+**`tests/fluxo/acende.test.js`** (motor, 6 casos; os tempos e as curvas lidos dos
+tokens; verdes no Chromium e, com `LASTRO_MOTOR=webkit`, no WebKit):
+
+1. *sobe 8 px e acende em 160 ms na curva do lugar, e sai só apagando* — quadro a
+   quadro: uma animação só na mensagem, `ins-chega-aviso`, no tempo e na curva,
+   só `translate` e opacidade, de `--ins-sobe-aviso` e 0 a `none` e 1; o lugar
+   sem animação; a mensagem só sobe e só acende, em vários quadros, e assenta.
+   Com todo evento de fim de transição e de animação bloqueado na captura, a
+   saída apaga em vários quadros, só opacidade, sem sair do lugar, e o nó sai no
+   tempo da saída; a região nunca `display: none`. O toque: na tela, a mensagem
+   o pega; apagando, ele passa e acha o que está embaixo.
+2. *o texto novo refaz a entrada* — a mensagem nova está na tela desde o
+   primeiro quadro, com a entrada do zero, de novo apagada e abaixo do lugar, e
+   acende em vários quadros; o mesmo texto: o mesmo nó, nada se mexe.
+3. *a composição* — no modo, o aviso e, 40 ms depois, o descanso começando; e o
+   aviso e o descanso parando. Primeiro o que se vê: nenhum passo da mensagem
+   num quadro passa de metade da altura do cronômetro, ela se move em vários
+   quadros, nunca fica por baixo do cronômetro, só acende e assenta acesa no
+   lugar novo, e dentro do lugar que anda continua subindo os 8 px dela. Depois a
+   forma: uma entrada só, que o acompanhamento não reinicia, correndo quando o
+   lugar começa a andar, com o tempo só para a frente.
+4. *sob "Reduzir"* — só `ins-esmaece` em `--ins-dur-dissolve`, só opacidade,
+   nada sobe; o texto novo acende de novo; a saída, vazia desde o primeiro quadro.
+5. *a árvore* — a região, sem aviso, com aviso e depois: `- status`,
+   `- status: <a mensagem>`, `- status` (a árvore do Playwright, nos dois
+   motores); no Chromium, a do motor (`Accessibility.getPartialAXTree`):
+   `status`, não ignorada.
+6. *a troca de camada* — com o aviso na tela, abrir os Ajustes: só o par de
+   imagens do aviso anda (`ins-rodape-desce`), e a foto velha tem opacidade 0;
+   sem aviso, nada do aviso anda; o aviso que chega junto com a troca entra
+   durante ela.
+
+**Plantio** (`scratchpad/peca7/planta.mjs`, como o das peças 5 e 6: guarda cópias
+limpas em `limpo/`, aplica a violação, constrói quando o caso lê o `dist/`, roda
+só os casos que a cobram — cada arquivo de motor sozinho, no motor pedido —,
+registra em `plantio.json` e devolve o arquivo num `finally`, e também em SIGINT,
+SIGTERM, SIGHUP, exceção e saída; confere cada arquivo contra a cópia por hash
+depois de cada passo e no fim, e reconstrói o `dist/` do limpo; `restaura.mjs`
+devolve as cópias se tudo o mais falhar). Os 21 ficaram vermelhos; os dois
+controles, verdes; todos os arquivos voltaram ao limpo (conferido também por
+`cmp` contra as cópias, no fim).
+
+| # | a violação plantada | quem ficou vermelho | voltou ao limpo |
+|---|---|---|---|
+| P1 | a entrada fora do portão | (b) | sim |
+| P2 | a região de volta a `display: none` sem mensagem (`#toast:empty`) | (j); árvore: a região; motor (Chromium e WebKit): a entrada e a saída ("a região nunca some"), a árvore ("fora da árvore") | sim |
+| P3 | a entrada no LUGAR, em `translate`, de `calc(var(--ins-sobe-aviso) - var(--ins-timer-h))` (a forma que a peça 3 sugeria) | (b), (j); motor (Chromium e WebKit): **a composição — "o aviso andou 84,3 px num quadro"** (Chromium; 83,0 no WebKit: 847,3 844,0 759,7 …), a entrada, o texto novo, a troca; e `descanso.test.js`, o acompanhamento (o toast ganha uma animação de `translate` além da transição) | sim |
+| P4 | o texto novo troca no mesmo nó | árvore: o nó novo; motor (Chromium e WebKit): o texto novo, a composição | sim |
+| P5 | até o mesmo texto refaz a entrada | árvore: o nó novo ("o mesmo texto… nada se mexe"); motor: o texto novo | sim |
+| P6 | os 3,6 s fixos de antes | árvore: o tempo, e a saída pelo relógio ("a longa continua, depois dos 3,6 s") | sim |
+| P7 | sem teto | árvore: o tempo (a mais longa, 8200 ms) | sim |
+| P8 | sem piso (a curta some antes do que sumia) | árvore: o tempo, e a saída pelo relógio | sim |
+| P9 | a saída espera `animationend` | (e); árvore: a saída e a região; motor (Chromium e WebKit): a saída (eventos bloqueados: o nó não sai) | sim |
+| P10 | a saída segura 160 ms sem perguntar à porta | (j); árvore: "sob Reduzir e sem a porta saber, de uma vez"; motor: "Reduzir" | sim |
+| P11 | a saída desce (`ins-desce`) | (b), (j); motor: "sai só apagando" | sim |
+| P12 | sob "Reduzir", o aviso sobe | (b), (c), (j); motor: "Reduzir" | sim |
+| P13 | sob "Reduzir", a saída apaga em vez de sair de uma vez | (j); árvore: "de uma vez"; motor: "Reduzir" | sim |
+| P14 | a mensagem que saiu fica na região, apagada | árvore: a saída pelo relógio, a saída, a região ("vazia depois"); motor (Chromium e WebKit): a entrada e a saída, "Reduzir", a árvore, a troca | sim |
+| P15 | o toque não passa pela mensagem que apaga | (j); motor: a saída ("apagando, o toque passa") | sim |
+| P16 | a foto velha do aviso aparece na troca | (h); motor (Chromium e WebKit): a troca ("a foto velha nunca aparece") | sim |
+| P17 | o aviso vazio também muda de altura na troca | (h); motor: a troca ("sem aviso, nada do aviso se move"); e `troca.test.js`, o Voltar do sistema (uma animação a mais) | sim |
+| P18 | a entrada no tempo da camada (350) | (j); motor: a entrada, o texto novo | sim |
+| P19 | a entrada na curva da camada | (j); motor: a entrada | sim |
+| P20 | a entrada parte do dobro da distância | (j); motor: a entrada, a composição | sim |
+| P21 | o lugar pega o toque | (j); motor: a saída ("apagando, o toque passa") | sim |
+| V1 | controle: sob "Reduzir", o esmaecer na curva da camada (permitido) | nenhum (verde, como devia) | sim |
+| V2 | controle: a leitura a 16 caracteres por segundo (outra escolha da mesma regra) | nenhum (verde, como devia) | sim |
+
+Duas notas. **O V2 ficou vermelho na primeira rodada**: o caso do tempo cobrava
+que a mensagem de 108 caracteres batesse EXATAMENTE no teto, o que prende o
+parâmetro e não a regra. Troquei por "a mais longa fica entre a longa e o teto" e
+um texto de 400 caracteres no teto; refiz P7 (continua vermelho, agora pelo
+8200) e V2 (verde). **O P3 reprovava a composição pela forma** (nenhuma
+animação na mensagem) antes de chegar ao salto; reordenei o caso para cobrar
+primeiro o que se vê, e no replantio o salto apareceu: o aviso andou a altura
+inteira do cronômetro num quadro, nos dois motores. É a prova da decisão 1.
+
+**Contra o build de antes** (a árvore de `b2d102a`, `git archive`, construída no
+scratchpad, com os três arquivos de teste finais): os 12 casos novos ficam
+vermelhos, e a (h) ajustada também. Pelo defeito: a guarda (j) ("a região viva
+sai da árvore"); na árvore, a região (`display: none` antes de qualquer aviso),
+a saída pelo relógio (a longa já tinha saído aos 3,6 s) e o nó novo (a mensagem
+não é um nó); no motor, a árvore — no Chromium a região sem aviso é `none`,
+ignorada, e na do Playwright não aparece, nos dois motores. Os outros cinco do
+motor e dois da árvore caem pela forma (`apagaAviso` e `tempoDeLeitura` não
+existem lá; o aquecimento do motor já chama `apagaAviso`).
+
+### O que ficou de fora, e por quê
+
+- **Nada foi visto num iPhone de verdade.** Ficam pela leitura: se o VoiceOver
+  anuncia o nó que entra na região (é o caso que a 05 §3.2 dava como confiável —
+  a região já na árvore, o texto entrando depois —, e aqui não há leitor de tela);
+  se o Core Animation do A13 compõe a entrada da caixa de dentro com o
+  acompanhamento do lugar como os dois motores daqui compõem; se o iOS pinta a
+  foto viva do aviso durante a troca (os quadros do compositor do WebKit daqui
+  pintam; o `page.screenshot` não).
+- **O tempo pelo texto não foi medido com pessoas.** A regra é a da 03 §5.1
+  (15–20 caracteres por segundo), no passo mais lento; o dono não testa à mão, e
+  a regra está num lugar só, com as quatro constantes nomeadas, se ele quiser
+  mais ou menos tempo.
+- **O aviso sobre o controle focado** (05 §3.4, regra 9: nada animado por cima
+  cobre inteiramente o elemento em foco). O aviso continua onde sempre esteve,
+  acima do rodapé, e a peça não mudou o lugar dele; não há regra nova que o
+  afaste de um controle focado embaixo dele. Não era pedido aqui.
+- **"Não guardei" e a faixa "Não guardado"** não mudaram: são outra região
+  (`role="alert"` montado com o texto, e `role="status"` da faixa, peça 4).
+- **O `03-micro.md` §5.1 propunha "só o texto, não a caixa" na troca de texto.**
+  A resposta 10 do dono diz "um texto novo com o aviso na tela refaz a entrada",
+  e a entrada é da caixa (ela sobe e acende); segui a resposta, que prevalece.
+- **O caso da corrida do histórico no WebKit** (`troca.test.js`, "o Voltar do
+  sistema…", decisão 20 da peça 5): sozinho no WebKit, com carga 5–6, ficou
+  vermelho em 2 de 5 rodadas ("a camada aberta logo depois do fecho continua
+  aberta"), e no build de antes desta peça, na mesma carga, em 1 de 4 — o mesmo
+  vermelho. Não é desta peça (a peça 6 já o registrou caindo sob carga, e
+  suspeitava do relógio do desenho atrasado); não mexi. No Chromium, verde nas
+  duas suítes completas.
+- **Os fluxos do revisor** (`_medicao/`) não foram tocados, nem as portas dele.
+  Meus servidores foram a 4729 (os scripts de medida) e as portas efêmeras dos
+  próprios testes, todos desligados no fim.
+
+### Para o revisor
+
+- **O fluxo 10, passo `some`, espera `getComputedStyle(#toast).display === 'none'`**
+  (`revisor-fluxos.mjs`) — isso nunca mais acontece: a região fica sempre, e o
+  passo vai esperar até o limite. O aviso acabou quando a região está vazia:
+  `!document.querySelector('#toast > .aviso')` (ou `#toast` com `textContent`
+  vazio). Antes disso, 160 ms com `.sai` (apagando). Não mexi em `_medicao/`.
+- **No fluxo 10**: "Treino B iniciado. O tempo começa agora." tem 40 caracteres
+  e fica 3,7 s; "Treino pausado. O relógio parou." (32) fica os 3,6 s. O passo
+  `troca` é texto novo: a entrada recomeça (nó novo).
+- **A caixa do aviso agora é `#toast > .aviso`.** `#toast` é o lugar: com
+  mensagem ele mede o que ela mede (e não se move pela entrada — ela é da caixa de
+  dentro); sem mensagem é uma caixa de altura 0, `display: block`. Quem lê
+  `#toast` para saber se o aviso está na tela (`R.fixos` em `revisor-comum.mjs`,
+  `acesso-foco.mjs` §7) passa a ver `[x, y, 378, 0]` e `block` sem aviso.
+  `micro-avisos.mjs` lê o `textContent` do `#toast`, que continua sendo o texto
+  da mensagem.
+- **As durações que aparecem**: 160 (a entrada e a saída do aviso, na
+  `--ins-curva`) e 120 (sob "Reduzir", a entrada; a saída é de uma vez). Nenhuma
+  nova.
+- **O `page.screenshot` do WebKit desta máquina não pinta a foto viva de elemento
+  com nome** durante a troca (peça 6), e a foto velha do aviso está sempre
+  escondida: nessas capturas o aviso some durante a troca. Nos quadros do
+  compositor (o screencast), não.
+- **O que se move de propósito no fluxo 10**: só a mensagem (`toast` em
+  `movem`, como o comparador já faz). O lugar não anda, a não ser pelo
+  acompanhamento do cronômetro.
+
+### As saídas
+
+`npm run tipos`:
+
+```
+> lastro-app@2.0.0 tipos
+> tsc --noEmit
+
+(saída 0)
+```
+
+`npm run build`:
+
+```
+> lastro-app@2.0.0 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 84 modules transformed.
+src/main.jsx (7618:45): Use of eval in "src/main.jsx" is strongly discouraged as it poses security risks and may cause issues with minification.
+rendering chunks...
+computing gzip size...
+dist/sw.js                        5.24 kB
+dist/index.html                   6.07 kB │ gzip:   2.85 kB
+dist/assets/index-2O9tSOJF.css  109.98 kB │ gzip:  19.44 kB
+dist/assets/index-BKMSsFYH.js   592.84 kB │ gzip: 185.40 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 941ms
+(saída 0)
+```
+
+`npx vitest run`, duas vezes seguidas (a carga no começo de cada uma, pelo
+`uptime`):
+
+```
+ 11:13:13 up 17:14,  1 user,  load average: 1,67, 2,34, 3,05
+
+ RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+
+
+ Test Files  85 passed (85)
+      Tests  1675 passed (1675)
+   Start at  11:13:13
+   Duration  68.17s (transform 3.49s, setup 0ms, import 40.58s, tests 646.56s, environment 12ms)
+```
+
+```
+ 11:14:28 up 17:15,  1 user,  load average: 10,80, 5,22, 4,01
+
+ RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+
+
+ Test Files  85 passed (85)
+      Tests  1675 passed (1675)
+   Start at  11:14:29
+   Duration  67.62s (transform 3.67s, setup 0ms, import 40.41s, tests 633.67s, environment 12ms)
+```
+
+Antes desta peça: 1663 de 1663 (peça 6). A diferença, +12, são os casos novos: a
+guarda (j) em `estilo.test.ts` (62 casos ali; a (h) ajustada dentro do que já
+existia), 5 em `aviso.test.js` e 6 em `acende.test.js`. No WebKit
+(`LASTRO_MOTOR=webkit`), um arquivo por vez: `acende` 6/6, `descanso` 5/5,
+`aba` 7/7, `troca` 11/11 (em 3 de 5; o caso da corrida do histórico, acima, cai
+também no build de antes).

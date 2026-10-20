@@ -448,6 +448,16 @@ p, .ins-prosa, input, textarea {
   to   { opacity: 1; }
 }
 
+/* O AVISO CURTO CHEGA (peça 7): de `--ins-sobe-aviso` abaixo e apagado até o
+   lugar, aceso. Apagado no começo, e não .4 como o pouso: o aviso não é um
+   número que tem de ser legível em todo quadro, é algo que acabou de
+   acontecer — e o que diz isso é aparecer. `translate` da caixa de DENTRO do
+   toast (`componentes.css`), que soma com o acompanhamento do lugar. */
+@keyframes ins-chega-aviso {
+  from { translate: 0 var(--ins-sobe-aviso); opacity: 0; }
+  to   { translate: none; opacity: 1; }
+}
+
 /* ESMAECER, a chegada de uma camada sob "Reduzir movimento" (resposta 2 do
    dono, 16/10): nada desliza; a camada aparece de 0 ao lugar, em
    `--ins-dur-dissolve`, e sai de uma vez. Só opacidade, que não é movimento
@@ -457,7 +467,8 @@ p, .ins-prosa, input, textarea {
    desde o quadro zero: opacidade não tira o toque.
    É também o VÉU da folha e do painel acendendo, com ou sem a preferência
    (peça 4): o véu não se desloca, ele escurece — no tempo da camada sem a
-   preferência, e no do esmaecer com ela. */
+   preferência, e no do esmaecer com ela. E o aviso curto que chega sob a
+   preferência (peça 7): acende sem subir. */
 @keyframes ins-esmaece {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -507,7 +518,8 @@ p, .ins-prosa, input, textarea {
   from { transform: none; }
   to   { transform: translateY(100%); }
 }
-/* APAGAR: o véu que some com a folha que desce. */
+/* APAGAR: o véu que some com a folha que desce; e o aviso curto que sai (peça
+   7), sem ir a lugar nenhum. */
 @keyframes ins-apaga {
   from { opacity: 1; }
   to   { opacity: 0; }

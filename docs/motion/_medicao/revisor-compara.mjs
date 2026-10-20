@@ -90,8 +90,8 @@ const ehPulso = x => (x.props || []).join() === 'opacity' && x.dur === 2400;
 // (o aviso que some não entra: sob "Reduzir movimento" ele ainda apaga, só em opacidade)
 const ehSaida = m => m && m.tipo === 'sai';
 const ehCamada = m => m && ['entra', 'sai', 'quique', 'aba'].includes(m.tipo);
-function faixa(tira, a, b) {
-  try { return Number(execFileSync(PY, [path.join(AQUI, 'revisor-tiras.py'), 'faixa', tira, a, b, '0', '60']).toString().trim()); }
+function faixa(tira, a, b, x0 = 0, x1 = 60, y0 = 0, y1 = 896) {
+  try { return Number(execFileSync(PY, [path.join(AQUI, 'revisor-tiras.py'), 'faixa', tira, a, b, String(x0), String(x1), String(y0), String(y1)]).toString().trim()); }
   catch (e) { return null; }
 }
 
@@ -130,15 +130,23 @@ function julga(rodada, a, d, extra, mov, tiraD) {
     if (d.segundoToque && d.confere !== true && (!d.segundoToque.alvoDoClique || /^(html|body)\b/.test(d.segundoToque.alvoDoClique))) reprova(p, `o segundo toque (${d.segundoToque.cliqueRelMs} ms depois do primeiro) caiu em ${d.segundoToque.alvoDoClique || 'lugar nenhum'}`);
     if (td.handlerMs != null && ta.handlerMs != null && td.handlerMs > Math.max(16, ta.handlerMs + 4)) reprova(p, `trabalho no toque ${td.handlerMs} ms (antes ${ta.handlerMs})`);
     if (td.eventTimingClickMs != null && ta.eventTimingClickMs != null && td.eventTimingClickMs > ta.eventTimingClickMs + 16) reprova(p, `Event Timing ${td.eventTimingClickMs} ms (antes ${ta.eventTimingClickMs})`);
-    if (!lac && qd.primeiraMudancaMs != null && qa.primeiraMudancaMs != null && qd.primeiraMudancaMs > qa.primeiraMudancaMs + 17)
-      reprova(p, `a tela muda a ${qd.primeiraMudancaMs} ms (antes ${qa.primeiraMudancaMs}): mais de um quadro de atraso (decisão 6 aceita um)`);
+    // Nas trocas de camada e de aba a decisão 6 aceita UM quadro a mais. A
+    // medida cai no quadro, e onde o toque cai dentro do quadro muda de uma
+    // gravação para outra: "um quadro a mais" aparece entre +8 e +25 ms, "dois",
+    // de +25 a +42. O limite fica em 1,5 quadro (25 ms) nesses passos (peça 6);
+    // nos outros, em um quadro (17 ms), como sempre.
+    const troca = mov && /^(entra|sai|aba)$/.test(mov.tipo), lim = troca ? 25 : 17;
+    if (!lac && qd.primeiraMudancaMs != null && qa.primeiraMudancaMs != null && qd.primeiraMudancaMs > qa.primeiraMudancaMs + lim)
+      reprova(p, `a tela muda a ${qd.primeiraMudancaMs} ms (antes ${qa.primeiraMudancaMs}): ` + (troca ? 'dois quadros ou mais de atraso (decisão 6 aceita um)' : 'mais de um quadro de atraso'));
     // Troca de camada (peça 5): com a View Transition, o 1º quadro que muda pode
     // ser só o controle apertado (a caixa dele), e a troca anda depois. Aqui vale
     // o 1º quadro cuja mudança encosta na borda direita e tem a altura da tela
     // (x + largura ≥ 410 e altura ≥ 300, pela medida fina): "a troca anda".
-    const anda = andaMs;
-    if (!lac && mov && /^(entra|sai)$/.test(mov.tipo) && anda(qa) != null && anda(qd) != null && anda(qd) > anda(qa) + 17 && !v.some(x => x.principio === p && /a tela muda/.test(x.motivo)))
-      reprova(p, `a troca anda a ${anda(qd)} ms (antes a tela trocava a ${anda(qa)}): mais de um quadro de atraso (decisão 6 aceita um)`);
+    // (no antes a troca é seca e nem sempre encosta na borda: vale então o 1º
+    // quadro que muda; a aba entra na regra a partir da peça 6, o carrossel)
+    const andaA = andaMs(qa) ?? qa.primeiraMudancaMs, andaD = andaMs(qd);
+    if (!lac && troca && andaA != null && andaD != null && andaD > andaA + lim && !v.some(x => x.principio === p && /a tela muda/.test(x.motivo)))
+      reprova(p, `a troca anda a ${andaD} ms (antes a tela trocava a ${andaA}): dois quadros ou mais de atraso (decisão 6 aceita um)`);
     // 04 R8: a 1ª série sem o tranco do AudioContext — ≤ 16 ms no Chromium 1×
     // (rodadas chromium e chromium-mouse); nas outras o número fica para leitura
     if (/primeira-serie|serie-regua/.test(extra.fluxo) && d.id === 'grava-1' && td.handlerMs > 16)
@@ -252,8 +260,25 @@ function julga(rodada, a, d, extra, mov, tiraD) {
       // Transition a foto da de baixo guarda o estado de toque do controle que
       // abriu (o cartão apertado), que não é movimento — visto na peça 5, 07 §11.
       const [c1, c2] = mov.debaixo === 'entra' ? ['+50', '+100'] : ['+150', '+800'];
-      const f = faixa(tiraD, c1, c2);
-      if (f != null) (f > 0.01 ? reprova : passa)(p, `faixa da esquerda (0–60 px) entre ${c1} e ${c2} ms: ${(f * 100).toFixed(1)} % diferente (a de baixo parada: < 1 %)`);
+      // (`debaixoAte`: a faixa só até essa altura — no fluxo 17 o cronômetro
+      // desce de propósito pela faixa da esquerda, 52 px, junto com a camada)
+      const y1 = mov.debaixoAte || 896;
+      const f = faixa(tiraD, c1, c2, 0, 60, 0, y1);
+      if (f != null) (f > 0.01 ? reprova : passa)(p, `faixa da esquerda (0–60 px${y1 < 896 ? ', y 0–' + y1 : ''}) entre ${c1} e ${c2} ms: ${(f * 100).toFixed(1)} % diferente (a de baixo parada: < 1 %)`);
+    }
+    // decisão 3 (peça 6): o carrossel — a página inteira (as fotos da raiz) e o
+    // fio em 350 ms; a barra parada (a faixa dos rótulos, y 856–896, sem o fio)
+    if (mov && mov.tipo === 'aba' && !mov.meio) {
+      const raiz = vivas.filter(x => /::view-transition-(old|new)\(root\)/.test(x.pseudo || '') && Math.abs(x.dur - mov.ms) <= 1);
+      const fio = vivas.filter(x => /ins-tab-ind/.test(x.alvo || '') && (x.props || []).includes('transform'));
+      if (raiz.length < 2) reprova(p, `a página inteira não desliza: ${raiz.length} foto(s) da raiz em ${mov.ms} ms (${vivas.map(x => x.nome + ' ' + x.dur).join(', ')})`);
+      if (!fio.length || fio.some(x => Math.abs(x.dur - mov.ms) > 1)) reprova(p, `o fio não anda junto: ${fio.map(x => x.nome + ' ' + x.dur + ' ms').join(', ') || 'nenhuma animação no fio'}`);
+      // (+50 a +150 e +250 a +800: no Chromium com o dedo do CDP, a aba tocada
+      // fica apertada até ~+150 depois de soltar — 07 §1.1 —, e isso não é a barra andar)
+      if (tiraD) for (const [c1, c2] of [['+50', '+150'], ['+250', '+800']]) {
+        const f = faixa(tiraD, c1, c2, 0, 414, 856, 896);
+        if (f != null) (f > 0.01 ? reprova : passa)(p, `a barra (rótulos, y 856–896) entre ${c1} e ${c2} ms: ${(f * 100).toFixed(1)} % diferente (parada: < 1 %)`);
+      }
     }
     if (v.length === n0) passa(p, mov ? `esperado: ${mov.tipo}${mov.ms ? ' ' + mov.ms + ' ms' : ''}; ${novas.length} movimento(s) novo(s), ${qd.quadrosComQualquerMudanca} quadro(s) com mudança em ${visivel} ms` : 'sem expectativa para este passo');
   }

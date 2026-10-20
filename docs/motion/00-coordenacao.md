@@ -85,7 +85,7 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Respostas do dono registradas no diário (16/10, 01h25).
 
 ### Fase 3 — implementação (só depois das respostas)
-- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1, 2 (16/10), 3, 4 (19/10), 5 e 6 (20/10) feitas.
+- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1, 2 (16/10), 3, 4 (19/10), 5, 6 e 7 (20/10) feitas.
 - [x] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`). Peça 0: casos (a)–(e) e a lista de folhas, 52 plantios.
 - [x] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova (peça 0).
 - [ ] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde.
@@ -536,3 +536,39 @@ quadro no fim de TODA transição de vista, até numa página mínima sem o app 
 do motor aqui, não do app. `<main key={aba}>`: o `<main>` nasce de novo a cada
 aba. Depois: `tipos` limpo, build, 1663/1663 duas vezes seguidas (a segunda com
 load 9,8).
+
+**20/10 — peça 6 conferida pelo revisor** (07 §12). O carrossel passa: a página
+e o fio andam juntos em 350 ms com 22 a 40 quadros com mudança, a barra parada
+(0,0–0,6 %), largura 414, a aba tocada no meio vence em todas as rodadas, e sob
+"Reduzir" a aba nova esmaece 120 e o fio salta. Os itens da peça 5 refeitos:
+**o quadro a mais passa no Chromium** (medianas de 5: modo 17 → 35 ms, aba
+17 → 36, Voltar 15 → 32 — o quadro seguinte ao do antes; na peça 5 era o
+terceiro); o foco em "Ir para Semana" sob "Reduzir" e no treino do Programa; o
+cronômetro desce junto na troca em 10–14 quadros, no máximo 13 px por quadro
+(saltava 815 → 867); o painel de apagar descendo (13). O revisor passou o
+limite do princípio 1 nas trocas de 17 para 25 ms (a medida cai no quadro; "um
+quadro a mais" aparece entre +8 e +25). **Ficam para os ajustes finais**
+(decididos por mim, técnicos; pedido em `_pedidos/peca-9-ajustes.md`): fechar
+pelo × a folha de cima com outra embaixo ainda leva dois quadros (quadro longo
+de trabalho, 16,9 → 50,2 ms, igual na peça 5); no WebKit, depois do toque no
+meio de uma troca de aba, o foco cai no `body` (o clique reenviado não foca a
+aba). **A conferir no aparelho:** no WebKit desta máquina cada transição custa
+um quadro longo de 38 a 75 ms e a tela volta um quadro no fim em 13 de 26 passos
+— já acontecia na peça 5 e é do motor aqui (acontece numa página mínima).
+
+**20/10, 11h40 — peça 7 conferida.** O aviso sobe 8 px e acende em 160 ms, sai
+só apagando (e o toque já passa por ele enquanto apaga); texto novo refaz a
+entrada, o mesmo texto só recomeça o tempo; o tempo na tela é uma regra só
+(`tempoDeLeitura`: 1 s para achar + 15 caracteres por segundo, piso 3,6 s, teto
+8 s — das 57 mensagens fixas, 42 ficam como estavam; a do "Pular", com 101
+caracteres, fica 7,7 s); sob "Reduzir" só acende em 120 e sai de uma vez. A
+região viva: `#toast` não usa mais `display: none` e está na árvore de
+acessibilidade sempre. **Aceitei os dois desvios dele:** duas caixas (o
+`#toast` é o lugar, centrado e acompanhando o cronômetro; a mensagem é um nó
+dentro dele, que sobe e apaga — a forma que a peça 3 sugeria fazia o aviso
+saltar 84 px num quadro); e na troca de camada a foto velha do aviso sempre
+escondida (senão um aviso apagando ficava aceso ~10 quadros e sumia de estalo).
+A regra do tempo é escolha técnica a partir da 03 §5.1, num lugar só, se o dono
+quiser outra. Achado: o caso da corrida do histórico da peça 5 cai às vezes no
+WebKit com carga, também no build de antes — vai para os ajustes finais.
+`tipos` limpo, build, 1675/1675 duas vezes.

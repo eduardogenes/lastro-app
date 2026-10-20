@@ -57,7 +57,10 @@ export const FLUXOS = [
     id: '02-modo-faixa', hora: '07:10',
     titulo: 'Entrar no modo pela faixa, do fundo do Corpo, e sair pela seta (02 T1 e T6: a rolagem que volta cortada)',
     montar: SESSAO_ABERTA + `CTX.vaiPara('corpo'); render();`,
-    depoisDeMontar: async p => { await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); await p.waitForTimeout(300); },
+    // (peça 6: o vaiPara('corpo') do montar passou a ser o carrossel, e o app
+    // rola ao topo quando o desenho novo entra; rolar antes disso não fica.
+    // Espera a troca acabar.)
+    depoisDeMontar: async p => { await p.waitForTimeout(700); await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); await p.waitForTimeout(300); },
     passos: [
       { id: 'entra', mov: { tipo: 'entra', ms: 350, debaixo: 'entra' }, titulo: 'toca a faixa "treino em andamento" no fundo do Corpo', alvo: '.ins-faixa', semRolar: true },
       { id: 'sai', mov: { tipo: 'sai', ms: 350, debaixo: 'sai', rolagemDe: 'entra' }, titulo: 'toca a seta "‹": o Corpo volta — em que rolagem?', alvo: '.ins-modo-sair', pausaAntes: 700 }
@@ -232,6 +235,20 @@ export const FLUXOS = [
     passos: [
       { id: 'entra-e-sai', mov: { tipo: 'entra', ms: 350, meio: true }, tipo: 'toqueNoMeio', titulo: 'toca o cartão do treino e, logo depois, a seta "‹": tem de voltar ao Agora',
         alvo: 'button.ins-foco, .ins-foco button', alvo2: '.ins-modo-sair', confere: `!document.querySelector('.ins-modo') && !!document.querySelector('.ins-tabbar')` }
+    ]
+  },
+  {
+    // Peça 6 (o item 3 da conferência da peça 5, 07 §11.3): com o descanso
+    // contando, o cronômetro fica sobre a barra de abas no Agora e no fundo da
+    // tela nas telas cheias. Na troca de camada ele tem de mudar de altura junto
+    // com ela, em vez de saltar 52 px num quadro. A posição dele quadro a quadro
+    // sai dos quadros guardados (QUADROS=1) por revisor-cronometro.py.
+    id: '17-cronometro-troca', hora: '07:10',
+    titulo: 'O cronômetro numa troca de camada: descanso contando, Agora → Ajustes → Agora',
+    montar: `CTX.vaiPara('agora'); render(); window.scrollTo(0, 0); startTimer(90, 'descanso · série 1 · teste');`,
+    passos: [
+      { id: 'abre-ajustes', mov: { tipo: 'entra', ms: 350, debaixo: 'entra', debaixoAte: 740 }, titulo: 'toca o ⚙ com o descanso contando: os Ajustes chegam', alvo: '[data-a="ajustes"]', pausaAntes: 900, confere: `!!document.querySelector('.tc')` },
+      { id: 'volta', mov: { tipo: 'sai', ms: 350, debaixo: 'sai', debaixoAte: 740 }, titulo: 'toca "‹ Voltar": de volta ao Agora, o descanso ainda contando', alvo: '.tc-back', pausaAntes: 600, confere: `!document.querySelector('.tc') && !!document.querySelector('#timer.on')` }
     ]
   }
 ];

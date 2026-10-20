@@ -782,13 +782,20 @@ button.ins-linha { border-radius: 0; }
 .pare-w:not(.falhou-w) > .pare { view-transition-name: painel; }
 .pare-w:not(.falhou-w) > .ins-veu { view-transition-name: veu-painel; }
 /* O que é do aparelho e NÃO está mais na tela nova (a faixa da sessão, que o
-   modo cobre; o aviso que acabou) sai de uma vez, no primeiro quadro, em vez de
-   ficar 350 ms por cima da página que chega. `:only-child`: só a foto velha, sem
-   nova. O que chega (a faixa, ao sair do modo) aparece parado no lugar dele. */
+   modo cobre) sai de uma vez, no primeiro quadro, em vez de ficar 350 ms por
+   cima da página que chega. `:only-child`: só a foto velha, sem nova. O que
+   chega (a faixa, ao sair do modo) aparece parado no lugar dele. */
 ::view-transition-old(cronometro):only-child,
-::view-transition-old(aviso):only-child,
 ::view-transition-old(faixa):only-child,
 ::view-transition-old(nao-guardado):only-child { opacity: 0; }
+/* O AVISO CURTO É SÓ O VIVO (peça 7). O lugar dele (`#toast`) nunca sai da
+   página — fica vazio —, e por isso tem foto velha E nova em toda troca. A nova
+   é viva: mostra a mensagem chegando, trocando ou apagando enquanto as páginas
+   passam. A velha é a mensagem PARADA no instante da foto, e por baixo da viva
+   ela faria a mensagem que apaga continuar acesa até o fim da troca, e a que
+   chega aparecer sobre a anterior. Ela nunca se vê; o que a tela mostra é o
+   aviso de agora. */
+::view-transition-old(aviso) { opacity: 0; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* UM QUADRO ADIANTE, em toda foto que anda (`--ins-adianta`, nos tokens; a
@@ -839,12 +846,14 @@ button.ins-linha { border-radius: 0; }
      (`data-pe`, posto pela porta: `desce` quando a barra sai, `sobe` quando ela
      volta). Só o cronômetro EM CENA (`#timer.on`): fora de cena ele continua
      desenhado, abaixo da borda e invisível, e tem foto — moveria o que ninguém
-     vê. O aviso fora de cena é `display: none` e nem tem foto. A faixa da sessão
-     não precisa: ela nunca está nas duas telas. */
+     vê. O mesmo para o aviso: o lugar dele está sempre lá, vazio quando não há
+     mensagem (peça 7), e só anda quando há uma (`#toast > .aviso`, a que chega,
+     a que está na tela e a que apaga). A faixa da sessão não precisa: ela nunca
+     está nas duas telas. */
   html[data-pe="desce"]:has(#timer.on)::view-transition-image-pair(cronometro),
-  html[data-pe="desce"]::view-transition-image-pair(aviso) { animation: ins-rodape-desce var(--ins-dur-entra) var(--ins-curva-camada) var(--ins-adianta) both; }
+  html[data-pe="desce"]:has(#toast > .aviso)::view-transition-image-pair(aviso) { animation: ins-rodape-desce var(--ins-dur-entra) var(--ins-curva-camada) var(--ins-adianta) both; }
   html[data-pe="sobe"]:has(#timer.on)::view-transition-image-pair(cronometro),
-  html[data-pe="sobe"]::view-transition-image-pair(aviso) { animation: ins-rodape-sobe var(--ins-dur-sai) var(--ins-curva-camada) var(--ins-adianta) both; }
+  html[data-pe="sobe"]:has(#toast > .aviso)::view-transition-image-pair(aviso) { animation: ins-rodape-sobe var(--ins-dur-sai) var(--ins-curva-camada) var(--ins-adianta) both; }
 }
 /* SOB "REDUZIR MOVIMENTO" (pergunta 2): nenhuma transição de vista — a porta
    não a pede —; a tela cheia e o modo que CHEGAM esmaecem em
@@ -1417,18 +1426,58 @@ html[data-nav="seca"] .ins-tab-ind { transition: none; }
    num quadro, no meio da subida, e trocar `bottom` em transição seria animar
    posição. Em `translate`, a mesma medida vira movimento composto, no mesmo
    tempo e na mesma curva do cronômetro, e sem tocar no `translateX(-50%)` que
-   centra — a propriedade é outra. A entrada e a saída do PRÓPRIO toast são
-   outra coisa (peça 7). */
+   centra — a propriedade é outra.
+
+   DUAS CAIXAS, DOIS MOVIMENTOS (peça 7). `#toast` é o LUGAR: fixo, centrado,
+   acompanha o cronômetro, e é a região viva (`role="status"`, `index.html`).
+   Ele NUNCA some — nem `display: none`, nem `visibility: hidden`: os dois tiram
+   a região da árvore de acessibilidade, e a mensagem que entrava junto com ela
+   não era anunciada de forma confiável (docs/motion/05 §3.2). Sem mensagem ele
+   está VAZIO: altura zero, nada para ler nem para tocar. A mensagem é o nó de
+   dentro (`.aviso`, um por mensagem, posto por `toast()` em `main.jsx`), e é
+   ELE que chega e sai: a entrada mora numa caixa à parte para compor com o
+   acompanhamento, e não brigar com ele — a mesma propriedade `translate` no
+   mesmo nó teria dois donos, e o aviso saltaria quando o cronômetro entrasse
+   no meio da subida dele. Assim o `translate` do lugar é só do
+   acompanhamento, o `transform` do lugar é só do centramento, e o da caixa de
+   dentro é só da entrada; os três se somam. */
 #toast {
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(var(--ins-tabbar) + var(--ins-faixa-h) + var(--ins-6));
   translate: 0 calc(-1 * var(--ins-timer-h));
   width: calc(100% - 36px); max-width: 424px; z-index: 30;
+  /* o lugar não pega toque: quem pega é a mensagem, enquanto está na tela */
+  pointer-events: none;
+}
+#toast > .aviso {
   background: var(--ins-superficie-2); border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta);
   font: 400 11.5px/1.45 var(--ins-fonte);
-  padding: var(--ins-5) var(--ins-6); text-align: center; display: none;
+  padding: var(--ins-5) var(--ins-6); text-align: center;
+  pointer-events: auto;
 }
-#toast.on { display: block; }
+/* SAINDO: apaga, e o toque já passa por ele — some como sumia, de uma vez, para
+   o dedo (o lugar também não pega: acima). Fora do portão este é o último
+   quadro (apagado); lá a classe nem chega a entrar, porque o casco lê o tempo
+   da saída na porta, e ele é 0. */
+#toast > .aviso.sai { opacity: 0; pointer-events: none; }
+/* O AVISO CURTO SOBE E ACENDE, E SAI APAGANDO (dono, 16/10, pergunta 10). Sobe
+   `--ins-sobe-aviso` (8 px) e acende de 0 a 1 em `--ins-dur-lugar`, na curva do
+   lugar: diz "isto acabou de acontecer", no canto do olho, onde algo que só
+   aparece não se distingue de algo que já estava lá (docs/motion/03 §5.1). Um
+   texto NOVO com o aviso na tela é um nó novo, e a entrada recomeça: é outra
+   mensagem. Sai só apagando, no mesmo tempo e na mesma curva — não vai a lugar
+   nenhum, e o sumiço de estalo no canto puxava o olho. Nada escuta o fim: quem
+   tira o nó é o relógio do casco, pelo tempo da porta. */
+@media (prefers-reduced-motion: no-preference) {
+  #toast > .aviso { animation: ins-chega-aviso var(--ins-dur-lugar) var(--ins-curva) both; }
+  #toast > .aviso.sai { animation: ins-apaga var(--ins-dur-lugar) var(--ins-curva) both; }
+}
+/* Sob "Reduzir movimento" (pergunta 2): só a opacidade. Acende sem subir, em
+   `--ins-dur-dissolve`, e sai de uma vez (o casco tira o nó na hora). O texto
+   novo acende de novo, que é o mesmo "é outra mensagem" sem deslocamento. */
+@media (prefers-reduced-motion: reduce) {
+  #toast > .aviso { animation: ins-esmaece var(--ins-dur-dissolve) var(--ins-curva) both; }
+}
 
 /* ACIMA da tab bar, não em cima dela.
    Estava em `bottom: 0` com z-index 20, e a tab bar mora no mesmo lugar com
@@ -1508,9 +1557,10 @@ html[data-nav="seca"] .ins-tab-ind { transition: none; }
 /* O ACOMPANHAMENTO: o toast e a faixa andam a altura do cronômetro no tempo e
    na curva dele — `--ins-dur-entra` enquanto ele chega, `--ins-dur-sai`
    enquanto vai. Fora do portão (e sob "Reduzir movimento") vão direto ao
-   lugar novo, que é o último quadro. Só o acompanhamento: o toast que aparece
-   ou some, e a faixa que nasce ou morre, não se movem por aqui (a transição
-   não roda no primeiro desenho de um nó). */
+   lugar novo, que é o último quadro. Só o acompanhamento: a mensagem que chega
+   ou sai se move na caixa de DENTRO do toast (peça 7, acima), e a faixa que
+   nasce ou morre não se move por aqui (a transição não roda no primeiro
+   desenho de um nó). */
 @media (prefers-reduced-motion: no-preference) {
   #toast, .ins-faixa { transition: translate var(--ins-dur-sai) var(--ins-curva-camada); }
   html:has(#timer.on) #toast,

@@ -5059,14 +5059,90 @@ async function importText(txt) {
   toast((comConta ? 'Backup juntado: ' : 'Histórico importado: ') + sessoes(nS) + '.');
 }
 
-let toastT = null;
+/**
+ * O TEMPO DO AVISO NA TELA, pelo tamanho do texto (peça 7 do motion; dono,
+ * 16/10, pergunta 10: "fica o tempo do texto"). NÃO É MOVIMENTO: É LEITURA —
+ * por isso mora aqui, e não nos tokens de tempo, e vale igual sob "Reduzir
+ * movimento".
+ *
+ * Eram 3,6 s para toda mensagem, e as longas (até ~105 caracteres, com o nome
+ * do exercício dentro: "Guardei como pulado hoje: Remada. Não volta a ser
+ * pedido nesta sessão; desfazer põe de volta na fila.") sumiam antes de dar
+ * tempo de ler (docs/motion/03 §5.1). A regra é uma só: um segundo para o olho
+ * sair do que estava fazendo e achar o aviso, mais o texto a 15 caracteres por
+ * segundo — o passo mais lento da faixa de leitura de frase curta (15 a 20,
+ * 03 §5.1), porque quem lê está de pé, entre séries. Com piso nos 3,6 s de
+ * antes (nenhuma mensagem fica MENOS do que ficava: até 39 caracteres, como
+ * hoje) e teto em 8 s (as de 105 caracteres ou mais chegam nele; a mais longa
+ * escrita no app tem 108). Contado no texto como ele aparece.
+ */
+const AVISO_PISO_MS = 3600;
+const AVISO_TETO_MS = 8000;
+const AVISO_ACHAR_MS = 1000;
+const AVISO_CARACTERES_POR_S = 15;
+function tempoDeLeitura(texto) {
+  const n = String(texto == null ? '' : texto).trim().length;
+  const le = AVISO_ACHAR_MS + Math.round(n * 1000 / AVISO_CARACTERES_POR_S);
+  return Math.min(AVISO_TETO_MS, Math.max(AVISO_PISO_MS, le));
+}
+
+/**
+ * O AVISO CURTO (o toast): a frase do que acabou de acontecer, no rodapé.
+ * Informa, nunca interrompe, e nunca atrasa nada — `toast()` é chamado DEPOIS
+ * de o que ele conta já estar gravado.
+ *
+ * `#toast` (`index.html`) é a região viva, e NUNCA sai da página: sem
+ * mensagem ele fica vazio, em vez de `display: none` — que o tirava da árvore
+ * de acessibilidade, e a mensagem que entrava junto com ele não era anunciada
+ * de forma confiável (docs/motion/05 §3.2). A mensagem é um nó dentro dele
+ * (`.aviso`), um por mensagem: o texto novo entra numa região que já estava
+ * lá, e o leitor de tela o anuncia; vazio, não sobra frase velha para o dedo
+ * do VoiceOver achar, nem nada para tocar.
+ *
+ * Um nó NOVO por mensagem nova é também o que faz a entrada recomeçar (peça 7;
+ * `componentes.css`): o aviso sobe e acende de novo, para dizer que é OUTRA
+ * mensagem. O mesmo texto com o aviso ainda na tela não é outra: o nó fica,
+ * nada se mexe, e só o tempo recomeça (como sempre foi).
+ *
+ * A saída: o nó ganha `.sai` (apaga, e o toque passa por ele) e é tirado pelo
+ * tempo de `--ins-dur-lugar` lido na porta — nunca por evento de fim de
+ * animação. Sob "Reduzir movimento" (e onde a porta não sabe) o tempo é 0, e
+ * ele sai de uma vez.
+ */
+let avisoLeitura = null;   // o relógio do tempo de leitura
+let avisoSaindo = null;    // o relógio da saída (o nó apagando)
 function toast(msg) {
-  const el = document.getElementById('toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('on');
-  clearTimeout(toastT);
-  toastT = setTimeout(() => el.classList.remove('on'), 3600);
+  const regiao = document.getElementById('toast');
+  if (!regiao) return;
+  const texto = msg == null ? '' : String(msg);
+  clearTimeout(avisoLeitura);
+  if (avisoSaindo) { clearTimeout(avisoSaindo); avisoSaindo = null; }
+  const atual = regiao.firstElementChild;
+  if (!atual || atual.classList.contains('sai') || atual.textContent !== texto) {
+    const no = document.createElement('div');
+    no.className = 'aviso';
+    no.textContent = texto;
+    regiao.textContent = '';
+    regiao.appendChild(no);
+  }
+  avisoLeitura = setTimeout(apagaAviso, tempoDeLeitura(texto));
+}
+/** O tempo de leitura acabou: o aviso apaga (com movimento) ou sai de uma vez. */
+function apagaAviso() {
+  avisoLeitura = null;
+  const regiao = document.getElementById('toast');
+  const no = regiao && regiao.firstElementChild;
+  if (!no || no.classList.contains('sai')) return;
+  const ms = tempoDoMovimento('--ins-dur-lugar');
+  if (ms > 0) {
+    no.classList.add('sai');
+    avisoSaindo = setTimeout(function () {
+      avisoSaindo = null;
+      if (no.parentNode) no.parentNode.removeChild(no);
+    }, ms);
+  } else {
+    regiao.textContent = '';
+  }
 }
 
 // ---------- actions ----------

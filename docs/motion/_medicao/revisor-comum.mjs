@@ -212,6 +212,8 @@ export async function calibra(p) {
     await p.waitForTimeout(300);
   }
   await p.screencast.stop();
+  // sob carga o screencast entrega quadros fora de ordem: vale o carimbo (peça 6)
+  q.sort((x, y) => x.ts - y.ts);
   const off = MOTOR === 'chromium' ? 0 : Math.min(...q.map(x => x.node - x.ts));
   // Cor de um pixel do meio, pelo decodificador de JPEG que vem no Playwright.
   const { jpegjs } = await import('../../../node_modules/playwright-core/lib/utilsBundle.js').then(m => m.default || m);
@@ -466,6 +468,10 @@ export async function gravaFluxo(ab, registro, cal, fluxo) {
   }
   await p.waitForTimeout(300);
   await p.screencast.stop();
+  // Sob carga, o screencast ENTREGA quadros fora de ordem (o de 87 ms antes do de
+  // 75 ms; 09, peça 6, decisão 17): na ordem de chegada aparece um "quadro que
+  // volta" que a tela não mostrou. Tiras e contas vão na ordem do carimbo.
+  quadros.sort((x, y) => x.ts - y.ts);
   // Guarda: com pouquíssimos quadros (uma tela parada sob "Reduzir movimento"),
   // o gravador do Playwright já esticou o último quadro até um carimbo absurdo
   // (um .webm de 6,9 horas e 527 MB em depois-0/09-copo). Se o vídeo passar do

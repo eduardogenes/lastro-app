@@ -2164,9 +2164,11 @@ test('(h) a troca de camada move só as fotos: a tela cheia pela direita com a d
   // própria — saltavam a altura dela no primeiro quadro. Agora o par de imagens
   // deles muda de altura junto com a troca, no tempo e na curva da camada, e só
   // na vertical: não anda de lado com as páginas.
-  // (o cronômetro só em cena: fora dela ele continua desenhado, invisível, e tem foto)
+  // (o cronômetro só em cena: fora dela ele continua desenhado, invisível, e tem
+  // foto; o aviso só com mensagem: desde a peça 7 o lugar dele nunca sai da
+  // página, fica vazio, e também tem foto)
   const RODAPE = ['desce', 'sobe'].flatMap(p => ['html[data-pe="' + p + '"]:has(#timer.on)::view-transition-image-pair(cronometro)',
-    'html[data-pe="' + p + '"]::view-transition-image-pair(aviso)']);
+    'html[data-pe="' + p + '"]:has(#toast > .aviso)::view-transition-image-pair(aviso)']);
   RODAPE.forEach(sel => {
     const a = animacoes(sel, doPortao);
     const desce = /"desce"/.test(sel);
@@ -2225,6 +2227,13 @@ test('(h) a troca de camada move só as fotos: a tela cheia pela direita com a d
   assert.ok(regras.some(r => !NO_PORTAO(r) && !NO_REDUZ(r) && FOTOS_PARADAS.every(f => r.sels.includes(f)) &&
     r.decls.some(d => d.prop === 'opacity' && d.valor === '0')),
     'o que é do aparelho e não está na tela nova sai de uma vez, no primeiro quadro');
+  // O AVISO CURTO É SÓ O VIVO (peça 7): o lugar dele nunca sai da página, e a
+  // foto velha — a mensagem parada no instante da foto — nunca aparece; por
+  // baixo da viva, a mensagem que apaga ficaria acesa até o fim da troca
+  // (visto nos quadros do compositor) e a que chega nasceria sobre a anterior.
+  assert.ok(regras.some(r => !NO_PORTAO(r) && !NO_REDUZ(r) && r.sels.includes('::view-transition-old(aviso)') &&
+    r.decls.some(d => d.prop === 'opacity' && d.valor === '0')),
+    'a foto velha do aviso nunca aparece: `::view-transition-old(aviso) { opacity: 0 }`, fora do portão');
   // a folha e o véu, pela POSIÇÃO na pilha (o nível se repete: refeição e editar refeição são 50)
   const folha = fonte('src/ui/instrumento/folha.jsx');
   assert.match(folha, /class="ins-veu"[^>]*style=\{'view-transition-name:veu-' \+ lugar\}/, 'o véu da folha se nomeia pela posição');
@@ -2244,8 +2253,8 @@ test('(h) a troca de camada move só as fotos: a tela cheia pela direita com a d
   assert.match(mj, /function render\(\) \{[\s\S]{0,400}trocaDeCamada\(/, 'e esse ponto é o render()');
 });
 
-/** O que é do aparelho, na foto velha sem nova (`:only-child`): sai de uma vez. */
-const FOTOS_PARADAS = ['cronometro', 'aviso', 'faixa', 'nao-guardado'].map(n => '::view-transition-old(' + n + '):only-child');
+/** O que é do aparelho, na foto velha sem nova (`:only-child`): sai de uma vez. O aviso não: o lugar dele está sempre lá (peça 7). */
+const FOTOS_PARADAS = ['cronometro', 'faixa', 'nao-guardado'].map(n => '::view-transition-old(' + n + '):only-child');
 
 /** O carrossel da aba (peça 6): as duas fotos da página, nos dois sentidos do índice. */
 const SENTIDOS_DA_ABA = ['aba-direita', 'aba-esquerda'];
@@ -2363,6 +2372,112 @@ function animacoesOuTransicoes(sel: string, rs: Regra[]) {
 // a paleta. A metade de ÁRVORE — todo controle de verdade, com o fundo de
 // verdade atrás dele, nos dois temas — é `tests/fluxo/toque.test.js`.
 // ============================================================
+
+test('(j) o aviso curto sobe e acende, sai apagando, compõe com o acompanhamento, e a região viva nunca sai da árvore', () => {
+  // Peça 7 (dono, 16/10): pergunta 10, o aviso entra subindo `--ins-sobe-aviso`
+  // e acendendo, sai apagando, em `--ins-dur-lugar` na `--ins-curva`, e o texto
+  // novo refaz a entrada; pergunta 2, sob "Reduzir movimento" só a opacidade.
+  // E a precondição da 05 §3.2: a região viva (`#toast`) deixa de usar
+  // `display: none`, que a tirava da árvore de acessibilidade.
+  //
+  // A forma: DUAS caixas. `#toast` é o lugar — fixo, centrado por
+  // `transform: translateX(-50%)`, acompanhando o cronômetro pelo `translate`
+  // (peça 3) — e a mensagem é o nó de dentro (`#toast > .aviso`), que é quem
+  // chega e sai. A mesma propriedade no mesmo nó teria dois donos, e o aviso
+  // saltaria quando o cronômetro entrasse no meio da subida. Esta é a metade de
+  // fonte; o tempo pelo texto e a ordem dos nós são `aviso.test.js` (árvore), e
+  // o que a tela mostra, `acende.test.js` (motor).
+  const regras = folhasDoApp().flatMap(f => f.regras);
+  const porNome = quadrosPorNome(todasAsFolhas());
+  const CAIXA = '#toast > .aviso', SAI = '#toast > .aviso.sai';
+  const anim = (sel: string, rs: Regra[]) => rs.filter(r => r.sels.includes(sel)).flatMap(r => r.decls)
+    .filter(d => d.prop === 'animation' && !ehNada(d.valor)).flatMap(d => partesNoTopo(d.valor, ',').map(x => x.trim()));
+  const decl = (sel: string, prop: string) => (regras.filter(r => r.sels.includes(sel) && !NO_PORTAO(r) && !NO_REDUZ(r)).flatMap(r => r.decls)
+    .filter(d => d.prop === prop).pop() || { valor: '' }).valor.trim();
+  /** As declarações de um quadro (0 ou 100) de um `@keyframes`, como "prop: valor". */
+  const quadro = (nome: string, pos: number) => {
+    const q = (porNome.get(nome) || [])[0];
+    assert.ok(q, 'não há @keyframes ' + nome);
+    return q.quadros.filter(f => f.pos.includes(pos)).flatMap(f => f.decls)
+      .filter(d => d.prop !== 'animation-timing-function').map(d => d.prop + ': ' + d.valor.trim()).sort();
+  };
+
+  // A REGIÃO VIVA NUNCA SAI DA ÁRVORE (05 §3.2, M12): nenhuma regra do app dá
+  // `display: none`, `visibility: hidden` ou `content-visibility` ao toast, à
+  // mensagem dele ou à série dita. A exceção é o documento de FORA da bancada,
+  // onde o app não monta e o esqueleto cru sai de cena inteiro.
+  const DA_REGIAO = /#toast(?![\w-])|#serie-dita(?![\w-])/;
+  const tira: string[] = [];
+  todasAsFolhas().flatMap(f => f.regras).forEach(r => r.sels.forEach(sel => {
+    if (/^html\[data-palco="bancada"\]/.test(sel)) return;
+    const ehDaRegiao = DA_REGIAO.test(sujeitoDe(sel)) || (/#toast(?![\w-])/.test(sel) && /\.aviso(?![\w-])/.test(sujeitoDe(sel)));
+    if (!ehDaRegiao) return;
+    r.decls.forEach(d => {
+      if ((d.prop === 'display' && /^none$/i.test(d.valor)) || (d.prop === 'visibility' && /^(hidden|collapse)$/i.test(d.valor)) ||
+          d.prop === 'content-visibility') tira.push(onde(r, d));
+    });
+  }));
+  assert.deepStrictEqual(tira, [], 'a região viva sai da árvore de acessibilidade, e o aviso que entra junto não é anunciado');
+  const div = (indexHtml().match(/<div id="toast"[^>]*>([\s\S]*?)<\/div>/) || []);
+  assert.ok(div[0], 'o toast sumiu do index.html');
+  assert.strictEqual(div[1], '', 'a região nasce vazia: a mensagem é posta por toast(), e só ela');
+  assert.ok(!/\s(hidden|aria-hidden|inert)(=|\s|>)/.test(div[0]), 'nada esconde a região no HTML: ' + div[0]);
+
+  // O LUGAR NÃO SE MOVE SOZINHO: no `#toast` só o acompanhamento (o `translate`
+  // da peça 3, no tempo e na curva da camada), e nenhuma animação. E ele não
+  // pega toque: quem pega é a mensagem enquanto está na tela.
+  const doLugar = regras.filter(r => (NO_PORTAO(r) || NO_REDUZ(r)) && r.sels.some(s => /#toast$/.test(sujeitoDe(s))) &&
+    r.decls.some(d => ehMovimento(d.prop) && !ehNada(d.valor)));
+  doLugar.forEach(r => r.decls.filter(d => ehMovimento(d.prop) && !ehNada(d.valor)).forEach(d => {
+    assert.strictEqual(d.prop, 'transition', onde(r, d) + ': o lugar do aviso só acompanha o cronômetro');
+    assert.match(d.valor, /^translate var\(--ins-dur-(entra|sai)\) var\(--ins-curva-camada\)$/, onde(r, d));
+  }));
+  assert.ok(doLugar.length >= 2, 'o acompanhamento do toast sumiu (peça 3)');
+  assert.strictEqual(decl('#toast', 'pointer-events'), 'none', 'o lugar vazio, ou com a mensagem apagando, não pega toque');
+  assert.strictEqual(decl(CAIXA, 'pointer-events'), 'auto', 'a mensagem na tela pega o toque como sempre pegou');
+  assert.match(decl('#toast', 'transform'), /^translateX\(\s*-50%\s*\)$/, 'o lugar continua centrado pelo translateX(-50%)');
+
+  // A ENTRADA: a caixa de dentro sobe `--ins-sobe-aviso` e acende, em
+  // `--ins-dur-lugar` na `--ins-curva`, no portão — e só ela.
+  const entra = anim(CAIXA, regras.filter(NO_PORTAO));
+  assert.strictEqual(entra.length, 1, 'a mensagem chega com uma animação só: ' + entra);
+  assert.strictEqual(nomeDaAnimacao(entra[0]), 'ins-chega-aviso', entra[0]);
+  assert.ok(/var\(--ins-dur-lugar\)/.test(entra[0]) && /var\(--ins-curva\)(?![\w-])/.test(entra[0]), 'em --ins-dur-lugar, na --ins-curva: ' + entra[0]);
+  assert.deepStrictEqual(quadro('ins-chega-aviso', 0), ['opacity: 0', 'translate: 0 var(--ins-sobe-aviso)'], 'de --ins-sobe-aviso abaixo, apagado');
+  assert.deepStrictEqual(quadro('ins-chega-aviso', 100), ['opacity: 1', 'translate: none'], 'até o lugar, aceso');
+  // A SAÍDA: só apaga, no mesmo tempo e na mesma curva; o toque passa por ela.
+  const sai = anim(SAI, regras.filter(NO_PORTAO));
+  assert.strictEqual(sai.length, 1, 'a mensagem sai com uma animação só: ' + sai);
+  assert.strictEqual(nomeDaAnimacao(sai[0]), 'ins-apaga', sai[0]);
+  assert.ok(/var\(--ins-dur-lugar\)/.test(sai[0]) && /var\(--ins-curva\)(?![\w-])/.test(sai[0]), 'em --ins-dur-lugar, na --ins-curva: ' + sai[0]);
+  assert.deepStrictEqual(oQueMove({ arquivo: '', linha: 0, sels: [SAI], decls: [{ prop: 'animation', valor: sai[0] }], midias: [] }, porNome), ['opacity'],
+    'sai só apagando: não vai a lugar nenhum');
+  assert.strictEqual(decl(SAI, 'pointer-events'), 'none', 'a mensagem que apaga não pega toque');
+  // SOB "REDUZIR": só a opacidade — acende em --ins-dur-dissolve, e sai de uma vez (nada para `.sai`).
+  const reduz = anim(CAIXA, regras.filter(NO_REDUZ));
+  assert.strictEqual(reduz.length, 1, 'sob "Reduzir movimento" a mensagem acende: ' + reduz);
+  assert.ok(nomeDaAnimacao(reduz[0]) === 'ins-esmaece' && /var\(--ins-dur-dissolve\)/.test(reduz[0]), 'só esmaecer, em --ins-dur-dissolve: ' + reduz[0]);
+  assert.deepStrictEqual(anim(SAI, regras.filter(NO_REDUZ)), [], 'sob "Reduzir movimento" a saída é de uma vez');
+  // E nada mais move a mensagem.
+  const daMensagem = (s: string) => /\.aviso(?![\w-])/.test(sujeitoDe(s));
+  const outras = regras.filter(r => (NO_PORTAO(r) || NO_REDUZ(r)) && r.sels.some(daMensagem) &&
+    r.decls.some(d => ehMovimento(d.prop) && !ehNada(d.valor)))
+    .flatMap(r => r.sels).filter(s => daMensagem(s) && s !== CAIXA && s !== SAI);
+  assert.ok(daMensagem(CAIXA) && daMensagem(SAI) && !daMensagem('html[data-pe="sobe"]:has(#toast > .aviso)::view-transition-image-pair(aviso)'),
+    'a leitura do sujeito mudou: o caso tem de mudar junto');
+  assert.deepStrictEqual(outras, [], 'movimento na mensagem do aviso fora da entrada e da saída');
+
+  // O RELÓGIO DA SAÍDA lê na porta o MESMO token da animação de saída — nunca um
+  // número, nunca o fim da animação.
+  const mj = semComentariosJs(mainJsx());
+  const apaga = (/function apagaAviso\(\) \{([\s\S]*?)\n\}/.exec(mj) || [])[1] || '';
+  assert.ok(apaga, 'apagaAviso sumiu do main.jsx');
+  assert.match(apaga, /tempoDoMovimento\('--ins-dur-lugar'\)/, 'a saída segura o nó pelo tempo da porta, o mesmo da animação');
+  assert.match(apaga, /classList\.add\('sai'\)/, 'e é a classe que apaga');
+  const toastFn = (/function toast\(msg\) \{([\s\S]*?)\n\}/.exec(mj) || [])[1] || '';
+  assert.match(toastFn, /className = 'aviso'/, 'a mensagem é um nó próprio, a caixa de dentro');
+  assert.ok(!/classList\.(add|remove|toggle)\('on'\)|style\.display/.test(toastFn + apaga), 'a região não acende nem apaga por classe ou display: ela fica');
+});
 
 test('(f) o toque escurece: uma camada só, fora do portão, e nada no controle se move', () => {
   const regras = folhasDoApp().flatMap(f => f.regras);

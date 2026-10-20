@@ -278,13 +278,15 @@ def par(a, b, saida, rot_a, rot_b):
     tela.save(saida, optimize=True)
 
 
-def faixa(tira, col_a, col_b, x0, x1):
+def faixa(tira, col_a, col_b, x0, x1, y0=0, y1=896):
     """Fração da faixa vertical [x0, x1] (CSS px de 414) que difere entre duas
     colunas da tira ('antes', 'dedo', '+50' … '+800'), a 24 níveis de cinza.
     É a conferência "a de baixo parada" da decisão 4 do dono: aos +50 ms de uma
     tela cheia que chega pela direita, a faixa da esquerda ainda é a página de
     baixo, intacta (comparada com 'antes'); numa que sai, a faixa da esquerda já
-    é a página de baixo no lugar final (comparada com '+800')."""
+    é a página de baixo no lugar final (comparada com '+800').
+    Com y0/y1 (CSS px), só a faixa horizontal [y0, y1] dela: a barra de abas
+    parada no carrossel (peça 6), pela faixa dos rótulos, sem o fio."""
     im = Image.open(tira).convert('L')
     gap, topo = 6, 74
     n = round((im.width - gap) / (LARG + gap))
@@ -295,7 +297,7 @@ def faixa(tira, col_a, col_b, x0, x1):
     def corte(nome):
         k = nomes.index(nome)
         x = gap + k * (LARG + gap)
-        return np.asarray(im.crop((x + int(x0 * esc), topo, x + int(x1 * esc), topo + alt)), dtype=np.int16)
+        return np.asarray(im.crop((x + int(x0 * esc), topo + int(y0 * esc), x + int(x1 * esc), topo + min(alt, int(y1 * esc)))), dtype=np.int16)
     a, b = corte(col_a), corte(col_b)
     return float((np.abs(a - b) > 24).mean())
 
@@ -333,6 +335,6 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'repousa':
         print(sum(repousa(a) for a in sys.argv[2:]))
     elif sys.argv[1] == 'faixa':
-        print(faixa(sys.argv[2], sys.argv[3], sys.argv[4], float(sys.argv[5]), float(sys.argv[6])))
+        print(faixa(sys.argv[2], sys.argv[3], sys.argv[4], *[float(v) for v in sys.argv[5:9]]))
     else:
         print(__doc__)

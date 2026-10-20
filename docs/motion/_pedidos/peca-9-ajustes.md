@@ -1,0 +1,15 @@
+Você é o implementador dos **ajustes finais** do motion do Lastro (PWA em Preact, `/home/infraestrutura-imts/workspace/personal/lastro-app`), depois das peças 0 a 8 (veja `git log`). São consertos pequenos que as conferências do revisor acharam e que o coordenador decidiu (técnicos, não do dono). Fale e escreva em português.
+
+## Leia antes
+1. `docs/motion/00-briefing.md`; `docs/motion/08-parecer.md` §5.1; `docs/motion/00-coordenacao.md` (as entradas de conferência das peças 5 a 8).
+2. `docs/motion/07-revisao-base.md`, as seções "Depois da peça N" que citam cada item abaixo.
+3. `docs/motion/09-implementacao.md`, as seções das peças 4 a 8 (a porta `src/ui/movimento.js`, `miraDoDedo`, `trocaDeCamada`, `--ins-adianta`, `naoPerdeOFoco`).
+
+## Os itens (cada um com teste, e o 09 dizendo antes e depois)
+1. **Fechar a folha de cima pelo × com outra folha embaixo leva dois quadros** (07 §12, fluxo 06 `fecha-x`): 16,9 → 50,2 ms no Chromium, com um quadro longo (rAF 24–33 ms, Event Timing 32 → 56) que o `--ins-adianta` não cobre — era igual na peça 5. Ache o que esse quadro faz (o desenho da folha de baixo? a devolução do foco? o isolamento `inert` recalculado?) e tire do caminho do toque o que não precisa estar nele, sem mudar o que se grava nem a ordem dos toques. Meta: no máximo um quadro além do antes, como as outras trocas (regra do revisor: até +25 ms nas trocas).
+2. **No WebKit, depois do toque no meio de uma troca de aba (fluxo 14), o foco cai no `body`**: o clique reenviado à aba pela mira não a foca. O reenvio tem de deixar o foco onde um clique de verdade deixaria (ou onde `naoPerdeOFoco` manda), nos dois motores.
+3. **A corrida do histórico no WebKit** (achada na peça 7): o caso "a camada aberta logo depois do fecho continua aberta" de `tests/fluxo/troca.test.js` (o conserto do `popstate` atrasado, da peça 5) cai às vezes no WebKit com carga — 2 de 5 rodadas na peça 7, e 1 de 4 no build de antes, na mesma carga. Descubra se é defeito do app (num aparelho lento o `popstate` de um fecho ainda pode fechar a camada recém-aberta) ou do teste. Se for do app, conserte; se for do teste, torne-o robusto sem esconder a corrida real. Prove com repetições sob carga nos dois motores.
+(O coordenador acrescenta aqui o que a conferência da peça 8 achar.)
+
+## Regras
+As de sempre (as mesmas de `docs/motion/_pedidos/peca-8.md`, seção "Regras"): motion é apresentação; o toque nunca espera; nada escuta fim de animação; "Reduzir movimento" em tudo; `tipos`, `build` e a suíte completa verdes (duas vezes seguidas); sem commit, ramo ou push; portas 4726–4728 e `shots/` do revisor intocados; plantio com try/finally; ação recusada no pedido de permissão → pare e diga qual. Escreva a seção **"Ajustes finais"** em `docs/motion/09-implementacao.md` antes do relatório.

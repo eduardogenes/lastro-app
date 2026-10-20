@@ -351,7 +351,7 @@ respostas do dono de 16/10 (`docs/motion/00-coordenacao.md`).
 | `--ins-curva-camada` | `cubic-bezier(.32, .72, 0, 1)` | a camada que entra e sai pela borda (a curva do iPhone) |
 | `--ins-curva-grandeza` | `linear` | só a barra do descanso: o tempo passa linear |
 | `--ins-curva-ciclo` | `cubic-bezier(.25, .1, .25, 1)` (o `ease`) | o pulso do ponto ao vivo e o véu da folha e do painel de pare acendendo (o token mais perto do `ease-out` que o dono viu) |
-| `--ins-dur-lugar` | 160 ms | o que muda onde está |
+| `--ins-dur-lugar` | 160 ms | o que muda onde está: o pouso; o aviso curto chegando e apagando |
 | `--ins-dur-entra` · `--ins-dur-sai` | 350 ms · 350 ms | a camada que entra · que sai, pela mesma borda; o véu da folha e do pare acende em `--ins-dur-entra`; o carrossel da aba — as duas páginas juntas — e o fio com elas, em `--ins-dur-entra` |
 | `--ins-dur-quique` | 640 ms | só a chegada da folha e do painel de apagar, com os quadros de `ins-quique` (passa 8 % aos 55 %, volta 3 % aos 80 %) |
 | `--ins-dur-clarao` | 200 ms | só o clarão do disparo da câmera |
@@ -374,7 +374,8 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 | O clarão do disparo | `.cam-clarao` (`componentes.css`), um nó por foto | `opacity` .9 → 0 | `--ins-dur-clarao` · `--ins-curva` | a foto foi tirada (lido a 3 m) | não aparece: a foto é dita pelo obturador, pela voz e pelo bloco da pose |
 | O pouso da série | `.pousa.recem` (`treino.css`), o número da célula num nó próprio por valor (`pousa`, `ui/exercicio.jsx`), só sob a marca de recém do toque que grava — régua, RIR, coluna anterior, a carga do "+ série"; o teclado não (`marcaRecem`, `main.jsx`) | `@keyframes ins-pousa` (`base.css`): `translate` de `--ins-pousa` abaixo e `opacity` .4 → 1, no número e nunca no botão | `--ins-dur-lugar` · `--ins-curva` | o valor entrou AQUI | só acende: `ins-acende`, `opacity` .4 → 1, em `--ins-dur-dissolve` |
 | O descanso sobe e desce | `#timer` (`componentes.css`), fora da árvore do Preact; as classes `.on` (em cena), `.sai` (descendo, segurada pelo tempo de `--ins-dur-sai` lido na porta) e `.anda` (posta pelo toque), por `poeEmCena`/`tiraDeCena` (`main.jsx`) | `translate` de `calc(100% + --ins-tabbar)` (abaixo da borda da tela) a `none`, e de volta; fora de cena `visibility: hidden` — o `translateX(-50%)` que centra fica intacto | entra `--ins-dur-entra`, sai `--ins-dur-sai` · `--ins-curva-camada`, sem quique | o descanso começou, e mora aqui embaixo; acabou | esmaece ao chegar (`ins-esmaece`, `opacity` 0 → 1, em `--ins-dur-dissolve`) e sai de uma vez |
-| O toast e a faixa acompanham o descanso | `#toast`, `.ins-faixa` (`componentes.css`) | `translate` de menos a altura publicada do cronômetro (`--ins-timer-h`), que muda na hora em que ele entra ou sai | o tempo e a curva dele (`--ins-dur-entra`/`-sai` · `--ins-curva-camada`), no mesmo instante | o que estava em cima do rodapé foi empurrado pelo que chegou embaixo | vão direto ao lugar novo |
+| O aviso curto chega e sai | a mensagem do toast (`#toast > .aviso`, `componentes.css`), um nó por mensagem posto por `toast()` (`main.jsx`); o lugar (`#toast`) não se move por isso | chega: `@keyframes ins-chega-aviso` (`base.css`), `translate` de `--ins-sobe-aviso` abaixo a `none` e `opacity` 0 → 1; sai (`.sai`, segurada pelo tempo de `--ins-dur-lugar` lido na porta): `ins-apaga`, só `opacity` 1 → 0, e o toque já passa por ela; um texto NOVO é um nó novo e a entrada recomeça; o mesmo texto não se mexe | `--ins-dur-lugar` · `--ins-curva` | isto acabou de acontecer — e, quando troca, que é OUTRA mensagem (dono, 16/10, pergunta 10) | só acende (`ins-esmaece`, em `--ins-dur-dissolve`), também no texto novo, e sai de uma vez |
+| O toast e a faixa acompanham o descanso | `#toast` (o lugar do aviso), `.ins-faixa` (`componentes.css`) | `translate` de menos a altura publicada do cronômetro (`--ins-timer-h`), que muda na hora em que ele entra ou sai | o tempo e a curva dele (`--ins-dur-entra`/`-sai` · `--ins-curva-camada`), no mesmo instante | o que estava em cima do rodapé foi empurrado pelo que chegou embaixo | vão direto ao lugar novo |
 | A folha sobe | `.ins-folha` (`componentes.css`, "A CAMADA QUE CHEGA COM O QUIQUE"), no nó que nasce; a segunda e a terceira sobem por cima da primeira, que fica onde está | `@keyframes ins-quique` (`tokens.css`): `transform` de `translateY(100%)` a `-8%` aos 55 %, `3%` aos 80 % e `none` — a única ultrapassagem do app; o pé (`::after`, o mesmo fundo) cobre o vão abaixo da caixa no pico; o invólucro, que é o fixo, não se move | `--ins-dur-quique` · os trechos do quique (a declaração diz `--ins-curva-camada`) | de onde veio: de baixo, por cima de tudo | esmaece ao chegar (`ins-esmaece`, `opacity` 0 → 1, em `--ins-dur-dissolve`) e sai de uma vez |
 | O véu acende | `.ins-veu` da folha e do painel de pare, cada camada com o seu | `opacity` 0 → 1 (`ins-esmaece`) | `--ins-dur-entra` · `--ins-curva-ciclo` | chegou algo por cima; os véus empilhados somam, e a profundidade fica dita pela cor | esmaece em `--ins-dur-dissolve` |
 | O painel de pare chega igual à folha | `.pare` do `Pare` (as duas variantes; não o "Não guardei") | o quique e o véu, iguais aos da folha; a frase sobe inteira com o painel, legível desde o primeiro quadro | os da folha | chegou por cima, a pedido do dedo (dono, 16/10, pergunta 11) | esmaece ao chegar e sai de uma vez |
@@ -382,7 +383,7 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 | A tela cheia e o modo saem | a foto da tela velha (`html[data-nav="sai"]::view-transition-old(root)`), por cima da que reaparece — que já nasce na rolagem de onde se entrou; pela seta, pelo "‹ Voltar", pelo Esc e pelo Voltar do sistema | `transform` de `none` a `translateX(100%)` (`ins-para-direita`), com o mesmo fio | `--ins-dur-sai` · `--ins-curva-camada` | para onde foi: o lugar estava lá embaixo | sai de uma vez |
 | A folha e o painel de apagar descem | as fotos `folha-N` (o nome é a POSIÇÃO na pilha, no `style` da `Folha`; nunca o nível, que se repete) e `painel`, só a foto velha sem nova (`:only-child`): a folha que fica aberta debaixo de outra não se move | `transform` de `none` a `translateY(100%)` (`ins-desce`) — sem quique, nenhuma saída quica | `--ins-dur-sai` · `--ins-curva-camada` | para onde foi: de volta à borda de baixo | sai de uma vez |
 | O véu apaga | as fotos `veu-N` e `veu-painel`, com a folha e o painel que descem | `opacity` 1 → 0 (`ins-apaga`) | `--ins-dur-sai` · `--ins-curva-ciclo` | a camada de cima acabou | sai de uma vez |
-| O cronômetro e o aviso mudam de altura com a troca | o par de imagens das fotos `cronometro` (só com o cronômetro em cena) e `aviso`, quando a troca tira a barra de abas (chega uma tela cheia ou o modo: `html[data-pe="desce"]`) ou a devolve (`data-pe="sobe"`), posto pela porta a pedido do `render()` | `translate` vertical da altura da barra (`--ins-barra-de-abas`) até `none` (`ins-rodape-desce`, `ins-rodape-sobe`, `base.css`) — só na vertical: não andam de lado com as páginas | `--ins-dur-entra` / `--ins-dur-sai` · `--ins-curva-camada` | continuam do aparelho; a reserva do rodapé mudou junto com a troca (antes, saltavam 52 px no primeiro quadro; 07 §11.3) | sem transição: vão ao lugar novo no mesmo desenho que a troca |
+| O cronômetro e o aviso mudam de altura com a troca | o par de imagens das fotos `cronometro` (só com o cronômetro em cena) e `aviso` (só com uma mensagem nele, `#toast > .aviso`: o lugar vazio também tem foto), quando a troca tira a barra de abas (chega uma tela cheia ou o modo: `html[data-pe="desce"]`) ou a devolve (`data-pe="sobe"`), posto pela porta a pedido do `render()` | `translate` vertical da altura da barra (`--ins-barra-de-abas`) até `none` (`ins-rodape-desce`, `ins-rodape-sobe`, `base.css`) — só na vertical: não andam de lado com as páginas | `--ins-dur-entra` / `--ins-dur-sai` · `--ins-curva-camada` | continuam do aparelho; a reserva do rodapé mudou junto com a troca (antes, saltavam 52 px no primeiro quadro; 07 §11.3) | sem transição: vão ao lugar novo no mesmo desenho que a troca |
 | A bancada: pouso, painel e régua, virada | `palco.css`, `palco.js` | `transform` e `opacity` | `--pl-dur-*` · `--pl-curva` | chegou; virou | nada |
 
 **O que fica sem movimento**, de propósito: o toque, que só escurece e troca na
@@ -398,7 +399,8 @@ correndo volta no lugar, sem subir — e o giro do telefone; o que é do
 aparelho durante uma troca de camada — o cronômetro, o aviso curto, a faixa da
 sessão e a faixa "Não guardado" têm foto própria e ficam parados enquanto as
 páginas passam por baixo (o que sai da tela sai de uma vez; o que chega aparece
-no lugar), e a barra de abas fica com o lugar — na troca de ABA ela ganha foto própria e fica parada enquanto as páginas passam, com o fio andando dentro dela; a aba que não está na barra (`vaiPara('treino')`), que troca seca, porque não há para que lado andar; o Voltar que o navegador já
+no lugar; do aviso só a foto VIVA aparece, e a mensagem que chega ou apaga
+durante a troca chega ou apaga ali dentro), e a barra de abas fica com o lugar — na troca de ABA ela ganha foto própria e fica parada enquanto as páginas passam, com o fio andando dentro dela; a aba que não está na barra (`vaiPara('treino')`), que troca seca, porque não há para que lado andar; o Voltar que o navegador já
 animou (o gesto de borda do iPhone, `hasUAVisualTransition`), que o app não anima
 de novo; a primeira tela, que nunca anima; a folha que toma o lugar da de cima ("cadastrar", `trocaFolha`),
 que nasce no lugar — a camada não se move, só o conteúdo troca; o aviso "Não
@@ -457,10 +459,25 @@ na hora).
 thread trava: o fio da aba andava em `left`, 14 layouts e 26 pinturas por troca
 contra 1 e 3 em `transform`, e parava 320 ms com a thread presa. O centrado por
 `translateX(-50%)` (`#toast`, `#timer`, `.ins-faixa`) só se move pela
-propriedade `translate`, que não desfaz o centramento. E nada que contenha um
+propriedade `translate`, que não desfaz o centramento — e no toast ela é do
+acompanhamento do cronômetro: a mensagem chega e sai na caixa de DENTRO
+(`#toast > .aviso`), e os dois movimentos se somam em vez de disputar a mesma
+propriedade. E nada que contenha um
 fixo (`html`, `body`, `#app`, `.ins-modo`) ganha `transform`, `filter` ou
 `will-change`: o fixo passaria a rolar com o pai. Por isso o quique é da caixa
 da folha e do pare, e nunca do invólucro deles, que é o fixo.
+
+**O aviso curto: a região viva nunca sai da árvore, e o tempo dele é de
+leitura.** `#toast` é a região viva (`role="status"`) e fica SEMPRE na página —
+vazia quando não há mensagem —, nunca `display: none` nem `visibility: hidden`,
+que a tiravam da árvore de acessibilidade e faziam a mensagem que entrava junto
+não ser anunciada de forma confiável (`docs/motion/05-acessibilidade.md` §3.2).
+A mensagem é um nó dentro dela, posto por `toast()` e tirado quando o tempo
+acaba: vazia, não sobra frase velha para o leitor de tela achar, e nada para
+tocar. O tempo na tela segue o tamanho do texto (`tempoDeLeitura`, `main.jsx`):
+um segundo para o olho achar o aviso mais o texto a 15 caracteres por segundo,
+com piso nos 3,6 s de antes e teto em 8 s. Não é movimento — vale igual sob
+"Reduzir movimento".
 
 **O portão.** Todo `transition` e `animation` mora dentro de
 `@media (prefers-reduced-motion: no-preference)`, ao lado da regra que ele
@@ -508,7 +525,10 @@ adiante; fora do portão as fotos não animam; (i) a aba
 desliza a página inteira, as duas fotos juntas, no sentido do índice, em
 `--ins-dur-entra` na `--ins-curva`, o fio anda junto no mesmo tempo e na mesma
 curva, a barra só tem nome nessa troca e não se move, e sob "Reduzir" só o que
-nasce com a aba esmaece.
+nasce com a aba esmaece; (j) o aviso curto: a região viva sem `display: none`
+nem `visibility: hidden`, o lugar só acompanha o cronômetro, a mensagem sobe e
+acende e sai só apagando em `--ins-dur-lugar` na `--ins-curva`, sob "Reduzir" só
+acende e sai de uma vez, e o relógio da saída lê na porta o mesmo token.
 
 **O que já foi recusado, e o que caiu.** Mola e ultrapassagem continuam fora de
 tudo menos do quique (decisão do dono, 16/10). Comemoração, esqueleto que

@@ -100,11 +100,14 @@
 }
 
 /* ---- O app cru sai de cena --------------------------------------------
-   Especificidade por atributo + id, sem `!important`: `#toast.on` acende
-   com (0,1,1,0) e estas ganham com (0,1,1,1). O `#timer` é `display: flex`
-   sempre desde a peça 3 do motion (fora de cena ele fica layoutado e
-   invisível, para poder subir e descer); quem declara o `display` dele é só
-   `#timer`, com (0,1,0,0). */
+   Especificidade por atributo + id, sem `!important`. O `#timer` é
+   `display: flex` sempre desde a peça 3 do motion (fora de cena ele fica
+   layoutado e invisível, para poder subir e descer); quem declara o `display`
+   dele é só `#timer`, com (0,1,0,0). O `#toast` não declara `display` nenhum
+   desde a peça 7 (no app a região viva nunca some: fica vazia). Aqui é o
+   documento de FORA da bancada, onde o app não monta (quem roda é o iframe) e
+   o esqueleto cru do `index.html` sai de cena inteiro — a região daqui nunca
+   recebe aviso; a que fala é a do aparelho. */
 html[data-palco="bancada"] body { overflow: hidden; }
 html[data-palco="bancada"] #app,
 html[data-palco="bancada"] #toast,
