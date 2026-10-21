@@ -248,21 +248,45 @@ function faixa(im, { x0, x1, y0, y1 }) {
 }
 const distancia = (a, b) => a.reduce((s, v, i) => s + Math.abs(v - b[i]), 0) / a.length;
 
-for (const [nome, rolagem, k] of [['com a página no topo', 0, 'tudo'], ['com a página rolada', 200, 'tudo'], ['"Metade", no topo', 0, 'metade']]) {
-  test('"' + (k === 'tudo' ? 'Comi tudo' : 'Metade') + '" pela linha, ' + nome + ': a linha fica onde estava, e o retorno do toque se vê nela', DEMORADO, async () => {
+// O "Comi tudo" fica no PAINEL aberto da linha, abaixo dela, e a marca fecha o
+// painel: com o topo da linha no lugar (peça 8), sob o dedo subia a linha de
+// baixo — a "Ceia" —, e um segundo toque rápido a abria (07 §14.3). Desde os
+// ajustes finais a rolagem é pelo ponto do toque: a linha desce, de uma vez,
+// só até o dedo cair dentro dela, e nunca sobe.
+// (`alcanca`: o "Metade" fica 56 px abaixo do "Comi tudo", e com a página no topo
+// nenhuma rolagem leva a linha até ele — ela desce o máximo, os 157 px de antes)
+for (const [nome, rolagem, k, alcanca] of [['com a página no topo', 0, 'tudo', true], ['com a página rolada', 200, 'tudo', true],
+  ['"Metade", no topo', 0, 'metade', false], ['"Metade", com a página rolada', 200, 'metade', true]]) {
+  test('"' + (k === 'tudo' ? 'Comi tudo' : 'Metade') + '" pela linha, ' + nome + ': o dedo continua sobre a linha, ela não é empurrada, e o retorno do toque se vê nela', DEMORADO, async () => {
     const nav = await abreNavegador();
     try {
       await noAgora(nav, rolagem);
       const { linha, botao } = await abreALinha(nav, 'almoco', k);
       assert.strictEqual(await nav.caixa('.ag-volta'), null, 'pré-condição: sem leitura de volta');
+      assert.ok(botao.cy > linha.y + linha.h, 'pré-condição: o botão fica no painel, ABAIXO da linha fechada');
       await nav.toca(botao.cx, botao.cy);
       await nav.espera(300);
 
-      assert.ok(await nav.caixa('.ag-volta'), 'a leitura de volta nasceu acima da linha — o que a fazia descer');
+      assert.ok(await nav.caixa('.ag-volta'), 'a leitura de volta nasceu acima da linha — o que a fazia descer 157 px');
       const depois = await nav.caixa('[data-a="linha-almoco"]');
-      assert.ok(Math.abs(depois.y - linha.y) <= FOLGA_PX,
-        'a linha saiu do lugar: y ' + linha.y + ' → ' + depois.y + ' (antes do conserto, no topo, +157)');
-      // o retorno do toque: a linha, no lugar do dedo, diz o que ficou, e a forma dela é a da marca
+      assert.ok(depois.y >= linha.y - FOLGA_PX, 'a linha subiu: y ' + linha.y + ' → ' + depois.y);
+      const sob = await nav.sobODedo(botao.cx, botao.cy);
+      const rolouAte = await nav.p.evaluate(() => window.scrollY);
+      if (alcanca) {
+        // o dedo continua SOBRE a linha que acabou de ser marcada, e ela desceu
+        // só o que faltava para isso: o dedo dentro dela, a no máximo 12 px (a
+        // folga) da borda de baixo
+        assert.strictEqual(sob.controle, 'button.ag-l-b[linha-almoco]', 'sob o dedo ficou outra coisa, e não a linha marcada: ' + JSON.stringify(sob));
+        assert.ok(botao.cy <= depois.y + depois.h - 1 && botao.cy >= depois.y + depois.h - 12 - FOLGA_PX,
+          'a linha desceu além do dedo: o dedo em ' + botao.cy + ', a linha em ' + depois.y + '–' + (depois.y + depois.h));
+      } else {
+        // o botão está tão abaixo da linha que nem a página no topo a leva até
+        // o dedo: ela desce o mais que dá — a rolagem fica em 0, e a leitura de
+        // volta inteira acima dela —, e não passa do dedo
+        assert.strictEqual(rolouAte, 0, 'a linha não desceu o que podia: rolagem ' + rolouAte);
+        assert.ok(depois.y + depois.h <= botao.cy, 'a linha passou do dedo');
+      }
+      // o retorno do toque: a linha, sob o dedo, diz o que ficou, e a forma dela é a da marca
       const linhaAgora = await nav.p.evaluate(() => {
         const b = document.querySelector('[data-a="linha-almoco"]');
         return { texto: b.querySelector('.ag-l-s').textContent, forma: b.querySelector('.df').getAttribute('class') };
@@ -270,16 +294,33 @@ for (const [nome, rolagem, k] of [['com a página no topo', 0, 'tudo'], ['com a 
       assert.ok(new RegExp('^' + (k === 'tudo' ? 'comi tudo' : 'metade') + ' · ').test(linhaAgora.texto), linhaAgora.texto);
       assert.ok(new RegExp('\\b' + k + '\\b').test(linhaAgora.forma), linhaAgora.forma);
       assert.ok(depois.y >= 0 && depois.y + depois.h <= 896, 'e ela está na tela');
-      // sob o dedo não cai um botão que grava
-      const sob = await nav.sobODedo(botao.cx, botao.cy);
-      assert.ok(!sob.controle || !/\[(tudo|metade|naocomi|fora|nsei|nao|desfaz|cartao)-/.test(sob.controle),
-        'sob o dedo ficou um botão que grava: ' + JSON.stringify(sob));
+      // o segundo toque rápido, no mesmo ponto, reabre a MESMA linha (a de "Desfazer"), e não a de baixo
+      if (alcanca) {
+        await nav.toca(botao.cx, botao.cy);
+        await nav.espera(200);
+        assert.strictEqual(await nav.E('view.linhaComida'), 'almoco', 'o segundo toque abriu outra linha');
+      }
       assert.deepStrictEqual(nav.erros, []);
     } finally { await nav.fecha(); }
   });
 }
 
-test('"Comi tudo" no topo: em nenhum quadro do compositor a linha sai do lugar; e "Desfazer" pela linha também a deixa lá', DEMORADO, async () => {
+test('"Comi tudo" pelo teclado (sem dedo): a linha fica onde estava, como na peça 8', DEMORADO, async () => {
+  const nav = await abreNavegador();
+  try {
+    await noAgora(nav, 0);
+    const { linha } = await abreALinha(nav, 'almoco', 'tudo');
+    await nav.p.focus('[data-a="tudo-almoco"]');
+    await nav.p.keyboard.press('Enter');
+    await nav.espera(300);
+    assert.ok(await nav.caixa('.ag-volta'), 'a marca entrou');
+    const depois = await nav.caixa('[data-a="linha-almoco"]');
+    assert.ok(Math.abs(depois.y - linha.y) <= FOLGA_PX, 'sem dedo, a linha saiu do lugar: y ' + linha.y + ' → ' + depois.y);
+    assert.deepStrictEqual(nav.erros, []);
+  } finally { await nav.fecha(); }
+});
+
+test('"Comi tudo" no topo: a linha vai ao dedo de uma vez — nenhum quadro do compositor a mostra empurrada ou no meio do caminho; e "Desfazer" pela linha a deixa lá', DEMORADO, async () => {
   const nav = await abreNavegador();
   try {
     await noAgora(nav, 0);
@@ -287,25 +328,35 @@ test('"Comi tudo" no topo: em nenhum quadro do compositor a linha sai do lugar; 
     // a hora e o nome da linha: o que não muda com a marca (a forma pousa e o
     // texto da direita troca)
     const h = await nav.caixa('[data-a="linha-almoco"] .ag-l-h'), n = await nav.caixa('[data-a="linha-almoco"] .ag-l-n');
-    const caixa = { x0: Math.round(h.x), x1: Math.min(Math.round(n.x + 80), 300), y0: Math.round(linha.y + 6), y1: Math.round(linha.y + linha.h - 6) };
+    const caixa = y => ({ x0: Math.round(h.x), x1: Math.min(Math.round(n.x + 80), 300), y0: Math.round(y + 6), y1: Math.round(y + linha.h - 6) });
     const qs = await quadrosDoCompositor(nav, () => nav.toca(botao.cx, botao.cy), 500);
     assert.ok(qs.length >= 3, 'o compositor entregou ' + qs.length + ' quadros');
-    const fim = faixa(qs[qs.length - 1], caixa);
-    const longe = qs.map(im => distancia(faixa(im, caixa), fim));
-    assert.ok(longe.every(d => d < 4), 'algum quadro mostrou a linha fora do lugar (distância da faixa ao último quadro): ' +
-      longe.map(d => d.toFixed(1)).join(' '));
-    // e a faixa é mesmo a da linha: 157 px abaixo, no último quadro, é outra coisa
-    assert.ok(distancia(faixa(qs[qs.length - 1], { ...caixa, y0: caixa.y0 + 157, y1: caixa.y1 + 157 }), fim) > 4,
-      'a faixa medida não distingue a linha do que está embaixo dela');
+    const depois = await nav.caixa('[data-a="linha-almoco"]');
+    assert.ok(depois.y > linha.y + FOLGA_PX, 'pré-condição: a linha desceu até o dedo (' + linha.y + ' → ' + depois.y + ')');
+    const velha = faixa(qs[0], caixa(linha.y)), nova = faixa(qs[qs.length - 1], caixa(depois.y));
+    // cada quadro mostra a linha no lugar de antes (o toque ainda não entrou) ou
+    // no de depois — e, depois de ir, não volta. Um quadro com ela empurrada
+    // (+157, a leitura de volta nascendo sem a rolagem) ou no meio não casa com
+    // nenhum dos dois.
+    const onde = qs.map(im => distancia(faixa(im, caixa(depois.y)), nova) < 4 ? 'n' : distancia(faixa(im, caixa(linha.y)), velha) < 4 ? 'v' : '?');
+    assert.ok(/^v*n+$/.test(onde.join('')), 'algum quadro mostrou a linha fora dos dois lugares (v antes, n depois): ' + onde.join(''));
+    // e a faixa é mesmo a da linha: no lugar de antes, no último quadro, é outra coisa
+    assert.ok(distancia(faixa(qs[qs.length - 1], caixa(linha.y)), nova) > 4,
+      'a faixa medida não distingue a linha do que ficou no lugar de antes');
 
-    // Desfazer pela linha aberta: a leitura sai de cima, e a linha não sobe
+    // Desfazer pela linha aberta: a leitura sai de cima, o dedo continua no
+    // painel dela, e a linha não sobe (a linha desceu até o dedo, e o painel
+    // dela aberto passaria da dobra: a página rola antes, como o dedo faria)
+    await nav.p.evaluate(() => window.scrollBy(0, 220));
+    await nav.espera(150);
     const { linha: aberta, botao: desfaz } = await abreALinha(nav, 'almoco', 'desfaz');
     assert.ok(desfaz, 'a linha marcada abre com "Desfazer"');
+    const sobDesfaz = await nav.sobODedo(desfaz.cx, desfaz.cy);
     await nav.toca(desfaz.cx, desfaz.cy);
     await nav.espera(300);
-    assert.strictEqual(await nav.caixa('.ag-volta'), null, 'a leitura de volta saiu');
-    const depois = await nav.caixa('[data-a="linha-almoco"]');
-    assert.ok(Math.abs(depois.y - aberta.y) <= FOLGA_PX, 'desfazer subiu a linha: y ' + aberta.y + ' → ' + depois.y);
+    assert.strictEqual(await nav.caixa('.ag-volta'), null, 'a leitura de volta saiu (sob o dedo: ' + JSON.stringify(sobDesfaz) + ', ' + JSON.stringify(desfaz) + ')');
+    const voltou = await nav.caixa('[data-a="linha-almoco"]');
+    assert.ok(Math.abs(voltou.y - aberta.y) <= FOLGA_PX, 'desfazer subiu a linha: y ' + aberta.y + ' → ' + voltou.y);
   } finally { await nav.fecha(); }
 });
 
@@ -452,14 +503,20 @@ for (const reduz of [false, true]) {
       T = await tempoECurva(nav);
       const com = q.filter(x => x.ha);
       assert.ok(com.length > 10 && inicio != null, 'a frase ficou na tela enquanto o script não chegava (' + com.length + ' quadros)');
+      // a forma dos ajustes finais: uma animação que dura CEM esperas, sem
+      // atraso, com o degrau a 1 % — ainda correndo quando a frase acende, para
+      // o compositor a acender com a thread presa (o caso abaixo)
       const esperando = com.filter(x => x.anim);
       assert.ok(esperando.length >= 3, 'a frase esperou em vários quadros');
-      assert.ok(esperando.every(x => x.anim.nome === 'ins-espera' && x.anim.atraso === T.espera && x.anim.dur === 0),
-        'a espera é a do token, sem duração: ' + JSON.stringify(esperando.find(x => !(x.anim.nome === 'ins-espera' && x.anim.atraso === T.espera && x.anim.dur === 0))));
-      assert.ok(com.every(x => x.op === 0 || x.op === 1), 'aparece de uma vez, sem esmaecer: ' + [...new Set(com.map(x => x.op))].join(' '));
-      assert.ok(esperando.every(x => x.op === 0 && x.correu < T.espera), 'enquanto espera, apagada');
+      const naForma = x => x.anim.nome === 'ins-espera' && x.anim.atraso === 0 && Math.abs(x.anim.dur - T.espera * 100) < 1;
+      assert.ok(esperando.every(naForma), 'a espera é a do token, cem vezes, sem atraso: ' + JSON.stringify(esperando.find(x => !naForma(x))));
+      // de uma vez: o degrau tem 30 µs de rampa, e no máximo um quadro cairia nele
+      const noMeio = com.filter(x => x.op > 0 && x.op < 1);
+      assert.ok(noMeio.length === 0 || (noMeio.length === 1 && Math.abs(noMeio[0].correu - T.espera) < 1),
+        'aparece de uma vez, sem esmaecer: ' + [...new Set(com.map(x => x.op))].join(' '));
+      assert.ok(com.filter(x => x.correu != null && x.correu < T.espera).every(x => x.op === 0), 'enquanto espera, apagada');
       const i = com.findIndex(x => x.op === 1);
-      assert.ok(i > 0 && com.slice(i).every(x => x.op === 1 && !x.anim), 'passada a espera ela aparece e fica até o app montar: ' + com.map(x => x.op).join(''));
+      assert.ok(i > 0 && com.slice(i).every(x => x.op === 1), 'passada a espera ela aparece e fica até o app montar: ' + com.map(x => x.op).join(''));
       assert.ok(com[i].correu >= T.espera - 1 && com[i - 1].correu < T.espera + 1,
         'aparece no primeiro quadro depois da espera: ' + com[i - 1].correu.toFixed(0) + ' → ' + com[i].correu.toFixed(0) + ' ms');
       assert.strictEqual(await nav.p.evaluate(() => document.querySelector('#app > .msg')), null, 'o app montou por cima dela');
@@ -480,6 +537,93 @@ for (const reduz of [false, true]) {
       if (com.every(x => x.correu == null || x.correu < T.espera)) {
         assert.ok(com.every(x => x.op === 0), 'a abertura rápida mostrou a frase');
       }
+    } finally { await nav.fecha(); }
+  });
+}
+
+// A ABERTURA LENTA COM A THREAD PRESA (ajustes finais; 07 §14.3). No WebKit desta
+// máquina o boot prende a thread principal de ~200 ms até o primeiro desenho do
+// app, a ~850, e a forma da peça 8 (duração zero e um atraso) dependia dela para
+// acender: a frase nunca chegava à tela. Aqui a thread fica presa de propósito,
+// por 1,2 s, logo depois dos primeiros quadros, com o script do app ainda longe
+// (chega a 2 s): quem acende a frase, se ela acender, é o compositor. Lido nos
+// quadros DO COMPOSITOR, não no DOM.
+/** Abre o app com o script a 2 s e a thread presa por 1,2 s a partir dos 120 ms; liga o screencast antes. */
+async function abreComAThreadPresa(reduz) {
+  const q = [];
+  let liga = null;
+  const nav = await abreNavegador({ reduz, preparo: async ctx => {
+    await ctx.route(/\/assets\/.*\.js$/, async r => { await new Promise(ok => setTimeout(ok, 2000)); await r.continue(); });
+    await ctx.addInitScript(() => {
+      window.__presa = {};
+      requestAnimationFrame(t => { window.__presa.quadro = t; });
+      setTimeout(() => {
+        window.__presa.de = performance.now();
+        const f = performance.now() + 1200;
+        while (performance.now() < f) { /* a thread presa, como no boot */ }
+        window.__presa.ate = performance.now();
+      }, Math.max(0, 120 - performance.now()));
+    });
+    // o screencast liga quando a página nasce, antes de ela abrir o app: os
+    // quadros do compositor desde o começo
+    ctx.on('page', pg => { liga = pg.screencast.start({ size: { width: 414, height: 896 }, quality: 90, onFrame: f => { q.push({ ts: f.timestamp, d: f.data }); } }); });
+  } });
+  await liga;
+  await nav.p.screencast.stop();
+  const { origem, presa } = await nav.p.evaluate(() => ({ origem: performance.timeOrigin, presa: window.__presa }));
+  return { nav, q, origem, presa };
+}
+for (const reduz of [false, true]) {
+  test('"Abrindo o registro…" acende aos 300 ms mesmo com a thread presa, nos quadros do compositor' + (reduz ? ', igual com "Reduzir movimento"' : ''), DEMORADO, async () => {
+    const { jpegjs } = await import('../../node_modules/playwright-core/lib/utilsBundle.js').then(m => m.default || m);
+    // sob a carga da suíte o primeiro quadro pode sair depois da trava, e aí a
+    // frase nem chegou ao compositor: a abertura não serve de prova e se repete
+    // (até três vezes)
+    let aberta = null, tentativas = [];
+    for (let k = 0; k < 3 && !aberta; k++) {
+      const a = await abreComAThreadPresa(reduz);
+      const espera = (await tempoECurva(a.nav)).espera;
+      tentativas.push(a.presa);
+      // um quadro desenhado antes da trava (é nele que a frase vai ao compositor)
+      if (a.presa.quadro != null && a.presa.quadro <= a.presa.de && a.presa.de < espera - 50 && a.presa.ate > espera + 300) aberta = Object.assign(a, { espera });
+      else await a.nav.fecha();
+    }
+    assert.ok(aberta, 'a trava nunca cobriu a espera: ' + JSON.stringify(tentativas));
+    const { nav, q, origem, presa, espera } = aberta;
+    try {
+      assert.ok(presa.ate - presa.de >= 1100, 'a thread ficou presa: ' + JSON.stringify(presa));
+      // o WebKit carimba no relógio monotônico; o Chromium, em época
+      const OFF = Date.now() - Number(process.hrtime.bigint()) / 1e6;
+      // antes do script do app chegar (2 s) a página só tem o fundo e a frase: a
+      // tela inteira serve de caixa
+      q.sort((a, b) => a.ts - b.ts);
+      const linha = q.map(({ ts, d }) => {
+        const t = (ts < 1e11 ? ts + OFF : ts) - origem;
+        const im = jpegjs.decode(d, { useTArray: true });
+        const E = im.width / 414, px = (x, y) => (Math.round(y * E) * im.width + Math.round(x * E)) * 4;
+        const f0 = px(5, 5), fundo = [im.data[f0], im.data[f0 + 1], im.data[f0 + 2]];
+        let tinta = 0;
+        for (let y = 1; y <= 895; y += 2) for (let x = 1; x <= 413; x += 2) {
+          const o = px(x, y);
+          if (Math.abs(im.data[o] - fundo[0]) + Math.abs(im.data[o + 1] - fundo[1]) + Math.abs(im.data[o + 2] - fundo[2]) > 60) tinta++;
+        }
+        return { t, tinta };
+      }).filter(x => x.t > -100 && x.t < presa.ate);
+      // a frase é pouca tinta sobre o fundo; o quadro de antes do estilo (o
+      // documento ainda em branco, no WebKit) é tinta na tela inteira, e não conta
+      const FRASE = x => x.tinta > 30 && x.tinta < 5000;
+      const acesa = linha.find(FRASE);
+      assert.ok(acesa, 'com a thread presa (' + Math.round(presa.de) + '–' + Math.round(presa.ate) + ' ms) a frase não chegou à tela: ' +
+        linha.map(x => Math.round(x.t) + ':' + x.tinta).join(' '));
+      assert.ok(acesa.t >= espera - 20, 'acendeu antes da espera: ' + Math.round(acesa.t) + ' ms');
+      assert.ok(acesa.t < presa.ate - 200, 'só acendeu quando a thread soltou (' + Math.round(presa.ate) + ' ms): ' + Math.round(acesa.t) + ' ms');
+      // e fica acesa enquanto a thread está presa (a animação que acaba com a
+      // thread presa volta, no WebKit, ao apagado que a thread tinha entregado)
+      assert.ok(linha.filter(x => x.t >= acesa.t).every(FRASE), 'a frase apagou de novo com a thread presa: ' +
+        linha.filter(x => x.t >= acesa.t).map(x => Math.round(x.t) + ':' + x.tinta).join(' '));
+      assert.ok(linha.filter(x => x.t < espera - 20).every(x => !FRASE(x)), 'antes da espera, só o fundo: ' +
+        linha.map(x => Math.round(x.t) + ':' + x.tinta).join(' '));
+      assert.deepStrictEqual(nav.erros, []);
     } finally { await nav.fecha(); }
   });
 }

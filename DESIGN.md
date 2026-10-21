@@ -271,7 +271,13 @@ isso") pela linha faz nascer no topo a leitura de volta, 145 px acima: a linha
 tocada descia 157 px — ou, com a página rolada, o navegador às vezes a ancorava
 e às vezes não, conforme o que estava no alto da tela; agora, no mesmo desenho,
 a página rola o que ela andou, e o "Desfazer" pela linha, que tira a leitura de
-cima, faz o caminho de volta. É rolagem, sempre um salto (ver [Movimento](#movimento)), e
+cima, faz o caminho de volta. E o dedo continua SOBRE a linha: o "Comi tudo"
+mora no painel aberto, abaixo dela, e a marca fecha o painel — com o topo no
+lugar, sob o dedo subia a linha seguinte, e um segundo toque rápido a abria.
+A rolagem vai pelo ponto do toque: quando o dedo ficaria fora da linha, ela
+desce, de uma vez, só até ele cair dentro dela (a 12 px da borda); com a página
+no topo e o botão longe demais ("Metade"), ela desce o máximo que a página deixa.
+Sem dedo (o teclado), o topo fica onde estava. É rolagem, sempre um salto (ver [Movimento](#movimento)), e
 depois do render(): nada do que se grava muda, nem a ordem dos toques. O que
 some ABAIXO do dedo continua como é: fechar a régua sobe a linha seguinte para
 onde ela estava. Medido no motor de verdade por `tests/fluxo/dedo.test.js` e,
@@ -390,7 +396,7 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 | O painel de pare chega igual à folha | `.pare` do `Pare` (as duas variantes; não o "Não guardei") | o quique e o véu, iguais aos da folha; a frase sobe inteira com o painel, legível desde o primeiro quadro | os da folha | chegou por cima, a pedido do dedo (dono, 16/10, pergunta 11) | esmaece ao chegar e sai de uma vez |
 | A tela cheia e o modo chegam | a FOTO da tela nova (`html[data-nav="entra"]::view-transition-new(root)`, `componentes.css`, "A TROCA DE CAMADA"), numa transição de vista pedida pelo `render()` à porta (`trocaDeCamada`); vale para os 14 destinos, os Ajustes e o modo de sessão | `transform` de `translateX(100%)` a `none` (`ins-da-direita`, `base.css`): a tela inteira, da borda direita, com um fio de 1 px (`--ins-fio`) na borda esquerda dela, fora da foto; a de baixo PARADA (a foto velha não anima) | `--ins-dur-entra` · `--ins-curva-camada`, sem quique | de onde veio: da direita, por cima do lugar, que continua lá (dono, 16/10, perguntas 4 e 5) | sem transição: a tela cheia e o modo esmaecem no nó que nasce (`ins-esmaece`, em `--ins-dur-dissolve`) |
 | A tela cheia e o modo saem | a foto da tela velha (`html[data-nav="sai"]::view-transition-old(root)`), por cima da que reaparece — que já nasce na rolagem de onde se entrou; pela seta, pelo "‹ Voltar", pelo Esc e pelo Voltar do sistema | `transform` de `none` a `translateX(100%)` (`ins-para-direita`), com o mesmo fio | `--ins-dur-sai` · `--ins-curva-camada` | para onde foi: o lugar estava lá embaixo | sai de uma vez |
-| A folha e o painel de apagar descem | as fotos `folha-N` (o nome é a POSIÇÃO na pilha, no `style` da `Folha`; nunca o nível, que se repete) e `painel`, só a foto velha sem nova (`:only-child`): a folha que fica aberta debaixo de outra não se move | `transform` de `none` a `translateY(100%)` (`ins-desce`) — sem quique, nenhuma saída quica | `--ins-dur-sai` · `--ins-curva-camada` | para onde foi: de volta à borda de baixo | sai de uma vez |
+| A folha e o painel de apagar descem | as fotos `folha-N` (o nome é a POSIÇÃO na pilha, o `data-lugar` do invólucro, no CSS; nunca o nível, que se repete) e `painel`, só a foto velha sem nova (`:only-child`): a folha que fica aberta debaixo de outra não se move, e na descida nem tem foto (fica na da página) | `transform` de `none` a `translateY(100%)` (`ins-desce`) — sem quique, nenhuma saída quica | `--ins-dur-sai` · `--ins-curva-camada` | para onde foi: de volta à borda de baixo | sai de uma vez |
 | O véu apaga | as fotos `veu-N` e `veu-painel`, com a folha e o painel que descem | `opacity` 1 → 0 (`ins-apaga`) | `--ins-dur-sai` · `--ins-curva-ciclo` | a camada de cima acabou | sai de uma vez |
 | O cronômetro e o aviso mudam de altura com a troca | o par de imagens das fotos `cronometro` (só com o cronômetro em cena) e `aviso` (só com uma mensagem nele, `#toast > .aviso`: o lugar vazio também tem foto), quando a troca tira a barra de abas (chega uma tela cheia ou o modo: `html[data-pe="desce"]`) ou a devolve (`data-pe="sobe"`), posto pela porta a pedido do `render()` | `translate` vertical da altura da barra (`--ins-barra-de-abas`) até `none` (`ins-rodape-desce`, `ins-rodape-sobe`, `base.css`) — só na vertical: não andam de lado com as páginas | `--ins-dur-entra` / `--ins-dur-sai` · `--ins-curva-camada` | continuam do aparelho; a reserva do rodapé mudou junto com a troca (antes, saltavam 52 px no primeiro quadro; 07 §11.3) | sem transição: vão ao lugar novo no mesmo desenho que a troca |
 | A bancada: pouso, painel e régua, virada | `palco.css`, `palco.js` | `transform` e `opacity` | `--pl-dur-*` · `--pl-curva` | chegou; virou | nada |
@@ -438,8 +444,11 @@ camada (a transição de vista) o alvo de todo toque é a raiz: o `pointerdown`
 PULA para o fim (`skipTransition()`), o desenho novo entra na hora, e o clique
 vai ao que ficou sob o dedo — sozinho, quando o navegador acha o alvo de novo, ou
 reenviado pela porta. O mesmo no carrossel da aba: a barra está parada, e o toque
-rápido em outra aba no meio da troca acerta a aba que o dedo vê. Nada espera: o
-clique age na hora, e nada escuta o fim de uma transição.
+rápido em outra aba no meio da troca acerta a aba que o dedo vê. O clique
+reenviado deixa o foco onde um de verdade deixaria: a descida caiu na raiz e
+tirou o foco que havia, e a porta o põe no controle sob a mira antes do clique,
+sem rolar e sem anel; onde o toque não foca (o Safari), não inventa foco. Nada
+espera: o clique age na hora, e nada escuta o fim de uma transição.
 
 **A troca de camada mora num ponto só, e a rolagem e o foco vão dentro dela.**
 O `render()` (`main.jsx`) compara as camadas desenhadas com as que `view` pede
@@ -460,6 +469,14 @@ que troca, sob "Reduzir movimento" o segundo desenho do "Ir para Semana"; o
 treino aberto na lista do Programa), o foco vai ao título da tela desenhada.
 Toda foto que anda começa um quadro adiante (`--ins-adianta`): o primeiro
 quadro é a foto da tela velha, e o primeiro animado já mostra a página andando.
+Na descida (só uma folha ou o painel fecham), só o que sai tem foto: a folha
+que fica, o véu dela e o que é do aparelho ficam na foto da página, que não
+anda — fotografá-los à parte fazia o quadro da foto passar de um quadro, e o ×
+da folha de cima com outra embaixo andava dois quadros depois do toque. O
+casco marca a folha que sai (`data-sai`) antes de pedir a troca. E o histórico
+não empurra entrada enquanto a volta que o próprio app pediu (o fecho pelo botão)
+não pousou: o destino dela é fixado na hora do pedido, e uma entrada empurrada no
+meio a fazia pousar atrás da camada recém-aberta e fechá-la.
 
 **A camada de cima é a única alcançável.** A folha, o painel de pare e o "Não
 guardei" isolam o resto com `inert`, pelo mesmo mecanismo (`abreCamada`,
@@ -498,11 +515,14 @@ com piso nos 3,6 s de antes e teto em 8 s. Não é movimento — vale igual sob
 **"Abrindo o registro…" só quando demora.** A frase do `index.html` ficava 3 a
 4 quadros na tela em toda abertura — um piscar, e não uma espera. Agora ela
 nasce apagada e aparece de uma vez em `--ins-espera-abertura`, se o app ainda não
-tiver montado (`#app > .msg`, `ins-espera`: duração zero, o atraso e mais nada).
-Não é movimento, e é a única declaração de animação fora do portão: vale igual
-sob "Reduzir movimento", porque o atraso não é um gesto que a preferência
-desligaria. É CSS, e não um relógio do JavaScript, para a frase aparecer também
-quando o próprio script é que demora a chegar.
+tiver aparecido (`#app > .msg`, `ins-espera`: um degrau de opacidade a 1 % de uma
+animação de cem esperas). Não é movimento, e é a única declaração de animação
+fora do portão: vale igual sob "Reduzir movimento", porque a espera não é um
+gesto que a preferência desligaria. É CSS, e não um relógio do JavaScript, para a
+frase aparecer também quando o próprio script é que demora a chegar — e é uma
+animação que ainda CORRE quando acende, para o compositor a acender sozinho
+quando o boot prende a thread principal (no WebKit desta máquina, de ~200 a ~850
+ms): a forma de duração zero dependia da thread e nunca chegava à tela.
 
 **O portão.** Todo `transition` e `animation` mora dentro de
 `@media (prefers-reduced-motion: no-preference)`, ao lado da regra que ele
@@ -545,8 +565,10 @@ da camada, sob "Reduzir" os quatro só esmaecem, e nada mais da pilha se move;
 (h) a troca de camada move só as fotos — a tela que chega e a que sai, a folha
 e o painel que descem, os véus —, a de baixo fica parada, nada quica, e só o
 que é do aparelho tem nome — e o cronômetro e o aviso só mudam de altura, quando
-a troca tira ou devolve a barra de abas —; toda foto que anda começa um quadro
-adiante; fora do portão as fotos não animam; (i) a aba
+a troca tira ou devolve a barra de abas —, a folha pela posição (`data-lugar`,
+nome no CSS), e na descida só o que sai (`data-sai`, marcado pelo casco antes da
+troca); toda foto que anda começa um quadro adiante; fora do portão as fotos não
+animam; (i) a aba
 desliza a página inteira, as duas fotos juntas, no sentido do índice, em
 `--ins-dur-entra` na `--ins-curva`, o fio anda junto no mesmo tempo e na mesma
 curva, a barra só tem nome nessa troca e não se move, e sob "Reduzir" só o que
@@ -558,7 +580,7 @@ resto do lugar: o copo enche de baixo por UMA transição do `::after`, no port�
 no tempo e na curva do lugar, e o copo cheio não pinta o próprio fundo; a forma
 pousa com `ins-pousa` (e só acende sob "Reduzir"), só a da linha, com chave por
 estado, e a marca dela vence sozinha e sai com a aba; a frase da abertura espera
-com duração zero e o token, fora de toda `@media`; e régua, teclado e RIR não se
+em cem vezes o token, com o degrau a 1 %, fora de toda `@media`; e régua, teclado e RIR não se
 movem, com o teclado focando sem rolar e vindo inteiro para a tela pelo mínimo
 quando não cabe (o `scroll-margin` dele desconta o rodapé, e todo lugar que o
 abre chama `mostraOTecladoInteiro`).

@@ -198,6 +198,35 @@ test('fechar pelo botão do app não deixa entrada órfã no histórico', async 
   a.fechar();
 });
 
+test('a camada aberta logo depois de um fecho pelo botão continua aberta: a volta do app não a fecha', async () => {
+  // A CORRIDA DO HISTÓRICO (ajustes finais do motion). O fecho pelo botão
+  // consome a entrada da camada com `history.go(-1)`, que é assíncrono, e o
+  // destino dele é fixado na hora do pedido. Se outra camada abre antes de a
+  // volta andar, a entrada nova era empurrada, a volta pousava ATRÁS dela, e o
+  // `popstate` disso — igual a um Voltar — fechava a camada recém-aberta. No
+  // WebKit a volta leva 100–160 ms; aqui o jsdom a faz no tique seguinte, e o
+  // fecho e a abertura no mesmo tique a alcançam sempre.
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  a.v('ctx.abreFolha', { k: 'dia' });
+  await a.esperar();
+  assert.strictEqual(a.window.history.state.lastro, 1, 'pré-condição: a folha tem a entrada dela');
+
+  a.v('ctx.fechaFolha');
+  a.v('ctx.abreFolha', { k: 'editaRefeicao', id: null });
+  await a.esperar(120);
+
+  assert.strictEqual((a.vista().pilha || []).length, 1, 'a folha aberta logo depois do fecho continua aberta');
+  assert.ok(a.$('.ins-folha'), 'e desenhada');
+  assert.strictEqual(a.window.history.state.lastro, 1, 'e o histórico tem a entrada dela, uma só');
+  // o Voltar seguinte fecha ESTA folha, e não sai do app
+  await voltar(a);
+  assert.strictEqual((a.vista().pilha || []).length, 0, 'o Voltar fechou a folha nova');
+  assert.ok(a.$('.ins-tabbar'), 'e o app continua de pé');
+  assert.strictEqual(a.window.history.state.lastro, 0);
+  a.fechar();
+});
+
 test('voltar de um destino devolve a posição de leitura', async () => {
   // Guia é a tela mais longa do app: cair no topo dela ao voltar é perder o
   // lugar toda vez. O mecanismo já existia e estava ligado em 4 dos 10

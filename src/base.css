@@ -449,12 +449,15 @@ p, .ins-prosa, input, textarea {
   to   { opacity: 1; }
 }
 
-/* ESPERAR para aparecer: o que fica apagado durante o atraso e aparece de uma
-   vez quando ele acaba — sem duração, então sem interpolação nenhuma. Não é
-   movimento, e por isso não mora no portão. Só a frase "Abrindo o registro…"
-   (`componentes.css`, peça 8), com `--ins-espera-abertura`. */
+/* ESPERAR para aparecer: o que fica apagado durante a espera e aparece de uma
+   vez quando ela acaba. A animação dura CEM esperas (`componentes.css`, a frase
+   da abertura): o degrau mora a 1 %, e a rampa dele (de 1 % a 1,001 %) é de
+   0,3 ms — menos que um quadro, então nada esmaece. Não é movimento, e por isso
+   não mora no portão. Só a frase "Abrindo o registro…" (peça 8 e ajustes
+   finais), com `--ins-espera-abertura`. */
 @keyframes ins-espera {
-  from, to { opacity: 0; }
+  0%, 1% { opacity: 0; }
+  1.001%, to { opacity: 1; }
 }
 
 /* O AVISO CURTO CHEGA (peça 7): de `--ins-sobe-aviso` abaixo e apagado até o

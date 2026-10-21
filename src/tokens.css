@@ -542,7 +542,8 @@
      "Abrindo o registro…" aparecer (de uma vez, sem esmaecer). Abaixo disso ela
      só piscava — 3 a 4 quadros em toda abertura, medido (docs/motion/03 §6) —;
      acima, a espera já é de verdade e a frase diz o que está acontecendo. Vale
-     igual sob "Reduzir movimento". Só a frase da abertura. */
+     igual sob "Reduzir movimento". Só a frase da abertura, que acende pelo
+     compositor, com a thread presa ou não (`componentes.css`). */
   --ins-espera-abertura: 300ms;
   /* NÃO é duração de transição: é o PERÍODO de `pintaTimer`. A barra interpola
      entre duas amostras; menos deixa vão parado, mais atrasa a barra em relação

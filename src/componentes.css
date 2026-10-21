@@ -776,11 +776,38 @@ button.ins-linha { border-radius: 0; }
 .ins-faixa { view-transition-name: faixa; }
 .ng-faixa { view-transition-name: nao-guardado; }
 /* A folha de baixo e o véu dela se nomeiam pela POSIÇÃO NA PILHA (`folha-0`,
-   `veu-0`…, no `style` da `Folha`, `folha.jsx`): o nível se repete. O painel de
-   apagar é um por vez; o "Não guardei" não desce (03 §5.3), e por isso não tem
-   nome: sai de uma vez, com a página. */
+   `veu-0`…; a posição é o `data-lugar` do invólucro, posto pela `Folha`,
+   `folha.jsx`): o nível se repete. Quatro posições: o desenho para em três, e
+   uma quinta sai de uma vez, com a página. O painel de apagar é um por vez; o
+   "Não guardei" não desce (03 §5.3), e por isso não tem nome: sai de uma vez,
+   com a página. */
+.ins-folha-w[data-lugar="0"] > .ins-veu { view-transition-name: veu-0; }
+.ins-folha-w[data-lugar="0"] > .ins-folha { view-transition-name: folha-0; }
+.ins-folha-w[data-lugar="1"] > .ins-veu { view-transition-name: veu-1; }
+.ins-folha-w[data-lugar="1"] > .ins-folha { view-transition-name: folha-1; }
+.ins-folha-w[data-lugar="2"] > .ins-veu { view-transition-name: veu-2; }
+.ins-folha-w[data-lugar="2"] > .ins-folha { view-transition-name: folha-2; }
+.ins-folha-w[data-lugar="3"] > .ins-veu { view-transition-name: veu-3; }
+.ins-folha-w[data-lugar="3"] > .ins-folha { view-transition-name: folha-3; }
 .pare-w:not(.falhou-w) > .pare { view-transition-name: painel; }
 .pare-w:not(.falhou-w) > .ins-veu { view-transition-name: veu-painel; }
+/* NA DESCIDA, SÓ O QUE SAI TEM FOTO (ajustes finais; 07 §12.3). Quando só uma
+   folha ou o painel de apagar descem (`fica`), a página não anda: a foto dela é
+   a viva, e tudo o que não sai pode ficar nela, no lugar e na ordem de sempre —
+   a folha que continua aberta, o véu dela, o cronômetro, o aviso, as faixas. Com
+   foto própria cada um custava uma imagem a mais no quadro em que o navegador
+   fotografa a tela: fechar pelo × a folha de cima com outra embaixo fotografava
+   duas folhas e dois véus inteiros, e esse quadro passava do tempo de um quadro
+   (o desenho dele ia de 11 a 15–18 ms nesta máquina) — a descida começava DOIS
+   quadros depois do toque. O casco marca o que sai (`data-sai`, no `render()`,
+   antes da foto); o resto perde o nome nas duas fotos, a velha e a nova. Sem
+   nome, o cronômetro continua sob o véu da folha, como na página. */
+html[data-nav="fica"] .ins-folha-w:not([data-sai]) > .ins-veu,
+html[data-nav="fica"] .ins-folha-w:not([data-sai]) > .ins-folha,
+html[data-nav="fica"] #timer,
+html[data-nav="fica"] #toast,
+html[data-nav="fica"] .ins-faixa,
+html[data-nav="fica"] .ng-faixa { view-transition-name: none; }
 /* O que é do aparelho e NÃO está mais na tela nova (a faixa da sessão, que o
    modo cobre) sai de uma vez, no primeiro quadro, em vez de ficar 350 ms por
    cima da página que chega. `:only-child`: só a foto velha, sem nova. O que
@@ -1402,14 +1429,28 @@ html[data-nav="seca"] .ins-tab-ind { transition: none; }
    nasce apagada e aparece de uma vez em `--ins-espera-abertura`, se o app ainda
    não tiver montado: abertura rápida mostra só o fundo e o app; abertura lenta
    mostra a frase, como antes.
-   NÃO é movimento: duração zero (o primeiro quadro da animação dura o atraso
-   inteiro, `backwards`, e acabou), nenhuma interpolação, nada se desloca. Por
-   isso mora FORA do portão e vale igual sob "Reduzir movimento": o atraso não é
-   um gesto que a preferência desligaria, e sem ele quem pediu menos movimento
-   teria o piscar de volta. Só CSS, e não um relógio do JavaScript: a frase
-   aparece mesmo quando o próprio script é que está demorando a chegar. A guarda
-   (k) de `estilo.test.ts` cobra esta forma, e é a única exceção da (b). */
-#app > .msg { animation-name: ins-espera; animation-delay: var(--ins-espera-abertura); animation-fill-mode: backwards; }
+   NÃO é movimento: um degrau — apagada até a espera, acesa dali em diante —,
+   nada se desloca nem esmaece. Por isso mora FORA do portão e vale igual sob
+   "Reduzir movimento": a espera não é um gesto que a preferência desligaria, e
+   sem ela quem pediu menos movimento teria o piscar de volta. Só CSS, e não um
+   relógio do JavaScript: a frase aparece mesmo quando o próprio script é que
+   está demorando a chegar.
+   QUEM ACENDE É O COMPOSITOR (ajustes finais; 07 §14.3). Na abertura lenta a
+   thread principal está PRESA no boot (no WebKit desta máquina, de ~200 ms até
+   o primeiro desenho do app, a ~850, pela fonte que falta no Linux), e a forma
+   da peça 8 — duração zero e um atraso — dependia dela para acender: a frase
+   nunca chegava à tela (0 quadros visíveis em 21 aberturas). Uma animação de
+   opacidade que ainda CORRE é levada pelo compositor sozinho, nos dois motores
+   (sonda numa página mínima com a thread presa por 1,2 s: o quadrado acende
+   aos ~320 ms no WebKit e no Chromium); uma que ACABA com a thread presa, não
+   (no WebKit o compositor volta ao último valor que a thread entregou, o
+   apagado). Por isso ela dura CEM esperas (`ins-espera`: o degrau mora a 1 %,
+   com 0,3 ms de rampa, menos que um quadro) e continua correndo durante
+   qualquer boot de verdade; quando o app monta, a frase sai do DOM e a animação
+   vai com ela. A curva é a de omissão, e não importa: cada trecho dos quadros
+   é constante, menos o degrau. A guarda (k) de `estilo.test.ts` cobra esta
+   forma, e é a única exceção da (b). */
+#app > .msg { animation-name: ins-espera; animation-duration: calc(var(--ins-espera-abertura) * 100); }
 /* O registro não abriu (§7.2 da frente 3): família "falhou", na moldura de pare,
    cobrindo a tela — não há app por baixo para mostrar. */
 .abertura-falhou {

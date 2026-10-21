@@ -354,6 +354,52 @@ test('a aba tocada no meio da troca vence: o dedo acerta a aba que vê (o fluxo 
   } finally { await nav.fecha(); }
 });
 
+// O FOCO DO TOQUE NO MEIO (ajustes finais; 07 §12.4). A descida do segundo dedo
+// cai no `html` (as fotos), e o foco que havia sai para o `body`; o clique que o
+// app reenvia à aba é sintético, e não focava nada: no WebKit (e no Chromium com
+// o ponteiro) o foco acabava no `body`, onde um clique de verdade o deixa na aba
+// tocada. A régua é o próprio motor: onde um clique de verdade, sem troca nenhuma
+// correndo, deixa o foco, o do meio da troca tem de deixar também — e sem anel,
+// porque foi um toque.
+test('o toque no meio da troca deixa o foco onde um clique de verdade deixaria: na aba tocada, sem anel', DEMORADO, async () => {
+  const nav = await abreNavegador();
+  try {
+    await semeia(nav);
+    for (const a of ['corpo', 'semana', 'agora']) await vai(nav, a);
+    const foco = () => nav.p.evaluate(() => {
+      const e = document.activeElement;
+      return !e || e === document.body ? 'body' : (e.classList.contains('ins-tab') ? 'aba ' + e.textContent : e.tagName.toLowerCase() + '.' + e.className) +
+        (e.matches(':focus-visible') ? ' (anel)' : '');
+    });
+    const falhas = [];
+    for (const como of ['dedo', 'ponteiro']) {
+      // a régua: um clique de verdade, sem nada correndo
+      await vai(nav, 'agora');
+      const [cx, cy] = await daAba(nav, 'Corpo');
+      await toca(nav, como, cx, cy);
+      await nav.espera(150); await assenta(nav);
+      const deVerdade = await foco();
+      // o fluxo 14: Corpo e, no meio, Semana
+      await vai(nav, 'agora');
+      const [x1, y1] = await daAba(nav, 'Corpo'), [x2, y2] = await daAba(nav, 'Semana');
+      await toca(nav, como, x1, y1);
+      await nav.p.waitForFunction(() => document.getAnimations().some(a => a.effect && a.effect.pseudoElement &&
+        /view-transition/.test(a.effect.pseudoElement) && a.playState === 'running' && a.currentTime >= 110), null, { timeout: 8000 }).catch(() => {});
+      const andava = await nav.p.evaluate(() => document.getAnimations().some(a => a.effect && a.effect.pseudoElement &&
+        /view-transition/.test(a.effect.pseudoElement) && a.playState === 'running'));
+      await toca(nav, como, x2, y2);
+      await nav.espera(150); await assenta(nav);
+      const noMeio = await foco();
+      if (!andava) falhas.push(como + ': nenhuma foto se movia quando o dedo desceu — o caso não prova nada');
+      const quer = deVerdade.replace('Corpo', 'Semana');
+      if (noMeio !== quer) falhas.push(como + ': um clique de verdade deixa o foco em "' + deVerdade + '", e o do meio da troca em "' + noMeio + '" (queria "' + quer + '")');
+      if (deVerdade === 'body') falhas.push(como + ': o clique de verdade não focou a aba neste motor — a régua não distingue nada');
+    }
+    assert.deepStrictEqual(falhas, [], MOTOR + ': o foco do toque no meio');
+    assert.deepStrictEqual(nav.erros, []);
+  } finally { await nav.fecha(); }
+});
+
 // ---------- "Reduzir movimento" e a aba sem índice ----------
 
 /** Conta as transições de vista pedidas daqui em diante. */

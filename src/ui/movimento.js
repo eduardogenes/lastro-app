@@ -93,7 +93,8 @@ export function podeDissolver() {
 // cair em outro nó (porque a tela andou, ou porque ele caiu na raiz) é engolido
 // e reenviado à mira, e o que não vier (`SEM_CLIQUE_MS` depois de soltar) o app
 // entrega. Virou rolagem (`pointercancel`): não há clique. Nada espera o fim de
-// nada, e nada se pausa.
+// nada, e nada se pausa. O clique reenviado deixa o foco onde a descida de
+// verdade deixaria (`focaComoOClique`).
 
 /** O clique que não veio depois de um toque mirado: o app o entrega. */
 const SEM_CLIQUE_MS = 300;
@@ -101,8 +102,9 @@ const SEM_CLIQUE_MS = 300;
 const FOLGA_MS = 150;
 
 /**
- * O toque mirado: o dedo, o nó em que ele desceu, e o relógio do clique que não veio.
- * @type {{ id: number, alvo: Element, relogio: any } | null}
+ * O toque mirado: o dedo, o nó em que ele desceu, o que estava focado quando ele
+ * desceu, e o relógio do clique que não veio.
+ * @type {{ id: number, alvo: Element, foco: Element | null, relogio: any } | null}
  */
 let mira = null;
 let escutando = false;
@@ -131,7 +133,35 @@ function entregaOClique(alvo, x, y) {
 function arma(id, alvo) {
   if (mira) clearTimeout(mira.relogio);
   const raiz = document.documentElement;
-  mira = alvo && alvo !== raiz && alvo !== document.body ? { id: id, alvo: alvo, relogio: 0 } : null;
+  mira = alvo && alvo !== raiz && alvo !== document.body
+    ? { id: id, alvo: alvo, foco: document.activeElement, relogio: 0 } : null;
+}
+
+/** O que um clique de verdade foca: o próprio controle, ou o ancestral focável dele. */
+const FOCAVEL = 'button, a[href], input, select, textarea, [tabindex]';
+
+/**
+ * O CLIQUE REENVIADO DEIXA O FOCO ONDE UM DE VERDADE DEIXARIA (ajustes finais do
+ * motion, da conferência da peça 6). Um clique de verdade foca na DESCIDA: o
+ * Chromium e o WebKit desta máquina focam o controle tocado; o Safari do iPhone
+ * não foca botão no toque. No meio de uma troca a descida cai no `html` (as
+ * fotos) — o foco que havia sai para o `body` — e o clique que o app reenvia à
+ * mira é sintético, e não foca nada: tocar a aba Semana no meio do carrossel
+ * deixava o foco no `body` (medido nos dois motores, com o ponteiro; o dedo do
+ * Chromium chega sozinho ao alvo, e foca). Aqui o reenvio faz o que a descida
+ * faria, antes do clique, como ela: se o toque TIROU o foco de um nó, ele vai ao
+ * controle sob a mira (ou ao ancestral focável dela), sem rolar. Se não havia
+ * foco — o Safari, que não foca no toque —, não inventa um.
+ * @param {{ alvo: Element, foco: Element | null }} m
+ */
+function focaComoOClique(m) {
+  const vazio = /** @param {Element | null} e */ function (e) {
+    return !e || e === document.body || e === document.documentElement;
+  };
+  if (vazio(m.foco) || !vazio(document.activeElement)) return;
+  const c = m.alvo.isConnected && m.alvo.closest ? m.alvo.closest(FOCAVEL) : null;
+  if (!c || c.closest('[inert]')) return;
+  try { /** @type {HTMLElement} */ (c).focus({ preventScroll: true }); } catch (e) { /* não focável */ }
 }
 
 /** @param {PointerEvent} e */
@@ -143,6 +173,7 @@ function aoSoltar(e) {
   m.relogio = setTimeout(function () {
     if (mira !== m) return;
     mira = null;
+    focaComoOClique(m);
     entregaOClique(m.alvo, x, y);
   }, SEM_CLIQUE_MS);
 }
@@ -164,9 +195,11 @@ function aoClicar(e) {
   const t = /** @type {Node} */ (e.target);
   // Chegou à mira (ou a algo dentro dela): segue como veio.
   if (!m.alvo.isConnected || t === m.alvo || m.alvo.contains(t)) return;
-  // Caiu em outro nó — a camada andou, ou a raiz da transição o pegou: vai à mira.
+  // Caiu em outro nó — a camada andou, ou a raiz da transição o pegou: vai à mira,
+  // com o foco que a descida de verdade teria dado.
   e.stopImmediatePropagation();
   e.preventDefault();
+  focaComoOClique(m);
   entregaOClique(m.alvo, e.clientX, e.clientY);
 }
 

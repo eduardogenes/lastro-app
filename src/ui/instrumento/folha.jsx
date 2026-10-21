@@ -26,12 +26,19 @@ import { miraDoDedo } from '../movimento.js';
 export const ChegadaDaFolha = createContext('sobe');
 
 /**
- * ONDE A FOLHA ESTÁ NA PILHA: 0 a de baixo, 1 a segunda, 2 a terceira. É o
+ * ONDE A FOLHA ESTÁ NA PILHA: 0 a de baixo, 1 a segunda, 2 a terceira. Dá o
  * NOME dela na transição de vista (peça 5 do motion): a folha que fecha DESCE
  * pela foto dela (`folha-N`), e o véu dela apaga junto (`veu-N`) —
  * `componentes.css`, "A TROCA DE CAMADA". Pela posição, e nunca pelo `nivel`:
  * a refeição e "editar refeição" têm os dois o nível 50, e dois nomes iguais na
  * mesma tela abortam a transição (docs/motion/02 T3).
+ *
+ * A posição vai no invólucro (`data-lugar`), e o NOME mora no CSS, não no
+ * `style` (ajustes finais do motion): na descida, a folha que FICA não tem foto
+ * própria — fotografá-la à parte, sem ela se mover, fazia o quadro da foto
+ * passar do tempo de um quadro, e fechar pelo × a folha de cima com outra
+ * embaixo andava dois quadros depois do toque (07 §12.3). Um nome no `style`
+ * venceria a regra que o tira.
  */
 export const LugarNaPilha = createContext(0);
 
@@ -268,12 +275,12 @@ export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao
   // (`miraSobODedo`).
   return (
     <div class={'ins-folha-w' + (chegada === 'troca' ? ' troca' : '')} style={`z-index:${nivel}`}
-         onPointerDown={chegada === 'troca' ? undefined : miraSobODedo}>
+         data-lugar={lugar} onPointerDown={chegada === 'troca' ? undefined : miraSobODedo}>
       {/* Tocar no véu fecha. O véu é irmão da folha, não pai: pai capturaria
           o toque que sobe de dentro dela. */}
-      <div class="ins-veu" onClick={aoFechar} style={'view-transition-name:veu-' + lugar} />
+      <div class="ins-veu" onClick={aoFechar} />
       <div class="ins-folha" role="dialog" aria-modal="true" aria-label={titulo}
-           ref={caixa} tabindex="-1" style={'view-transition-name:folha-' + lugar}>
+           ref={caixa} tabindex="-1">
         <div class="ins-folha-h">
           <div class="ins-folha-h-txt">
             {olho && <div class="ins-label">{olho}</div>}

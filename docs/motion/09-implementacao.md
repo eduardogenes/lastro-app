@@ -3675,3 +3675,562 @@ Antes desta peça: 1675 de 1675 (peça 7). A diferença, +23, são os casos novo
 (k) em `estilo.test.ts` (63 casos ali; a exceção da (b) dentro do caso que já
 existia), 7 em `lugar.test.js` e 15 em `enche.test.js`. No WebKit
 (`LASTRO_MOTOR=webkit`), um arquivo por vez: `enche` 15/15, `dedo` 9/9.
+
+---
+
+## Ajustes finais
+
+Implementados em 20/10, sobre `143cf27`, sem commit. Espec: o pedido em
+`_pedidos/peca-9-ajustes.md` (itens 1 a 3) e os dois itens que o coordenador
+somou no meio, da conferência da peça 8 (07 §14.3): 4, quem fica sob o dedo
+depois de "Comi tudo"; 5, a frase da abertura no WebKit. As regras da peça 8
+valem: motion é apresentação, o toque nunca espera, nada escuta fim de animação,
+"Reduzir movimento" em tudo.
+
+A máquina reiniciou no começo (o implementador tinha acabado de ler o pedido):
+o scratchpad foi refeito do zero, com `src/` limpo em `143cf27` (conferido por
+`git status`). Os scripts e as medidas estão em `scratchpad/p9/`; o servidor foi
+a porta 4729, com `/a22/` (uma cópia do `dist-antes` do revisor, o `a22b09d`),
+`/antes/` (o build de `143cf27`, `index-Cfat16yr.js`, guardado antes da primeira
+mudança) e `/depois/` (o `dist/` do repositório). As portas e os `shots/` do
+revisor não foram tocados (só copiei, para ler, o `dist-antes` dele).
+
+### Em uma página
+
+- **1. O × da folha de cima com outra embaixo.** O quadro longo não era da
+  thread principal: o trabalho nela no toque é de 2,4 a 4,2 ms (o desenho, a
+  devolução do foco e o `inert` juntos), igual com uma folha. Era o **quadro da
+  foto**: o navegador fotografava, cada uma numa imagem à parte, as duas folhas
+  e os dois véus inteiros, mais o cronômetro e o aviso, e o desenho desse quadro
+  (no trace do Chromium, `DirectRenderer::DrawFrame`) ia a **15,4–17,8 ms**,
+  contra 10,2–13,3 com uma folha só — passava do tempo de um quadro, e a descida
+  começava um quadro depois. Conserto: **na descida, só o que sai tem foto.** A
+  folha que fica, o véu dela e o que é do aparelho ficam na foto da página, que
+  na descida não anda. Agora o quadro da foto desenha em **10,9–11,4 ms**, e os
+  quadros da descida em 3,7–4,5 (eram 5,6–6,4). Quando a descida anda depois do
+  toque, mediana de seis intercalados, máquina livre: **`a22b09d` 20 · antes 47,5
+  · depois 41 ms** (+27,5 → +21: dentro do +25 do revisor). Com carga 2–7: 21 ·
+  65 · 53 — e com uma folha só, na mesma carga, 49 → 52: o × com duas folhas
+  passou a custar o mesmo que com uma. O que se grava e a ordem dos toques não
+  mudam; o que se vê é igual quadro a quadro (conferido nos quadros do
+  compositor, com o descanso contando e um aviso na tela).
+- **2. O foco do toque no meio da troca de aba.** A descida do segundo dedo cai
+  no `html` (as fotos) e tira o foco da aba de onde se saía; o clique que a porta
+  reenvia à aba é sintético, e não focava nada. Medido: com o ponteiro, o foco
+  acabava no `body` **nos dois motores** (o revisor viu no WebKit porque lá o
+  dedo dele é o ponteiro); com o dedo do Playwright, o Chromium chega sozinho à
+  aba. Agora o reenvio faz o que a descida de verdade faria, antes do clique: se o
+  toque tirou o foco de um nó, ele vai ao controle sob a mira, sem rolar e sem
+  anel. Nas quatro combinações (dois motores, dedo e ponteiro), o foco acaba na
+  aba Semana, como um clique sem troca nenhuma correndo deixa.
+- **3. A corrida do histórico é defeito do app, nos dois motores.** O
+  `history.go(-1)` com que um fecho pelo botão consome a entrada da camada é
+  assíncrono, e os dois motores fixam o DESTINO dele na hora do pedido. Se uma
+  camada nova abre e desenha antes de a volta andar, a entrada dela é empurrada,
+  a volta pousa ATRÁS dela, e o `popstate` disso — igual a um Voltar — fecha a
+  camada recém-aberta. No Chromium a volta anda em ~3 ms; no WebKit desta
+  máquina, em 100 a 160 ms — e o desenho da camada nova cabe nesse meio (a do
+  teste vermelho: o `pushState` aos +36 ms, o `popstate` aos +161). Num aparelho
+  lento, o dedo que abre outra camada logo depois de fechar uma alcança a mesma
+  janela. Conserto em `navegacao.js`: **nada se empurra enquanto a volta que o
+  app pediu está no ar**; o `popstate` dela é reconhecido pela profundidade em
+  que pousa, e só então o histórico alcança a pilha que a tela desenhou. O caso
+  do teste ficou determinístico nas duas ordens possíveis (forçadas) e na do
+  motor; com a ordem forçada, o build de antes reprova 3 de 3 nos dois motores, e
+  o depois passa. Sob carga (3,5 a 12,6), intercalados: no WebKit, a ordem do
+  motor caiu **10 de 10** no antes e passou 10 de 10 no depois; a forçada, 0 de
+  10 → 10 de 10 nos dois motores; o caso de `troca.test.js`, 5 de 5 no WebKit e 3
+  de 3 no Chromium com carga 11–14.
+- **4. "Comi tudo": o dedo continua sobre a linha.** O "Comi tudo" fica no painel
+  aberto da linha, 123 px abaixo da linha fechada, e a marca fecha o painel. Com o
+  topo da linha no lugar (peça 8), sob o dedo subia a "Ceia". Agora a rolagem vai
+  pelo ponto do toque: quando o dedo ficaria fora da linha, ela desce, de uma vez
+  e no mesmo desenho, só até ele cair dentro dela (a 11,5 px da borda de baixo).
+  No topo: a linha vai de 332 a **466** (+134; antes da peça 8, +157; na peça 8,
+  0), sob o dedo fica a própria linha, e o segundo toque a reabre — com o
+  "Desfazer", inócuo. Rolada: 300 → 434, igual. **O limite, dito:** "Metade" fica
+  56 px mais abaixo, e com a página no topo nenhuma rolagem leva a linha até o
+  dedo — ela desce o máximo que a página deixa (332 → 489, a rolagem em 0) e sob
+  o dedo fica a linha do "Lanche" (na peça 8 ficava o número da água). Com a
+  página rolada, chega (300 → 489, sob o dedo a própria linha). Sem dedo (o
+  teclado), o topo fica onde estava, como na peça 8. **Desvio dito:** "sem a linha
+  descer" e "o dedo sobre a linha" não cabem juntos quando o botão mora no painel
+  que fecha: o dedo está abaixo da linha fechada, e só ela descendo chega a ele.
+  Fiquei com o dedo sobre a linha e a descida mínima; os números estão aqui
+  para o coordenador decidir.
+- **5. A frase da abertura no WebKit: dá, pelo compositor.** No WebKit desta
+  máquina o boot tira a frase do DOM aos ~207 ms e o primeiro desenho do app só
+  sai aos ~855 (a fonte que falta no Linux prende a thread); a forma da peça 8
+  (duração zero e um atraso de 300 ms) dependia da thread para acender, e a tela
+  ficava no fundo vazio de ~190 a ~900 ms. Uma animação de opacidade que **ainda
+  corre** é levada pelo compositor sozinho nos dois motores; uma que **acaba**
+  com a thread presa, não (no WebKit o compositor volta ao apagado que a thread
+  tinha entregado; `steps()` ele nem acelera). A forma nova: a animação dura
+  **cem esperas** e o degrau mora a 1 % (rampa de 30 µs). Resultado nos quadros
+  do compositor: **WebKit, a frase na tela de 326–335 ms até o app (919–977)**,
+  em 3 de 3 aberturas (antes: nunca, 0 de 2); Chromium sem freio, 4× e 6×: a
+  abertura termina antes dos 300 ms (app a 74–92, 184–192, 269–277 ms) e a frase
+  **nunca** aparece, como na peça 8; Chromium 12×: a frase aparece aos 493–507 e
+  o app aos 544–568 (antes: nunca, só o fundo até 552–562). Sob "Reduzir", igual.
+  O "menor mal" não precisou ser escolhido: o caminho serve nos dois motores.
+- **Testes.** 7 casos novos — 1 em `troca.test.js`, 1 em `navegacao.test.js`, 1
+  em `aba.test.js`, 4 em `enche.test.js` — e 7 reescritos (a corrida de
+  `troca.test.js`, os do "Comi tudo" e os da frase em `enche.test.js`), mais as
+  guardas (b), (h) e (k) ajustadas. Plantei 14 violações e as 14 ficaram
+  vermelhas; os 2 controles, verdes; todo arquivo voltou ao limpo, conferido por
+  hash. Contra o build de `143cf27`, os casos novos e reescritos ficam vermelhos,
+  menos o do teclado, que cobra o que já era assim.
+- **`tipos` limpo, `build` ok, `vitest` 1705 de 1705 duas vezes seguidas** (as
+  duas começando com carga ~9). No WebKit, um arquivo de motor por vez: `troca`
+  12/12, `aba` 8/8, `enche` 19/19, `sobe` 7/7, `descanso` 5/5, `dedo` 9/9,
+  `acende` 6/6.
+
+### O que mudou, arquivo por arquivo
+
+| arquivo | o que mudou |
+|---|---|
+| `src/ui/navegacao.js` | **Item 3.** `voltaPendente` (a profundidade em que a volta que o app pediu vai pousar), `VOLTA_PERDIDA_MS` (3 s) e `contaCamadas` (posto por `liga`). `sincronizaHistorico` não empurra nem volta enquanto há volta no ar; quando ele volta, marca `voltaPendente` e arma o prazo. O `popstate` que pousa na profundidade da volta é reconhecido como dela: nada fecha, e o histórico alcança a pilha desenhada (`sincronizaHistorico(p.camadas())`). Se a volta nunca vier, passado o prazo o app relê onde o histórico está e alcança dali. `_reinicia` zera a marca. Comentários do cabeçalho ("uma marca só, e ela não conta eventos"). |
+| `src/ui/movimento.js` | **Item 2.** A mira guarda o que estava focado quando o dedo desceu (`foco`); `focaComoOClique(m)`, antes de todo clique que a porta entrega (o reenviado e o que não veio): se o toque tirou o foco de um nó, ele vai ao controle sob a mira (ou ao ancestral focável dela, `FOCAVEL`), sem rolar; se não havia foco, nada. Comentários. |
+| `src/ui/instrumento/folha.jsx` | **Item 1.** O invólucro diz a posição (`data-lugar={lugar}`); o véu e a caixa deixaram de ter `view-transition-name` no `style` (um nome no `style` venceria a regra da descida). Comentário de `LugarNaPilha`. |
+| `src/componentes.css` | **Item 1.** Os nomes da folha pela posição, no CSS (`.ins-folha-w[data-lugar="0…3"] > .ins-veu`/`.ins-folha`); a regra **"NA DESCIDA, SÓ O QUE SAI TEM FOTO"**: com `html[data-nav="fica"]`, a folha sem `data-sai`, o véu dela, `#timer`, `#toast`, `.ins-faixa` e `.ng-faixa` ficam sem nome (`none`). **Item 5.** `#app > .msg { animation-name: ins-espera; animation-duration: calc(var(--ins-espera-abertura) * 100); }` (era o nome, o atraso e `backwards`), e o comentário do porquê. |
+| `src/base.css` | **Item 5.** `@keyframes ins-espera`: `0%, 1% { opacity: 0 }` e `1.001%, to { opacity: 1 }` (era `from, to { opacity: 0 }`). |
+| `src/tokens.css` | O comentário de `--ins-espera-abertura` (a frase acende pelo compositor). |
+| `src/main.jsx` | **Item 1.** `marcaAsFolhasQueSaem(pedidas)`, chamado no `render()` logo antes de `trocaDeCamada`: marca `data-sai` no invólucro de toda folha cuja posição passa do que `view` pede, e tira a marca das outras. **Item 4.** O ouvinte de clique de captura (o do foco devolvido) guarda também a altura do toque (`y`, só quando `detail ≥ 1`); `pontoDoToque(dentro)`; `marcaLinhaDaComida` passa o dedo a `devolveALinhaDaComida`, que, depois de pôr o topo da linha no lugar, rola o que falta para o dedo cair dentro dela (a `folga` de até 12 px da borda), só quando ele ficaria fora. Comentários. |
+| `DESIGN.md` | "O dedo não perde o lugar" (o dedo sobre a linha do "Comi tudo", e o limite do "Metade" no topo); "O toque chega ao que o dedo mirou" (o foco do clique reenviado); "A troca de camada mora num ponto só" (na descida, só o que sai tem foto; o histórico não empurra com a volta no ar); a linha da tabela "A folha e o painel de apagar descem"; "Abrindo o registro…" (o degrau pelo compositor); a guarda (h) e a (k). |
+| `tests/dominio/estilo.test.ts` | **(b)** a exceção da espera na forma nova (`VEZES_DA_ESPERA`, `DECL_DA_ESPERA`: o nome e a duração de cem esperas); **(h)** os nomes das folhas pela posição e a regra da descida na lista dos nomes (`SEM_FOTO_NA_DESCIDA`), uma regra só com `none`, o casco marcando antes de pedir a troca e o critério da marca, e a folha sem nome no `style` (com `data-lugar` no invólucro); **(k)** a frase: os quadros com o degrau a 1 % e rampa ≤ 0,001 %, a regra sem atraso. |
+| `tests/fluxo/troca.test.js` | Caso novo *na descida só o que sai tem foto* (os nomes que o navegador vê na foto velha e na nova: duas folhas, a última, o painel sobre uma folha, e a tela cheia que chega, em que o cronômetro e o aviso continuam com nome). A corrida do histórico, no caso do Voltar, nas três ordens: o `popstate` antes do desenho da nova, o desenho da nova antes da volta (forçadas) e a do motor — cada uma também fechada pelo Voltar do sistema depois. |
+| `tests/fluxo/navegacao.test.js` | Caso novo de árvore: fecho pelo botão e abertura no mesmo tique — a folha nova fica, com uma entrada só, e o Voltar seguinte a fecha. |
+| `tests/fluxo/aba.test.js` | Caso novo: o foco do toque no meio da troca de aba é o de um clique de verdade (a régua: o mesmo motor, sem troca correndo), com o dedo e com o ponteiro, sem anel. |
+| `tests/fluxo/enche.test.js` | Os casos do "Comi tudo" reescritos para o dedo sobre a linha (no topo, rolada, "Metade" no topo — o limite — e "Metade" rolada), com o segundo toque no mesmo ponto; caso novo pelo teclado (sem dedo, o topo fica); o dos quadros do compositor (a linha vai ao dedo de uma vez, nenhum quadro no meio). A frase: os casos de antes na forma nova, e dois novos — a thread presa por 1,2 s, lida nos quadros do compositor, com e sem "Reduzir". |
+
+### As decisões, com o porquê
+
+1. **Item 1: o que o quadro longo fazia, medido, e não suposto.** As três
+   suspeitas do pedido moram na thread principal, e lá o toque gasta pouco: no
+   trace do Chromium o desenho dentro da transição (`ViewTransition::ProcessCurrentState`,
+   com o `render()`, o `inert` recalculado pela folha que sai e o foco devolvido
+   ao "···" da folha de baixo) leva 3,7–3,8 ms, e cada quadro da thread menos de
+   3. O que passava do quadro era o **desenho do quadro da foto** no compositor:
+   a foto velha de cada elemento com nome é uma imagem própria, e com duas folhas
+   eram cinco grandes (a página, duas folhas, dois véus da tela inteira) e mais
+   duas pequenas (o cronômetro, mesmo fora de cena, e o aviso). Prova pelo
+   contrário: tirar o nome só da folha de baixo e do véu dela (num estilo
+   injetado, antes de mexer no app) já levava a descida de 47,5 a ~41 ms e o
+   desenho da foto a 11 ms.
+2. **Na descida, só o que sai tem foto — e o que é do aparelho também fica na
+   página.** Com a página parada, a foto dela é a viva e mostra tudo no lugar e
+   na ordem de sempre. Tirar o nome só das folhas que ficam não bastava: o
+   cronômetro, com foto própria, passaria a ser desenhado POR CIMA da folha que
+   ficou e do véu dela (as fotos com nome vão por cima da página), e com um
+   descanso contando ele acenderia sobre o véu por 350 ms. Sem nome, ele fica
+   sob o véu, como na página. A regra vale só para `fica`; nas trocas que andam
+   (tela cheia, modo, aba) tudo continua como era.
+3. **O nome da folha mudou do `style` para o CSS.** Um nome no `style` vence
+   qualquer regra sem `!important`, e a guarda não deixa `!important` fora da
+   camada do toque. O invólucro diz a posição (`data-lugar`), e quatro pares de
+   regras dão os nomes, como as quatro posições que a descida já conhecia.
+4. **Quem sai é marcado pelo casco, antes da foto.** O CSS não sabe quais folhas
+   vão sair: o `render()` sabe (`camadasAbertas(view)`), e a foto só é tirada no
+   quadro seguinte, então a marca (`data-sai`) entra a tempo. A pilha só fecha
+   por cima (`pop`, `fechaTudo`), e por isso "sai" é "a posição passa do que a
+   pilha pede". O nó que sai deixa o DOM no desenho e leva a marca; a de uma
+   folha que acabou ficando (o `view` mudou de novo antes do desenho) é tirada no
+   `render()` seguinte. O Preact não mexe num atributo que não é dele.
+5. **Item 2: o foco que a descida de verdade daria, e só quando ela daria.** Um
+   clique de verdade foca na descida, não no clique. O reenvio não pode saber a
+   regra de cada motor (o Chromium e o WebKit desta máquina focam o botão; o
+   Safari do iPhone não), mas o próprio toque diz: se havia um nó focado e ele
+   saiu para o `body`, quem tirou foi a descida que caiu na raiz, e o foco vai
+   ao controle sob a mira — o mesmo que a descida nele teria feito. Se não havia
+   foco (o Safari, que não foca no toque), não se inventa um. O foco entra antes
+   do clique, como na descida, e sem rolar; o motor não acende o anel, porque a
+   última coisa foi um toque. Cobre os dois caminhos da porta que entregam o
+   clique: o reenviado e o que não veio.
+6. **Item 3: defeito do app, provado com as duas ordens forçadas.** O teste da
+   peça 5 era determinístico só numa ordem — o `popstate` antes do desenho da
+   nova. Na outra — o desenho da nova antes da volta andar —, ele caía sempre nos
+   dois motores (forçado: 0 de 3 no Chromium, 0 de 3 no WebKit, no build de
+   antes), porque a volta, de destino fixado, pousa atrás da entrada nova. No
+   Chromium essa ordem quase nunca acontece sozinha (a volta anda em ~3 ms); no
+   WebKit desta máquina ela leva 100–160 ms, e é por isso que o caso caía às
+   vezes lá. Num aparelho lento o toque que abre a camada seguinte cabe na
+   janela. Não é do teste: o teste só a alcançava sem querer.
+7. **O conserto não conta eventos.** O cabeçalho de `navegacao.js` explica por
+   que o mecanismo não conta `popstate` (o `history.go(-n)` não promete um por
+   passo). A marca nova é uma profundidade — onde a volta do app vai pousar —, e
+   ela faz duas coisas: (a) nada se empurra enquanto ela está no ar (senão a volta
+   pula a entrada nova; num motor que resolvesse o destino na hora de andar,
+   como o jsdom, ficaria uma entrada sobrando e o Voltar seguinte não faria nada);
+   (b) o `popstate` que pousa nela é dela, e não fecha nada. Um `popstate` em
+   outra profundidade (o usuário voltando junto) segue a regra de sempre. O prazo
+   de 3 s é só a rede: se um motor perder a volta, o app relê o histórico e
+   alcança dali, em vez de nunca mais empurrar (o Voltar sairia do app).
+8. **Item 4: o dedo sobre a linha, e a descida mínima — e o desvio, dito.** O
+   pedido diz "o dedo continua sobre a linha recém-marcada, sem ela descer". As
+   duas coisas não cabem juntas quando o botão mora no painel que fecha: o dedo
+   está 123 px abaixo da linha fechada ("Metade", 179), e só ela descendo chega a
+   ele. Segui o exemplo do pedido — "role pelo ponto do toque, e só quando o
+   painel fechado deixaria outra linha sob o dedo" —: primeiro o topo volta ao
+   lugar (peça 8, o defeito 3 continua consertado: nada a empurra), e só se o
+   dedo ficaria fora da linha a página rola o que falta para ele cair dentro
+   dela, a 12 px da borda de baixo (um quarto da linha; o raio do dedo). É a
+   menor descida que põe a linha sob o dedo: 134 px no "Comi tudo" (eram 157
+   antes da peça 8 e 0 na peça 8). Com a página no topo e o "Metade", a página
+   não tem como rolar para cima: a linha desce o máximo (157, a rolagem em 0) e o
+   dedo fica no "Lanche" — melhor que o número da água da peça 8, pior que o
+   pedido; dito. O "Desfazer" reabre o painel no lugar, o dedo continua nele, e
+   nada muda. Sem dedo (teclado, script), o topo fica onde estava.
+9. **O ponto do toque vem do ouvinte que já existia.** O ouvinte de clique de
+   captura que guarda o último controle tocado (o do foco devolvido, peça 5)
+   guarda também a altura do toque, só para clique de ponteiro (`detail ≥ 1`); o
+   do teclado e o do script não têm ponto. A marca só o usa se foi há menos de
+   1 s e dentro da linha marcada. Não grava nada, não muda a ordem de nada.
+10. **Item 5: o compositor acende a frase, e por isso a animação precisa estar
+    correndo.** A sonda numa página mínima, com a thread presa por 1,2 s logo
+    depois dos primeiros quadros, mostrou nos dois motores: uma animação de
+    opacidade sem fim e uma de 30 s com o degrau a 1 % acendem no tempo certo
+    com a thread presa; as que acabam (300 ms, com o degrau no fim) acendem no
+    Chromium e NÃO no WebKit (o compositor volta ao último valor que a thread
+    entregou, o apagado — a de 600 ms com o degrau no meio acende aos 331 e apaga
+    aos 631, ainda presa); com `steps()`, o WebKit também só acende ao soltar. E
+    a forma da peça 8 (duração zero e atraso), no app, não acendeu em nenhum dos
+    dois com a thread presa (WebKit 1×, Chromium 12× e 20×). Daí a
+    forma: cem esperas de duração, sem atraso, o degrau a 1 % — 300 ms — com uma
+    rampa de 0,001 % (30 µs, menos que um quadro: nada esmaece). Ela corre por
+    30 s, mais do que qualquer boot; quando o app monta, a frase sai do DOM e a
+    animação vai com ela. A curva é a de omissão e não importa (cada trecho é
+    constante, menos o degrau), e por isso não há curva escrita, que a guarda (a)
+    recusaria.
+11. **No Chromium a espera conta do primeiro quadro.** O compositor do Chromium
+    começa o relógio da animação no primeiro quadro que a leva; o do WebKit, no
+    começo do documento. Com a thread presa desde cedo (12× e 20× de freio), o
+    primeiro quadro sai a ~180–300 ms, e a frase acende ~300 ms depois dele
+    (493–507 e 618–629 ms). É a espera que o dono quer — 300 ms de fundo e então
+    a frase —, contada da primeira coisa que a tela mostrou.
+
+### Os números, antes e depois
+
+Chromium 1234 e WebKit 26.5 (Playwright), 414 × 896 a ×2. "a22" é o `a22b09d`
+(o antes de tudo, cópia do `dist-antes` do revisor); "antes" é `143cf27`;
+"depois", o final. Servidos da porta 4729, desligada no fim. Scripts em
+`scratchpad/p9/` (`fechax.mjs`, `descida-quadros.mjs`, `foco.mjs`,
+`corrida.mjs`, `comitudo.mjs`, `abertura.mjs`, `sonda-compositor.mjs`; as
+repetições em `repete-*.sh` e `repete-*.txt`; a carga, `carga.mjs`, N laços
+ocupados). Nenhum erro de página.
+
+**Item 1 — o × da folha de cima, com outra embaixo** (o fluxo 06 `fecha-x`: a
+refeição aberta pela linha, "···" empilha "editar refeição", o dedo do CDP no ×,
+pousado 100 ms). "Anda" é o primeiro quadro do compositor depois do clique cuja
+mudança vai de borda a borda e tem 300 px de altura (o `andaMs` do revisor).
+
+| medida | antes | depois |
+|---|---|---|
+| a thread principal no toque (trace): o desenho dentro da transição | 3,7–3,8 ms (o `render()`, o `inert`, o foco) | igual |
+| o desenho do quadro da foto (`DirectRenderer::DrawFrame`, trace) | **15,4–17,8 ms** (com uma folha só: 10,2–13,3) | **10,9–11,4 ms** |
+| o desenho de cada quadro da descida | 5,6–6,4 ms | 3,7–4,5 ms |
+| o que tem foto própria na foto velha | página, `folha-0`, `veu-0`, `folha-1`, `veu-1`, `cronometro`, `aviso` | página, `folha-1`, `veu-1` |
+| quando a descida anda, máquina livre (carga 0,6–1,9), mediana de 6 intercalados | a22 **20** · antes **47,5** (46–52) | **41** (39–50): +21 do a22 |
+| … com 6 laços ocupados (carga 1,5–6,8), mediana de 6 | a22 21 · antes **65** (62–70) | **53** (50–62) |
+| … o × com UMA folha, na mesma carga, mediana de 5 | a22 21 · antes 49 (47–52) | 52 (46–54) |
+| o que se vê (os quadros do compositor a 60, 150 e 260 ms, com o descanso contando e um aviso) | a de cima desce, o véu dela apaga, a de baixo parada | igual, imagem por imagem |
+
+**Item 2 — o foco depois do toque no meio da troca de aba** (Agora → Corpo e,
+com as fotos ~110 ms andadas, Semana; 2 rodadas por linha):
+
+| | antes | depois |
+|---|---|---|
+| um clique de verdade, sem troca correndo (a régua) | na aba tocada, nos dois motores, com dedo e ponteiro | igual |
+| Chromium, dedo | aba Semana | aba Semana |
+| Chromium, ponteiro | **`body`** | **aba Semana**, sem anel |
+| WebKit, dedo | aba Semana | aba Semana |
+| WebKit, ponteiro (o "dedo" do revisor no WebKit) | **`body`** | **aba Semana**, sem anel |
+
+**Item 3 — a corrida do histórico** (os Ajustes abertos sobre o Corpo; fecha e,
+na microtarefa logo depois do desenho do fecho, abre a Evolução — o caso de
+`troca.test.js`):
+
+| | antes | depois |
+|---|---|---|
+| a ordem dos eventos no vermelho do WebKit (antes) | `go(-1)` +0 · `pushState(1)` +36 ms (o desenho da Evolução) · `popstate(0)` +161 ms — a volta pousou atrás da entrada nova, e a Evolução fechou | `go(-1)` · `popstate(0)` · `pushState(1)` (o push espera a volta) |
+| a volta do app (do `go` ao `popstate`) | Chromium ~3 ms · WebKit 100–160 ms | igual |
+| a ordem forçada (o desenho da nova antes da volta), máquina livre | **0 de 3** no Chromium, **0 de 3** no WebKit | **3 de 3**, **3 de 3** |
+| a ordem do motor, WebKit, máquina livre | 3 de 4 | 4 de 4 |
+
+**Item 4 — o que fica sob o dedo depois da marca pela linha** (13h10, a linha
+do almoço aberta; o dedo no centro do botão; nos dois motores, os mesmos
+números):
+
+| | peça 8 (antes) | depois |
+|---|---|---|
+| "Comi tudo", página no topo: a linha · a rolagem | 332 → 332 · 0 → 157 | 332 → **466** · 0 → 23 |
+| … sob o dedo (y 501) · o segundo toque no mesmo ponto | a linha da **Ceia** · abre a Ceia | a **própria linha** · reabre ela (o "Desfazer") |
+| "Comi tudo", página rolada (a linha em 300) | 300 → 300 · Ceia sob o dedo | 300 → 434 · a própria linha |
+| "Metade", página no topo (o dedo em y 557) | 332 → 332 · o número da **água** | 332 → 489 (o máximo: rolagem 0) · a linha do **Lanche** |
+| "Metade", página rolada (o dedo em y 525) | 300 → 300 · o número da água | 300 → 489 (rolagem 0) · a própria linha |
+| "Comi tudo" pelo teclado (sem dedo) | a linha no lugar | igual |
+| a leitura de volta, no topo | y −33 (33 px cortados em cima) | inteira, ou 23 px cortados |
+| a linha nos quadros do compositor | parada | do lugar de antes ao de depois num quadro, sem quadro no meio |
+
+(Antes da peça 8, sem conserto nenhum, a linha descia 157 com a página no topo e
+o dedo ficava sobre ela no "Comi tudo"; no "Metade", no Lanche.)
+
+**Item 5 — a frase "Abrindo o registro…" na tela** (os quadros do compositor,
+do começo da navegação; contexto novo a cada abertura, as fontes do Google
+bloqueadas; 2 ou 3 aberturas por linha):
+
+| | antes (a forma da peça 8) | depois |
+|---|---|---|
+| WebKit 1×: a frase sai do DOM · o primeiro desenho do app | ~207–211 ms · ~855–858 (FCP) | igual |
+| WebKit 1×: a frase na tela | **nunca** (fundo vazio de ~190 a ~900 ms) | de **326–335 ms** até o app (919–977), 3 de 3 |
+| Chromium 1×, 4×, 6× de freio: o app na tela | 66–92 · 182–196 · 269–290 ms | igual |
+| … a frase na tela | nunca (a abertura é rápida) | nunca |
+| Chromium 12×: a frase · o app | nunca · 552–562 | **493–507** · 544–568 |
+| Chromium 20×: a frase · o app | nunca · 975–999 | 618–629 · 938–981 (na variante de sonda, a mesma forma) |
+
+A sonda (`sonda-compositor.mjs`: uma página mínima, a thread presa de ~115 a
+~1315 ms; quando cada quadrado acende nos quadros do compositor):
+
+| a forma da animação | Chromium | WebKit |
+|---|---|---|
+| 300 ms constante em 0, e acaba (o valor volta ao da página) | só ao soltar | só ao soltar |
+| 300 ms, o degrau no fim, `forwards` | 308 ms | só ao soltar |
+| atraso de 300 ms e 1 ms de rampa, `backwards` | ~360 ms | só ao soltar |
+| `steps(1, end)` em 300 ms | 330 ms | só ao soltar |
+| `steps(2, jump-none)` em 600 ms | 360 ms | só ao soltar |
+| 600 ms, o degrau no meio | 311 ms, e fica | 331 ms, e **apaga** aos 631, ainda presa |
+| **30 s, o degrau a 1 %** (a forma nova) | **357 ms**, e fica | **317 ms**, e fica |
+| sem fim, de 0,05 a 1 e de volta (controle) | anda durante a trava | anda durante a trava |
+| `transform` sem fim (controle) | anda durante a trava | anda durante a trava |
+
+**A corrida sob carga** (`repete-corrida.sh`: dois blocos de cinco rodadas por
+motor, build e ordem, intercalados, com 6 laços ocupados e a máquina com carga
+3,5 a 12,6 — outro processo também rodava):
+
+| | antes | depois |
+|---|---|---|
+| Chromium, a ordem do motor | 10 de 10 (a volta anda em ~3 ms: a janela quase não abre) | 10 de 10 |
+| Chromium, a ordem forçada | **0 de 10** | **10 de 10** |
+| WebKit, a ordem do motor | **0 de 10** (com carga a janela abre sempre) | **10 de 10** |
+| WebKit, a ordem forçada | **0 de 10** | **10 de 10** |
+| o caso de `troca.test.js` (as três ordens), carga 11–14 | — | WebKit 5 de 5 · Chromium 3 de 3 |
+
+### Os testes, e como provei que reprovam
+
+**`tests/fluxo/troca.test.js`** (motor; `LASTRO_MOTOR=webkit` os mesmos no
+WebKit — 12 de 12 nos dois):
+
+1. *na descida só o que sai tem foto: a folha que fica, o véu dela, o cronômetro
+   e o aviso ficam na página* (novo, item 1) — com um descanso contando e um
+   aviso na tela, lê o `view-transition-name` que o motor calcula para cada
+   folha, véu, painel, `#timer` e `#toast` na hora da foto velha (logo antes do
+   desenho) e na da nova (logo depois): fechando a de cima de duas, só `folha-1`
+   e `veu-1` na velha, ninguém na nova, e só elas se movem; fechando a última,
+   ela tem nome; o painel de apagar sobre uma folha, só o painel; e numa troca
+   que anda (os Ajustes chegando), o cronômetro e o aviso com os nomes de
+   sempre.
+2. *o Voltar do sistema faz o mesmo reverso…* (a corrida reescrita, item 3) —
+   as três ordens: o `popstate` antes do desenho da nova (o desenho dela espera
+   o `popstate`), o desenho da nova antes da volta (ela desenha sem transição, e o
+   `pushState` entra antes de a volta andar) e a do motor; em cada uma a Evolução
+   continua aberta com a entrada dela, e o Voltar do sistema a fecha e devolve o
+   histórico à base.
+
+**`tests/fluxo/navegacao.test.js`** (árvore, novo, item 3): *a camada aberta logo
+depois de um fecho pelo botão continua aberta* — fecho e abertura no mesmo tique
+(o jsdom faz a volta no tique seguinte): a folha nova fica, uma entrada só, e o
+Voltar seguinte a fecha (não sai do app).
+
+**`tests/fluxo/aba.test.js`** (motor, novo, item 2; 8 de 8 nos dois): *o toque no
+meio da troca deixa o foco onde um clique de verdade deixaria* — a régua é o
+próprio motor: um clique sem troca correndo; depois o fluxo 14 com o dedo e com
+o ponteiro, com as fotos andando quando o segundo dedo desce. O foco tem de ser o
+da régua (a aba tocada), sem anel; e a régua tem de distinguir (se o motor não
+focasse o botão, o caso diria).
+
+**`tests/fluxo/enche.test.js`** (motor; 19 de 19 nos dois): os casos do "Comi
+tudo" reescritos (item 4) — no topo, rolada, "Metade" no topo e "Metade" rolada:
+o botão abaixo da linha fechada (a pré-condição), a leitura de volta nascendo,
+a linha nunca acima de onde estava, o dedo sobre a própria linha e ela não além
+dele (a 12 px da borda), o segundo toque no mesmo ponto reabrindo a mesma linha
+— e, no "Metade" no topo, a descida máxima (rolagem 0) sem passar do dedo; *pelo
+teclado (sem dedo)* (novo): o topo fica; *os quadros do compositor* reescrito:
+cada quadro mostra a linha no lugar de antes ou no de depois, e uma vez ido não
+volta — um quadro com ela empurrada ou no meio não casa com nenhum. A frase
+(item 5): os dois casos de antes na forma nova (cem esperas, sem atraso, o degrau
+de no máximo um quadro, apagada antes, acesa depois), e dois novos, *acende aos
+300 ms mesmo com a thread presa, nos quadros do compositor* (com e sem
+"Reduzir"): o script do app chega aos 2 s, a thread fica presa por 1,2 s desde os
+120 ms (depois de um quadro desenhado; senão a abertura se repete, até três
+vezes), e nos quadros do compositor a frase acende depois da espera, antes de a
+thread soltar, e fica acesa.
+
+**`tests/dominio/estilo.test.ts`** (63 casos, os mesmos): **(b)** a exceção da
+espera na forma nova; **(h)** os nomes das folhas pela posição e a regra da
+descida, uma só, com `none`; o casco marcando antes de pedir a troca, e o
+critério; a folha sem nome no `style`; **(k)** a frase: cem esperas, os quadros
+com o degrau a 1 %, a rampa de no máximo 0,001 %.
+
+**Plantio** (`scratchpad/p9/planta.mjs`, como o das peças 5 e 6: guarda cópias
+limpas em `limpo/`, aplica a violação, reconstrói o `dist/`, roda só os casos que
+a cobram — cada arquivo de motor sozinho, o WebKit um por vez —, registra em
+`plantio.json` e devolve o arquivo num `finally`, e também em SIGINT, SIGTERM,
+SIGHUP, exceção e saída; confere por hash depois de cada passo e no fim, e
+reconstrói o `dist/` do limpo):
+
+| # | a violação plantada | quem ficou vermelho | o arquivo voltou ao limpo |
+|---|---|---|---|
+| P1 | o histórico empurra entrada com a volta do app no ar (o defeito) | a camada aberta logo depois de um fecho pelo botão continua aberta (árvore) | sim |
+| P2 | o popstate da volta do app não é reconhecido como dela (a camada nova fica sem entrada) | a camada aberta logo depois de um fecho pelo botão continua aberta (árvore) · o Voltar do sistema faz o mesmo reverso; quando o navegador já animou a volta, o app não anima de novo (Chromium) | sim |
+| P3 | o clique reenviado não foca (o defeito) | o toque no meio da troca deixa o foco onde um clique de verdade deixaria (Chromium) · o toque no meio da troca deixa o foco onde um clique de verdade deixaria (WebKit) | sim |
+| P4 | o reenvio foca o controle, mas pela tela inteira: a mira vira o body | o toque no meio da troca deixa o foco onde um clique de verdade deixaria (Chromium) | sim |
+| P5 | na descida, o que fica continua com foto (sem a regra do "fica") | (h) a troca de camada move só as fotos (guarda) | sim |
+| P5b | na descida, a regra do "fica" sem a declaração (tudo continua com foto) | (h) a troca de camada move só as fotos (guarda) · na descida só o que sai tem foto (Chromium) · na descida só o que sai tem foto (WebKit) | sim |
+| P6 | o casco não marca a folha que sai (ela perde a foto e não desce) | (h) a troca de camada move só as fotos (guarda) · a folha e o painel de apagar descem em 350 ms sem quique, o véu apaga junto, e a folha de baixo de duas fica (Chromium) · na descida só o que sai tem foto (Chromium) | sim |
+| P7 | a folha volta a se nomear no style (a regra da descida não vence) | (h) a troca de camada move só as fotos (guarda) · na descida só o que sai tem foto (Chromium) | sim |
+| P8 | "Comi tudo": a rolagem ignora o dedo (o defeito: a Ceia sob o dedo) | "Comi tudo" pela linha, com a página no topo (Chromium) · "Comi tudo" pela linha, com a página rolada (Chromium) · "Metade" pela linha, "Metade", no topo (Chromium) · "Metade" pela linha, "Metade", com a página rolada (Chromium) · "Comi tudo" no topo (Chromium) · "Comi tudo" pela linha, com a página no topo (WebKit) · "Comi tudo" pela linha, com a página rolada (WebKit) · "Metade" pela linha, "Metade", no topo (WebKit) · "Metade" pela linha, "Metade", com a página rolada (WebKit) · "Comi tudo" no topo (WebKit) | sim |
+| P9 | "Comi tudo": a linha desce além do dedo (o dedo no meio dela, e mais 10) | "Comi tudo" pela linha, com a página no topo (Chromium) · "Comi tudo" pela linha, com a página rolada (Chromium) · "Metade" pela linha, "Metade", com a página rolada (Chromium) | sim |
+| P10 | "Comi tudo": o clique do teclado conta como dedo (no ponto 0) | "Comi tudo" pelo teclado (sem dedo) (Chromium) | sim |
+| P11 | a frase volta à forma da peça 8 (duração zero e o atraso: só a thread acende) | (b) reduzir movimento falha fechado (guarda) · (k) o resto do lugar (guarda) · "Abrindo o registro…" só aparece se a abertura demorar, de uma vez (Chromium) · "Abrindo o registro…" só aparece se a abertura demorar, de uma vez, igual com "Reduzir movimento" (Chromium) · "Abrindo o registro…" acende aos 300 ms mesmo com a thread presa, nos quadros do compositor (Chromium) · "Abrindo o registro…" acende aos 300 ms mesmo com a thread presa, nos quadros do compositor, igual com "Reduzir movimento" (Chromium) · "Abrindo o registro…" acende aos 300 ms mesmo com a thread presa, nos quadros do compositor (WebKit) · "Abrindo o registro…" acende aos 300 ms mesmo com a thread presa, nos quadros do compositor, igual com "Reduzir movimento" (WebKit) | sim |
+| P12 | a frase dura só duas esperas (a animação acaba com a thread presa) | (k) o resto do lugar (guarda) · "Abrindo o registro…" acende aos 300 ms mesmo com a thread presa, nos quadros do compositor (WebKit) · "Abrindo o registro…" acende aos 300 ms mesmo com a thread presa, nos quadros do compositor, igual com "Reduzir movimento" (WebKit) | sim |
+| P13 | a frase esmaece (rampa de 1 % a 10 %) em vez do degrau | (k) o resto do lugar (guarda) · "Abrindo o registro…" só aparece se a abertura demorar, de uma vez (Chromium) · "Abrindo o registro…" só aparece se a abertura demorar, de uma vez, igual com "Reduzir movimento" (Chromium) | sim |
+| V1 | controle: a folga do dedo em 10 px, e não 12 (permitido) | nenhum (verde, como devia) | sim |
+| V2 | controle: o prazo da volta perdida em 2 s, e não 3 (permitido) | nenhum (verde, como devia) | sim |
+
+Os 14 ficaram vermelhos; os controles V1 e V2, verdes; todo arquivo voltou ao
+limpo, conferido por hash depois de cada passo e no fim, e o `dist/` foi
+reconstruído do limpo. Três notas:
+
+- **O P1, nos motores, não reprova o caso de `troca.test.js`.** Sem o adiamento,
+  o `pushState` entra antes de a volta andar, mas o `popstate` dela, reconhecido
+  pela profundidade, empurra de novo a entrada que faltou, e a Evolução fica. No
+  jsdom, que resolve o destino da volta na hora de andar, a volta pousa na
+  entrada velha e sobra uma entrada (o Voltar seguinte não faz nada) — o caso de
+  árvore pega. As duas metades do conserto são precisas: uma para cada jeito de
+  motor.
+- **O P5 trocava só o último seletor da regra da descida** (`.ng-faixa`), e só a
+  guarda o pegou; o **P5b** tira a declaração da regra inteira, e os casos de
+  motor dos dois motores reprovam.
+- **O P12** (a animação de duas esperas, que acaba com a thread presa) reprova só
+  no WebKit, como a sonda dizia: o Chromium segura o último valor depois do fim;
+  o WebKit volta ao apagado.
+
+**Contra o build de antes** (`143cf27`, o `dist/` de antes no lugar do de agora,
+e de volta no fim): ficam vermelhos o de árvore da corrida; no Chromium e no
+WebKit, os dois de `troca.test.js` (a descida e a corrida), o do foco em
+`aba.test.js`, e 9 dos 10 de `enche.test.js` filtrados — os quatro do dedo, o dos
+quadros, os dois da forma da frase e os dois da thread presa. O que passa é o
+*pelo teclado*, que cobra o que a peça 8 já fazia e tem de continuar.
+
+### O que ficou de fora, e por quê
+
+- **Nada foi visto num iPhone de verdade.** O quadro da foto no A13 (Core
+  Animation, com GPU) deve custar bem menos que os 11–18 ms do desenho em
+  software daqui; o Safari do iPhone não foca botão no toque, e por isso o item
+  2 lá não muda nada (o reenvio não inventa foco); a abertura lá tende a ser mais
+  curta, e o Core Animation leva animações finitas até o fim sem a thread — a
+  forma nova acende do mesmo jeito.
+- **Sob carga, toda descida daqui ainda passa do +25.** Com 6 laços ocupados
+  (carga 3–7), o × com uma folha só anda a ~52 ms e com duas também (era 65); o
+  `a22b09d`, seco, a 21. É o desenho da foto em software disputando a CPU, e vale
+  para a descida de uma folha, que o revisor não reprovou (não havia o passo). O
+  que este ajuste tirou foi o que era da segunda folha. Livre, +21.
+- **O "Metade" com a página no topo** (item 4): nenhuma rolagem leva a linha até
+  o dedo; sob ele fica o "Lanche". Só sem o painel fechar — mudar o que a tela
+  promete — daria.
+- **O Voltar do sistema no meio de uma volta do app** (o usuário aperta Voltar
+  logo depois de fechar pelo botão): os dois `popstate` chegam e cada um é
+  tratado pela regra dele — o da volta do app não fecha nada, o do usuário fecha
+  uma camada. Se um motor os fundir num só, numa profundidade que não é a da
+  volta, vale a regra de sempre (fecha a diferença). Não medido: o gesto e o
+  botão não se produzem juntos aqui.
+- **Os fluxos do revisor** (`_medicao/`) não foram tocados, nem as portas dele.
+  O meu servidor foi a 4729, desligado no fim, e os testes usam as portas
+  efêmeras do `navegador.js`.
+
+### Para o revisor
+
+- **O × com duas folhas**: na descida (`html[data-nav="fica"]`) só a folha que
+  sai e o véu dela têm nome; a de baixo, o cronômetro, o aviso e as faixas, não.
+  Uma tira montada sobre os nomes da foto vê só `folha-1` e `veu-1` no `06
+  fecha-x`, e `folha-0`/`veu-0` no `voltar`. Nas trocas que andam (tela cheia,
+  modo, aba), os nomes são os de sempre.
+- **O fluxo 14 no WebKit**: o foco acaba na aba Semana (era `body`).
+- **O fluxo 11 ("Comi tudo")**: a linha desce de 332 a ~466 e fica sob o dedo;
+  a régua da peça 8 ("a linha fica em 332") mudou de propósito. A leitura de
+  volta fica cortada 23 px em cima, e não 33.
+- **A abertura no WebKit**: a frase aparece aos ~330 ms e fica até o app
+  (~920–977). No `revisor-abertura.mjs`, que lê a opacidade pelo
+  `requestAnimationFrame`, ela pode não aparecer, porque a thread está presa: os
+  quadros dela vêm do compositor — vale o screencast. A animação da frase agora
+  dura 30 s (`ins-espera`, cem vezes `--ins-espera-abertura`) e, depois do degrau,
+  continua `running` até o app montar: isso não é movimento (a opacidade fica em 1).
+
+### As saídas
+
+`npm run tipos`:
+
+```
+
+> lastro-app@2.0.0 tipos
+> tsc --noEmit
+
+(saída 0)
+```
+
+`npm run build`:
+
+```
+
+> lastro-app@2.0.0 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 84 modules transformed.
+src/main.jsx (7756:45): Use of eval in "src/main.jsx" is strongly discouraged as it poses security risks and may cause issues with minification.
+rendering chunks...
+computing gzip size...
+dist/sw.js                        5.24 kB
+dist/index.html                   6.07 kB │ gzip:   2.84 kB
+dist/assets/index-BFYmknP0.css  111.76 kB │ gzip:  19.73 kB
+dist/assets/index-DyE4jf7X.js   596.22 kB │ gzip: 186.55 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.73s
+(saída 0)
+```
+
+`npx vitest run`, duas vezes seguidas (a carga no começo de cada uma, pelo
+`uptime`):
+
+```
+ 19:58:48 up  1:40,  1 user,  load average: 8,90, 9,24, 5,91
+ RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+ Test Files  87 passed (87)
+      Tests  1705 passed (1705)
+   Start at  19:58:49
+   Duration  118.77s (transform 5.10s, setup 0ms, import 59.06s, tests 834.58s, environment 19ms)
+(saída 0)
+```
+
+```
+ 20:00:48 up  1:42,  1 user,  load average: 9,16, 10,34, 6,79
+ RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+ Test Files  87 passed (87)
+      Tests  1705 passed (1705)
+   Start at  20:00:49
+   Duration  86.75s (transform 5.63s, setup 0ms, import 57.15s, tests 841.41s, environment 20ms)
+(saída 0)
+```
+
+Antes destes ajustes: 1698 de 1698 (peça 8). A diferença, +7, são os casos
+novos: 1 em `troca.test.js`, 1 em `navegacao.test.js`, 1 em `aba.test.js` e 4 em
+`enche.test.js` (as guardas de `estilo.test.ts` mudaram dentro dos casos que já
+existiam: 63 ali). Os casos de motor no WebKit (`LASTRO_MOTOR=webkit`), um
+arquivo por vez: `troca` 12/12, `aba` 8/8, `enche` 19/19, `sobe` 7/7, `descanso`
+5/5, `dedo` 9/9, `acende` 6/6. A máquina esteve com carga de 1 a 14 durante o
+trabalho (outro processo rodava em paralelo, além da carga que eu mesmo pus nas
+repetições).

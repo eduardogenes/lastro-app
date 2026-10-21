@@ -331,6 +331,69 @@ test('a folha e o painel de apagar descem em 350 ms sem quique, o véu apaga jun
   } finally { await nav.fecha(); }
 });
 
+// NA DESCIDA, SÓ O QUE SAI TEM FOTO (ajustes finais; 07 §12.3). Fechar pelo × a
+// folha de cima com outra embaixo andava DOIS quadros depois do toque: o quadro
+// em que o navegador fotografa a tela fotografava, cada uma numa imagem à
+// parte, as duas folhas e os dois véus inteiros, mais o cronômetro e o aviso —
+// e o desenho dele passava do tempo de um quadro (15–18 ms, contra 11 com uma
+// folha; trace do Chromium). Na descida a página não anda: o que não sai fica na
+// foto dela, que é a viva. Cobrado nos nomes que o navegador vê na hora da foto
+// velha e na da nova, e no que se move.
+test('na descida só o que sai tem foto: a folha que fica, o véu dela, o cronômetro e o aviso ficam na página', DEMORADO, async () => {
+  const nav = await abreNavegador();
+  try {
+    await semeia(nav);
+    await nav.E(`startTimer(600, 'descanso · série 1 · Supino'); toast('um aviso na tela'); render();`);
+    await nav.espera(400);
+    /** Os nomes da troca na foto velha (logo antes do desenho) e na nova (logo depois). */
+    const nomesNaTroca = (fecha) => nav.p.evaluate(fecha => new Promise(ok => {
+      const ler = () => [...document.querySelectorAll('.ins-folha-w > .ins-folha, .ins-folha-w > .ins-veu, .pare, .pare-w > .ins-veu, #timer, #toast')]
+        .map(e => (e.id ? '#' + e.id : e.className.split(' ')[0]) + (e.closest('.ins-folha-w') ? '@' + e.closest('.ins-folha-w').getAttribute('data-lugar') : '') + '=' + getComputedStyle(e).viewTransitionName);
+      const f = document.startViewTransition;
+      document.startViewTransition = function (cb) {
+        document.startViewTransition = f;
+        const velha = ler();
+        return f.call(document, function () { cb(); ok({ velha, nova: ler() }); });
+      };
+      window.__escopo(fecha);
+    }), fecha);
+
+    // duas folhas: fecha a de cima
+    await nav.E(`CTX.abreFolha({ k: 'refeicao', id: 'almoco' })`); await nav.espera(900);
+    await nav.E(`CTX.abreFolha({ k: 'editaRefeicao', id: 'almoco' })`); await nav.espera(900);
+    const duas = await nomesNaTroca(`CTX.fechaFolha()`);
+    const vivas = await fotos(nav);
+    await assenta(nav);
+    assert.deepStrictEqual(duas.velha.sort(), ['#timer=none', '#toast=none', 'ins-folha@0=none', 'ins-folha@1=folha-1', 'ins-veu@0=none', 'ins-veu@1=veu-1'],
+      'na foto velha, só a folha que sai e o véu dela têm nome');
+    assert.deepStrictEqual(duas.nova.sort(), ['#timer=none', '#toast=none', 'ins-folha@0=none', 'ins-veu@0=none'],
+      'na nova, ninguém: a folha que fica está na página, parada');
+    assert.deepStrictEqual(vivas.map(v => v.foto).sort(), ['::view-transition-old(folha-1)', '::view-transition-old(veu-1)'],
+      'e a de cima desce, com o véu dela: ' + JSON.stringify(vivas));
+    // a que ficou ganha o nome de volta para a descida DELA
+    const uma = await nomesNaTroca(`CTX.fechaFolha()`);
+    await assenta(nav);
+    assert.deepStrictEqual(uma.velha.sort(), ['#timer=none', '#toast=none', 'ins-folha@0=folha-0', 'ins-veu@0=veu-0'],
+      'fechando a última, ela tem nome na foto velha');
+
+    // o painel de apagar sobre uma folha: desce só o painel
+    await nav.E(`CTX.abreSeletorDeDia()`); await nav.espera(900);
+    await nav.E(`void pare({ texto: 'Apagar o peso de 28/09 tira 1 medida.', sim: 'Apagar o peso de 28/09' })`); await nav.espera(900);
+    const painel = await nomesNaTroca(`respondePare(false)`);
+    await assenta(nav);
+    assert.deepStrictEqual(painel.velha.sort(), ['#timer=none', '#toast=none', 'ins-folha@0=none', 'ins-veu=veu-painel', 'ins-veu@0=none', 'pare=painel'],
+      'com o painel descendo, a folha embaixo dele fica na página');
+    assert.strictEqual(await nav.p.evaluate(() => document.querySelectorAll('.ins-folha').length), 1, 'e continua aberta');
+    await nav.E(`CTX.fechaFolha()`); await nav.espera(500); await assenta(nav);
+
+    // numa troca que ANDA (a tela cheia que chega), o que é do aparelho continua com nome
+    const ajustes = await nomesNaTroca(`CTX.abreAjustes()`);
+    await assenta(nav);
+    assert.deepStrictEqual(ajustes.velha.sort(), ['#timer=cronometro', '#toast=aviso'], 'fora da descida, o cronômetro e o aviso têm foto própria');
+    assert.deepStrictEqual(nav.erros, []);
+  } finally { await nav.fecha(); }
+});
+
 test('o Voltar do sistema faz o mesmo reverso; quando o navegador já animou a volta, o app não anima de novo', DEMORADO, async () => {
   const nav = await abreNavegador();
   try {
@@ -364,25 +427,54 @@ test('o Voltar do sistema faz o mesmo reverso; quando o navegador já animou a v
     }
 
     // A CORRIDA DO HISTÓRICO. O desenho que fecha uma camada pelo botão consome a
-    // entrada dela (`history.go(-1)`), e o `popstate` disso chega depois. Se uma
-    // camada nova abre nesse meio, o desenho dela está pendente e o histórico
-    // ainda não a tem: o `popstate` tem de ser comparado com a tela desenhada,
-    // e não com o `view` pendente — senão ele fecha a camada recém-aberta (achado
-    // no WebKit, onde a foto da tela velha demora). Aqui, determinístico: a
-    // Evolução abre logo depois do desenho que fecha os Ajustes.
-    await nav.E(`CTX.vaiPara('corpo')`); await nav.espera(300); await assenta(nav);
-    await nav.E(`CTX.abreAjustes()`); await nav.espera(500); await assenta(nav);
-    await nav.p.evaluate(() => {
-      const f = document.startViewTransition;
-      document.startViewTransition = function (cb) {
-        document.startViewTransition = f;
-        return f.call(document, function () { cb(); queueMicrotask(() => window.__escopo(`CTX.abreEvolucao()`)); });
-      };
-      window.__escopo(`CTX.fechaAjustes()`);
-    });
-    await nav.espera(600); await assenta(nav); await nav.espera(300);
-    assert.strictEqual(await camadas(nav), 'evolucao', 'a camada aberta logo depois do fecho continua aberta');
-    assert.strictEqual(await nav.p.evaluate(() => history.state && history.state.lastro), 1, 'e o histórico tem a entrada dela');
+    // entrada dela (`history.go(-1)`), e o `popstate` disso chega depois — no
+    // WebKit desta máquina, 100 a 160 ms depois. O destino da volta é fixado na
+    // hora do pedido, nos dois motores. Se uma camada nova abre nesse meio, há
+    // duas ordens, e as duas fechavam (ou podiam fechar) a camada recém-aberta:
+    //  1. o `popstate` chega com o desenho da nova ainda PENDENTE: tem de ser
+    //     comparado com a tela desenhada, e não com o `view` pendente (peça 5);
+    //  2. o desenho da nova entra ANTES de a volta andar: a entrada dela era
+    //     empurrada, a volta pousava atrás dela, e o `popstate` parecia um Voltar
+    //     (ajustes finais: o app não empurra nada enquanto a volta dele está no
+    //     ar). Era esta que caía às vezes no WebKit com carga.
+    // As duas ordens, forçadas — e a do motor, sem forçar nada.
+    for (const ordem of ['o popstate antes do desenho da nova', 'o desenho da nova antes da volta', 'a do motor']) {
+      await nav.E(`CTX.vaiPara('corpo')`); await nav.espera(300); await assenta(nav);
+      await nav.E(`CTX.abreAjustes()`); await nav.espera(500); await assenta(nav);
+      await nav.p.evaluate(ordem => {
+        const f = document.startViewTransition;
+        document.startViewTransition = function (cb) {
+          document.startViewTransition = f;
+          return f.call(document, function () {
+            cb();
+            queueMicrotask(() => {
+              if (ordem === 'o desenho da nova antes da volta') {
+                // sem a transição, a Evolução desenha na hora: o pushState dela
+                // entra antes de o go(-1) do fecho andar
+                document.startViewTransition = undefined;
+                try { window.__escopo(`CTX.abreEvolucao()`); } finally { document.startViewTransition = f; }
+              } else if (ordem === 'o popstate antes do desenho da nova') {
+                // o desenho da Evolução só entra depois do popstate do fecho
+                document.startViewTransition = function (cb2) {
+                  document.startViewTransition = f;
+                  return f.call(document, () => new Promise(ok => addEventListener('popstate', () => { cb2(); ok(); }, { once: true })));
+                };
+                window.__escopo(`CTX.abreEvolucao()`);
+              } else window.__escopo(`CTX.abreEvolucao()`);
+            });
+          });
+        };
+        window.__escopo(`CTX.fechaAjustes()`);
+      }, ordem);
+      await nav.espera(600); await assenta(nav); await nav.espera(300);
+      assert.strictEqual(await camadas(nav), 'evolucao', ordem + ': a camada aberta logo depois do fecho continua aberta');
+      assert.strictEqual(await nav.p.evaluate(() => history.state && history.state.lastro), 1, ordem + ': e o histórico tem a entrada dela');
+      // e o Voltar do sistema a fecha, uma camada só
+      await nav.p.evaluate(() => history.back());
+      await nav.espera(200); await assenta(nav); await nav.espera(100);
+      assert.strictEqual(await camadas(nav), '', ordem + ': o Voltar fecha a Evolução');
+      assert.strictEqual(await nav.p.evaluate(() => history.state && history.state.lastro), 0, ordem + ': e o histórico volta à base');
+    }
     assert.deepStrictEqual(nav.erros, []);
   } finally { await nav.fecha(); }
 });

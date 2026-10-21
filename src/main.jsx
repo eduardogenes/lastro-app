@@ -2902,7 +2902,10 @@ const CTX = {
    *    leitura que nascia fora da tela). O topo da linha se mede no toque e, no
    *    desenho seguinte, a página rola o que a linha andou — o mesmo conserto
    *    da série (`depoisDoLayout`). Desfazer pela linha é o caminho de volta: a
-   *    leitura sai de cima e a linha subiria o mesmo tanto;
+   *    leitura sai de cima e a linha subiria o mesmo tanto. E, quando foi o
+   *    dedo, ele continua SOBRE a linha (ajustes finais): o painel que fecha
+   *    era o que estava sob ele, e a rolagem vai pelo ponto do toque
+   *    (`devolveALinhaDaComida`);
    *  - a FORMA da linha pousa (03 §4.6): é o retorno do toque, ali onde o dedo
    *    está. `view.formaRecem` é estado de tela, como a marca da série: vence em
    *    `VIDA_DO_RECEM_MS`, e trocar de aba ou entrar no modo a apaga.
@@ -2911,13 +2914,16 @@ const CTX = {
     const d = diaDeComida();
     if (k === 'pergunta') { view.perguntaDe = id; render(); return; }
     const daLinha = view.linhaComida === id;
-    const antes = daLinha ? topoNaTela(botaoDaLinhaDaComida(id)) : null;
+    const botao = daLinha ? botaoDaLinhaDaComida(id) : null;
+    const antes = daLinha ? topoNaTela(botao) : null;
+    // e onde o dedo está, se foi o dedo: a linha tem de continuar sob ele
+    const dedo = botao ? pontoDoToque(botao.closest('li')) : null;
     if (k === 'desfaz') {
       if (!d.done[id]) return;
       if (d.escala[id] != null) delete d.escala[id];
       view.formaRecem = null;
       CTX.marcaRefeicao(id);
-      devolveALinhaDaComida(id, antes);
+      devolveALinhaDaComida(id, antes, dedo);
       return;
     }
     if (d.done[id]) return;                 // marcada: só "Desfazer" muda
@@ -2928,7 +2934,7 @@ const CTX = {
     view.ultimaMarca = { id: id, k: k, data: d.data };
     view.formaRecem = daLinha ? { id: id, data: d.data, t: Date.now() } : null;
     CTX.marcaRefeicao(id, k === 'tudo' || k === 'metade' ? undefined : k);
-    devolveALinhaDaComida(id, antes);
+    devolveALinhaDaComida(id, antes, dedo);
   },
   editaRefeicao: function (id) { CTX.abreFolha({ k: 'editaRefeicao', id: id }); },
   novaRefeicao: function () { CTX.abreFolha({ k: 'editaRefeicao', id: null }); },
@@ -5375,12 +5381,33 @@ function botaoDaLinhaDaComida(id) {
  * seguinte, para onde estava: a leitura de volta nasce ou sai acima dela
  * (defeito 3 da docs/motion/03 §8.5; ver `marcaLinhaDaComida`). Onde o
  * navegador já ancorou a rolagem, a linha está no lugar e nada rola.
+ *
+ * E O DEDO CONTINUA SOBRE ELA (ajustes finais do motion; 07 §14.3). `dedo` é a
+ * altura do toque na tela (`pontoDoToque`), ou `null` (teclado, script). O dedo
+ * estava num botão do PAINEL aberto da linha ("Comi tudo", 123 px abaixo da
+ * linha fechada), e a marca fecha o painel: com o topo da linha no lugar, sob o
+ * dedo subia a linha seguinte — a "Ceia" —, e um segundo toque rápido a abria.
+ * Então a rolagem é pelo PONTO DO TOQUE: quando a linha, com o topo de volta ao
+ * lugar, deixaria o dedo fora dela, a página rola só o que falta para ele cair
+ * DENTRO da linha, a `folga` da borda; com o dedo já sobre ela (o "Desfazer",
+ * que reabre o painel no lugar), nada muda. A linha desce, de uma vez, até o
+ * dedo — o mínimo, e só para isso: o painel que fechou era o que estava sob ele.
  */
-function devolveALinhaDaComida(id, antes) {
+function devolveALinhaDaComida(id, antes, dedo) {
   if (antes == null) return;
   depoisDoLayout(function () {
-    const agora = topoNaTela(botaoDaLinhaDaComida(id));
-    if (agora != null) rolaPor(agora - antes);
+    const b = botaoDaLinhaDaComida(id);
+    const agora = topoNaTela(b);
+    if (agora == null) return;
+    let dy = agora - antes;
+    if (dedo != null) {
+      const r = (b.closest('li') || b).getBoundingClientRect();
+      const topo = r.top - dy, base = r.bottom - dy;
+      const folga = Math.min(12, b.getBoundingClientRect().height / 4);
+      if (dedo >= base) dy -= dedo - (base - folga);
+      else if (dedo < topo) dy += (topo + folga) - dedo;
+    }
+    rolaPor(dy);
   });
 }
 
@@ -8000,7 +8027,27 @@ function render() {
   const sentido = abriu ? sentidoDaTroca(camadasDesenhadas, pedidas, abaDesenhada, CTX.abaAtual()) : null;
   if (!sentido) { desenhaAgora(); return; }
   desenhoPendente = true;
+  marcaAsFolhasQueSaem(pedidas);
   trocaDeCamada(sentido, desenhaPendente, !jaAnimado, rodapeDaTroca(camadasDesenhadas, pedidas));
+}
+
+/**
+ * A FOLHA QUE SAI, marcada antes da foto (ajustes finais do motion; 07 §12.3).
+ * Na descida (`fica`) só ela tem nome na transição: a que fica, o véu dela e o
+ * que é do aparelho ficam na foto da página, que não anda (`componentes.css`,
+ * "NA DESCIDA, SÓ O QUE SAI TEM FOTO") — fotografá-los à parte fazia o quadro da
+ * foto passar do tempo de um quadro. Sai toda folha cuja posição passa do que
+ * `view` pede (a pilha só fecha por cima); a marca de uma que fica é tirada. O
+ * nó que sai deixa o DOM no desenho, e a marca vai com ele. Não muda o que se
+ * desenha: só quem tem foto.
+ */
+function marcaAsFolhasQueSaem(pedidas) {
+  if (typeof document === 'undefined' || !document.querySelectorAll) return;
+  const ficam = pedidas.filter(function (c) { return c.indexOf('folha:') === 0; }).length;
+  [].slice.call(document.querySelectorAll('.ins-folha-w[data-lugar]')).forEach(function (el) {
+    if (Number(el.getAttribute('data-lugar')) >= ficam) el.setAttribute('data-sai', '');
+    else el.removeAttribute('data-sai');
+  });
 }
 
 /**
@@ -12610,11 +12657,26 @@ const focoDoDestino = {};
 let ultimoAcionado = null;
 if (typeof document !== 'undefined' && document.addEventListener) {
   document.addEventListener('click', function (e) {
-    ultimoAcionado = { el: e.target, quando: relogioDoFoco() };
+    // e onde o dedo estava: o clique de um toque (`detail` ≥ 1) traz o ponto;
+    // o do teclado e o do script, não (`pontoDoToque`)
+    ultimoAcionado = { el: e.target, quando: relogioDoFoco(),
+                       y: e.detail >= 1 && typeof e.clientY === 'number' ? e.clientY : null };
   }, true);
 }
 function relogioDoFoco() {
   return typeof performance !== 'undefined' && performance.now ? performance.now() : 0;
+}
+/**
+ * A altura na tela do toque que está sendo atendido agora, se ele foi um toque
+ * (ou um clique de ponteiro) DENTRO de `dentro` — `null` para o teclado, o
+ * script, ou um clique de outro lugar. Lido no próprio clique (o ouvinte de
+ * captura acima roda antes do botão).
+ */
+function pontoDoToque(dentro) {
+  const u = ultimoAcionado;
+  if (!u || u.y == null || relogioDoFoco() - u.quando > 1000) return null;
+  if (!dentro || !u.el || !u.el.isConnected || !dentro.contains(u.el)) return null;
+  return u.y;
 }
 /** O que conta como controle a que o foco pode voltar. */
 const CONTROLE = 'button, a[href], [role="button"], label, input, select, textarea, [tabindex]:not([tabindex="-1"]), .ex-top';

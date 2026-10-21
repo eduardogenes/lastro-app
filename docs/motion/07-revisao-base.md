@@ -283,6 +283,8 @@ pasta de saída por argumento: o mesmo script grava o antes e o depois.
 | `revisor-aviso-janela.mjs` | o "Não guardei" ignora o toque que vinha para outra coisa? (peça 4, defeito 5). Provoca a falha de gravação, grava uma série e, com o dedo de verdade, toca "Fechar este aviso" 150 ms depois de o aviso chegar (tem de ficar) e 600 ms depois (tem de fechar); anota também o fundo inerte e o foco (escreve `aviso-janela-<rodada>.json`). Feito porque o `micro-avisos.mjs` clica logo que o aviso chega e, depois da peça 4, esse clique é engolido de propósito |
 | `revisor-regiao-viva.mjs` | a região viva do aviso fica na árvore de acessibilidade? (peça 7; 05 M12). No Agora, sem aviso, com um, com o mesmo texto de novo, com um texto novo e depois que ele some: o `display`, o `role`, o `aria-live`, o texto, as linhas da `ariaSnapshot` do Playwright que falam da região e, no Chromium, o nó da árvore do motor (`Accessibility.getPartialAXTree`); e o que está sob o centro da região. Escreve `regiao-viva-<rodada>.json` |
 | `revisor-aviso-tempo.mjs` | quanto tempo o aviso fica pelo tamanho do texto (13, 50, 101 e 140 caracteres), do `toast()` ao começo da saída (peça 7). Escreve `aviso-tempo-<rodada>.json` |
+| `revisor-abertura.mjs` | "Abrindo o registro…" pisca na abertura? (peça 8). Lê, a cada quadro desde o começo do documento, se `#app > .msg` existe e a OPACIDADE dela (desde a peça 8 ela nasce apagada). Contexto novo a cada abertura, fontes do Google bloqueadas; no Chromium sem freio e com a CPU freada 4× e 6×, no WebKit sem freio; três aberturas de cada. Escreve `abertura-<rodada>.json` |
+| `revisor-teclado.mjs` | o teclado próprio vem inteiro para a tela, e a página rola só o necessário? (peça 8). No modo, uma célula de carga posta na metade de cima (y ≈ 200) ou na de baixo (y ≈ 640) e tocada; também na de baixo com o descanso contando. Anota a rolagem, as caixas do teclado, do "pronto" e do cronômetro, e quanto do teclado fica sob o cronômetro. Escreve `teclado-<rodada>.json` |
 | `revisor-cronometro.py` | onde o cronômetro está em cada quadro de uma troca (o fluxo 17, peça 6). Na transição o DOM não diz onde ele está na tela, então se lê nos quadros do screencast guardados com `QUADROS=1`: a linha azul do descanso, nas colunas x 90–200 e na faixa y 740–896. Escreve `cronometro-<rodada>.json` com a trilha [t, y], o maior passo por quadro e quantas alturas houve |
 | `revisor-anel-e-cronometro.mjs` | dois itens da peça 5 que os fluxos não cobrem: com o teclado (Tab), o campo de importar dos Ajustes mostra o anel? (lê o contorno do rótulo e do `input` e fotografa o rótulo); e, com um descanso contando, onde fica o cronômetro no Agora, nos Ajustes e na Evolução (escreve `anel-e-cronometro-<rodada>.json` e `anel-<rodada>.png`) |
 | `revisor-thread-presa.mjs` | o "não congela com a thread presa" do 04 §6 no elemento real: troca de aba, a thread principal presa 150 ms dois quadros depois de o fio começar a andar, o fio achado quadro a quadro pela cor de acento; mede a maior parada no meio do caminho (escreve `thread-presa-<rodada>.json`). As peças 3 a 6 acrescentam a cena delas (cronômetro, folha, tela cheia, carrossel) |
@@ -1210,3 +1212,77 @@ texto. Com o cronômetro entrando ou saindo no meio da entrada, a mensagem anda
 no máximo 16 px por quadro, onde antes saltava 82. Sob "Reduzir movimento" só
 acende e sai de uma vez. E a região viva fica sempre na árvore de
 acessibilidade, vazia quando não há aviso.
+
+---
+
+## 14. Depois da peça 8
+
+Conferida em 20/10 pela linha da peça 8 da tabela 1.4, contra o build congelado
+em `docs/motion/_medicao/shots/dist-peca-8/` (commit `143cf27`), servido na
+porta 4728, com o antes na 4727. Nenhuma das duas está no ar: caíram junto com a
+sessão, depois da gravação. O registro é o mesmo `antes/registro.json`. A
+gravação foi das 14h46 às 15h02, com carga de 0,8 a 3,3 (`carga-20-10.txt`,
+linhas "peça 8"). O implementador dos ajustes finais trabalhava em paralelo; as
+medidas de tempo vêm de antes e peça 8 **intercalados** três vezes (1.5, 5c).
+Depois da queda, o Python com numpy do scratchpad foi refeito, do mesmo jeito
+(seção 3, "ambiente").
+
+**O que se gravou.** Os fluxos 09 (o copo), 11 (a refeição pela linha) e 12 (o
+teclado) no Chromium e no WebKit, com e sem "Reduzir movimento" (`depois-8/`).
+Antes e peça 8 intercalados três vezes por motor (`repeticoes-peca-8/`). Os
+complementos, dos dois lados: `micro-agora.mjs` e `micro-abertura.mjs` (no
+Chromium; a saída deles foi guardada em `antes-complementos/micro/` e
+`depois-8/complementos/micro/`), e dois scripts meus, novos:
+`revisor-abertura.mjs` (a opacidade da frase de abertura em cada quadro) e
+`revisor-teclado.mjs` (o teclado na metade de cima, na de baixo e com o
+descanso contando). Nenhum erro de página. Comparador em `comparacao-8/`.
+
+### 14.1 A linha da peça 8: o que passou
+
+| o que a peça tinha de provar | resultado | o número | arquivo |
+|---|---|---|---|
+| **o copo enche de baixo em 160 ms** | **passa** | transição de `transform` no `i.f::after`, **160 ms**, `cubic-bezier(0.2, 0.8, 0.2, 1)` (a `--ins-curva`), nos dois toques e nos dois motores; 7 a 10 quadros com mudança até ~150–210 ms (no antes, um quadro). O número troca sem movimento | `depois-8/09-copo/medidas-{chromium,webkit}.json` (`animacoes`) |
+| **sob "Reduzir", o copo aparece cheio** | **passa** | nenhuma animação; a tela muda em um ou dois quadros | `depois-8/09-copo/medidas-*-reduz.json`; princípio 5: 16/16 |
+| **a forma da refeição pousa em 160 ms** | **passa** | `ins-pousa` no `svg` da forma, **160 ms**, `--ins-curva`; sob "Reduzir", `ins-acende`, 120 ms, só opacidade | `depois-8/11-refeicao-linha/medidas-*.json` (`comi-tudo`) |
+| **"Comi tudo" não empurra a linha** (defeito 3) | **passa** | a linha do almoço fica em **y 332** (no antes, ia a **489**: 157 px para baixo). A página rola 157 px no mesmo desenho (`scrollY` 0 → 157), nos dois motores e nas quatro rodadas. A leitura de volta nasce no topo e fica com 33 dos 145 px dela acima da tela (y −33), como o coordenador aceitou | `depois-8/complementos/micro/micro-agora-chromium.json` contra `antes-complementos/micro/…`; `depois-8/11-refeicao-linha/medidas-*.json` (`depois.y`) |
+| **o teclado vem inteiro, e só rola quando não cabe** | **passa** | célula na metade de cima: **não rola**, nos dois lados. Na de baixo: rola **92 px** e o teclado termina em 896, com o "pronto" inteiro, igual ao antes. Com o descanso contando: rola **174 px** (92 + os 82 do cronômetro), o teclado termina em 814, encostado no cronômetro (813,8), e o "pronto" fica acima dele. No antes rolava os mesmos 92, e **82 px do teclado ficavam sob o cronômetro**. A conta bate com a do implementador (131 e 213): a diferença é a mesma, 82 px; a altura da célula é que é outra | `depois-8/complementos/teclado-{chromium,webkit}.json` contra `antes-complementos/teclado-*.json` |
+| **régua e teclado continuam sem movimento** | **passa** | fluxo 12: nenhuma animação em abrir, nas teclas e no "pronto"; a célula na metade de cima não rola (y 363 → 363) | `depois-8/12-teclado/medidas-*.json`; princípio 8 |
+| **"Abrindo o registro…" não pisca** | **passa** | a frase está no DOM até 27–87 ms no Chromium (com e sem freio) e até ~186 ms no WebKit, **sempre com opacidade 0**: nenhum quadro com ela visível, em nenhuma das 21 aberturas, com e sem "Reduzir". No antes, ela ficava visível 1 a 2 quadros no Chromium (56 ms numa das três aberturas sem freio; 122–215 ms em quase todas com freio 4× e 6×) e **~565 ms no WebKit** desta máquina | `depois-8/complementos/abertura-{chromium,webkit,chromium-reduz}.json` contra `antes-complementos/abertura-*.json`; `micro-abertura-chromium.txt` dos dois lados |
+| **o toque não ficou mais lento** (5c) | **passa** | medianas de três, antes → peça 8: o trabalho no toque dentro de ±2 ms em todo passo (Chromium "+1 copo" 4,7 → 5,5; "Comi tudo" 3,2 → 3,8); a primeira mudança no mesmo quadro; nenhum intervalo de `requestAnimationFrame` acima do limite | `repeticoes-peca-8/{antes,peca-8}-{1,2,3}/` |
+| princípios 1, 2, 6, 7, 10 | **passa** | 32/32, 32/32, 32/32, 16/16, 16/16 | `comparacao-8/protocolo.json` |
+
+### 14.2 O que o comparador marcou, e por que não é da peça
+
+- **09 · `mais-2`, Chromium com "Reduzir": um "quadro que aparece e some" a
+  +15,9 ms** (princípio 3). É o "+1 copo" apertado: com o dedo do CDP, o estado
+  de toque do Chromium acende depois de soltar e dura ~150 ms (1.1). A mudança
+  seguinte, a +166,5 ms, está na caixa do botão ([304, 561, 87, 55]). No antes
+  não aparece porque o toque ainda não escurecia (a peça 1 é que fez isso).
+  Arquivo: `depois-8/09-copo/medidas-chromium-reduz.json` (`transitorios`,
+  `mudancasFinas`).
+- **09 · `mais-1`, WebKit: um intervalo de 51 ms** (princípio 4) na gravação
+  principal. Nas três repetições, nenhum acima do limite (pior 17 ms): pela
+  regra 5a, não se confirma.
+
+### 14.3 O que ficou "a conferir"
+
+- **Sob o dedo, depois de "Comi tudo", fica a linha da "Ceia".** O dedo estava
+  em "Comi tudo", dentro da linha aberta. A linha fecha no lugar, e sob o
+  dedo passa a estar outra linha de refeição. No antes, era a própria linha do
+  almoço, empurrada até ali. Um segundo toque rápido abre a "Ceia", não a marca.
+  Arquivo: `depois-8/complementos/micro/micro-agora-chromium.json`
+  (`sobOdedo`).
+- **No WebKit desta máquina, a abertura fica ~770 ms só com o fundo** (o
+  primeiro desenho com conteúdo, o FCP, a 744–799 ms), onde antes mostrava a
+  frase de ~103 a ~670 ms. A frase sai do DOM aos ~186 ms, antes dos 300, e o
+  resto é o primeiro desenho do app, lento aqui por causa das fontes. No
+  aparelho isso tende a ser bem mais curto. A conferir.
+- **O defeito 6** (dois "+1 copo" com o aparelho recusando) só aparece com um
+  armazenamento que responde devagar; o teste é da peça (1.4), e não o medi.
+
+**Conclusão: a peça 8 passa na linha dela.** O copo enche de baixo em 160 ms e,
+sob "Reduzir movimento", aparece cheio. A forma pousa. "Comi tudo" não empurra
+mais a linha: a página rola os 157 px de uma vez. O teclado só rola quando não
+cabe e, com o cronômetro em cena, para acima dele em vez de terminar por baixo.
+"Abrindo o registro…" não aparece mais nas aberturas rápidas. E o toque ficou
+igual ao antes.

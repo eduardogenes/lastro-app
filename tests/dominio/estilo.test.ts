@@ -1605,15 +1605,19 @@ function noCodigo(rels: string[], re: RegExp): string[] {
 const PORTA = 'src/ui/movimento.js';
 
 /**
- * A ESPERA DA ABERTURA (peça 8): a frase "Abrindo o registro…" só aparece se a
- * abertura demorar, de uma vez, e igual sob "Reduzir movimento". É a única
- * declaração de `animation-*` fora do portão, e não é movimento — duração zero,
- * o atraso e mais nada —; a (b) a deixa passar SÓ nesta forma exata, e o caso
- * (k) cobra a forma inteira (os quadros, o token, que nada mais a mova).
+ * A ESPERA DA ABERTURA (peça 8 e ajustes finais): a frase "Abrindo o registro…"
+ * só aparece se a abertura demorar, de uma vez, e igual sob "Reduzir movimento".
+ * É a única declaração de `animation-*` fora do portão, e não é movimento — um
+ * degrau de opacidade, apagada até a espera e acesa dali em diante —; a (b) a
+ * deixa passar SÓ nesta forma exata, e o caso (k) cobra a forma inteira (os
+ * quadros com o degrau a 1 % de CEM esperas, o token, que nada mais a mova).
+ * Dura cem esperas para continuar CORRENDO quando acende: só assim o compositor
+ * a acende com a thread presa (`componentes.css`).
  */
 const ESPERA_DA_ABERTURA = '#app > .msg';
+const VEZES_DA_ESPERA = 100;
 const DECL_DA_ESPERA: Record<string, string> = {
-  'animation-name': 'ins-espera', 'animation-delay': 'var(--ins-espera-abertura)', 'animation-fill-mode': 'backwards'
+  'animation-name': 'ins-espera', 'animation-duration': 'calc(var(--ins-espera-abertura) * ' + VEZES_DA_ESPERA + ')'
 };
 const ehEsperaDaAbertura = (r: Regra, d: Decl) => !r.midias.length && r.sels.length === 1 &&
   r.sels[0] === ESPERA_DA_ABERTURA && DECL_DA_ESPERA[d.prop] === d.valor;
@@ -2238,8 +2242,20 @@ test('(h) a troca de camada move só as fotos: a tela cheia pela direita com a d
   assert.deepStrictEqual(nomes.sort(), [
     '#timer → cronometro', '#toast → aviso', '.ins-faixa → faixa', '.ng-faixa → nao-guardado',
     '.pare-w:not(.falhou-w) > .ins-veu → veu-painel', '.pare-w:not(.falhou-w) > .pare → painel',
-    ...BARRA_NA_ABA.map(sel => sel + ' → barra-de-abas')
-  ].sort(), 'os nomes próprios da troca: o cronômetro, o aviso, as duas faixas e o painel de apagar — a barra de abas só na troca de aba (na de camada ela é do lugar), e nunca o "Não guardei" (não desce)');
+    ...[0, 1, 2, 3].flatMap(i => ['.ins-folha-w[data-lugar="' + i + '"] > .ins-veu → veu-' + i, '.ins-folha-w[data-lugar="' + i + '"] > .ins-folha → folha-' + i]),
+    ...BARRA_NA_ABA.map(sel => sel + ' → barra-de-abas'),
+    ...SEM_FOTO_NA_DESCIDA.map(sel => sel + ' → none')
+  ].sort(), 'os nomes próprios da troca: o cronômetro, o aviso, as duas faixas, o painel de apagar e as folhas pela posição — a barra de abas só na troca de aba (na de camada ela é do lugar), nunca o "Não guardei" (não desce), e na descida só o que sai');
+  // NA DESCIDA, SÓ O QUE SAI TEM FOTO (ajustes finais; 07 §12.3): a folha que
+  // fica, o véu dela e o que é do aparelho perdem o nome quando só uma folha ou o
+  // painel descem — a página não anda, e fotografá-los à parte custava o quadro
+  // a mais do × com duas folhas. O casco marca a que sai antes da foto.
+  assert.ok(regras.some(r => !NO_PORTAO(r) && !NO_REDUZ(r) && SEM_FOTO_NA_DESCIDA.every(sel => r.sels.includes(sel)) &&
+    r.decls.some(d => d.prop === 'view-transition-name' && d.valor === 'none')), 'na descida, o que fica perde o nome, numa regra só');
+  assert.match(semComentariosJs(mainJsx()), /desenhoPendente = true;\s*marcaAsFolhasQueSaem\(pedidas\);\s*trocaDeCamada\(/,
+    'o casco marca a folha que sai ANTES de pedir a troca (a foto é tirada no quadro seguinte)');
+  assert.match(semComentariosJs(mainJsx()), /if \(Number\(el\.getAttribute\('data-lugar'\)\) >= ficam\) el\.setAttribute\('data-sai', ''\);\s*else el\.removeAttribute\('data-sai'\);/,
+    'sai a folha cuja posição passa do que a pilha pede; a que fica perde a marca');
   assert.ok(regras.some(r => !NO_PORTAO(r) && !NO_REDUZ(r) && FOTOS_PARADAS.every(f => r.sels.includes(f)) &&
     r.decls.some(d => d.prop === 'opacity' && d.valor === '0')),
     'o que é do aparelho e não está na tela nova sai de uma vez, no primeiro quadro');
@@ -2250,10 +2266,12 @@ test('(h) a troca de camada move só as fotos: a tela cheia pela direita com a d
   assert.ok(regras.some(r => !NO_PORTAO(r) && !NO_REDUZ(r) && r.sels.includes('::view-transition-old(aviso)') &&
     r.decls.some(d => d.prop === 'opacity' && d.valor === '0')),
     'a foto velha do aviso nunca aparece: `::view-transition-old(aviso) { opacity: 0 }`, fora do portão');
-  // a folha e o véu, pela POSIÇÃO na pilha (o nível se repete: refeição e editar refeição são 50)
-  const folha = fonte('src/ui/instrumento/folha.jsx');
-  assert.match(folha, /class="ins-veu"[^>]*style=\{'view-transition-name:veu-' \+ lugar\}/, 'o véu da folha se nomeia pela posição');
-  assert.match(folha, /class="ins-folha"[\s\S]{0,200}style=\{'view-transition-name:folha-' \+ lugar\}/, 'a folha se nomeia pela posição');
+  // a folha e o véu, pela POSIÇÃO na pilha (o nível se repete: refeição e editar
+  // refeição são 50) — a posição no invólucro, e o nome no CSS: um nome no
+  // `style` venceria a regra da descida
+  const folha = semComentariosJs(fonte('src/ui/instrumento/folha.jsx'));
+  assert.match(folha, /class=\{'ins-folha-w'[^>]*data-lugar=\{lugar\}/, 'o invólucro da folha diz a posição dela na pilha');
+  assert.ok(!/view-transition-name/.test(folha), 'a folha não se nomeia no `style`: o nome é do CSS, pela posição');
   assert.match(mainJsx(), /<LugarNaPilha\.Provider value=\{i\}>/, 'a posição é o índice na pilha, e não o nível');
 
   // SOB "REDUZIR": a tela cheia e o modo que chegam esmaecem no nó que nasce, e só eles
@@ -2269,6 +2287,9 @@ test('(h) a troca de camada move só as fotos: a tela cheia pela direita com a d
   assert.match(mj, /function render\(\) \{[\s\S]{0,400}trocaDeCamada\(/, 'e esse ponto é o render()');
 });
 
+/** Na descida (`fica`), o que não sai perde o nome (ajustes finais). */
+const SEM_FOTO_NA_DESCIDA = ['html[data-nav="fica"] .ins-folha-w:not([data-sai]) > .ins-veu', 'html[data-nav="fica"] .ins-folha-w:not([data-sai]) > .ins-folha',
+  'html[data-nav="fica"] #timer', 'html[data-nav="fica"] #toast', 'html[data-nav="fica"] .ins-faixa', 'html[data-nav="fica"] .ng-faixa'];
 /** O que é do aparelho, na foto velha sem nova (`:only-child`): sai de uma vez. O aviso não: o lugar dele está sempre lá (peça 7). */
 const FOTOS_PARADAS = ['cronometro', 'faixa', 'nao-guardado'].map(n => '::view-transition-old(' + n + '):only-child');
 
@@ -2761,9 +2782,11 @@ test('(k) o resto do lugar: o copo enche de baixo, a forma pousa, a frase da abe
   assert.match(vaiPara, /view\.formaRecem = null;/, 'trocar de aba apaga a marca: a aba nasce inteira, e a forma pousaria de novo');
   assert.match(abreModo, /view\.formaRecem = null;/, 'entrar no modo também');
 
-  // ---- 3. A FRASE DA ABERTURA espera para aparecer: duração zero, um atraso
-  //      que é token, quadros só apagados — um degrau, sem esmaecer —, fora de
-  //      toda `@media` (vale igual sob "Reduzir"), e só ela.
+  // ---- 3. A FRASE DA ABERTURA espera para aparecer: uma animação de cem
+  //      esperas (o token), com o degrau a 1 % — apagada antes, acesa depois,
+  //      sem esmaecer —, fora de toda `@media` (vale igual sob "Reduzir"), e só
+  //      ela. Cem, e não zero com um atraso (a peça 8): a que ainda corre o
+  //      compositor acende sozinho com a thread presa (ajustes finais).
   const msg = regras.filter(r => r.sels.some(s => /(^|[\s>])\.msg\b/.test(s)));
   assert.deepStrictEqual(msg.filter(r => r.midias.length).map(r => r.arquivo + ':' + r.linha + ' ' + r.midias.join(' / ')), [],
     'a frase da abertura mora fora de toda @media: com e sem "Reduzir movimento" ela espera igual');
@@ -2771,15 +2794,19 @@ test('(k) o resto do lugar: o copo enche de baixo, a forma pousa, a frase da abe
   assert.strictEqual(espera.length, 1, 'a espera da frase é uma regra só, `' + ESPERA_DA_ABERTURA + '`');
   assert.deepStrictEqual(espera[0].decls.filter(d => ehMovimento(d.prop)).map(d => d.prop + ': ' + d.valor).sort(),
     Object.keys(DECL_DA_ESPERA).map(p => p + ': ' + DECL_DA_ESPERA[p]).sort(),
-    'a espera é o atraso e mais nada: sem duração (que esmaeceria), sem curva, sem transição');
+    'a espera é o nome e a duração de cem esperas, e mais nada: sem atraso (a animação tem de correr desde o começo), sem transição');
   assert.deepStrictEqual(msg.filter(r => r !== espera[0] && movem(r)).map(r => r.arquivo + ':' + r.linha), [],
     'outra regra move a frase da abertura');
   const quadrosDaEspera = porNome.get('ins-espera') || [];
   assert.deepStrictEqual(quadrosDaEspera.map(q => q.arquivo), ['base.css'], 'os quadros da espera são um só, em base.css');
   const qs = quadrosDaEspera[0].quadros;
-  assert.ok(qs.some(q => q.pos.includes(0)) && qs.some(q => q.pos.includes(100)) &&
-    qs.every(q => q.decls.length === 1 && q.decls[0].prop === 'opacity' && q.decls[0].valor === '0'),
-    'ins-espera: apagada do começo ao fim, e só opacidade — quando o atraso acaba ela aparece de uma vez');
+  const opacidadeEm = (p: number) => qs.filter(q => q.pos.includes(p)).map(q => q.decls.map(d => d.prop + ': ' + d.valor).join('; '));
+  const degrau = 100 / VEZES_DA_ESPERA;   // a 1 %: a espera, dentro das cem
+  assert.ok(qs.every(q => q.decls.length === 1 && q.decls[0].prop === 'opacity'), 'ins-espera: só opacidade');
+  assert.deepStrictEqual([0, degrau].map(opacidadeEm), [['opacity: 0'], ['opacity: 0']], 'ins-espera: apagada do começo até a espera');
+  const depois = qs.flatMap(q => q.pos).filter(p => p > degrau).sort((a, b) => a - b);
+  assert.ok(depois.length === 2 && depois[1] === 100 && depois[0] - degrau <= 0.001 && opacidadeEm(depois[0])[0] === 'opacity: 1' &&
+    opacidadeEm(100)[0] === 'opacity: 1', 'ins-espera: acesa logo depois da espera — um degrau de no máximo 0,001 % (30 µs), sem esmaecer — e até o fim: ' + depois);
   assert.deepStrictEqual(regras.filter(r => r.decls.some(d => /^animation(-name)?$/.test(d.prop) && /(?<![\w-])ins-espera(?![\w-])/.test(d.valor)))
     .flatMap(r => r.sels), [ESPERA_DA_ABERTURA], 'só a frase da abertura espera');
   const tok = /--ins-espera-abertura\s*:\s*(\d+)ms/.exec(semComentariosCss(fonte('src/tokens.css')));

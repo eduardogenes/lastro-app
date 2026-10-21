@@ -33,6 +33,11 @@
 // diferença é quantas fechar. Quando fomos NÓS que provocamos o evento, os dois
 // números já batem e não há o que fazer. O mecanismo se corrige sozinho depois
 // de qualquer divergência, inclusive uma que não previmos.
+//
+// Uma marca só, e ela não conta eventos: a profundidade em que a volta que o
+// app pediu vai POUSAR (`voltaPendente`). Enquanto ela está no ar, nada se
+// empurra — senão a volta, cujo destino o motor já fixou, pularia a entrada
+// nova e o `popstate` dela fecharia a camada recém-aberta.
 
 /**
  * As camadas abertas, da mais funda para a mais alta — a ordem em que o usuário
@@ -94,8 +99,31 @@ export function camadasAbertas(view) {
 /** Profundidade que o histórico representa hoje. */
 let profundidade = 0;
 
+/**
+ * A VOLTA QUE O PRÓPRIO APP PEDIU e o navegador ainda não fez: a profundidade
+ * em que o `history.go(-n)` de um fecho pelo botão vai pousar, ou `null`.
+ *
+ * `history.go` é assíncrono, e os dois motores resolvem o DESTINO dele na hora
+ * do pedido — a entrada que estava `n` passos atrás —, não na hora em que andam
+ * (medido no Chromium e no WebKit 26.5: com um `pushState` no meio, a volta
+ * pula a entrada nova e pousa na de antes). Se uma camada nova abria entre o
+ * fecho e a volta — e no WebKit desta máquina a volta leva de 100 a 160 ms —,
+ * a entrada dela era empurrada, a volta pousava na profundidade do fecho, e o
+ * `popstate` disso, igual a um Voltar do sistema, FECHAVA a camada recém-aberta
+ * (a corrida da peça 5 que ainda caía no WebKit com carga; docs/motion/09,
+ * "Ajustes finais"). Agora nada se empurra enquanto a volta do app está no ar:
+ * o `popstate` dela é reconhecido pela profundidade em que pousa, e só então o
+ * histórico alcança a pilha que a tela desenhou.
+ */
+let voltaPendente = null;
+/** Quanto esperar a volta do app antes de concluir que o navegador a perdeu. */
+const VOLTA_PERDIDA_MS = 3000;
+let relogioDaVolta = 0;
+
 /** Chamado quando o usuário volta: fecha uma camada. Injetado por `liga()`. */
 let aoVoltar = function () {};
+/** Quantas camadas a tela desenhada tem agora. Injetado por `liga()`. */
+let contaCamadas = function () { return profundidade; };
 
 /** A profundidade gravada na entrada atual do histórico. */
 function profundidadeDoHistorico() {
@@ -113,6 +141,10 @@ function profundidadeDoHistorico() {
  */
 export function sincronizaHistorico(n) {
   if (typeof history === 'undefined' || !history.pushState) return;
+  // A volta que o app pediu ainda não pousou: empurrar agora seria empilhar
+  // sobre a entrada que ela vai deixar (ver `voltaPendente`). O `popstate`
+  // dela chama isto de novo, com a pilha que a tela tiver então.
+  if (voltaPendente != null) return;
   if (n === profundidade) return;
 
   if (n > profundidade) {
@@ -130,9 +162,19 @@ export function sincronizaHistorico(n) {
   // ser apertado duas vezes para sair de uma tela que já foi fechada.
   const passos = profundidade - n;
   profundidade = n;
-  try { history.go(-passos); } catch (e) {}
-  // O `popstate` que isto provoca chega com `lastro === n`, igual ao que o app
-  // já tem aberto: o handler compara, vê que batem, e não fecha nada.
+  voltaPendente = n;
+  try { history.go(-passos); } catch (e) { voltaPendente = null; return; }
+  // O `popstate` que isto provoca chega com `lastro === n`: o handler o
+  // reconhece como a volta do app e não fecha nada. Se ele nunca vier (um motor
+  // que perde a volta), o app não fica para sempre sem empurrar: passado o
+  // prazo, ele relê onde o histórico está e alcança a pilha dali.
+  clearTimeout(relogioDaVolta);
+  relogioDaVolta = setTimeout(function () {
+    if (voltaPendente == null) return;
+    voltaPendente = null;
+    profundidade = profundidadeDoHistorico();
+    sincronizaHistorico(contaCamadas());
+  }, VOLTA_PERDIDA_MS);
 }
 
 /**
@@ -146,6 +188,7 @@ export function sincronizaHistorico(n) {
 export function liga(p) {
   if (typeof window === 'undefined' || !window.addEventListener) return;
   aoVoltar = p.aoVoltar;
+  contaCamadas = p.camadas;
 
   // Quem manda na posição de leitura é o app, não o navegador.
   //
@@ -198,6 +241,18 @@ export function liga(p) {
 
   window.addEventListener('popstate', function (e) {
     const k = profundidadeDoHistorico();
+    // A VOLTA DO APP POUSOU (o `history.go` de um fecho pelo botão): não é o
+    // usuário voltando, e nada fecha. O que abriu enquanto ela estava no ar
+    // ganha agora as entradas dele.
+    if (voltaPendente != null && k === voltaPendente) {
+      voltaPendente = null;
+      clearTimeout(relogioDaVolta);
+      profundidade = k;
+      sincronizaHistorico(p.camadas());
+      return;
+    }
+    voltaPendente = null;
+    clearTimeout(relogioDaVolta);
     const n = p.camadas();
     profundidade = k;
     // O NAVEGADOR JÁ ANIMOU? O gesto de borda do iPhone puxa a página de cima
@@ -215,4 +270,4 @@ export function liga(p) {
 }
 
 /** Só para os testes: devolve o mecanismo ao estado de boot. */
-export function _reinicia() { profundidade = 0; }
+export function _reinicia() { profundidade = 0; voltaPendente = null; clearTimeout(relogioDaVolta); }

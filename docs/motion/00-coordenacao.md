@@ -85,10 +85,10 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Respostas do dono registradas no diário (16/10, 01h25).
 
 ### Fase 3 — implementação (só depois das respostas)
-- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0 a 8 feitas (16/10 a 20/10); faltam os ajustes finais.
+- [x] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0 a 8 e os ajustes finais (16 a 20/10).
 - [x] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`). Peça 0: casos (a)–(e) e a lista de folhas, 52 plantios.
 - [x] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova (peça 0).
-- [ ] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde.
+- [x] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde (conferido pelo coordenador em cada commit).
 
 ### Fase 4 — revisão
 - [ ] Revisor passa por tudo com capturas e gravações a 414 × 896 (Blink; WebKit se der).
@@ -610,3 +610,34 @@ cronômetro em cena: rola 213 e o teclado fica acima dele — antes ficava por
 baixo do cronômetro, com o "pronto" coberto (defeito antigo, consertado junto).
 Custo escrito: quando precisa rolar, sob o dedo fica uma tecla, como era antes.
 `tipos` limpo, build, 1698/1698 duas vezes.
+
+**20/10 — peça 8 conferida pelo revisor** (07 §14), sem reprovação confirmada.
+O copo enche de baixo em 160 ms (sob "Reduzir" aparece cheio); a forma pousa em
+160 (sob "Reduzir", acende em 120); "Comi tudo" deixa a linha em y 332 (antes
+489), com a leitura de volta cortada 33 px em cima, como aceito; o teclado não
+rola na metade de cima, rola o mínimo na de baixo, e com o descanso contando
+para encostado no cronômetro (antes 82 px dele ficavam por baixo); "Abrindo o
+registro…" nunca fica visível em 21 aberturas (antes 1–2 quadros no Chromium);
+o toque responde no mesmo quadro de antes. **Somados aos ajustes finais:**
+depois de "Comi tudo" fica sob o dedo a linha da Ceia (o painel do almoço fecha
+e a de baixo sobe) — antes ficava a própria linha, inócua; e no WebKit desta
+máquina a abertura lenta (~770 ms) mostra só o fundo, sem a frase (antes a frase
+ficava ~565 ms) — o atraso do CSS não vira quadro com a thread ocupada.
+
+**20/10, 23h — ajustes finais conferidos.** O implementador terminou o trabalho
+e a seção do 09 (plantio de 14 violações + 2 controles, todo arquivo de volta ao
+limpo; suíte verde duas vezes às 20h), e a máquina reiniciou antes do relatório
+final; conferi pelo 09 e pelo disco (nenhuma violação plantada ficou) e rodei
+tudo: `tipos` limpo, build, 1705/1705 duas vezes (a segunda com load 13), e o
+`troca.test.js` no WebKit, 12/12. Os cinco itens: (1) o × da folha de cima com
+outra embaixo — o quadro longo era o da FOTO (duas folhas, dois véus, cronômetro
+e aviso fotografados à parte); na descida só o que sai tem foto, e o × com duas
+folhas passou a custar o mesmo que com uma (+21 ms, dentro do +25); (2) o clique
+reenviado pela mira agora deixa o foco onde um clique de verdade deixaria, nos
+dois motores; (3) a corrida do histórico era defeito do app — o `popstate` da
+volta pedida pelo app agora é reconhecido pela profundidade, com prazo de 3 s se
+a volta se perder; (4) depois de "Comi tudo" o dedo continua sobre a linha
+marcada (rola o que falta para ele cair dentro dela, só quando ficaria fora);
+(5) "Abrindo o registro…" agora acende aos 300 ms mesmo com a thread presa — a
+animação de opacidade que o compositor leva sozinho, num degrau a 1 % de cem
+esperas. Fase 3 fechada.
