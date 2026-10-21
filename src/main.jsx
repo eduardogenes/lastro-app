@@ -12747,13 +12747,37 @@ function devolveOFoco(antes, agora) {
  * `devolveOFoco`. Com uma folha, o pare ou o aviso por cima, eles ficam com o
  * foco deles; ninguém tinha o foco (o toque no Safari não foca botão), nada a
  * fazer.
+ *
+ * O FOCO VAI DEPOIS DO LAYOUT, E NÃO DENTRO DO TOQUE (a 1ª série a frio no
+ * WebKit; docs/motion/09, "A primeira série a frio no WebKit"). `focus()` obriga
+ * o navegador a montar o desenho na hora, para saber se o nó é focável — o
+ * WebKit, o que o nó precisa (a frio, o app quase inteiro); o Chromium, o estilo
+ * e o layout do documento —, e este desenho quase sempre roda dentro do toque: a
+ * régua que fecha na série gravada tira da página o valor tocado (o Chromium e
+ * o WebKit desta máquina focam o botão tocado), e o treino aberto no Programa
+ * tira o botão da lista. No WebKit desta máquina, da primeira vez, eram ~200
+ * ms DENTRO do handler que o quadro ia gastar de qualquer jeito (a fonte que
+ * falta no Linux) — o mesmo defeito que a peça 2 tirou da medida da linha. Por
+ * `depoisDoLayout`, o foco entra no MESMO quadro do desenho, depois do layout e
+ * antes da pintura, e sem custar nada; a tela mostra o mesmo. Lá, tudo se confere
+ * de novo: se alguém pôs o foco nesse meio (uma folha que abriu, o teclado), ou
+ * se uma camada ficou por cima, ele fica onde está. Sem ResizeObserver (o jsdom
+ * dos testes), na hora, como antes.
  */
 function naoPerdeOFoco(focado) {
   if (!focado || focado === document.body || focado === document.documentElement || focado.isConnected) return;
-  const agora = document.activeElement;
-  if (agora && agora !== document.body && agora !== document.documentElement) return;
-  if (camadasDesenhadas.some(function (c) { return c === 'pare' || c === 'falhou' || c.indexOf('folha:') === 0; })) return;
-  tentaFocar(document.querySelector('#app h1[tabindex]'));
+  const perdido = function () {
+    const agora = document.activeElement;
+    return !agora || agora === document.body || agora === document.documentElement;
+  };
+  const cobre = function () {
+    return camadasDesenhadas.some(function (c) { return c === 'pare' || c === 'falhou' || c.indexOf('folha:') === 0; });
+  };
+  if (!perdido() || cobre()) return;
+  depoisDoLayout(function () {
+    if (!perdido() || cobre()) return;
+    tentaFocar(document.querySelector('#app h1[tabindex]'));
+  });
 }
 
 // ---------- ajustar uma foto ----------

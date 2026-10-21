@@ -4234,3 +4234,388 @@ arquivo por vez: `troca` 12/12, `aba` 8/8, `enche` 19/19, `sobe` 7/7, `descanso`
 5/5, `dedo` 9/9, `acende` 6/6. A máquina esteve com carga de 1 a 14 durante o
 trabalho (outro processo rodava em paralelo, além da carga que eu mesmo pus nas
 repetições).
+
+---
+
+## A primeira série a frio no WebKit
+
+Feito em 21/10, sobre `28d5a21`, sem commit. Espec: o pedido em
+`_pedidos/peca-10-serie-fria.md` (o toque da 1ª série a frio, que no WebKit voltou
+a gastar ~195 ms dentro do handler desde a peça 6) e o segundo item que o
+coordenador mandou no meio (00, 21/10 00h40): as trocas de camada que, na rodada
+final, andavam um quadro mais tarde no Chromium do que na peça 6, com a
+bissecção pelos builds congelados. As regras de sempre: motion é apresentação, o
+toque nunca espera, nada escuta fim de animação, "Reduzir movimento" em tudo.
+
+O implementador caiu no limite de uso logo depois de escrever o conserto em
+`main.jsx`; retomado, seguiu de onde parou (o servidor da 4729 continuava no
+ar). Scripts e medidas em `scratchpad/peca10/`: `mede.mjs` (o 03b e os outros
+fluxos pelas peças do revisor — `abreMotor`, `abreApp`, `aquece`, `recarrega`,
+`executaPasso` —, com um registro, dentro do clique, de toda chamada que pode
+forçar estilo ou layout, e as fases da transição de vista), `trace.mjs` (o trace
+do Chromium por passo), `minima.mjs` (a transição numa página sem o app),
+`grava.sh`/`bissecta.sh`/`grava2.mjs` (o gravador do revisor contra cada build,
+intercalado), `fria.sh`, `planta.mjs`. O servidor foi a porta 4729, com `/p5/`,
+`/p6/`, `/p7/`, `/p8/`, `/final/` e `/antes/` (os `dist-*` congelados do
+revisor, só lidos, por link) e `/meu/` (o `dist/` do repositório); desligado no
+fim. Os `shots/` e o `07` não foram tocados.
+
+### Em uma página
+
+- **A causa, medida: o `focus()` de `naoPerdeOFoco`, dentro do toque.** Com o
+  registro do clique no build da peça 6, no WebKit, a frio: o handler levou 215
+  ms, e **201 ms foram um único `focus()` no título do treino**, chamado 14 ms
+  depois do começo do clique, pela pilha `tentaFocar` ← `naoPerdeOFoco` ←
+  `desenhaAgora`. É a peça 6 (decisão 13 dela): a régua que fecha tira da página
+  o valor tocado, que tinha o foco (o Chromium e o WebKit desta máquina focam o
+  botão tocado — o WebKit com certeza com o ponteiro, que é o dedo do revisor
+  nele), o foco cai no `body`, e `naoPerdeOFoco` o põe no título —
+  certo —, mas na hora, dentro do toque. O `focus()` obriga o motor a montar o
+  desenho ali mesmo para saber se o nó é focável: no WebKit, o desenho do app a
+  frio (os ~180 ms da fonte que falta no Linux, que até a peça 5 o quadro pagava
+  DEPOIS do handler); no Chromium, o estilo e o layout do documento inteiros
+  (no trace: `Layout` de 2,7–3,4 ms e estilo de 4,4 ms dentro do clique). É o
+  mesmo defeito que a peça 2 tinha tirado da medida da linha (`depoisDoLayout`),
+  de volta por outro caminho. Nada mais do toque força desenho: no build final,
+  dentro do clique, só a medida da linha ANTES do `render()` (layout limpo, 1 ms),
+  esse `focus()` e a gravação.
+- **O conserto: o foco vai depois do layout, no mesmo quadro.**
+  `naoPerdeOFoco` decide no desenho, como antes, e entrega o foco por
+  `depoisDoLayout` — a entrega do ResizeObserver, depois do layout e antes da
+  pintura —, conferindo de novo lá se o foco continua perdido e se nada cobriu a
+  tela. O foco entra no mesmo quadro do desenho, e de graça (o layout já está
+  pronto). O que se grava, a ordem dos toques e o que a tela mostra não mudam; o
+  foco termina no mesmo lugar (o título do treino). Sem ResizeObserver (o jsdom),
+  na hora, como antes.
+- **Os números, a frio, intercalados (um processo do motor por medida):** no
+  WebKit, o handler **12–16 ms (peça 5) → 193–194 (final) → 12–13 (depois)**, e a
+  tela muda no mesmo tempo nos três (~200 ms, a fonte). No Chromium, **10,4–15,5 →
+  24,3–31,9 → 10,4–11,3 ms**, e o primeiro quadro volta ao da peça 5 (Event
+  Timing 40, era 56–64). No trace do Chromium, sem o registro por cima, o clique
+  vai de 15,6–16 ms a 10,9–11,9, sem `Layout` dentro. As metas (WebKit 10–20;
+  Chromium ≤ 16 com folga) estão cumpridas.
+- **O mesmo conserto vale para o treino aberto na lista do Programa** (o item 4
+  da peça 6, o outro caso de `naoPerdeOFoco`): no WebKit, a frio, ele também
+  pagava ~177 ms de `focus()` dentro do toque (handler 181 ms); agora, 4 ms.
+- **O teste, `tests/fluxo/frio.test.js`** (motor, um caso, os dois motores, com o
+  dedo e com o ponteiro): põe o "frio" ele mesmo — um lastro de texto fora da
+  tela que muda de largura e de estilo no mesmo desenho em que a régua fecha —
+  e cobra que, no fim do toque, o lastro ainda esteja por montar, que o toque
+  tenha levado menos da metade dele, e nenhum `focus()` dentro do toque; e que o
+  foco termine no título. Reprova o build de `28d5a21` nos DOIS motores (no
+  WebKit pelo `focus()` dentro do toque, ~220–300 ms de handler; no Chromium pelo
+  lastro montado dentro dele), e reprova também a medida da linha posta de volta
+  depois do `render()` (o defeito da peça 2).
+- **O segundo item — a troca de camada "um quadro mais tarde" no Chromium — não
+  é do código.** Intercalados, na mesma máquina e na mesma hora, os builds
+  congelados da peça 6, 7, 8 e o final andam igual (01 entra: 50,9 · 43,2 · 45,9
+  · 51,2 ms; 13 deixa: 44,5 · 44,6 · 49,8 · 42,9), e o trace mostra o quadro da
+  foto e o desenho do app dentro da transição no mesmo tamanho (no 01 entra, a
+  foto até mais leve no final: 8–9 ms, contra 14–16 na peça 6; no 13 deixa, 15–16
+  contra 14). O que mudou foi a máquina: os
+  35 ms da peça 6 foram medidos em 20/10 de manhã, e a rodada final depois de
+  dois reinícios (18h18 e 22h50) — desde o último, a captura leva o dobro para
+  entregar uma mudança (calibração: 2–3 ms antes, 4–6 depois), e o mesmo
+  `a22b09d` gasta 7,3–7,4 ms para desenhar o modo no toque, contra 3,7–7,4
+  (mediana 4,2) em 20/10, e 10,5–13,5 hoje. Uma página sem o app, com a mesma
+  transição, leva hoje 34–39 ms para andar: o piso. Nada a consertar no app;
+  números e a conta abaixo.
+- **Testes:** 1 caso de motor novo; o plantio com o build congelado, duas
+  violações e o controle. `tipos`, `build` e a suíte completa verdes, duas vezes
+  seguidas; no WebKit, os oito arquivos de motor verdes, um por vez.
+
+### O que mudou, arquivo por arquivo
+
+| arquivo | o que mudou |
+|---|---|
+| `src/main.jsx` | `naoPerdeOFoco(focado)`: decide no desenho (quem tinha o foco saiu da página, o foco caiu no `body`, nada por cima), e o `tentaFocar` do título vai por `depoisDoLayout`, que confere de novo as duas condições (`perdido()`, `cobre()`). Comentário novo: por que o foco vai depois do layout e não dentro do toque. |
+| `DESIGN.md` | "A troca de camada mora num ponto só": o foco que um desenho perdeu (agora também a régua que fecha) vai ao título no mesmo quadro, depois do layout, e não dentro do toque. |
+| `tests/fluxo/frio.test.js` (novo) | O motor (Chromium; `LASTRO_MOTOR=webkit` o mesmo no WebKit), 1 caso. |
+
+### As decisões, com o porquê
+
+1. **A causa medida, e não suposta.** O registro do clique (`mede.mjs`) envolve,
+   só enquanto o clique é despachado, toda chamada que pode forçar estilo ou
+   layout — `focus`, `getAnimations`, `getComputedStyle`, as caixas, a rolagem,
+   `matchMedia`, `startViewTransition`, o `AudioContext`, `setItem` e os
+   getters de medida — e anota quanto cada uma levou e em que ponto do clique.
+   No build da peça 6, a frio, no WebKit: `focus(h1.ins-display)` 201 ms aos
+   14 ms, de um handler de 215; as outras, menos de 1 ms. A pilha, no build
+   congelado, mapeada no código minificado: `tentaFocar` ← `naoPerdeOFoco` ←
+   `desenhaAgora`. Nenhuma das três suspeitas do pedido além dela: o
+   `getAnimations()` da mira não roda nesse toque (não há camada chegando), o
+   `<main key={aba}>` e o `--ins-adianta` não forçam nada no clique, e o
+   `focaComoOClique` só age no clique reenviado pela porta.
+2. **Por que da peça 6, e por que o tempo até a tela mudar não piorou.** O
+   trabalho é o mesmo — o desenho do app a frio, que a tela precisa de qualquer
+   jeito; mudou ONDE ele acontece. Até a peça 5 ele vinha no quadro, depois do
+   handler (handler 10–13, tela em ~195–200); da peça 6 em diante o `focus()` o
+   puxava para dentro do handler (handler ~195, tela no mesmo ~200). Quem esperava
+   era o toque: um segundo toque nesse meio esperaria 180 ms para ser atendido.
+3. **O foco no mesmo quadro, depois do layout — `depoisDoLayout`, e não um
+   quadro depois.** Três lugares possíveis: (a) no toque, como era — força o
+   desenho; (b) depois da pintura (um `setTimeout` depois do quadro, ou um efeito
+   comum) — o foco entraria um quadro depois do desenho, e por esse quadro a tela
+   estaria sem foco (com o teclado, o anel apareceria um quadro atrasado); (c)
+   depois do layout e antes da pintura, onde o navegador entrega as observações
+   de um ResizeObserver — o mecanismo que a peça 2 já usa para a medida da linha
+   e a peça 8 para o teclado. Escolhi (c): o foco entra no mesmo quadro em que o
+   desenho aparece, o layout já está pronto (o `focus()` ali não monta nada), e a
+   tela mostra o mesmo de antes, quadro a quadro. Na troca com transição de vista
+   (o "Ir para Semana" com movimento), pela ordem do "update the rendering" do
+   HTML (as observações do ResizeObserver vêm antes das operações pendentes da
+   transição), o foco já está posto quando o navegador fotografa o estado novo —
+   pela especificação; esse quadro não medi. Os casos da peça 6 que cobram esse
+   foco continuam verdes nos dois motores.
+4. **Confere de novo na entrega.** Entre o desenho e a entrega pode haver outro
+   desenho no mesmo tique, uma folha que abriu e pôs o foco nela, ou o teclado.
+   A entrega só foca o título se o foco continua perdido (`body`) e se nada cobre
+   a tela (folha, pare, aviso de falha) — as mesmas duas condições do desenho,
+   lidas de novo. O título é procurado na hora da entrega: é o da tela que está
+   desenhada então.
+5. **Só `naoPerdeOFoco`, e não `devolveOFoco` nem o foco ao montar.** O foco ao
+   montar (o título da tela cheia e o do modo, `useLayoutEffect`) e o
+   `devolveOFoco` rodam dentro do desenho que a transição de vista pede — quando
+   há transição, é o navegador que chama esse desenho, fora do toque. Sem
+   transição (sob "Reduzir movimento"), eles rodam no toque, mas sobre telas que
+   já estiveram desenhadas: medi, no WebKit, sob "Reduzir", o fecho da Evolução e
+   os três "‹ Voltar" do Programa — 1 ms de `focus()` cada. O único caso que
+   forçava o desenho a frio era `naoPerdeOFoco`, e é o único que mudou; mexer na
+   ordem do foco devolvido da peça 5 (que tem a corrida da folha que chega por
+   cima, `devolveOFoco` × `abreCamada`) sem um defeito medido seria trocar
+   certeza por suposição.
+6. **O teste põe o frio ele mesmo — e cobra a causa.** O frio de verdade só
+   aparece na primeira vez que o motor desenha o descanso num processo; num
+   arquivo de teste, isso depende da ordem dos casos. Então o caso injeta um
+   lastro de 2000 parágrafos fora da tela, que muda de largura e de
+   `letter-spacing` quando a régua fecha (`html:not(:has(.regua))`), mede quanto
+   ele custa para montar ali (25 ms ou mais, ou o caso não serve) e cobra: no fim
+   do toque, o lastro ainda por montar (pelo menos um terço do custo) e o toque
+   abaixo da metade do custo. Isso pega quem força o desenho do DOCUMENTO no
+   toque — o `focus()` no Chromium, a medida da linha depois do `render()` nos
+   dois motores. O WebKit, no `focus()`, monta só o que o nó precisa: o lastro,
+   uma raiz de layout à parte, fica de fora (medido: com o build de `28d5a21`, o
+   toque levava 218–304 ms e o lastro continuava inteiro por montar). Para ele o
+   caso cobra a causa achada: nenhum `focus()` dentro do toque. E o fim: o foco
+   no título do treino quando o valor tocado tinha o foco. Com o dedo e com o
+   ponteiro, porque o WebKit desta máquina nem sempre foca o botão com o toque
+   emulado (no primeiro plantio o build de `28d5a21` passou no WebKit com o
+   dedo); o ponteiro primeiro, o frio de verdade.
+
+### Os números, antes e depois
+
+Chromium 1234 e WebKit 26.5 (Playwright), 414 × 896 a ×2, o registro do revisor
+(`shots/revisor/antes/registro.json`), o fluxo 03b como o gravador faz
+(aquecimento geral, depois a 1ª série sem a passada de aquecimento), a captura
+de tela ligada. "Handler" é a régua do revisor (do clique na janela, na
+captura, ao fim dele, na bolha); "até o quadro", do clique ao primeiro
+`setTimeout` depois do `requestAnimationFrame` seguinte. Cada medida num
+processo novo do motor (a primeira série do processo é a fria), os três builds
+intercalados, três rodadas, máquina com carga 1,3–4,3 (o Chrome do dono aberto).
+
+**A 1ª série a frio (o toque no 3º valor da régua):**
+
+| | peça 5 (`1a54bf3`) | final (`28d5a21`) | depois |
+|---|---|---|---|
+| WebKit, handler | 12 · 13 · 16 ms | **193 · 194 · 194** | **13 · 13 · 12** |
+| WebKit, o `focus()` dentro dele | — | 181 · 182 · 181 ms, aos 12 ms do clique | nenhum |
+| WebKit, até o quadro | 199 · 200 · 204 | 200 · 201 · 200 | 203 · 202 · 202 |
+| WebKit, Event Timing do clique | 200 · 200 · 200 | 200 · 200 · 200 | 200 · 200 · 200 |
+| Chromium, handler (com o registro por cima) | 15,5 · 11,5 · 10,4 | 24,3 · 31,9 · 26,9 | **10,7 · 11,3 · 10,4** |
+| Chromium, o `focus()` dentro dele | — | 4,9 · 5,3 · 3,8 ms | nenhum |
+| Chromium, até o quadro | 26,1 · 19 · 17,9 | 28,1 · 38 · 31,2 | 18,8 · 19,4 · 17,6 |
+| Chromium, Event Timing do clique | 48 · 40 · 40 | 56 · 64 · 56 | 40 · 40 · 40 |
+| Chromium, o clique no trace (sem o registro) | — | 16,0 · 15,6 ms, com `Layout` 2,7 · 3,4 e estilo 4,5 · 4,4 | 10,9 · 11,9, estilo 3,4 · 3,2, sem `Layout` |
+
+O registro por cima (cada getter de medida envolvido) pesa mais no final, que
+chama `focus()` e força o resto; o trace, sem ele, dá a medida limpa. Para
+comparar com a régua do revisor: a rodada final dele deu WebKit 198 · 195 · 194
+e Chromium 15,0 · 16,1 · 16,5 (`repeticoes-final/serie-fria/final-1..3`), e a
+peça 5, 13 e 10,7. A primeira medida, antes de qualquer mudança, foi no build da
+peça 6: WebKit 215 ms de handler, 201 no `focus()`; as repetições no mesmo
+processo (já quente) ainda gastavam 7–8 ms de `focus()` num handler de 17–21.
+
+**O treino aberto na lista do Programa** (o fluxo 04, `abre-treino`, sob
+"Reduzir", WebKit, a primeira vez no processo): no final, handler 179 e 181 ms,
+dos quais 176 e 177 de `focus()` no título da tela cheia — o mesmo
+`naoPerdeOFoco`. Depois: **handler 4 ms**, a tela no mesmo tempo (até o quadro
+209 ms, Event Timing 208; no final, 188 e 184).
+
+**A troca de camada no Chromium (o segundo item).** O `andaMs` do revisor (o
+primeiro quadro do compositor depois do toque cuja mudança encosta na borda
+direita e tem 300 px de altura), pelo gravador dele (`revisor-gravar.mjs`, os
+fluxos 01, 06 e 13), cada build num processo, intercalados, mesmo registro:
+
+| passo | antes (`a22b09d`) | peça 6 | peça 7 | peça 8 | final | depois |
+|---|---|---|---|---|---|---|
+| 01 entra | 20,2 | 50,9 | 43,2 | 45,9 | 51,2 | 60,8 (50,4 · 71,2) |
+| 01 sai | 17,9 | 45,5 | 54,5 | 40,2 | 39,8 | 44,9 |
+| 06 fecha-x | 15,8 | 80,5 | 78,3 | 70,6 | **55,9** | 51,4 |
+| 06 voltar | 21,6 | 35,6 | 36,7 | 37,5 | 65,6 | 43,8 |
+| 13 deixa | 16,2 | 44,5 | 44,6 | 49,8 | 42,9 | 41,5 |
+
+(medianas de 2, carga 1,2–5,6; uma primeira bissecção, de 3 rodadas, com carga
+2–4, deu o mesmo desenho: 01 entra peça 5 63,6 · peça 6 51,2 · peça 7 53 · peça 8
+53,4 · final 51,6; 13 deixa 51 · 43,9 · 43,4 · 41,6 · 42.) Nenhum degrau entre a
+peça 6 e o final: o que cai é o 06 fecha-x, que os ajustes finais consertaram. O
+06 voltar do final, 65,6 nas duas rodadas, é a fase do vsync, e não o build: com
+um diário na página (`grava2.mjs`: o `back()`, o `popstate`, o pedido da
+transição, o desenho, a hora em que ela fica pronta), o `popstate` chega
+1,2–1,8 ms depois do `back()` e a transição fica pronta 15–25 ms depois dele em
+todos os builds; gravado de novo, o final deu 38,8 e 50,8 e o depois 38,6 e 43.
+
+O trace do Chromium (`trace.mjs`, três rodadas por build: o desenho do quadro
+da foto no compositor, `DirectRenderer::DrawFrame`, e o desenho do app dentro da
+transição, o `ViewTransition::ProcessCurrentState` longo):
+
+| passo | peça 6 | final |
+|---|---|---|
+| 01 entra: o quadro da foto | 15,7 · 13,9 · 14,1 ms | 9,4 · — · 8,1 |
+| 01 entra: o desenho do app na transição | 15,5 · 19 · 13,5 (dos 17 aos 31–36 ms) | 15,8 · 12,2 · 13,1 (dos 17 aos 30–33) |
+| 01 entra: o primeiro quadro depois dele | 43 · 42,8 · 41,1 | 40,5 · 34,9 · 36,4 |
+| 13 deixa: o quadro da foto | 14,2 · 13,8 · 14 | 15,5 · 16,2 · 25 |
+| 13 deixa: o desenho do app | 7,5 · 5,7 · 7 | 6 · 6,7 · 7 |
+| 06 fecha-x: o quadro da foto | 33,2 · 32,2 · 29,8 | 22,5 · 24 · 24,3 |
+
+Onde mora o quadro a mais: depois de fotografar a tela velha (~14 ms depois do
+toque), o navegador chama o desenho do app, e no 01 entra esse desenho — o modo
+inteiro, pelo Preact — leva 12–19 ms. Ele termina perto do vsync seguinte (~31
+ms): quando termina antes, a página anda no quadro de ~35 ms; quando passa, no
+de ~52. No 13 deixa o desenho é curto (6–7 ms), e quem segura é o quadro da
+foto no compositor (14–25 ms de desenho em software). Os dois são a máquina, e
+do mesmo tamanho nos dois builds — no final, a foto do 01 entra é mais leve, e a
+do 13 deixa 1–2 ms mais pesada (com um de 25 ms sob carga), com o andar igual
+(44,5 × 42,9). E a máquina mudou:
+
+| | 20/10 de manhã (as repetições da peça 6) | 20/10, 23h35 (a rodada final) | 21/10 (estas medidas) |
+|---|---|---|---|
+| a máquina | antes dos reinícios de 18h18 e 22h50 (`journalctl --list-boots`) | depois deles | a mesma sessão |
+| a captura entrega uma mudança em (calibração do revisor) | 2–3 ms | 4–6 | 4–6 |
+| `a22b09d` desenhando o modo dentro do toque (01 entra, handler) | 3,7 · 7,4 · 4,2 · 3,7 · 4,4 | 7,4 · 7,4 · 7,3 | 13,5 · 10,5 |
+| o 01 entra da peça 6 | 35,1 · 33,9 · 36 · 35,4 (e 86,3) | — | 56,2 · 45,5 · 35,6 · 51,2 · 53,4 |
+
+E o piso: a mesma transição (a nova da direita, 350 ms, um quadro adiante) numa
+página sem o app (`minima.mjs`, o dedo do CDP, a borda direita no screencast),
+hoje, anda em **39 ms** (mediana de 8; 34 com dois elementos nomeados) — já
++19 sobre o antes do app. O app, com o desenho do modo dentro da transição, fica
+entre o piso e um quadro acima dele. Não há o que devolver: a peça 6 não ganhou
+nada que a rodada final perdeu.
+
+### Os testes, e como provei que reprovam
+
+**`tests/fluxo/frio.test.js`** (novo; motor, 1 caso; `LASTRO_MOTOR=webkit` roda o
+mesmo no WebKit — verde nos dois): *o toque da 1ª série a frio não monta o
+desenho dentro dele: o estilo e o layout ficam para o quadro, e o foco vai
+depois do layout* — com o ponteiro e com o dedo, cada um num contexto novo: o
+treino de hoje no modo, a carga da série 1 posta, o lastro; toca a célula, a
+régua abre; mede o custo do lastro; toca o 3º valor (a 1ª série, que abre a
+sessão); cobra a sessão aberta e a régua fechada (a condição aconteceu), um
+clique só, o lastro ainda por montar no fim do toque, o toque abaixo da metade
+do custo dele, nenhum `focus()` dentro do toque, e — se o valor tocado tinha o
+foco — o foco no título do treino no fim. As medidas vão para o `console`
+(com `--reporter=verbose`). Verde no build limpo: Chromium, o toque 18,7–18,9 ms
+contra um lastro de 60–64, que no fim ainda custava 58,6–60.
+
+**Plantio** (`scratchpad/peca10/planta.mjs`: guarda o `main.jsx` e uma cópia do
+`dist/`, aplica a violação (ou põe o build congelado no lugar do `dist/`),
+constrói, roda o caso nos dois motores, um de cada vez, e devolve tudo num
+`finally` — e em SIGINT, SIGTERM e SIGHUP —, conferindo por hash o `main.jsx` e o
+`dist/` inteiro depois de cada passo e no fim):
+
+| # | a violação plantada | Chromium | WebKit | voltou ao limpo |
+|---|---|---|---|---|
+| B0 | o build congelado de `28d5a21` (`dist-final`) servido no lugar do `dist/` | **vermelho**: o toque levou 91,7 (ponteiro) e 77,1 ms (dedo) contra um lastro de 62; no fim dele o lastro já estava montado (0,0 ms); `focus()` dentro: `h1.ins-display` | **vermelho**: o toque levou 218 e 304 ms; `focus()` dentro: `h1.ins-display` (o lastro, à parte, ainda por montar: 350 e 708 ms) | sim |
+| P1 | o foco que o desenho perdeu volta a ir ao título DENTRO do desenho (sem `depoisDoLayout`) | **vermelho**: 86 e 76,1 ms contra 75,5 e 62; lastro montado (0,1 · 0,0); `focus()` dentro | **vermelho**: 259 e 278 ms; `focus()` dentro | sim |
+| P2 | a régua mede a linha DEPOIS do `render()`, dentro do toque (o defeito que a peça 2 tirou) | **vermelho**: 78,9 e 78 ms; lastro montado (0,0) | **vermelho**: 645 e 559 ms; lastro montado (0,0) | sim |
+| V1 | controle: o build limpo | verde: 19,1 e 19,2 ms contra 60,9 e 62,2; no fim ainda 63,1 e 57,3 | verde: 15 e 12 ms contra 486 e 369; no fim ainda 558 e 551 | sim |
+
+Os três vermelhos nos dois motores, o controle verde; depois de cada passo e no
+fim, o `main.jsx` e o `dist/` inteiro conferidos por hash contra os de antes do
+plantio (iguais), e o `dist/` reconstruído do limpo. A primeira rodada do
+plantio, com o caso na primeira forma (só o dedo, só o lastro), deixou o B0
+verde no WebKit, e o P1 vermelho só por pouco (o toque em 235 ms contra a metade
+do lastro, 232): o `focus()` do WebKit não monta o lastro (decisão 6), e o toque
+emulado dele nem sempre foca o valor da régua — sem foco, `naoPerdeOFoco` nem
+age. Por isso o caso passou a tocar com o ponteiro e com o dedo, e a cobrar o
+`focus()` dentro do toque, além do lastro; a tabela é a da segunda rodada, com o
+caso na forma final (nela, o toque emulado do WebKit focou o valor nos dois
+vermelhos).
+
+### O que ficou de fora, e por quê
+
+- **Nada foi visto num iPhone de verdade.** No Safari do iPhone o botão tocado
+  não ganha o foco, e `naoPerdeOFoco` nem age no toque (decisão 13 da peça 6): lá
+  o `focus()` dentro do toque provavelmente nem acontecia. O conserto vale para
+  o teclado e para os motores que focam no toque; no aparelho, nada muda.
+- **`devolveOFoco` e o foco ao montar continuam no desenho** (decisão 5): medidos
+  em 1 ms nos toques sob "Reduzir" em que rodam fora da transição.
+- **O quadro a mais da troca de camada no Chromium desta máquina** (o segundo
+  item) não tem conserto no app: o mesmo build da peça 6 anda igual ao final,
+  hoje. Diminuir o desenho do modo pelo Preact (12–19 ms dentro da transição)
+  seria trabalho de desempenho do app, não de motion, e não foi pedido; o piso da
+  transição sem app já está a +19 do antes. Os 35 ms da peça 6 ficam como o
+  número da máquina de 20/10 de manhã.
+- **Os números do WebKit da troca de camada** não foram perseguidos (o pedido do
+  coordenador).
+
+### Para o revisor
+
+- **A 1ª série a frio, no WebKit:** o handler volta a 12–13 ms; a tela muda no
+  mesmo tempo de antes (~200 ms: a fonte que falta no Linux é do quadro, e
+  continua lá). No Chromium, 10–11 ms (Event Timing 40).
+- **O foco** depois da série gravada (o valor tocado sai da página) continua no
+  título do treino, nos dois motores, com o dedo e com o ponteiro — entra no
+  mesmo quadro do desenho, depois do layout, e não mais dentro do toque.
+- **A comparação "peça 6 × final" da troca de camada não vale entre máquinas
+  diferentes.** A rodada final foi gravada depois de dois reinícios, com a
+  captura a 4–6 ms (contra 2–3) e o `a22b09d` desenhando o modo em 7,4 ms (contra
+  ~4). Intercalados hoje, peça 6 e final andam igual. Para a página de antes e
+  depois, o "antes" e o "depois" da mesma rodada continuam comparáveis entre si;
+  a linha da peça 6 não.
+
+### As saídas
+
+SAIDAS
+
+---
+
+## A primeira série a frio no WebKit, e o quadro da troca de camada
+
+Achados na rodada final do revisor (07 §15). O implementador achou a causa da
+primeira e deixou o conserto aplicado; caiu no limite de uso antes de escrever
+esta seção, e o coordenador fechou.
+
+### A primeira série a frio no WebKit (~195 ms dentro do toque desde a peça 6)
+
+**Causa.** `naoPerdeOFoco` (peça 6) devolve o foco ao título da tela quando o
+desenho tira da página o controle que estava focado — e, na série gravada, a
+régua que fecha tira o valor tocado. Ela chamava `focus()` **dentro do toque**,
+logo depois do `render()`. `focus()` obriga o navegador a montar o desenho na
+hora para saber se o nó é focável: no WebKit desta máquina, a frio, o app quase
+inteiro (o primeiro desenho, lento aqui pela fonte que falta no Linux) — ~195 ms
+de trabalho que o quadro ia gastar de qualquer jeito, agora dentro do handler.
+Nas peças 2 a 5 (antes de `naoPerdeOFoco`) o handler gastava 10–13 ms.
+
+**Conserto** (`src/main.jsx`, `naoPerdeOFoco`). O foco vai por `depoisDoLayout`:
+no MESMO quadro do desenho, depois do layout e antes da pintura, sem custo extra.
+Lá tudo se confere de novo — se alguém pôs o foco nesse meio (uma folha que
+abriu, o teclado) ou se uma camada ficou por cima, ele fica onde está. Sem
+ResizeObserver (o jsdom), na hora, como antes. A tela mostra o mesmo; o foco
+chega no mesmo quadro.
+
+### O quadro da troca de camada no Chromium — não era regressão
+
+A rodada final deu, nas medianas de três repetições, a troca de camada andando
++23 a +47 ms depois do antes (01 entra 18 → 54; 13 deixa 15,5 → 44,5), contra os
+"35 ms" que o revisor anotou na peça 6. O coordenador fez a bissecção com os
+builds congelados (`dist-peca-6`, `-7`, `-8`, `dist-final`, fluxos 01 e 13,
+Chromium, duas voltas intercaladas com o antes): **a peça 6 já dava o mesmo**
+(01 entra 53,4 e 53,8; 13 deixa 42,6 e 41,7), e as peças 7, 8 e o final ficam no
+mesmo lugar. Não houve regressão depois da peça 6; o número de então veio de uma
+régua que o revisor ajustou depois (07 §12). O estado verdadeiro: no Chromium
+desta máquina a troca de camada começa **um quadro e meio a dois** depois do
+toque (+20 a +35 ms; com duas folhas, até +40), quando o dono aceitou ~1. O que
+sobra é o custo da foto da tela que a View Transition tira antes de animar — o
+`--ins-adianta` já põe o primeiro quadro animado um passo adiante, e não há mais
+um quadro inteiro a tirar sem trocar de técnica. Fica escrito como está, na
+página de antes e depois, e a conferir no aparelho.

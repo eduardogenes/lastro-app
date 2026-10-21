@@ -466,7 +466,11 @@ mesmo desenho; ao sair, o foco volta ao controle que abriu (achado de novo pela
 chave dele) ou ao título da tela que reaparece — nunca ao `body`. E quando um
 desenho que não troca camada tira da página o controle que tinha o foco (a aba
 que troca, sob "Reduzir movimento" o segundo desenho do "Ir para Semana"; o
-treino aberto na lista do Programa), o foco vai ao título da tela desenhada.
+treino aberto na lista do Programa; a régua que fecha na série gravada), o foco
+vai ao título da tela desenhada — no MESMO quadro, mas depois do layout e antes
+da pintura (`depoisDoLayout`), e não dentro do toque: `focus()` obriga o motor a
+montar o layout na hora (o WebKit o monta inteiro), e na 1ª série a frio isso
+punha ~200 ms dentro do toque.
 Toda foto que anda começa um quadro adiante (`--ins-adianta`): o primeiro
 quadro é a foto da tela velha, e o primeiro animado já mostra a página andando.
 Na descida (só uma folha ou o painel fecham), só o que sai tem foto: a folha
