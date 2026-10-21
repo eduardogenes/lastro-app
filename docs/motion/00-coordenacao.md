@@ -91,8 +91,8 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde (conferido pelo coordenador em cada commit).
 
 ### Fase 4 — revisão
-- [ ] Revisor passa por tudo com capturas e gravações a 414 × 896 (Blink; WebKit se der).
-- [ ] Página publicada com o antes e o depois.
+- [x] Revisor passa por tudo com capturas e gravações a 414 × 896 (Chromium e WebKit, com e sem "Reduzir movimento"). 07 §15.
+- [x] Página publicada com o antes e o depois: https://claude.ai/artifact/2QcKje2hH15sNbzNWy1Cae (21/10).
 
 ---
 
@@ -641,3 +641,50 @@ marcada (rola o que falta para ele cair dentro dela, só quando ficaria fora);
 (5) "Abrindo o registro…" agora acende aos 300 ms mesmo com a thread presa — a
 animação de opacidade que o compositor leva sozinho, num degrau a 1 % de cem
 esperas. Fase 3 fechada.
+
+**20/10, 23h40 — fase 4, a rodada final (em curso).** Revisor gravou contra
+`dist-final` (`28d5a21`) todos os fluxos, com 15b e 17, nas quatro rodadas, mais
+mouse e ×3; nenhum erro de página. Ele teve de entregar no meio (o contexto
+dele chegou ao fim), com as repetições intercaladas e os complementos rodando
+num processo dele; o coordenador termina os passos mecânicos (comparador final,
+linha de base, `revisor-pagina.py`) e escreve a §15. Achados já vistos, numa
+amostra: a 1ª série a frio no Chromium tem trabalho no toque de 16,1 ms (meta
+≤ 16, no limite; era 59,8); **no WebKit, ~195 ms dentro do handler da 1ª série
+desde a peça 6** (nas peças 2 a 5 eram 10–13 ms; a tela muda no mesmo tempo da
+peça 3, ~195 contra 351 no antes) — regressão de trabalho no toque a investigar;
+o × da folha de cima ainda a 55 ms numa amostra, contra o ajuste (1) — as
+repetições dizem.
+
+**21/10, 00h40 — o comparador final, e duas regressões de desempenho.** Rodei
+o `revisor-compara.mjs` contra `depois-final` (com vídeos) e as três repetições
+intercaladas. Passam sem nenhuma reprovação os princípios que não são de tempo:
+só `transform` e `opacity` (242/242), foco (242/242; no antes, 45 reprovavam),
+rolagem exata (18/18), o toque se vê (115, 0 reprovações), nada pisca (1 só, o
+dedo simulado do Chromium no copo, já conhecido). Nas medianas das três
+repetições, no Chromium: as abas (+7 a +11 ms) e o Voltar do sistema (+19 a
++21) estão dentro do combinado; **as trocas de camada voltaram a dois quadros**
+— 01 entra 18 → 54 ms, 06 fecha-x 16 → 56, 13 deixa 15,5 → 44,5, 04 abre +27,
+06 voltar +47 —, quando na peça 6 eram 35 ms (o `--ins-adianta` continua nas
+regras: outra coisa voltou a custar um quadro, depois da peça 6). E a **1ª série
+a frio no WebKit** gasta ~195 ms dentro do toque desde a peça 6 (eram 10–13).
+As duas foram para um implementador (`_pedidos/peca-10-serie-fria.md` e uma
+mensagem com a bissecção `dist-peca-6/7/8/final`). Os números do WebKit desta
+máquina (sem GPU: quadros de 40–130 ms nas transições) ficam para o aparelho.
+A página de antes e depois espera esse conserto, para mostrar o final de verdade.
+
+**21/10, 12h40 — fim.** A bissecção (`dist-peca-6/7/8/final`, fluxos 01 e 13)
+mostrou que a troca de camada a 1,5–2 quadros no Chromium não era regressão: a
+peça 6 já dava o mesmo; é o custo da foto da View Transition aqui, com o
+`--ins-adianta` aplicado. Fica escrito na página como está. A 1ª série a frio
+no WebKit era regressão da peça 6 (`naoPerdeOFoco` chamando `focus()` dentro do
+toque); consertado com o foco por `depoisDoLayout` — medido três vezes
+intercalado: trabalho no toque 153–189 → 11–13 ms, tela 330–376 → 191–199 ms.
+Por pedido do dono ("evite testes até finalizar"), uma verificação só no fim:
+`tipos` limpo, build, 1706/1706. Comparador final, `revisor-pagina.py` (52
+pares, 39 MB) e a página publicada (privada) com o antes e o depois, os
+números, o que ficou diferente do decidido e o que só o iPhone confirma. **O
+GitHub já tem tudo até `28d5a21`** — o `reflog` de `origin/main` mostra cinco
+envios feitos desta máquina (16/10 17h29, 19/10 23h54, 20/10 03h19 e 18h38,
+21/10 00h17), nenhum pelo coordenador nem pelos agentes; os dois commits de
+21/10 (o conserto da 1ª série e estes documentos) estão só locais. As quatro
+fases estão fechadas.

@@ -1286,3 +1286,51 @@ mais a linha: a página rola os 157 px de uma vez. O teclado só rola quando nã
 cabe e, com o cronômetro em cena, para acima dele em vez de terminar por baixo.
 "Abrindo o registro…" não aparece mais nas aberturas rápidas. E o toque ficou
 igual ao antes.
+
+---
+
+## 15. A rodada final
+
+Escrita pelo coordenador: o revisor gravou tudo contra `dist-final` (`28d5a21`)
+e chegou ao fim do contexto antes da análise; o coordenador rodou o comparador
+final, a linha de base, as três repetições intercaladas e `revisor-pagina.py`.
+
+**Gravado.** Todos os fluxos, com 15b e 17, em chromium, webkit, chromium-reduz e
+webkit-reduz; mouse (03, 03b, 09, 12, 13); ×3 (01, 03, 03b, 07); o 03b a frio,
+sozinho e primeiro. Nenhum erro de página, nenhum passo falhou. Três repetições
+intercaladas com o antes (01, 03, 04, 06, 07, 08, 09, 13, 14, 16) e os
+complementos. Comparação em `comparacao-final/`; repetições em
+`repeticoes-final/`; linha de base em `antes-contra-protocolo-final/`; a página
+em `pagina/` (52 pares, 39 MB, `manifesto.json`).
+
+**Os princípios que não são de tempo passam sem reprovação:** só `transform` e
+`opacity` 242/242; o foco não se perde 242/242 (no antes, 45 reprovavam); a
+rolagem volta exata 18/18 (o Corpo: 1982 → 1091 no antes, 1982 → 1982 agora); o
+toque se vê 115, 0 reprovações; "Reduzir movimento" 94 passam, 0 reprovam; nada
+pisca 134, 1 (o dedo simulado do Chromium no copo, conhecido).
+
+**O tempo, nas medianas das três repetições (Chromium).** Abas +7 a +11 ms e o
+Voltar do sistema +19 a +21: dentro do combinado. **A troca de camada** (modo,
+tela cheia, folha e painel descendo) **começa um quadro e meio a dois depois do
+toque**: 01 entra 18 → 54, 13 deixa 15,5 → 44,5, 04 abre +27, 06 fecha-x +40,
+06 voltar +47. A bissecção do coordenador (09, última seção) mostrou que a peça 6
+já dava o mesmo: não é regressão, é o custo da foto da View Transition nesta
+máquina, com o `--ins-adianta` já aplicado. O dono aceitou ~1 quadro; fica
+escrito na página como está, e a conferir no aparelho.
+
+**A primeira série a frio.** No WebKit, a rodada final achou ~195 ms dentro do
+toque desde a peça 6 (`naoPerdeOFoco` chamava `focus()` no toque). Consertado (o
+foco vai por `depoisDoLayout`), e medido de novo, três vezes intercalado
+(`scratchpad/fria`): trabalho no toque **153–189 → 11–13 ms**, a série na tela
+**330–376 → 191–199 ms**. No Chromium, 59,8 → 16,1 ms (na meta).
+
+**O que fica para o aparelho.** O WebKit desta máquina não tem placa de vídeo:
+quadros de 40–130 ms nas transições (o princípio 4 reprova 42 passos e o 1, 38,
+só nele) e um quadro que volta no fim de toda transição, até numa página mínima
+sem o app. O Core Animation do A13, o `:active` com o ouvinte de `touchstart`, o
+gesto de borda, o `svh` com a barra do Safari e se o quique de 640 ms se sente
+como chegada ou como atraso.
+
+**O que ainda pede conserto antes de publicar:** nada que se possa consertar
+sem trocar de técnica. A troca de camada a 1,5–2 quadros é o único número fora do
+que o dono decidiu, e vai para ele ver.

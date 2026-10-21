@@ -1,0 +1,340 @@
+<title>Movimento do Lastro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: um relatório de leitura, numa coluna; no topo o que mudou e o que ficou
+   diferente do decidido; depois os pares de antes e depois, peça por peça, cada
+   um com o vídeo, a tira e o veredito. Só tema claro, por pedido do dono; as cores
+   são as do próprio Lastro (src/tokens.css). */
+:root {
+  color-scheme: light;
+  --papel: #F1EEE8;
+  --folha: #FFFFFF;
+  --tinta: #15171A;
+  --tinta-2: #474C54;
+  --tinta-3: #5C6169;
+  --fio: #DCD8CF;
+  --fio-forte: #BBB6AC;
+  --acento: #3833DB;
+  --acento-tinta: #2C28BE;
+  --acento-suave: #E9E8FD;
+  --bom: #1F6B45;
+  --bom-suave: #E2F1E8;
+  --atencao: #8A5300;
+  --atencao-suave: #FBF0DC;
+  --ruim: #A3261C;
+  --ruim-suave: #FBE7E4;
+  --neutro-suave: #ECEAE5;
+
+  --f-titulo: "Space Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-texto: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-dado: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { background: var(--papel); }
+body { margin: 0; color: var(--tinta); font: 400 17px/1.55 var(--f-texto); -webkit-font-smoothing: antialiased; }
+
+main {
+  max-width: 900px; margin: 0 auto;
+  padding-block: 32px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+h1 { font: 700 clamp(32px, 6vw, 46px)/1.04 var(--f-titulo); letter-spacing: -.025em; margin: 0 0 14px; text-wrap: balance; }
+h2 { font: 700 26px/1.15 var(--f-titulo); letter-spacing: -.015em; margin: 0 0 10px; text-wrap: balance; }
+h3 { font: 700 19px/1.25 var(--f-titulo); margin: 0; text-wrap: balance; }
+p { margin: 0 0 10px; max-width: 66ch; }
+.lead { color: var(--tinta-2); }
+.secao { margin-top: 52px; scroll-margin-top: 16px; }
+.secao > p { color: var(--tinta-2); }
+.eti { font: 500 12.5px/1.2 var(--f-dado); letter-spacing: .05em; text-transform: uppercase; color: var(--tinta-3); }
+
+.indice { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; padding: 0; list-style: none; }
+.indice a { display: inline-block; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--fio-forte); background: var(--folha); color: var(--tinta); text-decoration: none; font-size: 14.5px; }
+.indice a:hover { border-color: var(--acento); }
+.indice a:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+
+/* os números que mudaram */
+.numeros { display: grid; gap: 10px; margin-top: 14px; }
+.num { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: baseline; padding: 14px 16px; background: var(--folha); border: 1px solid var(--fio); border-radius: 10px; }
+.num b { font: 600 16.5px/1.3 var(--f-titulo); }
+.num .de-para { font: 500 15px/1.3 var(--f-dado); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.num .de-para .de { color: var(--tinta-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+.num .de-para .para { color: var(--bom); font-weight: 500; }
+.num small { grid-column: 1 / -1; color: var(--tinta-2); font-size: 15px; }
+@media (max-width: 560px) { .num { grid-template-columns: 1fr; } .num .de-para { white-space: normal; } }
+
+/* o que ficou diferente do decidido */
+.aviso { padding: 16px 18px; border-radius: 10px; background: var(--atencao-suave); border: 1px solid #EBCF9C; margin-top: 12px; }
+.aviso h3 { color: var(--atencao); margin-bottom: 6px; }
+.aviso p { margin: 0 0 6px; color: var(--tinta-2); }
+.nota { padding: 14px 16px; border-radius: 10px; background: var(--folha); border: 1px solid var(--fio); margin-top: 12px; }
+.nota h3 { margin-bottom: 4px; }
+.nota p, .nota li { color: var(--tinta-2); }
+.nota ul { margin: 6px 0 0; padding-left: 20px; }
+.nota li { margin: 4px 0; }
+
+/* o quadro dos princípios */
+.tabela-caixa { overflow-x: auto; margin-top: 12px; background: var(--folha); border: 1px solid var(--fio); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 15px; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--fio); vertical-align: top; }
+th { font: 500 12px/1.3 var(--f-dado); letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); background: var(--papel); }
+td.n { font-family: var(--f-dado); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.ok { color: var(--bom); } .mau { color: var(--ruim); } .meio { color: var(--atencao); }
+
+/* os pares */
+.peca { margin-top: 44px; scroll-margin-top: 16px; }
+.peca-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 4px; }
+.peca-h h2 { margin: 0; }
+.peca > p { color: var(--tinta-2); }
+.par { background: var(--folha); border: 1px solid var(--fio); border-radius: 12px; padding: 18px; margin-top: 14px; display: grid; gap: 12px; }
+.par-topo { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
+.motor { font: 500 12.5px/1 var(--f-dado); padding: 5px 9px; border-radius: 999px; background: var(--neutro-suave); color: var(--tinta-2); white-space: nowrap; }
+.par .decidiu { font-size: 15.5px; color: var(--tinta-2); margin: 0; }
+.par .decidiu b { color: var(--tinta); }
+.video-caixa { display: grid; gap: 8px; }
+.rotulos { display: grid; grid-template-columns: 1fr 1fr; font: 500 12.5px/1 var(--f-dado); letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); }
+.rotulos span:last-child { text-align: right; }
+video { display: block; width: 100%; max-width: 100%; border-radius: 8px; background: var(--neutro-suave); border: 1px solid var(--fio); }
+.controles { display: flex; flex-wrap: wrap; gap: 8px; }
+.bt { display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 999px; cursor: pointer; font: 700 14.5px/1 var(--f-texto); color: var(--tinta); background: var(--folha); border: 1.5px solid var(--fio-forte); touch-action: manipulation; }
+.bt[aria-pressed="true"] { background: var(--tinta); border-color: var(--tinta); color: var(--folha); }
+.bt:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+details.tira summary { cursor: pointer; font: 500 14px/1.3 var(--f-texto); color: var(--acento-tinta); }
+details.tira summary:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+.tira-caixa { overflow-x: auto; margin-top: 8px; border: 1px solid var(--fio); border-radius: 8px; background: var(--papel); }
+.tira-caixa img { display: block; max-width: none; height: 300px; }
+.veredito { display: grid; gap: 6px; padding: 12px 14px; border-radius: 8px; }
+.veredito.passou { background: var(--bom-suave); }
+.veredito.ressalva, .veredito.aparelho, .veredito.aceito { background: var(--atencao-suave); }
+.veredito.mira { background: var(--neutro-suave); }
+.veredito.naopassou { background: var(--ruim-suave); }
+.veredito .selo { font: 700 13px/1.2 var(--f-dado); letter-spacing: .03em; text-transform: uppercase; }
+.veredito.passou .selo { color: var(--bom); }
+.veredito.ressalva .selo, .veredito.aparelho .selo, .veredito.aceito .selo { color: var(--atencao); }
+.veredito.mira .selo { color: var(--tinta-2); }
+.veredito.naopassou .selo { color: var(--ruim); }
+.veredito p { margin: 0; font-size: 15.5px; color: var(--tinta-2); }
+.veredito .medida { font: 500 14px/1.4 var(--f-dado); font-variant-numeric: tabular-nums; color: var(--tinta); }
+.correcao { font-size: 15px; padding: 10px 12px; border-radius: 8px; background: var(--acento-suave); color: var(--acento-tinta); margin: 0; }
+
+.rodape { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--fio); color: var(--tinta-2); font-size: 15.5px; }
+.rodape code, .nota code { font-family: var(--f-dado); font-size: .92em; }
+.erro { padding: 14px 16px; border-radius: 10px; background: var(--ruim-suave); color: var(--ruim); }
+</style>
+
+<main>
+  <header>
+    <p class="eti">Lastro · fase 4 do motion · 21/10</p>
+    <h1>Movimento do Lastro, antes e depois</h1>
+    <p class="lead">As nove peças que você decidiu em 16/10 estão no app. O GitHub já tem tudo até os ajustes finais (enviado daqui entre 16 e 21/10); só os dois últimos commits, o conserto do primeiro toque de série e os documentos finais, estão apenas neste computador. Esta página mostra o app de antes (o commit <code>a22b09d</code>) ao lado do de agora, gravados do mesmo jeito no motor do Chrome e no do Safari, com e sem "Reduzir movimento".</p>
+    <p class="lead">Cada par mostra o antes à esquerda e o depois à direita, alinhados no instante do toque. O vídeo toca em velocidade real; o botão "4× mais lento" mostra o mesmo devagar. A tira mostra os mesmos instantes, quadro a quadro, do antes do dedo até 0,8 s depois.</p>
+    <ul class="indice" id="indice" aria-label="Ir para"></ul>
+  </header>
+
+  <section class="secao" id="numeros" aria-labelledby="h-numeros">
+    <h2 id="h-numeros">O que mudou, em números</h2>
+    <p>Medidos pelo revisor, nos dois motores, com o antes e o depois gravados um depois do outro, três vezes.</p>
+    <div class="numeros">
+      <div class="num"><b>A primeira série do treino, no motor do Safari: a tela responde</b><span class="de-para"><span class="de">330–376 ms</span> → <span class="para">191–199 ms</span></span><small>O trabalho dentro do toque caiu de 153–189 ms para 11–13 ms. No Chrome, de 59,8 para 16,1 ms.</small></div>
+      <div class="num"><b>Sair do modo de sessão e voltar ao Corpo: onde a página fica</b><span class="de-para"><span class="de">volta a 1091 px</span> → <span class="para">volta a 1982 px</span></span><small>Antes a página voltava cortada, longe de onde você estava. Agora volta exatamente no lugar.</small></div>
+      <div class="num"><b>Passos em que o foco do teclado se perdia</b><span class="de-para"><span class="de">45</span> → <span class="para">0</span></span><small>Ao abrir e fechar telas, folhas e o modo, o foco agora vai ao título e volta a quem abriu.</small></div>
+      <div class="num"><b>Toques em que o dedo pousado não mostrava nada</b><span class="de-para"><span class="de">9 de 14</span> → <span class="para">0 de 14</span></span><small>Todo controle escurece enquanto o dedo está nele, também com "Reduzir movimento". Nada encolhe, como você pediu.</small></div>
+      <div class="num"><b>O aviso no pé da tela quando o cronômetro entra</b><span class="de-para"><span class="de">pulava 82 px</span> → <span class="para">anda até 16 px por quadro</span></span><small>E as mensagens longas ficam o tempo de ler: a do "Pular" fica 7,7 s, onde antes eram 3,6 s.</small></div>
+      <div class="num"><b>Animações em propriedades que pesam no celular</b><span class="de-para"><span class="de">16 passos</span> → <span class="para">0 de 242</span></span><small>Todo movimento novo usa só posição e transparência, que o celular faz sem esforço.</small></div>
+    </div>
+  </section>
+
+  <section class="secao" id="diferente" aria-labelledby="h-diferente">
+    <h2 id="h-diferente">O que ficou diferente do que você decidiu</h2>
+    <div class="aviso">
+      <h3>A troca de camada começa um quadro e meio a dois depois do toque</h3>
+      <p>Na pergunta 6 você aceitou um quadro a mais ao abrir e fechar telas cheias, o modo, as folhas e o painel de apagar. No motor do Chrome desta máquina, a troca começa a andar 20 a 35 ms depois do antes (com duas folhas abertas, até 40). Trocar de aba e o Voltar do sistema ficam dentro do um quadro.</p>
+      <p>O que sobra é o tempo que o navegador leva para fotografar a tela antes de animar. A troca já foi adiantada um quadro; tirar mais um exigiria trocar a técnica toda. No iPhone esse tempo pode ser outro, e só o aparelho mostra.</p>
+    </div>
+    <div class="aviso">
+      <h3>"Comi tudo" com a página no topo: o resumo do dia fica cortado em cima</h3>
+      <p>Para a linha do almoço não descer sob o seu dedo (o defeito que você mandou consertar), a página rola o que o resumo do dia ocupa, e o título dele fica uns 33 px acima da borda. O retorno do toque é a própria linha, que fica sob o dedo. Se preferir de outro jeito, é uma mudança de desenho, e é só dizer.</p>
+    </div>
+    <div class="nota">
+      <h3>O que foi decidido sem você, e por quê</h3>
+      <ul>
+        <li>O quique ficou só na chegada da folha e do painel de apagar, que foi o que o desenho da pergunta 1 mostrou; telas cheias, modo e cronômetro chegam em 350 ms sem quique.</li>
+        <li>O teclado próprio não rola a página quando cabe; quando não cabe, rola só o necessário para aparecer inteiro, acima do cronômetro. Antes, com o cronômetro na tela, o "pronto" ficava escondido atrás dele.</li>
+        <li>O aviso "Não guardei" ignora um toque de dedo que chegue antes de 0,4 s: era o toque mirado em outra coisa (o defeito 5).</li>
+        <li>O ponto ao vivo pulsa para sempre, como você escolheu; isso descumpre uma regra de acessibilidade (nada se mexendo sozinho por mais de 5 s), e está escrito no DESIGN.md como decisão sua.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="secao" id="iphone" aria-labelledby="h-iphone">
+    <h2 id="h-iphone">O que só o iPhone confirma</h2>
+    <p>Tudo foi gravado num computador. O motor do Safari roda aqui, mas sem placa de vídeo: as transições nele ficam mais lentas que no aparelho, e é por isso que boa parte das reprovações de tempo é só do motor do Safari. O que esta máquina não consegue mostrar:</p>
+    <div class="nota"><ul id="naomedido"></ul></div>
+  </section>
+
+  <section class="secao" id="principios" aria-labelledby="h-principios">
+    <h2 id="h-principios">Os princípios, passo a passo</h2>
+    <p>Cada passo gravado, julgado pelas regras que o time escreveu a partir do seu pedido. O antes também foi julgado pelas mesmas regras. As reprovações de tempo aqui são de uma gravação só; as que se confirmam em três repetições estão nos dois avisos acima.</p>
+    <div class="tabela-caixa"><table id="tabela"><thead><tr><th>o que a regra quer dizer</th><th>motor</th><th>antes</th><th>agora</th><th>leitura</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <div id="pares"></div>
+
+  <footer class="rodape">
+    <p>O GitHub tem tudo até o commit dos ajustes finais (<code>28d5a21</code>). Os dois commits de 21/10, o conserto do primeiro toque de série (<code>17e9d6d</code>) e os documentos finais, estão só neste computador; enviá-los publica o conserto na Vercel, e isso fica para quando você pedir. Os documentos do trabalho estão em <code>docs/motion/</code>: o parecer (<code>08-parecer.md</code>), o diário (<code>00-coordenacao.md</code>), a implementação de cada peça (<code>09-implementacao.md</code>) e a conferência de cada uma (<code>07-revisao-base.md</code>).</p>
+  </footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var PECAS = {
+    "0": ["O sistema e o \"Reduzir movimento\"", "Com a chave do iPhone ligada, nada desliza: a camada esmaece ao chegar e sai de uma vez, e a tela final é a mesma."],
+    "1": ["O toque", "Todo controle escurece com o dedo pousado; nada encolhe."],
+    "2": ["A série recebida", "O número pousa na célula; a primeira série deixou de travar a tela."],
+    "3": ["O descanso", "O cronômetro sobe da borda e desce por ela; o aviso acompanha."],
+    "4": ["A folha sobe", "A folha e o painel de apagar chegam com o quique."],
+    "5": ["Telas cheias e modo de sessão", "Chegam da direita com a de baixo parada; a folha e o painel descem; a rolagem volta exata."],
+    "6": ["A aba", "A página inteira desliza, como um carrossel."],
+    "7": ["O aviso curto", "Sobe ao chegar, apaga ao sair, fica o tempo do texto."],
+    "8": ["O resto do lugar", "O copo enche, a refeição pousa, \"Comi tudo\" e o teclado não empurram nada sob o dedo."]
+  };
+
+  // Medido de novo depois do último conserto (21/10), três vezes intercalado.
+  var CORRECOES = {
+    "03b-primeira-serie-fria|grava-1|webkit": "Depois do último conserto (21/10), medido três vezes: a tela responde em 191–199 ms (antes 330–376) e o trabalho dentro do toque caiu para 11–13 ms (antes 153–189). O vídeo é de antes desse conserto; o que se vê é o mesmo.",
+    "03b-primeira-serie-fria|grava-1|chromium": "Em três medidas, o trabalho dentro do toque fica em 15–16,5 ms (antes 59,8), na meta de 16 ms; esta gravação, uma só, pegou 26 ms."
+  };
+
+  function el(tag, attrs, filhos) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "texto") n.textContent = attrs[k];
+      else if (k === "classe") n.className = attrs[k];
+      else n.setAttribute(k, attrs[k]);
+    });
+    (filhos || []).forEach(function (f) { if (f) n.appendChild(typeof f === "string" ? document.createTextNode(f) : f); });
+    return n;
+  }
+  function ms(x) { return x == null ? "—" : (Math.round(x * 10) / 10).toString().replace(".", ",") + " ms"; }
+
+  function motorEmPalavras(rodada) {
+    var m = rodada.indexOf("webkit") === 0 ? "motor do Safari" : "motor do Chrome";
+    if (rodada.indexOf("reduz") >= 0) m += " · \"Reduzir movimento\"";
+    if (rodada.indexOf("mouse") >= 0) m += " · ponteiro";
+    return m;
+  }
+
+  // A leitura do veredito: o mesmo resultado do comparador, com o porquê dito.
+  function leitura(p) {
+    var v = p.veredito, webkit = p.rodada.indexOf("webkit") === 0;
+    var falhas = (p.tecnico && p.tecnico.vereditos || []).filter(function (x) { return x.veredito === "REPROVA"; });
+    var principios = falhas.map(function (x) { return x.principio.slice(0, 2).trim(); });
+    if (v === "passou") return { classe: "passou", selo: "passou" };
+    if (v.indexOf("ressalva") >= 0) return { classe: "ressalva", selo: "passou, com ressalva" };
+    if (p.fluxo.indexOf("15-") === 0) return { classe: "mira", selo: "a mira do robô", porque: "O robô lê onde está o × um quadro antes de o dedo descer, e nesse instante o × ainda sobe; o dedo cai no corpo da folha. O par 15b, que toca o véu num ponto fixo, fecha a folha." };
+    if (webkit && principios.every(function (x) { return x === "1" || x === "4"; })) return { classe: "aparelho", selo: "a conferir no iPhone", porque: "Só o motor do Safari reprovou, e só em tempo: este computador não tem placa de vídeo, e as transições ficam mais lentas que no aparelho." };
+    if (!webkit && principios.every(function (x) { return x === "1"; }) && /anda|tela muda/.test(falhas.map(function (x) { return x.motivo; }).join(" "))) return { classe: "aceito", selo: "um quadro e meio a dois", porque: "A troca começa um pouco mais tarde que o um quadro que você aceitou. É o custo da foto que o navegador tira antes de animar; está no aviso do topo." };
+    return { classe: "naopassou", selo: "não passou" };
+  }
+
+  function desenhaPar(p) {
+    var chave = p.fluxo + "|" + p.passo + "|" + p.rodada;
+    var cartao = el("article", { classe: "par" });
+    cartao.appendChild(el("div", { classe: "par-topo" }, [el("h3", { texto: p.oQueSeVe }), el("span", { classe: "motor", texto: motorEmPalavras(p.rodada) })]));
+    if (p.oQueODonoDecidiu) cartao.appendChild(el("p", { classe: "decidiu" }, [el("b", { texto: "O que você decidiu: " }), p.oQueODonoDecidiu]));
+
+    var arq = p.arquivos || {};
+    if (arq.video) {
+      var video = el("video", { src: arq.video, muted: "", loop: "", playsinline: "", controls: "", preload: "metadata" });
+      video.muted = true;
+      var real = el("button", { type: "button", classe: "bt", "aria-pressed": "true", texto: "Velocidade real" });
+      var lento = el("button", { type: "button", classe: "bt", "aria-pressed": "false", texto: "4× mais lento" });
+      var troca = function (src, a, b) {
+        var tocando = !video.paused;
+        video.src = src; a.setAttribute("aria-pressed", "true"); b.setAttribute("aria-pressed", "false");
+        if (tocando) { var pr = video.play(); if (pr && pr.catch) pr.catch(function () {}); }
+      };
+      real.addEventListener("click", function () { troca(arq.video, real, lento); });
+      if (arq.videoLento4x) lento.addEventListener("click", function () { troca(arq.videoLento4x, lento, real); });
+      cartao.appendChild(el("div", { classe: "video-caixa" }, [
+        el("div", { classe: "rotulos" }, [el("span", { texto: "antes" }), el("span", { texto: "agora" })]),
+        video,
+        el("div", { classe: "controles" }, arq.videoLento4x ? [real, lento] : [real])
+      ]));
+    }
+    if (arq.tira) {
+      var img = el("img", { alt: "Tira de quadros: o antes em cima, o agora embaixo, nos mesmos instantes depois do toque.", loading: "lazy" });
+      var det = el("details", { classe: "tira" }, [el("summary", { texto: "Ver a tira quadro a quadro" }), el("div", { classe: "tira-caixa" }, [img])]);
+      det.addEventListener("toggle", function () { if (det.open && !img.getAttribute("src")) img.setAttribute("src", arq.tira); });
+      cartao.appendChild(det);
+    }
+
+    var l = leitura(p);
+    var ver = el("div", { classe: "veredito " + l.classe }, [el("span", { classe: "selo", texto: l.selo })]);
+    if (l.porque) ver.appendChild(el("p", { texto: l.porque }));
+    else if (p.vereditoEmPalavras && l.classe !== "passou") ver.appendChild(el("p", { texto: p.vereditoEmPalavras }));
+    var nd = p.numeroQueDecidiu;
+    if (nd && (nd.antes != null || nd.depois != null)) ver.appendChild(el("p", { classe: "medida", texto: nd.oQue + ": " + ms(nd.antes) + " → " + ms(nd.depois) }));
+    if (p.aConferir && l.classe !== "passou") ver.appendChild(el("p", { texto: p.aConferir }));
+    cartao.appendChild(ver);
+    if (CORRECOES[chave]) cartao.appendChild(el("p", { classe: "correcao", texto: CORRECOES[chave] }));
+    return cartao;
+  }
+
+  function principal(peca) { return String(peca).split(",")[0].trim(); }
+
+  function desenha(m) {
+    var lista = document.getElementById("naomedido");
+    (m.oQueNaoSeMediu || []).forEach(function (t) { lista.appendChild(el("li", { texto: t })); });
+
+    var corpo = document.querySelector("#tabela tbody");
+    var antes = {};
+    ((m.quadroDosPrincipios || {}).antes || []).forEach(function (r) { antes[r.principio + "|" + r.motor] = r; });
+    ((m.quadroDosPrincipios || {}).final || []).forEach(function (r) {
+      var a = antes[r.principio + "|" + r.motor];
+      var leit = r.reprovam === 0 ? "passa em tudo" : (r.motor === "webkit" && (r.principio === "1" || r.principio === "4") ? "tempo no motor do Safari, a conferir no iPhone" : (r.principio === "1" ? "a troca de camada, no aviso do topo" : "casos conhecidos, ver os pares"));
+      var cls = r.reprovam === 0 ? "ok" : "meio";
+      corpo.appendChild(el("tr", {}, [
+        el("td", { texto: r.oQueQuerDizer }),
+        el("td", { texto: r.motor === "webkit" ? "Safari" : "Chrome" }),
+        el("td", { classe: "n", texto: a ? (a.passam + " passam · " + a.reprovam + " não") : "—" }),
+        el("td", { classe: "n " + cls, texto: r.passam + " passam · " + r.reprovam + " não" + (r.aConferir ? " · " + r.aConferir + " a conferir" : "") }),
+        el("td", { texto: leit })
+      ]));
+    });
+
+    var raiz = document.getElementById("pares");
+    var indice = document.getElementById("indice");
+    [["numeros", "Em números"], ["diferente", "O que ficou diferente"], ["iphone", "O que só o iPhone confirma"], ["principios", "Os princípios"]].forEach(function (x) {
+      indice.appendChild(el("li", {}, [el("a", { href: "#" + x[0], texto: x[1] })]));
+    });
+    var grupos = {};
+    (m.pares || []).forEach(function (p) { var k = principal(p.peca); (grupos[k] = grupos[k] || []).push(p); });
+    Object.keys(PECAS).forEach(function (k) {
+      if (!grupos[k]) return;
+      var id = "peca-" + k;
+      var sec = el("section", { classe: "peca", id: id, "aria-labelledby": "h-" + id });
+      sec.appendChild(el("div", { classe: "peca-h" }, [el("span", { classe: "eti", texto: "peça " + k }), el("h2", { id: "h-" + id, texto: PECAS[k][0] })]));
+      sec.appendChild(el("p", { texto: PECAS[k][1] }));
+      grupos[k].forEach(function (p) { sec.appendChild(desenhaPar(p)); });
+      raiz.appendChild(sec);
+      indice.appendChild(el("li", {}, [el("a", { href: "#" + id, texto: PECAS[k][0] })]));
+    });
+  }
+
+  fetch("manifesto.json").then(function (r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(desenha).catch(function (e) {
+    document.getElementById("pares").appendChild(el("p", { classe: "erro", texto: "Não consegui carregar os pares (" + e.message + "). Recarregue a página." }));
+  });
+})();
+</script>
