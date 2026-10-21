@@ -431,6 +431,36 @@ test('no Agora, o cartão do treino abre o MODO no dia de hoje — a porta 1', a
   a.fechar();
 });
 
+test('a linha do treino na comida de hoje leva ao treino: na janela, ao modo; depois dela, ao registro de hoje', async () => {
+  // Chamava `vaiPara('treino')`, uma aba que não existe mais (docs/mapa/10,
+  // risco 2): o toque não levava a lugar nenhum, e depois da janela do treino
+  // não havia porta nenhuma para o treino de hoje no Agora.
+  const cedo = agoraEstavel(6, 30);
+  const a = await app({
+    aba: 'agora', agora: cedo,
+    estado: { plano: 7, logs: {}, done: [], dia: diaDe(cedo, 'treino') }
+  });
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima').k, 'treino', 'pré-condição: na janela, o cartão é o treino');
+  a.$('[data-a="linha-treino"]').click();
+  await a.esperar();
+  assert.strictEqual(a.vista().modoSessao, true, 'na janela, a linha abre o modo, como o cartão');
+  a.fechar();
+
+  const tarde = agoraEstavel(16, 50);
+  const b = await app({
+    aba: 'agora', agora: tarde,
+    estado: { plano: 7, logs: {}, done: [], dia: diaDe(tarde, 'treino') }
+  });
+  const topo = b.vJ('ctx.cartaoDeCima');
+  assert.ok(!topo || topo.k !== 'treino', 'pré-condição: às 16h50 o cartão não é mais o treino');
+  b.$('[data-a="linha-treino"]').click();
+  await b.esperar();
+  assert.ok(!b.vista().modoSessao, 'depois da janela, não abre o modo ao vivo (as séries ganhariam a hora de agora)');
+  assert.ok(b.vista().add, 'abre o registro de hoje');
+  assert.strictEqual(new Date(b.vista().add.t).toDateString(), new Date(tarde).toDateString(), 'na data de hoje');
+  b.fechar();
+});
+
 test('no Agora, a refeição longe não é cartão; dentro da janela, diz "faltam"', async () => {
   // Pela D (`agora-descanso.html`, estados 1 e 3), fora da janela de 30 min não
   // há cartão de refeição: o que está à frente é linha do dia. Antes o cartão

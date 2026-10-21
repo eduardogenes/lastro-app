@@ -12530,6 +12530,14 @@ CTX.abreTreinoDeHoje = function () {
   render();
 };
 
+/**
+ * O treino de hoje, depois da janela dele: o registro de hoje (o mesmo do "Já
+ * fiz"), que grava na data de hoje e pergunta a hora em que foi, em vez de abrir
+ * o modo ao vivo e carimbar as séries com a hora de agora. Dele, "Detalhar
+ * exercícios e séries" abre o modo na data e na hora do registro.
+ */
+CTX.lancaTreinoDeHoje = function () { abrirAdicionar(Date.now()); };
+
 // ---------- enquanto descansa (a D, momento 1, estado 2) ----------
 //
 // No descanso, dentro da sessão, o que se faz a um toque cada: a refeição de
