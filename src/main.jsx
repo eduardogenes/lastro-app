@@ -2757,6 +2757,8 @@ const CTX = {
       sessao: {
         nome: P ? P.name : null,
         feita: prescritas > 0 && feitas >= prescritas,
+        // já há treino registrado hoje (a linha do treino leva ao dia, não a outro registro)
+        registrada: h.origem === 'registrado',
         valor: P ? feitas + '/' + prescritas + ' séries' : null,
         resumo: P ? P.ex.slice(0, 3).map(function (e) { return e.n; }).join(' · ') : 'Dia de descanso.',
         meta: S.sessao ? 'sessão aberta' : (feitas ? 'registrado' : 'não começou'),
@@ -6607,6 +6609,30 @@ async function corrigeDuracao(t, minutos) {
 }
 
 /**
+ * Corrige a hora de COMEÇO de um treino já registrado (dono, 21/10): o treino
+ * aberto ao vivo depois da hora carimba o começo com a hora de agora, e antes
+ * não havia onde dizer a hora de verdade. Muda o instante do registro e não a
+ * identidade dele: as séries estão ligadas pelo `sid`, que fica. O fim anda junto
+ * (a duração continua a mesma; ela se corrige nos botões ao lado). Hora no
+ * futuro não grava; o treino em andamento não se corrige (o relógio dele corre).
+ */
+async function corrigeComeco(t, txt) {
+  const m = S.done.filter(function (x) { return x.t === t; })[0];
+  if (!m || (S.sessao && S.sessao.sid === m.sid)) return;
+  const novo = aplicaHora(m.t, txt);
+  if (novo == null || novo > Date.now()) return;
+  m.t = instanteLivre(novo, m);
+  m.hora = 1;
+  delete m.ini;                        // "marcado antes do aquecimento" não vale mais
+  m.m = Date.now();                    // carimbo: é ele que a fusão compara
+  S.done.sort(function (x, y) { return x.t - y.t; });
+  view.sessao = m;
+  view.corrigeTempo = m.t;             // o painel fica aberto no registro, agora na hora nova
+  await save(); render();
+  toast('Começo corrigido.');
+}
+
+/**
  * "Está certo": o tempo aproximado passa a ser declarado, sem mudar o número.
  *
  * É a outra metade de `corrigeDuracao`, e a resposta mais comum — o app fechou
@@ -9790,7 +9816,7 @@ CTX.mes = function () {
     if (desc) ditos.push('descanso marcado');
     if (cardio) ditos.push(cardio === 1 ? 'cardio' : cardio + ' cardios');
     if (comida) ditos.push(comida === 'com' ? 'comida com marca' : 'comida sem marca');
-    if (hoje) ditos.push('hoje: abre o Agora');
+    if (hoje) ditos.push('hoje');
     const d = new Date(dia);
     celulas.push({
       n: i, iso: hojeISO(dia), hoje: hoje, futuro: futuro,
@@ -9798,7 +9824,10 @@ CTX.mes = function () {
       extra: letras.length && fora ? '+fora' : null,
       descanso: desc, cardio: cardio, comida: comida,
       rotulo: DIAS_LONGOS[d.getDay()] + ', ' + i + ' de ' + MESES[mesN] + (ditos.length ? ': ' + ditos.join(', ') : ''),
-      abre: hoje ? 'agora' : futuro ? null : dia
+      // Hoje abre o dia como os outros (dono, 21/10): é onde se vê e se corrige o
+      // que já foi registrado hoje — antes abria o Agora, e um treino lançado
+      // repetido ficava sem lugar para apagar.
+      abre: futuro ? null : dia
     });
   }
 
@@ -10106,6 +10135,7 @@ CTX.detalheDaSessao = function () {
     cab: cab, comeco: comeco, fim: fim, exercicios: exercicios,
     corrigindoTempo: view.corrigeTempo === m.t,
     corrigivel: corrigivel,
+    comecoTxt: hIni || '',
     exato: exato,
     duracoes: corrigivel
       ? [30, 45, 60, 75, 90].map(function (v) {
@@ -10195,6 +10225,12 @@ CTX.apagaSerieDaPassada = function () { return apagaSerieDaPassada(); };
 CTX.abreCorrecaoDoTempo = function (t) { abreCorrecaoDoTempo(t); };
 CTX.editaSessao = function (t) { return apagaRegistroDeTreino(t); };
 CTX.corrigeDuracao = function (t, min) { corrigeDuracao(t, min); };
+/** O campo do começo: máscara enquanto digita, e grava quando a hora fecha. */
+CTX.comecoNoCampo = function (t, el) {
+  const v = mascaraDeHora(el.value, el.value.length === 2);
+  if (v !== el.value) el.value = v;
+  if (aplicaHora(t, v) != null) corrigeComeco(t, v);
+};
 /* Uma porta só, e aqui: `corrigeDuracao` já mora em `CTX`, e as duas são as
    duas metades da mesma resposta. Pôr esta também na tabela de verbos nus daria
    dois caminhos para o mesmo verbo, que é o que a superfície existe para não
@@ -12537,6 +12573,8 @@ CTX.abreTreinoDeHoje = function () {
  * exercícios e séries" abre o modo na data e na hora do registro.
  */
 CTX.lancaTreinoDeHoje = function () { abrirAdicionar(Date.now()); };
+/** O dia de hoje aberto, com o que já foi registrado nele (corrigir, apagar). */
+CTX.abreDiaDeHoje = function () { CTX.abreDia(Date.now()); };
 
 // ---------- enquanto descansa (a D, momento 1, estado 2) ----------
 //

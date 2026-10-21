@@ -67,6 +67,12 @@ export function Sessao({ ctx }) {
         )}
         {d.corrigindoTempo && (
           <div class="ss-tempo-c">
+            <label class="ss-comeco" for="scomeco">
+              <span class="ins-body-sm ins-t2">Começo</span>
+              <input type="text" inputmode="numeric" id="scomeco" class="ins-input ln-hora" value={d.comecoTxt}
+                     placeholder="06:15" aria-label="hora de começo do treino" data-a="sessao-comeco"
+                     onInput={e => ctx.comecoNoCampo(d.t, e.currentTarget)} />
+            </label>
             <div class="ins-chips">
               {d.duracoes.map(v => (
                 <button key={v.k} class={'ins-chip' + (v.on ? ' on' : '')} aria-pressed={v.on ? 'true' : 'false'}
@@ -74,7 +80,7 @@ export function Sessao({ ctx }) {
               ))}
             </div>
             <Procedencia>
-              Hoje está {d.duracaoTxt}. Corrigir torna o tempo declarado, e o "aproximado" some.
+              Hoje está {d.duracaoTxt}. O começo é a hora em que você começou; o fim anda junto. Corrigir torna o tempo declarado, e o "aproximado" some.
             </Procedencia>
           </div>
         )}

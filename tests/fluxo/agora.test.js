@@ -459,6 +459,37 @@ test('a linha do treino na comida de hoje leva ao treino: na janela, ao modo; de
   assert.ok(b.vista().add, 'abre o registro de hoje');
   assert.strictEqual(new Date(b.vista().add.t).toDateString(), new Date(tarde).toDateString(), 'na data de hoje');
   b.fechar();
+
+  // Com o treino de hoje JÁ registrado, a linha leva ao dia de hoje, onde ele se
+  // corrige e se apaga — não a outro registro igual (o 21/10 do dono: quatro B
+  // no mesmo dia, sem lugar para apagar).
+  const feito = tarde - 9 * 3600000;
+  const c = await app({
+    aba: 'agora', agora: tarde,
+    estado: { plano: 7, logs: {}, done: [{ t: feito, day: 'B', sid: feito }], dia: diaDe(tarde, 'treino') }
+  });
+  c.$('[data-a="linha-treino"]').click();
+  await c.esperar();
+  assert.ok(!c.vista().add, 'não abre outro registro');
+  assert.ok(c.vista().diaAberto, 'abre o dia de hoje');
+  assert.strictEqual(c.$$('[data-a="dia-sessao"]').length, 1, 'com o treino registrado, para corrigir ou apagar');
+  c.fechar();
+});
+
+test('em Dias, o dia de hoje abre como os outros, com o que já foi registrado nele', async () => {
+  // Abria o Agora, e o que se registrou hoje não tinha onde ser corrigido nem
+  // apagado (dono, 21/10). Agora abre o dia, e cada registro abre o detalhe.
+  const agora = agoraEstavel(16, 50);
+  const t1 = agora - 9 * 3600000, t2 = agora - 2 * 3600000;
+  const a = await app({
+    aba: 'dias', agora: agora,
+    estado: { plano: 7, logs: {}, done: [{ t: t1, day: 'B', sid: t1 }, { t: t2, day: 'B', sid: t2 }] }
+  });
+  a.clicar('[data-dia="' + a.v('hojeISO', agora) + '"]');
+  await a.esperar();
+  assert.ok(a.vista().diaAberto, 'abriu o dia, não o Agora');
+  assert.strictEqual(a.$$('[data-a="dia-sessao"]').length, 2, 'os dois treinos de hoje aparecem, cada um com o seu detalhe');
+  a.fechar();
 });
 
 test('no Agora, a refeição longe não é cartão; dentro da janela, diz "faltam"', async () => {
@@ -1982,5 +2013,33 @@ test('"Não comi isso" no cartão troca os botões pela pergunta, no lugar', asy
   await a.esperar();
   assert.strictEqual(a.S().dia.como.lanche, 'nao');
   assert.ok(/não comi/.test(a.texto('.ag-volta')), a.texto('.ag-volta'));
+  a.fechar();
+});
+
+test('o começo de um treino registrado se corrige no detalhe, e as séries continuam dele', async () => {
+  // O treino aberto ao vivo depois da hora ficava com o começo da hora de agora,
+  // e não havia onde dizer a hora de verdade (dono, 21/10).
+  const agora = agoraEstavel(17, 50);
+  const t = agora - 53 * 60000;        // começou "às 16h57", que é quando ele abriu o app
+  const a = await app({
+    aba: 'dias', agora: agora,
+    estado: { plano: 7, done: [{ t: t, day: 'B', sid: t, dur: 45 * 60000, fim: 'manual', hora: 1 }],
+              logs: { x1: [{ t: t + 60000, sid: t, sets: [[60, 9]] }] } }
+  });
+  a.v('ctx.abreSessaoDoDia', { k: 'sessao', t: t });
+  await a.esperar();
+  a.clicar('[data-a="sessao-corrige-tempo"]');
+  await a.esperar();
+  const campo = a.$('[data-a="sessao-comeco"]');
+  assert.ok(campo, 'o campo do começo aparece no painel de corrigir');
+  campo.value = '06:15';
+  campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  await a.esperar(60);
+  const m = a.S().done[0];
+  const d = new Date(m.t);
+  assert.strictEqual(d.getHours() + ':' + d.getMinutes(), '6:15', 'o começo passou a 6h15');
+  assert.strictEqual(m.sid, t, 'a identidade do registro não muda');
+  assert.strictEqual(m.dur, 45 * 60000, 'a duração fica: o fim anda junto');
+  assert.strictEqual(a.S().logs.x1[0].sid, t, 'e as séries continuam ligadas a ele');
   a.fechar();
 });

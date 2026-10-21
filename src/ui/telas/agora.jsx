@@ -392,10 +392,13 @@ export function Agora({ ctx }) {
                           // A linha do treino leva ao mesmo lugar do cartão enquanto
                           // ele existe (o treino de agora, ou a sessão aberta); depois
                           // da janela, ao registro de hoje, com a hora em que foi — e
-                          // dele, "Detalhar exercícios e séries". Antes chamava uma aba
-                          // de treino que não existe mais (docs/mapa/10, risco 2).
+                          // dele, "Detalhar exercícios e séries"; e, se o treino de hoje
+                          // já foi registrado, ao dia de hoje, onde ele se corrige — e
+                          // não a outro registro igual. Antes chamava uma aba de treino
+                          // que não existe mais (docs/mapa/10, risco 2).
                           : topo && topo.k === 'sessao' ? ctx.voltaAoTreino()
                           : topo && (topo.k === 'treino' || topo.k === 'aula') ? ctx.abreTreinoDeHoje()
+                          : sessao.registrada ? ctx.abreDiaDeHoje()
                           : ctx.lancaTreinoDeHoje()}>
                   {/* A forma POUSA quando o dedo acabou de marcar esta linha
                       (peça 8 do motion): um nó por estado, e a marca de recém

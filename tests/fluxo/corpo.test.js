@@ -176,9 +176,8 @@ test('pesagem errada pode ser apagada', async () => {
 
 test('sessão de cardio registrada por engano pode ser apagada', async () => {
   // A porta de saída mora no dia aberto (a D, `dias.html` estado 12): a linha do
-  // cardio abre no lugar, e "Apagar este cardio" passa pelo painel. Hoje, tocado
-  // no mês, abre o Agora (pergunta 7 do desenhista, com o dono) — por isso o
-  // caso usa ontem.
+  // cardio abre no lugar, e "Apagar este cardio" passa pelo painel. O cardio
+  // esquecido entra só por dia passado — por isso o caso usa ontem.
   const agora = agoraEstavel();
   const t = agora - DIA;
   const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [{ t: t, m: 'bike', min: 25, i: 'moderado' }] } });
