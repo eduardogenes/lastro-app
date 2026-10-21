@@ -375,7 +375,10 @@ export function Agora({ ctx }) {
             const esc = comidaDoDia.escala[r.id] ?? 1;
             const como = comidaDoDia.como && comidaDoDia.como[r.id];
             const estado = treino
-              ? (sessao.feita ? 'tudo' : minutosDe(r.t) > minutosDoDia(agora) ? 'futuro' : 'sem')
+              // o treino com todas as séries é "tudo"; fechado com menos, "metade",
+              // a mesma forma da refeição comida pela metade (dono, 21/10)
+              ? (sessao.feita ? 'tudo' : sessao.fechada ? 'metade'
+                 : minutosDe(r.t) > minutosDoDia(agora) ? 'futuro' : 'sem')
               : quando ? (como || (esc === 0.5 ? 'metade' : 'tudo'))
               : emFoco != null && r.id === emFoco ? 'agora'
               : minutosDe(r.t) > minutosDoDia(agora) ? 'futuro' : 'sem';

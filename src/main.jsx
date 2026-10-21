@@ -2609,10 +2609,18 @@ function ehLinhaDeTreino(r) { return r.id === 'treino'; }
 function seriesFeitasHoje(d) {
   const P = treino(d);
   if (!P) return 0;
+  // Pelas SESSÕES de hoje daquele treino, como o dia aberto conta (`e.sid ===
+  // m.sid`), e não pela posição do exercício no programa: a série de um
+  // exercício trocado no dia mora na chave do exercício que entrou, e ficava de
+  // fora — o Agora dizia 6/22 com o dia dizendo 10 de 22 (dono, 21/10).
+  const sids = {};
+  sessoesDoDia(Date.now()).forEach(function (m) { if (!m.livre && m.day === d) sids[m.sid] = 1; });
+  if (S.sessao && S.sessao.day === d) sids[S.sessao.sid] = 1;
   let n = 0;
-  P.ex.forEach(function (ex, i) {
-    const h = (S.logs[id(d, i)] || []).filter(function (e) { return sameDay(e.t, Date.now()); });
-    h.forEach(function (e) { n += e.sets.filter(Boolean).length; });
+  Object.keys(S.logs).forEach(function (k) {
+    (S.logs[k] || []).forEach(function (e) {
+      if (e && sids[e.sid] && sameDay(e.t, Date.now())) n += (e.sets || []).filter(Boolean).length;
+    });
   });
   return n;
 }
@@ -2755,6 +2763,11 @@ const CTX = {
         feita: prescritas > 0 && feitas >= prescritas,
         // já há treino registrado hoje (a linha do treino leva ao dia, não a outro registro)
         registrada: h.origem === 'registrado',
+        // e ele já fechou: com todas as séries a linha ganha o check; com menos,
+        // a meia forma da refeição comida pela metade (dono, 21/10)
+        fechada: !!h.treino && sessoesDoDia(Date.now()).some(function (m) {
+          return !m.livre && m.day === h.treino && !(S.sessao && S.sessao.sid === m.sid);
+        }),
         valor: P ? feitas + '/' + prescritas + ' séries' : null,
         resumo: P ? P.ex.slice(0, 3).map(function (e) { return e.n; }).join(' · ') : 'Dia de descanso.',
         meta: S.sessao ? 'sessão aberta' : (feitas ? 'registrado' : 'não começou'),

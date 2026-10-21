@@ -2043,3 +2043,27 @@ test('o começo de um treino registrado se corrige no detalhe, e as séries cont
   assert.strictEqual(a.S().logs.x1[0].sid, t, 'e as séries continuam ligadas a ele');
   a.fechar();
 });
+
+test('o treino de hoje fechado pela metade ganha a meia forma, e a conta inclui o exercício trocado no dia', async () => {
+  // Dono, 21/10: registrou o treino e a linha ficou pontilhada ("6/22"), com o
+  // dia dizendo "10 de 22". A forma só mudava com TODAS as séries prescritas (o
+  // check); agora, fechado com menos, é a meia forma da refeição pela metade; e
+  // a conta, pela posição do exercício no programa, deixava de fora a série de
+  // um exercício trocado no dia, que mora na chave do exercício que entrou.
+  const agora = agoraEstavel(17, 20);
+  const t = agora - 10 * 3600000;
+  const a = await app({ aba: 'agora', agora: agora,
+    estado: { plano: 7, done: [{ t: t, day: 'B', sid: t, dur: 45 * 60000, fim: 'manual', hora: 1 }], logs: {},
+              dia: diaDe(agora, 'treino') } });
+  const P = a.vJ('treino', 'B');
+  const k0 = a.v('id', 'B', 0);
+  // duas séries no exercício do programa, e uma num exercício que entrou no lugar do segundo
+  a.E(`S.logs[${JSON.stringify(k0)}] = [{ t: ${t}, sid: ${t}, sets: [[60, 9], [60, 10]] }];
+    S.logs['troca-do-dia'] = [{ t: ${t}, sid: ${t}, sl: ${JSON.stringify(a.v('id', 'B', 1))}, sets: [[45, 10]] }];
+    render();`);
+  await a.esperar();
+  const linha = a.$('[data-a="linha-treino"]').closest('.ag-l');
+  assert.ok(linha.classList.contains('metade'), 'o treino fechado hoje com menos séries que o prescrito tem a meia forma');
+  assert.ok(P && /^3\//.test(a.vJ('ctx.hoje').sessao.valor), 'e conta as três séries, a trocada inclusive: ' + a.vJ('ctx.hoje').sessao.valor);
+  a.fechar();
+});
