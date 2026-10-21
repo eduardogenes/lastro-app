@@ -1708,7 +1708,8 @@ html[data-nav="seca"] .ins-tab-ind { transition: none; }
      botão. Existe porque o relógio da sessão também gruda no topo, e precisa
      parar DEPOIS desta barra — somar à mão nos dois lugares desencontra na
      primeira vez que o padding mudar. */
-  --ins-modo-topo-h: calc(var(--ins-topo) + var(--ins-3) + var(--ins-tap));
+  /* a barra: o respiro de cima, o círculo de 36 e o respiro de baixo */
+  --ins-modo-topo-h: calc(var(--ins-topo) + var(--ins-2) + 36px + var(--ins-2));
   /* `100vh` primeiro como fallback e `100svh` por cima, nesta ordem — a rede
      pegou esta regra errada na primeira versão deste arquivo, e com razão:
      invertida, o fallback vence e volta a sobra rolável do tamanho da barra. */
@@ -1785,8 +1786,20 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
      ou da faixa "Não guardado", quando ela está lá. Com `--sa-top` só, a faixa
      (fixa, z 86) cobria os dois (defeito 4, docs/motion/03 §8.3). A barra
      continua grudada em `top: 0`: o fundo dela passa por baixo da faixa. */
-  padding-top: calc(var(--ins-3) + var(--ins-topo));
-  background: var(--ins-fundo);
+  padding-top: calc(var(--ins-2) + var(--ins-topo));
+  padding-bottom: var(--ins-2);
+  /* A BARRA SOME NA PÁGINA (dono, 21/10). Era `--ins-fundo` — a cor de TRÁS de
+     tudo — dentro da goteira do `#app`: um bloco de outro tom, recuado das
+     bordas, solto em cima da tela. Uma faixa branca com fio embaixo "parecia
+     Android". Agora: a cor da própria página, de borda a borda, sem fio, e mais
+     baixa; quem diz que ali há controles são os dois círculos, como no iOS.
+     Opaca (o conteúdo passa por baixo e precisa sumir) e sem desfoque, que pisca
+     no Blink ao rolar. */
+  background: var(--ins-tela);
+  margin-left: calc(-1 * max(var(--ins-8), var(--sa-left)));
+  margin-right: calc(-1 * max(var(--ins-8), var(--sa-right)));
+  padding-left: max(var(--ins-8), var(--sa-left));
+  padding-right: max(var(--ins-8), var(--sa-right));
 }
 
 /* O relógio da sessão gruda abaixo da barra da saída, não embaixo dela. Fora do
@@ -1795,12 +1808,17 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 .ins-modo .day-rel { top: var(--ins-modo-topo-h); }
 
 
-.ins-modo-sair {
-  min-width: var(--ins-tap); min-height: var(--ins-tap);
+.ins-modo-sair, .ins-modo-mais {
+  /* Círculos de 36 com o preenchimento de controle, como os botões flutuantes
+     do iOS; o ALVO continua de 46, estendido por fora do desenho (::after). */
+  position: relative; flex: 0 0 auto;
+  width: 36px; height: 36px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: none; border: 0; color: var(--ins-tinta-2);
-  font: 400 26px/1 var(--ins-fonte);
+  background: var(--ins-superficie-2); border: 0; color: var(--ins-tinta);
 }
+.ins-modo-sair::after, .ins-modo-mais::after { content: ""; position: absolute; inset: -5px; }
+/* a seta pesa à esquerda: um pixel de volta para o centro ótico */
+.ins-modo-sair { font: 500 22px/1 var(--ins-fonte); padding: 0 1px 2px 0; }
 
 /* O cabeçalho do AGORA tem duas ações: o estado do dia e os ajustes. O de
    estado é o largo — é onde o tipo do dia e o turno se trocam, e é tocado todo
@@ -1875,12 +1893,9 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 /* O `···` do modo, à direita da hora. Alvo cheio e ícone discreto: o que é raro
    não deve pedir atenção, mas tem de ser alcançável com a mão suada. */
 .ins-modo-mais {
-  min-width: var(--ins-tap); min-height: var(--ins-tap);
-  display: flex; align-items: center; justify-content: center;
-  background: none; border: 0; color: var(--ins-tinta-3);
   /* encosta na direita; a seta fica na esquerda (a hora que ficava entre as
      duas saiu, dono 21/10) */
-  font: 400 20px/1 var(--ins-fonte); margin-left: auto;
+  font: 600 15px/1 var(--ins-fonte); letter-spacing: .02em; padding-bottom: 4px; margin-left: auto;
 }
 /* O item do menu tem DUAS linhas, e a de baixo é o freio — ela diz o corte em
    número. Por isso o nome não pode ficar sozinho numa linha só. */
