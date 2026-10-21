@@ -1459,3 +1459,95 @@ test('nenhuma aba mostra resto de código como texto', async () => {
   }
   a.fechar();
 });
+
+// ---------- o `···` com as opções da sessão (dono, 21/10) ----------
+//
+// A folha deixou de ser "o que é raro" e passou a ter o nome do treino no
+// título, com o que se decide sobre a sessão inteira: outro treino, editar o de
+// hoje, o deload, encerrar e descartar. Tudo, menos o descartar, também fica na
+// tela do treino.
+
+test('o ··· tem o treino no título, e os itens que cabem sem sessão', async () => {
+  const a = await app();
+  const d = a.vista().day;
+  const mais = a.$('[data-a="menu-sessao"]');
+  assert.strictEqual(mais.getAttribute('aria-label'), 'Opções desta sessão');
+  mais.click();
+  await a.esperar(60);
+  const folha = a.texto('.ins-folha');
+  assert.ok(folha.indexOf('Treino ' + d + ' · hoje') >= 0, folha);
+  assert.ok(!/raro/i.test(folha), 'a frase antiga saiu: ' + folha);
+  assert.ok(a.$('[data-a="menu-treino-' + d + '"][aria-pressed="true"]'), 'a fileira, com o treino de agora aceso');
+  assert.ok(a.$('[data-a="menu-editar"]'), 'editar o treino de hoje');
+  assert.ok(a.$('[data-a="deload"]'), 'o deload');
+  // encerrar e descartar só existem com sessão aberta
+  assert.strictEqual(a.$('[data-a="encerrar"]'), null);
+  assert.strictEqual(a.$('[data-a="descartar"]'), null);
+  a.fechar();
+});
+
+test('"Fazer outro treino hoje" no ··· troca o treino mostrado e fecha', async () => {
+  const a = await app();
+  const outro = a.vJ('ctx.menuDaSessao').troca.dias.filter(function (x) { return !x.on; })[0].k;
+  a.clicar('[data-a="menu-sessao"]');
+  await a.esperar(60);
+  a.clicar('[data-a="menu-treino-' + outro + '"]');
+  await a.esperar(60);
+  assert.strictEqual(a.vista().day, outro);
+  assert.strictEqual(a.$('.ins-folha'), null, 'e o menu fechou');
+  assert.ok(a.vista().modoSessao, 'sem sair do modo');
+  a.fechar();
+});
+
+test('"Editar o treino de hoje" no ··· entra na edição, e some de lá', async () => {
+  const a = await app();
+  a.clicar('[data-a="menu-sessao"]');
+  await a.esperar(60);
+  a.clicar('[data-a="menu-editar"]');
+  await a.esperar(60);
+  assert.strictEqual(a.vista().editProg, true);
+  assert.strictEqual(a.$('.ins-folha'), null, 'e o menu fechou');
+  assert.strictEqual(a.vJ('ctx.menuDaSessao').editar, null, 'já editando, o item não se oferece de novo');
+  a.fechar();
+});
+
+test('"Descartar esta sessão" diz quantas séries apaga, e apaga sessão e séries', async () => {
+  const a = await app();
+  a.clicar('.day-ini');
+  a.preencher(0, 0, 40, 10);
+  a.preencher(0, 1, 40, 9);
+  await a.esperar();
+  const sid = a.S().sessao.sid;
+  assert.strictEqual(a.vJ('ctx.menuDaSessao').descartar.detalhe, 'apaga o início e as 2 séries registradas');
+
+  a.clicar('[data-a="menu-sessao"]');
+  await a.esperar(60);
+  a.clicar('[data-a="descartar"]');
+  await a.esperar(60);
+  const p = a.perguntas().slice(-1)[0] || '';
+  assert.ok(/e as 2 séries registradas nela\. Isso não tem volta/.test(p), 'o pare diz o que vai embora: ' + p);
+
+  const S = a.S();
+  assert.strictEqual(S.sessao, null);
+  assert.ok(!S.done.some(function (x) { return x.sid === sid; }), 'a marca do dia saiu');
+  assert.ok(!Object.keys(S.logs).some(function (k) {
+    return S.logs[k].some(function (l) { return l.sid === sid; });
+  }), 'e as séries saíram junto, sem ficar órfãs');
+  assert.strictEqual(a.toast(), 'Sessão e séries descartadas.');
+  a.fechar();
+});
+
+test('recusar o pare do descartar deixa a sessão e as séries', async () => {
+  const a = await app({ confirmar: false });
+  a.clicar('.day-ini');
+  a.preencher(0, 0, 40, 10);
+  await a.esperar();
+  await a.v('ctx.descartarSessao');
+  await a.esperar();
+  const S = a.S();
+  assert.ok(S.sessao, 'a sessão continua aberta');
+  assert.ok(Object.keys(S.logs).some(function (k) {
+    return S.logs[k].some(function (l) { return l.sid === S.sessao.sid; });
+  }), 'e a série continua');
+  a.fechar();
+});

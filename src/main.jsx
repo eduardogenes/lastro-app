@@ -1163,6 +1163,48 @@ function abreSessaoVazia() {
   return S.sessao;
 }
 
+// ---------- descartar ----------
+/**
+ * Descarta a sessão ABERTA: a marca do dia, o relógio e as séries dela. É o
+ * "Apagar este treino" de Dias (`apagaRegistroDeTreino`) para a sessão que
+ * ainda corre, e mora no `···` (dono, 21/10). Sem série, é o mesmo descarte
+ * que o Encerrar de uma sessão vazia sempre fez, com o mesmo texto.
+ *
+ * Não vale para o treino passado em preenchimento: lá a sessão é um registro
+ * que já existia, e apagá-lo é coisa de Dias.
+ */
+async function descartarSessao() {
+  const s = S.sessao;
+  if (!s || s.retro) return;
+  const linhas = [];
+  Object.keys(S.logs).forEach(function (idEx) {
+    (S.logs[idEx] || []).forEach(function (l) { if (l.sid === s.sid) linhas.push({ idEx: idEx, l: l }); });
+  });
+  const series = linhas.reduce(function (a, x) { return a + x.l.sets.filter(Boolean).length; }, 0);
+  // PARE (§3.3): o que sai não volta, e o texto diz quanto sai.
+  const texto = series
+    ? 'Descartar esta sessão apaga o horário de início, a duração e ' +
+      (series === 1 ? 'a 1 série registrada' : 'as ' + series + ' séries registradas') +
+      ' nela. Isso não tem volta, e vale para os outros aparelhos.'
+    : 'Descartar esta sessão apaga o horário de início e a duração. Nenhuma série foi registrada nela, então não há série para perder.';
+  if (!(await pare({ texto: texto, sim: 'Descartar a sessão' }))) return;
+  // Lápide nos dois, como no apagar de Dias: sem ela a próxima sincronização
+  // traz a sessão e as séries de volta do outro aparelho.
+  lapide(chaveDeSessao({ sid: s.sid }));
+  linhas.forEach(function (x) { lapide(chaveDeLog(x.idEx, x.l)); });
+  S.done = S.done.filter(function (x) { return x.sid !== s.sid; });
+  Object.keys(S.logs).forEach(function (idEx) {
+    S.logs[idEx] = S.logs[idEx].filter(function (l) { return l.sid !== s.sid; });
+    if (!S.logs[idEx].length) delete S.logs[idEx];
+  });
+  S.sessao = null; S.draft = null; S.mods = null;
+  view.open = null; view.editProg = false;
+  view.day = nextDay();
+  soltarTela();
+  await save(); render(); rola(0);
+  toast(series ? 'Sessão e séries descartadas.' : 'Sessão descartada.');
+}
+
 // ---------- finalizar ----------
 async function finalizarSessao() {
   const s = S.sessao;
@@ -1170,20 +1212,8 @@ async function finalizarSessao() {
   const p = pendencias(s.day, s.sid, s.pulados);
   const feitas = p.feito.length;
 
-  if (!feitas && !p.parcial.length) {
-    // PARE (§3.3): o horário e a duração saem e não voltam.
-    if (!(await pare({ texto: 'Descartar esta sessão apaga o horário de início e a duração. Nenhuma série foi registrada nela, então não há série para perder.',
-                       sim: 'Descartar a sessão' }))) return;
-    lapide(chaveDeSessao({ sid: s.sid }));
-    S.done = S.done.filter(function (x) { return x.sid !== s.sid; });
-    S.sessao = null; S.draft = null; S.mods = null;
-    view.open = null; view.editProg = false;
-    view.day = nextDay();
-    soltarTela();
-    await save(); render(); rola(0);
-    toast('Sessão descartada.');
-    return;
-  }
+  // Encerrar uma sessão sem série nenhuma é descartá-la: não há o que guardar.
+  if (!feitas && !p.parcial.length) { await descartarSessao(); return; }
 
   const pend = p.parcial.concat(p.nada);
   if (pend.length) {
@@ -6531,7 +6561,7 @@ async function apagaRegistroDeTreino(t) {
   const m = S.done.filter(function (x) { return x.t === t; })[0];
   if (!m) return;
   if (S.sessao && S.sessao.sid === m.sid) {
-    toast('Este treino está em andamento. Finalize ou descarte primeiro.');
+    toast('Este treino está em andamento. Encerre ou descarte pelo ··· do treino.');
     return;
   }
 
@@ -12564,17 +12594,50 @@ CTX.cicloDoBloco = function () {
   };
 };
 
+/**
+ * O `···` do modo (dono, 21/10): as opções da sessão inteira, e não as de cada
+ * série. O título é o treino ("Treino B · hoje"), porque é dele que as opções
+ * falam. Tudo aqui também tem lugar na tela do treino — o menu é um caminho a
+ * mais, não uma mudança de casa —, menos o descartar, que antes só aparecia ao
+ * encerrar uma sessão vazia.
+ */
 CTX.menuDaSessao = function () {
   const d = view.day;
-  const deload = itemDoDeload(d);
-  if (!deload) return null;
+  const s = S.sessao;
+  const retro = !!(s && s.retro);
+  const quando = retro ? fmtDate(s.inicio) : 'hoje';
+  const series = s ? Object.keys(S.logs).reduce(function (n, k) {
+    return n + (S.logs[k] || []).filter(function (l) { return l.sid === s.sid; })
+      .reduce(function (a, l) { return a + l.sets.filter(Boolean).length; }, 0);
+  }, 0) : 0;
+  const prox = proximoTreino(S, ROT_BASE);
   return {
+    titulo: (diaAberto(d) ? 'Aula' : 'Treino ' + d) + ' · ' + quando,
+    // A mesma fileira da tela, e o mesmo efeito: a sessão segue o treino em
+    // que ele registrar. Num treino passado não há "outro hoje".
+    troca: retro ? null : {
+      rotulo: 'Fazer outro treino hoje',
+      dias: rot().map(function (x) { return { k: x, t: x, on: x === d, proximo: x === prox }; })
+    },
+    // As mesmas condições do botão do fim da tela: só o treino que ele está
+    // fazendo, e some quando ele já está editando.
+    editar: podeEditar(d) && !view.editProg
+      ? { rotulo: 'Editar o treino ' + (retro ? 'de ' + quando : 'de hoje'),
+          detalhe: 'subir, descer, trocar, tirar ou pôr exercício · vale só para esta sessão' }
+      : null,
+    deload: itemDoDeload(d),
     // "Encerrar o treino · o fim é agora, 7h31": o que o toque grava, com o
     // número, antes do toque (V4). Só existe com sessão aberta.
-    encerrar: S.sessao ? { rotulo: 'Encerrar o treino', detalhe: 'o fim é agora, ' + fmtHoraDita(Date.now()) } : null,
-    deload: deload
+    encerrar: s ? { rotulo: 'Encerrar o treino', detalhe: 'o fim é agora, ' + fmtHoraDita(Date.now()) } : null,
+    descartar: s && !retro ? {
+      rotulo: 'Descartar esta sessão',
+      detalhe: series
+        ? 'apaga o início e ' + (series === 1 ? 'a 1 série registrada' : 'as ' + series + ' séries registradas')
+        : 'apaga o início · nenhuma série registrada'
+    } : null
   };
 };
+CTX.descartarSessao = function () { descartarSessao(); };
 
 CTX.abreTreinoDeHoje = function () {
   const h = diaResolvido();

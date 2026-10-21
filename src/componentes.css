@@ -1897,8 +1897,8 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
   margin: var(--ins-6) 0 var(--ins-5);
 }
 
-/* O `···` do modo, à direita da hora. Alvo cheio e ícone discreto: o que é raro
-   não deve pedir atenção, mas tem de ser alcançável com a mão suada. */
+/* O `···` do modo, na ponta direita da barra. Alvo cheio e glifo discreto: as
+   opções da sessão não pedem atenção, mas têm de ser alcançáveis com a mão suada. */
 .ins-modo-mais {
   /* encosta na direita; a seta fica na esquerda (a hora que ficava entre as
      duas saiu, dono 21/10) */
@@ -1906,12 +1906,19 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
      para baixo os põem na mesma linha */
   font: 600 16px/1 var(--ins-fonte); letter-spacing: .1em; padding: 3px 0 0 var(--ins-4); margin-left: auto;
 }
-/* O item do menu tem DUAS linhas, e a de baixo é o freio — ela diz o corte em
-   número. Por isso o nome não pode ficar sozinho numa linha só. */
+/* O item do menu tem DUAS linhas, e a de baixo é o efeito, com número (no
+   deload, é o freio). Por isso o nome não fica sozinho numa linha só. */
 .ms-item { align-items: flex-start; }
 .ms-item .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-2); }
 .ms-detalhe { display: block; }
-.ms-regra { margin: var(--ins-3) 0 0; color: var(--ins-tinta-2); }
+/* a regra fica no bloco do deload, e o fio da lista vem depois dela */
+.ms-regra { margin: 0; padding-bottom: var(--ins-5); color: var(--ins-tinta-2); }
+/* "Fazer outro treino hoje": o rótulo e, embaixo, a fileira da tela */
+.ms-troca { padding: var(--ins-5) 0; }
+.ms-troca > .ins-linha-t { display: block; }
+.ms-troca .tr-rot { margin-top: var(--ins-3); }
+/* o único item que apaga leva a cor do pare, como o "Apagar este treino" */
+.ms-apaga .ins-linha-t { color: var(--ins-pare-tinta); }
 
 /* ---- A folha de pôr o dia em dia -------------------------------------- */
 /*

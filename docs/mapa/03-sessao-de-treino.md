@@ -14,7 +14,7 @@ Base da leitura: commit `8ec19a4` (as linhas citadas no índice técnico são de
 |---|---|---|---|
 | Entrar no modo de sessão | Abre o treino em tela cheia, sem a barra de abas. Entrar **não** começa sessão: é só navegação. | Três portas: o cartão de cima do Agora ("Abrir o treino →" / "Fiz a aula →"), a faixa da sessão ("treino A em andamento · Supino…"), e a própria abertura do app quando há sessão aberta. | O cartão só leva se hoje tem treino previsto; a faixa só existe com sessão aberta; a abertura só cai no modo se a sessão aberta ainda tem treino no programa. |
 | Sair sem encerrar | A seta `‹` no canto (rótulo acessível: "Voltar ao Agora, deixando a sessão aberta") ou o Voltar do sistema. A sessão continua aberta. | Barra grudada no topo do modo. | Sempre visível dentro do modo (não rola para fora). |
-| O menu `···` ("O que é raro") | Folha com "Encerrar o treino · o fim é agora, 7h31" (só com sessão aberta) e o deload dito em número. | Canto direito da barra do modo. | Sempre; em dia sem exercício a folha não tem conteúdo (ver §9). |
+| O menu `···` (rótulo acessível: "Opções desta sessão") | Folha com o treino no título ("Treino B · hoje") e, nesta ordem: "Fazer outro treino hoje" (a fileira A B C D E HX), "Editar o treino de hoje", o deload dito em número, "Encerrar o treino · o fim é agora, 7h31" e "Descartar esta sessão · apaga o início e as N séries registradas" (desenho do dono, 21/10). Tudo, menos o descartar, também fica na tela. | Canto direito da barra do modo. | Sempre. A troca e o descartar somem em sessão de treino passado; o editar, quando o dia mostrado não é o da sessão ou já se está editando; o encerrar e o descartar, sem sessão aberta. |
 
 **A tela do treino (dentro do modo)**
 
@@ -26,7 +26,7 @@ Base da leitura: commit `8ec19a4` (as linhas citadas no índice técnico são de
 | Iniciar treino | Começa a sessão antes da primeira série, para o tempo valer desde já. | Botão no lugar do relógio. | Só sem sessão aberta. |
 | Pausar / Retomar | Para o relógio; pausada, a sessão não morre por inatividade. | Linha de controle abaixo do relógio. | Só com sessão aberta. |
 | Encerrar | Fecha a sessão com o fim no instante do toque. | Mesma linha ("Encerrar") e no `···` ("Encerrar o treino"). | Só com sessão aberta. |
-| A rotação | Botões A B C D E HX: o mostrado aceso, o próximo com fio. Tocar troca o dia mostrado. | Abaixo dos controles. | Sempre. |
+| A rotação | Botões A B C D E HX: o mostrado aceso, o próximo com fio. Tocar troca o dia mostrado. | Abaixo dos controles, e no `···` ("Fazer outro treino hoje"). | Sempre (no `···`, menos em sessão de treino passado). |
 | Avisos do treino | "deload ativo", "fim de bloco chegando", "volta de pausa", "preenchendo treino passado". | Acima da lista de exercícios. | Conforme a regra de cada um (§6). |
 | Editar treino de hoje | Abre a edição do dia (mudanças que valem só hoje). | Seção "O programa", no fim da tela. | Só no treino que dá para editar hoje (o da sessão aberta, ou o próximo da rotação sem sessão). |
 | Abrir o programa | Leva à tela do programa (área 04). | Seção "O programa". | Sempre. |
@@ -66,11 +66,11 @@ Base da leitura: commit `8ec19a4` (as linhas citadas no índice técnico são de
 |---|---|---|---|
 | A sessão nasce sozinha | Na primeira série completa (ou no primeiro "Pular"), sem botão de salvar. | — | — |
 | Encerrar com pendentes | Pergunta neutra: "Encerrar com 2 exercícios pendentes: … Eles ficam marcados como não feitos no histórico." com "Encerrar assim" / "Voltar ao treino". | Painel por cima. | Ao encerrar com exercício parcial ou não tocado. |
-| Descartar sessão sem série | Painel de pare: "Descartar esta sessão apaga o horário de início e a duração…" | Painel por cima. | Ao encerrar sem nenhuma série. |
+| Descartar a sessão | Painel de pare: "Descartar esta sessão apaga o horário de início e a duração…", e com série: "…e as 7 séries registradas nela. Isso não tem volta…". Apaga a marca do dia e as séries, com lápide. | Painel por cima. | Ao encerrar sem nenhuma série, ou pelo `···` ("Descartar esta sessão") com sessão aberta ao vivo. |
 | A pergunta de 1h30 | Faixa "Treino A sem série nova há 1h32." com "continuo treinando" / "já parei". | Faixa acima do rodapé (em todas as abas e dentro do modo); também no cartão de cima do Agora. | Depois de 1h30 sem série nova, com sessão não pausada. |
 | O fecho automático | Fecha sozinho 10 min depois da pergunta (1h40 parado), ou na abertura seguinte, ou na virada do dia; avisa "Fechei o Treino A na última série, às 7h31…". | Toast. | Ver §6. |
 | Deload | Liga/desliga metade das séries, mesmas cargas, com o número dito antes do toque. | `···` e botão do aviso do treino. | Sempre (se o dia tem exercício). |
-| Edição do treino de hoje | Subir, descer, mais/menos série, trocar, remover, adicionar exercício (inclusive cadastrar novo); lista "mudanças de hoje" com "desfazer". | No lugar da lista, com a barra "Editando o treino A de hoje." e "Pronto". | Pelo "Editar treino de hoje". |
+| Edição do treino de hoje | Subir, descer, mais/menos série, trocar, remover, adicionar exercício (inclusive cadastrar novo); lista "mudanças de hoje" com "desfazer". | No lugar da lista, com a barra "Editando o treino A de hoje." e "Pronto". | Pelo "Editar treino de hoje" do fim da tela, ou pelo `···` ("Editar o treino de hoje"). |
 | Telefone deitado | Dentro do modo, o cartão aberto vira duas colunas: leitura à esquerda, polegar à direita. Fora do modo aparece "Gire o telefone". | Toda a tela. | Deitado e com altura até 520 px. |
 | As palavras do fecho | Cada maneira de acabar diz o fim que gravou ("Encerrei… 6h20 → 7h31 · 1h11", "Fechei… aproximada"). | Toast. | Em cada fecho. |
 | A decisão do fim | As mudanças do dia ficam guardadas para decidir depois, sentado (a fila é da **área 04**). | — | Ao encerrar, ou no fecho automático, em dia de prescrição com mudança. |
@@ -85,11 +85,11 @@ flowchart TD
   boot(["Abrir o app com sessão aberta"])
   c1["Cartão de cima do Agora<br/>Abrir o treino ou Fiz a aula"]
   fx["Faixa da sessão<br/>treino A em andamento"]
-  modo["Modo de sessão<br/>seta, hora e menu ···"]
+  modo["Modo de sessão<br/>seta e menu ···"]
   tr["Tela do treino<br/>contagem, relógio, rotação, avisos"]
   card["Cartão do exercício aberto<br/>séries, régua, teclado, RIR"]
   ed["Editando o treino de hoje"]
-  menu["Folha O que é raro<br/>Encerrar o treino, Deload"]
+  menu["Folha Treino B · hoje<br/>outro treino, editar, deload,<br/>encerrar, descartar"]
   foto["Folha O aparelho"]
   peso["Folha O peso de hoje"]
   hist["Histórico do exercício<br/>área 04"]
@@ -1234,7 +1234,7 @@ As séries e as presenças nunca se perdem entre aparelhos (coleções com chave
 4. **Tipo de carga sem lápide.** Voltar ao padrão apaga a chave em `S.carga`; a fusão une mapas sem lápide, então o outro aparelho pode trazer a correção antiga de volta.
 5. **O fecho automático não solta a tela acesa.** Só pausar, encerrar e descartar chamam `soltarTela`; a batida, o "já parei" e o fecho na abertura não. Depois deles o app continua pedindo tela acesa ao voltar do bloqueio.
 6. **A hora de parede para no modo com sessão pausada ou de treino passado** (`ajustaRelogio` desliga o tique nesses casos; a hora só muda no próximo repinte).
-7. **`···` vazio em dia sem exercício.** O menu devolve nada (o deload não tem o que cortar) mas a folha entra na pilha: o toque não mostra nada e o próximo Voltar é consumido por uma camada invisível. Num dia aberto antes da aula, "Encerrar o treino" fica só no botão da tela.
+7. ~~**`···` vazio em dia sem exercício.**~~ Resolvido em 21/10: a folha passou a ter a troca de treino, o editar, o encerrar e o descartar, e o deload é só um item entre eles. Sem o deload (dia sem exercício), os outros continuam.
 8. **O aviso "deload ativo" afirma algo que o código não faz:** "Os placeholders continuam mostrando a carga da última semana normal." A coluna anterior pega a sessão mais recente, inclusive de deload.
 9. **Anotação e dor sem série completa se perdem.** Elas só vão ao histórico junto de uma série completa; o rascunho é zerado no fim da sessão.
 10. **Carga digitada depois da repetição completa a série no primeiro dígito**: "Guardei a série…" e o descanso começam no "2" de "22,5"; se for a última série, a tela avança para o próximo exercício no meio da digitação (**a confirmar** o que acontece com o teclado ainda apontando para o cartão fechado).

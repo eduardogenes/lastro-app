@@ -630,7 +630,7 @@ flowchart TD
   X8["Grava. Aviso: Série apagada."]
   Y1(["Apagar este treino ou este registro"])
   Y2{"É o treino em andamento?"}
-  Y3(["Aviso: Este treino está em andamento.<br/>Finalize ou descarte primeiro."])
+  Y3(["Aviso: Este treino está em andamento.<br/>Encerre ou descarte pelo ··· do treino."])
   Y4["Pare: o que vai, com as séries;<br/>o que fica no dia; o que acontece com a sequência"]
   Y5{"Confirma?"}
   Y6["Lápide da presença e de cada registro de série"]

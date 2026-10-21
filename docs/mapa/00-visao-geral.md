@@ -176,7 +176,7 @@ flowchart LR
   FA["Alimento"]
   FP["Pôr o dia em dia"]
   FD["Decidir"]
-  FM["O que é raro<br/>Encerrar, Deload"]
+  FM["Treino B · hoje<br/>outro treino, editar, deload,<br/>encerrar, descartar"]
   FF["O aparelho<br/>foto do aparelho"]
   FW["O peso de hoje"]
   AG -->|"Outra porção"| FR

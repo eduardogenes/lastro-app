@@ -47,13 +47,12 @@ export function SessaoModo({ ctx }) {
                 onClick={ctx.fechaModoDeSessao}>‹ Voltar</button>
         {/* A hora de parede saiu da barra (dono, 21/10): o iPhone já mostra a
             hora logo acima, e a barra fica com a saída e o `···`. */}
-        {/* O `···`: o que é RARO mora aqui, e hoje é o deload. Ele saiu de
-            Ajustes por decisão do dono, e o lugar antigo ERA o freio — por isso
-            o item da folha diz o corte em número antes do toque, em vez de ser
-            um interruptor com nome. */}
+        {/* O `···`: as opções da sessão inteira (dono, 21/10) — outro treino,
+            editar o de hoje, deload, encerrar, descartar. A folha tem o nome do
+            treino no título (`folhas/menusessao.jsx`). */}
         <button class="ins-modo-mais"
                 data-a="menu-sessao"
-                aria-label="O que é raro nesta sessão"
+                aria-label="Opções desta sessão"
                 onClick={() => ctx.abreFolha({ k: 'menuSessao' })}>···</button>
       </div>
       {/* O `<main>` é do MODO, e precisa ser. A tela cheia é devolvida antes
