@@ -408,37 +408,14 @@ test('dentro do modo o relógio continua filho direto de um main', async () => {
   a.fechar();
 });
 
-test('o cabeçalho do modo mostra a hora de parede', async () => {
-  // Item 3 da lista do que não some no modo (frente 1, §4.3): "dentro do modo,
-  // a hora fica no cabeçalho". O protótipo achou que o app não tem relógio
-  // NENHUM — e a projeção de fim do treino não se confere sem ele: "acabo às
-  // 19h10" não diz nada a quem não sabe que horas são.
+test('a barra do modo não repete a hora do iPhone: tem a saída e o ···', async () => {
+  // A hora de parede saiu da barra a pedido do dono (21/10): o iPhone já a mostra
+  // logo acima. O relógio DA SESSÃO, que é outra coisa, continua.
   const a = await app({ agora: agoraEstavel(14, 37), estado: emTreino('B', agoraEstavel(14, 37)), aba: 'treino' });
   assert.strictEqual(a.vista().modoSessao, true, 'pré-condição: dentro do modo');
-
-  const hora = a.$('#hora');
-  assert.ok(hora, 'a hora está no cabeçalho do modo');
-  assert.strictEqual(hora.textContent, '14:37', 'e é a hora de agora, em HH:MM');
-  assert.strictEqual(hora.tagName, 'TIME', 'em <time>: é hora, não um número qualquer');
-  // Sem `aria-live`: o leitor de tela anunciando a virada de cada minuto no
-  // meio de uma série é interrupção, não informação.
-  assert.ok(!hora.getAttribute('aria-live'), 'e não se anuncia a cada minuto');
-  a.fechar();
-});
-
-test('a hora de parede aparece no modo mesmo SEM sessão aberta', async () => {
-  // Entrar no modo é navegação, e a sessão nasce na primeira série — então o
-  // modo tem um estado vazio (M1‑7). A hora não depende de haver treino
-  // aberto: ela é a hora, e é justamente antes de começar que se pergunta se
-  // dá tempo.
-  const a = await app({ agora: agoraEstavel(6, 5), estado: { logs: {}, done: [] } });
-  a.v('ctx.abreModoDeSessao');
-  await a.esperar();
-  assert.strictEqual(a.S().sessao, null, 'pré-condição: nenhuma sessão');
-
-  assert.strictEqual((a.$('#hora') || {}).textContent, '06:05',
-    'a hora está lá, com o zero à esquerda');
-  assert.ok(!a.$('#relogio'), 'e o relógio DA SESSÃO não, porque não há sessão');
+  assert.strictEqual(a.$('#hora'), null, 'a hora de parede não está na barra');
+  assert.ok(a.$('.ins-modo-sair'), 'a saída continua');
+  assert.ok(a.$('.ins-modo-mais'), 'e o ··· também');
   a.fechar();
 });
 

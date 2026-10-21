@@ -158,26 +158,29 @@ test('treino avulso não entra na conta de horário', async () => {
   a.fechar();
 });
 
-test('o período saiu das células; o horário de início mostra os pontos', async () => {
-  // Saída declarada pela D (`dias.html`, estado 1): a marca de manhã/tarde/
-  // noite nas células saiu, e com ela a legenda. Quando ele treina está no
-  // horário de início, com cada sessão como um ponto no eixo.
+test('o período voltou às células, com a legenda; o horário de início continua com os pontos', async () => {
+  // A marca de manhã/tarde/noite nas células tinha saído no redesenho (`dias.html`,
+  // estado 1) e voltou a pedido do dono (21/10), como era: o canto da célula e a
+  // legenda embaixo do mês. O treino sem hora não diz período.
   const agora = agoraEstavel();
   const hoje = new Date(agora);
   const dia = function (d, h) {
     return new Date(hoje.getFullYear(), hoje.getMonth(), d, h, 15).getTime();
   };
   const done = [
-    { day: 'A', t: dia(2, 6), sid: 1, dur: 50 * 60000 },
-    { day: 'B', t: dia(3, 14), sid: 2, dur: 50 * 60000 },
-    { day: 'C', t: dia(4, 20), sid: 3, dur: 50 * 60000 }
+    { day: 'A', t: dia(2, 6), sid: 1, dur: 50 * 60000, hora: 1 },
+    { day: 'B', t: dia(3, 14), sid: 2, dur: 50 * 60000, hora: 1 },
+    { day: 'C', t: dia(4, 20), sid: 3, dur: 50 * 60000, hora: 1 }
   ];
   const a = await app({ agora: agora, estado: { logs: {}, done: done } });
   a.aba('dias');
 
-  assert.strictEqual(a.$('.per'), null, 'nenhuma célula com período');
-  assert.strictEqual(a.$('.callegenda'), null, 'nem legenda');
-  assert.strictEqual(a.$$('.dm-eixo-p').length, 3, 'um ponto por sessão no eixo');
+  const celula = function (d) { return a.$('[data-dia="' + a.v('hojeISO', dia(d, 12)) + '"]'); };
+  assert.ok(celula(2).querySelector('.dc-per.manha'), 'o dia 2, às 6h15, é de manhã');
+  assert.ok(celula(3).querySelector('.dc-per.tarde'), 'o dia 3, às 14h15, é de tarde');
+  assert.ok(celula(4).querySelector('.dc-per.noite'), 'o dia 4, às 20h15, é de noite');
+  assert.strictEqual(a.$$('.dc-legenda .dc-per').length, 3, 'e a legenda tem os três períodos');
+  assert.strictEqual(a.$$('.dm-eixo-p').length, 3, 'o horário de início continua com um ponto por sessão');
   a.fechar();
 });
 

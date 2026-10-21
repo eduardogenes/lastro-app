@@ -45,18 +45,8 @@ export function SessaoModo({ ctx }) {
                 data-a="sai-do-modo"
                 aria-label="Voltar ao Agora, deixando a sessão aberta"
                 onClick={ctx.fechaModoDeSessao}>‹</button>
-        {/* A HORA, item 3 da lista do que não some no modo. O protótipo achou
-            que o app não tem relógio nenhum e que a projeção de fim não se
-            confere sem ele.
-            Escrita no primeiro desenho e mantida fresca por `tickRelogio`, que
-            anda por fora do Preact — re-renderizar a tela a cada minuto
-            roubaria o foco do campo que ele está preenchendo no meio da série,
-            que é a mesma razão do relógio da sessão.
-            `<time>` sem `datetime`: o conteúdo já é hora válida, e o atributo
-            ficaria mentindo depois da primeira virada escrita pelo casco.
-            Sem `aria-live`: anunciar a virada de cada minuto no meio de uma
-            série é interrupção, não informação. */}
-        <time id="hora" class="ins-modo-hora">{ctx.horaDeParede()}</time>
+        {/* A hora de parede saiu da barra (dono, 21/10): o iPhone já mostra a
+            hora logo acima, e a barra fica com a saída e o `···`. */}
         {/* O `···`: o que é RARO mora aqui, e hoje é o deload. Ele saiu de
             Ajustes por decisão do dono, e o lugar antigo ERA o freio — por isso
             o item da folha diz o corte em número antes do toque, em vez de ser

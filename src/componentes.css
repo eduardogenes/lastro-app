@@ -1781,9 +1781,9 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
   position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center;
   padding: var(--ins-3) var(--ins-8) 0;
-  /* `--ins-topo`: a seta, a hora e o `···` começam abaixo da barra de status —
+  /* `--ins-topo`: a seta e o `···` começam abaixo da barra de status —
      ou da faixa "Não guardado", quando ela está lá. Com `--sa-top` só, a faixa
-     (fixa, z 86) cobria os três (defeito 4, docs/motion/03 §8.3). A barra
+     (fixa, z 86) cobria os dois (defeito 4, docs/motion/03 §8.3). A barra
      continua grudada em `top: 0`: o fundo dela passa por baixo da faixa. */
   padding-top: calc(var(--ins-3) + var(--ins-topo));
   background: var(--ins-fundo);
@@ -1794,14 +1794,6 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
    da barra: as duas faixas ocupariam a mesma. */
 .ins-modo .day-rel { top: var(--ins-modo-topo-h); }
 
-/* A hora encosta na direita; a seta fica na esquerda. `margin-left: auto` e não
-   `justify-content: space-between` no pai: se um terceiro elemento entrar no
-   cabeçalho, a seta continua colada na esquerda em vez de ir para o meio. */
-.ins-modo-hora {
-  margin-left: auto;
-  font: 400 15px/1 var(--ins-fonte); color: var(--ins-tinta-2);
-  font-variant-numeric: tabular-nums;
-}
 
 .ins-modo-sair {
   min-width: var(--ins-tap); min-height: var(--ins-tap);
@@ -1886,7 +1878,9 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
   min-width: var(--ins-tap); min-height: var(--ins-tap);
   display: flex; align-items: center; justify-content: center;
   background: none; border: 0; color: var(--ins-tinta-3);
-  font: 400 20px/1 var(--ins-fonte); margin-left: var(--ins-3);
+  /* encosta na direita; a seta fica na esquerda (a hora que ficava entre as
+     duas saiu, dono 21/10) */
+  font: 400 20px/1 var(--ins-fonte); margin-left: auto;
 }
 /* O item do menu tem DUAS linhas, e a de baixo é o freio — ela diz o corte em
    número. Por isso o nome não pode ficar sozinho numa linha só. */
@@ -2096,7 +2090,16 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 .dc-p { font-size: 17px; font-weight: 600; line-height: 1.1; }
 .dc.desc .dc-p { font-size: 13px; font-weight: 400; font-style: italic; color: var(--ins-tinta-2); }
 .dc-x { font-size: 10px; color: var(--ins-tinta-2); }
-.dc-c { position: absolute; top: 3px; right: 5px; font-size: 10px; color: var(--ins-tinta-2); }
+/* O canto de cima à direita: o período em que o treino começou e o coração do
+   cardio, lado a lado (o período voltou a pedido do dono, 21/10, como era). */
+.dc-canto { position: absolute; top: 3px; right: 4px; display: flex; align-items: center; gap: 2px; line-height: 1; }
+.dc-per { font-size: 10px; line-height: 1; }
+.dc-c { font-size: 10px; color: var(--ins-tinta-2); }
+.dc-legenda {
+  display: flex; flex-wrap: wrap; gap: var(--ins-6); margin-top: var(--ins-4);
+  font: 400 9.5px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
+}
+.dc-legenda .dc-per { margin-right: var(--ins-1); font-size: 12px; }
 .dc-f { position: absolute; bottom: 5px; left: 22%; right: 22%; height: 0; border-top: 3px solid var(--ins-tinta); border-radius: 2px; }
 .dc-f.sem { border-top: 2px dashed var(--ins-fio-controle); }
 /* As três leituras. */

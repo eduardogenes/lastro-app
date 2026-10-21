@@ -10,7 +10,8 @@
 // - **nada prescrito.** O plano de um dia passado aparece no dia, como
 //   referência; o plano é de Prescrição.
 // - **nenhuma leitura de semana.** Volume e séries por músculo são de Semana.
-// - **o "agora".** Um dia que passou não tem; tocar em hoje abre o Agora.
+// - **o "agora".** Hoje abre o dia como os outros, para ver e corrigir o que já
+//   foi registrado nele (dono, 21/10); o "e agora?" continua sendo do Agora.
 // - **presunção.** Dia sem registro fica vazio: o domingo não vira descanso
 //   sozinho, e a segunda sem registro não vira treino.
 
@@ -28,7 +29,12 @@ function Celula({ c, ctx }) {
       <span class="dc-n" aria-hidden="true">{c.n}</span>
       {c.principal && <span class="dc-p" aria-hidden="true">{c.principal}</span>}
       {c.extra && <span class="dc-x" aria-hidden="true">{c.extra}</span>}
-      {c.cardio > 0 && <span class="dc-c" aria-hidden="true">♥{c.cardio > 1 ? c.cardio : ''}</span>}
+      {(c.periodo || c.cardio > 0) && (
+        <span class="dc-canto" aria-hidden="true">
+          {c.periodo && <span class={'dc-per ' + c.periodo.k}>{c.periodo.rot}</span>}
+          {c.cardio > 0 && <span class="dc-c">♥{c.cardio > 1 ? c.cardio : ''}</span>}
+        </span>
+      )}
       {c.comida && <i class={'dc-f ' + c.comida} aria-hidden="true" />}
     </button>
   );
@@ -81,6 +87,11 @@ export function Mes({ m, ctx }) {
         {m.dias.map(d => <span key={d} class="dc-h">{d}</span>)}
         {Array.from({ length: m.offset }).map((_, i) => <span key={'x' + i} class="dc-x0" />)}
         {m.celulas.map(c => <Celula key={c.n} c={c} ctx={ctx} />)}
+      </div>
+      <div class="dc-legenda">
+        {m.periodos.map(p => (
+          <span key={p.k}><span class={'dc-per ' + p.k} aria-hidden="true">{p.rot}</span>{p.nome}</span>
+        ))}
       </div>
     </>
   );

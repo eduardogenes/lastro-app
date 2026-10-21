@@ -6,7 +6,7 @@ import {
 } from './dominio/programa';
 import { caixaDeFrase as _caixaDeFrase,
   fmtNum, fmtCarga, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca, fmtHoraDita,
-  DIAS_CURTOS, DIAS_LONGOS, MESES, periodoDe,
+  DIAS_CURTOS, DIAS_LONGOS, MESES, PERIODOS, periodoDe,
   fmtHora, fmtDur, semanasDesde, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
   escapeHTML, escAttr
 } from './dominio/formato';
@@ -2132,10 +2132,6 @@ function relogioTexto(s) {
 
 let relogioT = null;
 function tickRelogio() {
-  // A hora primeiro, e FORA do `if` da sessão: ela não depende de haver treino
-  // aberto, e o modo tem estado vazio (a sessão nasce na primeira série).
-  const h = document.getElementById('hora');
-  if (h) h.textContent = fmtHora(Date.now());
   const el = document.getElementById('relogio');
   if (!el || !S.sessao) return;
   el.textContent = relogioTexto(S.sessao);
@@ -9766,10 +9762,11 @@ CTX.addCardio = function () { addCardio(); };
 // treino. Embaixo, três leituras do mês, e só estas.
 //
 // Saíram daqui, pelo desenho: a faixa da semana (o mês já mostra a semana), o
-// quadro de dias, tempo e volume (volume é leitura de Semana), a marca de
-// período nas células (o horário de início diz quando ele treina, com os
-// pontos à vista) e a lista de sessões, dos dias de comida e dos cardios — que
-// moram agora no dia aberto.
+// quadro de dias, tempo e volume (volume é leitura de Semana) e a lista de
+// sessões, dos dias de comida e dos cardios — que moram agora no dia aberto. A
+// marca de período nas células também tinha saído, e voltou a pedido do dono
+// (21/10), com a legenda: ela e o horário de início dizem a mesma coisa de dois
+// jeitos, e ele lê o mês pelo canto da célula.
 
 const DIA_MS = 86400000;
 function maiuscula(x) { return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; }
@@ -9805,6 +9802,13 @@ CTX.mes = function () {
     const fora = marcas.some(function (m) { return m.livre; });
     const desc = !marcas.length && !futuro && ehDescanso(dia);
     const cardio = futuro ? 0 : cardioDoDia(dia).length;
+    // O período em que o treino começou (manhã, tarde, noite; os marcadores
+    // são os de PERIODOS), pela
+    // primeira sessão com hora. Voltou a pedido do dono (21/10), como era antes
+    // do redesenho: o canto da célula e a legenda embaixo do mês. Treino
+    // registrado sem hora não diz período.
+    const comHora = futuro ? null : marcas.filter(temHora)[0] || null;
+    const per = comHora ? periodoDe(comHora.t) : null;
     const h = porData[hojeISO(dia)];
     const comida = futuro || hoje ? null : (h && diaInterpretavel(h) ? 'com' : 'sem');
     const partes = [];
@@ -9813,6 +9817,7 @@ CTX.mes = function () {
     });
     const desc0 = partes.length > 1 ? [partes.slice(0, -1).join(', ') + ' e ' + partes[partes.length - 1]] : partes;
     const ditos = desc0.slice();
+    if (per) ditos.push('de ' + per.nome);
     if (desc) ditos.push('descanso marcado');
     if (cardio) ditos.push(cardio === 1 ? 'cardio' : cardio + ' cardios');
     if (comida) ditos.push(comida === 'com' ? 'comida com marca' : 'comida sem marca');
@@ -9823,6 +9828,7 @@ CTX.mes = function () {
       principal: letras.length ? letras.join(' ') : fora ? 'fora' : desc ? 'desc.' : '',
       extra: letras.length && fora ? '+fora' : null,
       descanso: desc, cardio: cardio, comida: comida,
+      periodo: per ? { k: per.k, rot: per.rot } : null,
       rotulo: DIAS_LONGOS[d.getDay()] + ', ' + i + ' de ' + MESES[mesN] + (ditos.length ? ': ' + ditos.join(', ') : ''),
       // Hoje abre o dia como os outros (dono, 21/10): é onde se vê e se corrige o
       // que já foi registrado hoje — antes abria o Agora, e um treino lançado
@@ -9853,6 +9859,7 @@ CTX.mes = function () {
     offset: new Date(ini).getDay(),
     dias: DIAS_CURTOS,
     celulas: celulas,
+    periodos: PERIODOS.map(function (p) { return { k: p.k, rot: p.rot, nome: p.nome }; }),
     vazio: !temAlgo,
     treino: L
       ? (L.porSemana != null
@@ -11649,7 +11656,6 @@ CTX.setGordura = function (v) {
  * depois dele, e atribuir antes é TDZ no carregamento do módulo — o app não
  * boota e a suíte inteira responde `__escopo is not a function`.
  */
-CTX.horaDeParede = function () { return fmtHora(Date.now()); };
 
 /**
  * Os fatos do dia que a regra do cartão de cima lê, resolvidos do `S`.

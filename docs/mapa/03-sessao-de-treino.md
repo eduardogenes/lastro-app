@@ -14,7 +14,6 @@ Base da leitura: commit `8ec19a4` (as linhas citadas no índice técnico são de
 |---|---|---|---|
 | Entrar no modo de sessão | Abre o treino em tela cheia, sem a barra de abas. Entrar **não** começa sessão: é só navegação. | Três portas: o cartão de cima do Agora ("Abrir o treino →" / "Fiz a aula →"), a faixa da sessão ("treino A em andamento · Supino…"), e a própria abertura do app quando há sessão aberta. | O cartão só leva se hoje tem treino previsto; a faixa só existe com sessão aberta; a abertura só cai no modo se a sessão aberta ainda tem treino no programa. |
 | Sair sem encerrar | A seta `‹` no canto (rótulo acessível: "Voltar ao Agora, deixando a sessão aberta") ou o Voltar do sistema. A sessão continua aberta. | Barra grudada no topo do modo. | Sempre visível dentro do modo (não rola para fora). |
-| A hora | Mostra a hora de parede (`07:31`) na barra do topo. | Canto direito da barra do modo. | Sempre dentro do modo, com ou sem sessão. |
 | O menu `···` ("O que é raro") | Folha com "Encerrar o treino · o fim é agora, 7h31" (só com sessão aberta) e o deload dito em número. | Canto direito da barra do modo. | Sempre; em dia sem exercício a folha não tem conteúdo (ver §9). |
 
 **A tela do treino (dentro do modo)**

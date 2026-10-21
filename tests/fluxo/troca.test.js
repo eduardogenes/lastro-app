@@ -620,11 +620,11 @@ test('defeito 4: a faixa "Não guardado" não cobre a saída do modo, a hora e o
     falhas.push(...await acerta(['.ins-cab-ajustes', 'h1.ag-cab-d']));
     assert.ok(await faixa(), 'a faixa continua à vista, no topo');
     await nav.E(`CTX.abreTreinoDeHoje()`); await nav.espera(500); await assenta(nav);
-    falhas.push(...await acerta(['.ins-modo-sair', '#hora', '.ins-modo-mais']));
+    falhas.push(...await acerta(['.ins-modo-sair', '.ins-modo-mais']));
     assert.ok(await faixa(), 'no modo, a faixa continua à vista');
     // rolado: a barra do modo gruda abaixo da faixa
     await nav.p.evaluate(() => window.scrollTo(0, 600)); await nav.espera(150);
-    falhas.push(...(await acerta(['.ins-modo-sair', '#hora', '.ins-modo-mais'])).map(f => 'rolado: ' + f));
+    falhas.push(...(await acerta(['.ins-modo-sair', '.ins-modo-mais'])).map(f => 'rolado: ' + f));
     await nav.E(`CTX.fechaModoDeSessao()`); await nav.espera(500); await assenta(nav);
     await nav.E(`CTX.abreAjustes()`); await nav.espera(500); await assenta(nav);
     falhas.push(...await acerta(['.tc-back']));
