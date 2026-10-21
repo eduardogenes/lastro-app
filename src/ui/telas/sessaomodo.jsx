@@ -44,7 +44,7 @@ export function SessaoModo({ ctx }) {
         <button class="ins-modo-sair"
                 data-a="sai-do-modo"
                 aria-label="Voltar ao Agora, deixando a sessão aberta"
-                onClick={ctx.fechaModoDeSessao}>‹</button>
+                onClick={ctx.fechaModoDeSessao}>‹ Voltar</button>
         {/* A hora de parede saiu da barra (dono, 21/10): o iPhone já mostra a
             hora logo acima, e a barra fica com a saída e o `···`. */}
         {/* O `···`: o que é RARO mora aqui, e hoje é o deload. Ele saiu de

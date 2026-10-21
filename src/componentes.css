@@ -1708,8 +1708,8 @@ html[data-nav="seca"] .ins-tab-ind { transition: none; }
      botão. Existe porque o relógio da sessão também gruda no topo, e precisa
      parar DEPOIS desta barra — somar à mão nos dois lugares desencontra na
      primeira vez que o padding mudar. */
-  /* a barra: o respiro de cima, o círculo de 36 e o respiro de baixo */
-  --ins-modo-topo-h: calc(var(--ins-topo) + var(--ins-2) + 36px + var(--ins-2));
+  /* a barra: o respiro de cima, a linha de 36 e o respiro de baixo */
+  --ins-modo-topo-h: calc(var(--ins-topo) + var(--ins-1) + 36px + var(--ins-1));
   /* `100vh` primeiro como fallback e `100svh` por cima, nesta ordem — a rede
      pegou esta regra errada na primeira versão deste arquivo, e com razão:
      invertida, o fallback vence e volta a sobra rolável do tamanho da barra. */
@@ -1786,20 +1786,29 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
      ou da faixa "Não guardado", quando ela está lá. Com `--sa-top` só, a faixa
      (fixa, z 86) cobria os dois (defeito 4, docs/motion/03 §8.3). A barra
      continua grudada em `top: 0`: o fundo dela passa por baixo da faixa. */
-  padding-top: calc(var(--ins-2) + var(--ins-topo));
-  padding-bottom: var(--ins-2);
-  /* A BARRA SOME NA PÁGINA (dono, 21/10). Era `--ins-fundo` — a cor de TRÁS de
-     tudo — dentro da goteira do `#app`: um bloco de outro tom, recuado das
-     bordas, solto em cima da tela. Uma faixa branca com fio embaixo "parecia
-     Android". Agora: a cor da própria página, de borda a borda, sem fio, e mais
-     baixa; quem diz que ali há controles são os dois círculos, como no iOS.
-     Opaca (o conteúdo passa por baixo e precisa sumir) e sem desfoque, que pisca
-     no Blink ao rolar. */
+  padding-top: calc(var(--ins-1) + var(--ins-topo));
+  padding-bottom: var(--ins-1);
+  /* A BARRA É A PÁGINA, COM UMA RÉGUA (dono, 21/10, três tentativas). Era
+     `--ins-fundo` — a cor de TRÁS de tudo — dentro da goteira do `#app`: um bloco
+     de outro tom, recuado das bordas, solto em cima da tela. Uma faixa branca com
+     fio de ponta a ponta "parecia Android"; dois círculos preenchidos copiavam o
+     iOS e brigavam com o resto do app, que não tem círculo nem preenchimento para
+     agrupar. Agora: a cor da própria página, de borda a borda (o conteúdo passa
+     por baixo e some — opaca, e sem desfoque, que pisca no Blink), mais baixa, e
+     a separação é um fio de 1px na largura do conteúdo, como os fios das listas
+     (o `::after` abaixo), não de ponta a ponta. A saída é "‹ Voltar" em texto,
+     a mesma das telas cheias, e o `···` é texto também. */
   background: var(--ins-tela);
   margin-left: calc(-1 * max(var(--ins-8), var(--sa-left)));
   margin-right: calc(-1 * max(var(--ins-8), var(--sa-right)));
   padding-left: max(var(--ins-8), var(--sa-left));
   padding-right: max(var(--ins-8), var(--sa-right));
+}
+
+.ins-modo-topo::after {
+  content: ""; position: absolute; bottom: 0;
+  left: max(var(--ins-8), var(--sa-left)); right: max(var(--ins-8), var(--sa-right));
+  border-top: 1px solid var(--ins-fio);
 }
 
 /* O relógio da sessão gruda abaixo da barra da saída, não embaixo dela. Fora do
@@ -1809,16 +1818,14 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 
 
 .ins-modo-sair, .ins-modo-mais {
-  /* Círculos de 36 com o preenchimento de controle, como os botões flutuantes
-     do iOS; o ALVO continua de 46, estendido por fora do desenho (::after). */
+  /* Texto, sem fundo nem borda, como o "‹ Voltar" da tela cheia (`.tc-back`).
+     A linha tem 36 de desenho; o ALVO, 46, estendido por fora dele (::after). */
   position: relative; flex: 0 0 auto;
-  width: 36px; height: 36px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--ins-superficie-2); border: 0; color: var(--ins-tinta);
+  height: 36px; display: flex; align-items: center;
+  background: none; border: 0; color: var(--ins-tinta-3);
 }
-.ins-modo-sair::after, .ins-modo-mais::after { content: ""; position: absolute; inset: -5px; }
-/* a seta pesa à esquerda: um pixel de volta para o centro ótico */
-.ins-modo-sair { font: 500 22px/1 var(--ins-fonte); padding: 0 1px 2px 0; }
+.ins-modo-sair::after, .ins-modo-mais::after { content: ""; position: absolute; inset: -5px -6px; }
+.ins-modo-sair { padding-right: var(--ins-4); font: 500 var(--ins-t-corpo-forte)/1 var(--ins-fonte); }
 
 /* O cabeçalho do AGORA tem duas ações: o estado do dia e os ajustes. O de
    estado é o largo — é onde o tipo do dia e o turno se trocam, e é tocado todo
@@ -1895,7 +1902,9 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 .ins-modo-mais {
   /* encosta na direita; a seta fica na esquerda (a hora que ficava entre as
      duas saiu, dono 21/10) */
-  font: 600 15px/1 var(--ins-fonte); letter-spacing: .02em; padding-bottom: 4px; margin-left: auto;
+  /* os pontos ficam no meio da caixa do glifo, acima do meio do "Voltar": 3px
+     para baixo os põem na mesma linha */
+  font: 600 16px/1 var(--ins-fonte); letter-spacing: .1em; padding: 3px 0 0 var(--ins-4); margin-left: auto;
 }
 /* O item do menu tem DUAS linhas, e a de baixo é o freio — ela diz o corte em
    número. Por isso o nome não pode ficar sozinho numa linha só. */
