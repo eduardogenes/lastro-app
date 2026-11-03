@@ -11264,34 +11264,52 @@ async function tiraFotoDoCorpo(el) {
 }
 CTX.tiraFotoDoCorpo = function (el) { tiraFotoDoCorpo(el); };
 
-CTX.apagaFotoDoCorpo = async function (pose) {
-  const v = view.protocolo;
-  const ses = sessaoDe(S.protocolo.sessoes, v.d);
-  if (!ses || !ses.fotos[pose]) return;
+/**
+ * Apaga UMA foto de corpo, de qualquer sessão.
+ *
+ * Nasceu presa à sessão de HOJE, porque a única porta era a tela de captura —
+ * que sempre abre no dia. A foto de uma sessão passada não tinha saída:
+ * ajustar resolve a torta e a tirada de longe, mas não a que não devia existir
+ * (pedido do dono, 03/11). A segunda porta é a Comparar, que é onde a foto
+ * antiga aparece. As duas passam por aqui, com a mesma confirmação, a mesma
+ * lápide e a mesma fila para tirar os bytes do bucket.
+ *
+ * @returns {Promise<boolean>} se a foto foi apagada
+ */
+async function apagaFotoDoCorpo(d, pose) {
+  const antes = sessaoDe(S.protocolo.sessoes, d);
+  if (!antes || !antes.fotos[pose]) return false;
   // Confirma como toda outra ação destrutiva do app. E o aviso é honesto: a
   // lápide viaja na sincronização, então isto não apaga só daqui.
   const p = poseDe(pose);
   // PARE (§3.3): a lápide viaja, e a comparação perde o par.
   const qual = p ? p.n.toLowerCase() : pose;
-  if (!(await pare({ texto: 'Apagar a foto de ' + qual + ' de ' + fmtDate(Date.parse(v.d + 'T12:00:00')) + ' tira ela deste aparelho e dos outros na próxima sincronização, e a comparação perde esse par. Isso não tem volta.',
-                     sim: 'Apagar a foto de ' + qual }))) return;
+  if (!(await pare({ texto: 'Apagar a foto de ' + qual + ' de ' + fmtDate(Date.parse(d + 'T12:00:00')) + ' tira ela deste aparelho e dos outros na próxima sincronização, e a comparação perde esse par. Isso não tem volta.',
+                     sim: 'Apagar a foto de ' + qual }))) return false;
+  // Relida DEPOIS da resposta: o painel espera o dedo, e uma sincronização
+  // nesse meio-tempo pode ter trocado o estado inteiro — apagar no objeto
+  // velho não apagaria nada.
+  const ses = sessaoDe(S.protocolo.sessoes, d);
+  if (!ses || !ses.fotos[pose]) return false;
   const ext = ses.fotos[pose].ext;
-  lapide(chaveDeFotoDoCorpo(v.d, pose));
+  lapide(chaveDeFotoDoCorpo(d, pose));
   ses.fotos = Object.assign({}, ses.fotos);
   delete ses.fotos[pose];
   ses.m = Date.now();
-  CORPO.solta(v.d, pose);
-  await CORPO.esquece(v.d, pose, ext);
+  CORPO.solta(d, pose);
+  await CORPO.esquece(d, pose, ext);
   // e sai do bucket também, na próxima reconciliação com rede
-  apagaDaNuvemDepois(v.d, pose, ext);
+  apagaDaNuvemDepois(d, pose, ext);
   // sessão sem foto nenhuma não sobrevive à última: ela nasce na primeira
   if (!Object.keys(ses.fotos).length) {
-    lapide(chaveDeSessaoFoto(v.d));
-    S.protocolo.sessoes = S.protocolo.sessoes.filter(function (x) { return x.d !== v.d; });
+    lapide(chaveDeSessaoFoto(d));
+    S.protocolo.sessoes = S.protocolo.sessoes.filter(function (x) { return x.d !== d; });
   }
   await save(); render();
   toast('Foto apagada.');
-};
+  return true;
+}
+CTX.apagaFotoDoCorpo = function (pose) { return apagaFotoDoCorpo(view.protocolo.d, pose); };
 
 let notaT = null;
 CTX.setNotaDaSessao = function (txt) {
@@ -11527,6 +11545,22 @@ function vazioDeUmaSessao(d) {
 }
 CTX.voltaAoParLongo = function () { aplicaParPadrao(); render(); };
 
+/**
+ * Apagar a foto que está à vista, num dos lados do par. A pose é a da tela; a
+ * data é a do lado tocado.
+ *
+ * Se a foto era uma das pontas do par, o par volta ao padrão: a tela não pode
+ * continuar comparando com uma foto que não existe mais, e o padrão é o par
+ * que ela abriria agora. Sem par possível, ela mostra o vazio que já sabe
+ * mostrar.
+ */
+CTX.apagaFotoComparada = async function (d) {
+  const c = view.comparar;
+  if (!c) return;
+  if (!(await apagaFotoDoCorpo(d, c.pose))) return;
+  if (view.comparar && (view.comparar.de === d || view.comparar.ate === d)) { aplicaParPadrao(); render(); }
+};
+
 /** Um lado da comparação, com os números da semana daquela sessão. */
 function ladoDaComparacao(d, pose) {
   const ses = d && sessaoDe(S.protocolo.sessoes, d);
@@ -11542,6 +11576,9 @@ function ladoDaComparacao(d, pose) {
     // Referência antiga, sem instante de verdade, fica sem hora.
     hora: ref && ref.v > 1577836800000 ? fmtHoraDita(ref.v) : null,
     url: ref ? CORPO.urlDaFoto(d, pose, ref) : null,
+    // a referência existe, mesmo que os bytes não tenham chegado: é o que
+    // decide se dá para apagar — uma foto que não baixa também precisa de saída
+    tem: !!ref,
     enq: (ref && ref.enq) || null,
     aviso: avisoDaFoto(d, pose, !!ref, 'sem foto nesta pose'),
     retomar: podeTentarFoto(d, pose, !!ref),

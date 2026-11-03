@@ -203,6 +203,16 @@
 .cp-ajustar::after { content: ""; position: absolute; inset: -18px -10px; }
 .cp-ajustar:active { color: var(--ins-tinta); }
 
+/* Ajustar e apagar na mesma linha. O vão é maior que as duas expansões de alvo
+   somadas (10 + 10): dois toques vizinhos não podem dividir a mesma área, e
+   aqui o vizinho do ajustar é o verbo que não tem volta. */
+.cp-acoes { display: flex; gap: var(--ins-9); align-self: flex-start; margin-top: var(--ins-2); }
+.cp-acoes .cp-ajustar { margin-top: 0; }
+/* Na tinta do pare, discreto como o ajustar: o peso do aviso fica com o painel
+   de confirmação, que vem depois do toque. */
+.cp-apagar { color: var(--ins-pare-tinta); }
+.cp-apagar:active { color: var(--ins-pare-tinta); opacity: .7; }
+
 
 /* ============================================================
    A CÂMERA DE DENTRO DO APP

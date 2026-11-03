@@ -26,7 +26,7 @@ import { Chips, Procedencia, Vazio } from '../instrumento/primitivos.jsx';
 import { TelaCheia } from '../instrumento/telacheia.jsx';
 
 /** Um lado da comparação: a foto, a data e os números daquela semana. */
-function Lado({ l, aoAjustar, aoTentar }) {
+function Lado({ l, aoAjustar, aoApagar, aoTentar }) {
   return (
     <figure class="cp-lado">
       <FotoAjustada url={l.url} enq={l.enq} alt={l.pose + ' em ' + l.data} vazio={l.aviso}
@@ -37,8 +37,20 @@ function Lado({ l, aoAjustar, aoTentar }) {
         <span class="ins-data cp-num cp-num2">{l.cintura}</span>
         {/* É aqui que o desalinhamento se percebe, então é daqui que se conserta:
             mandar procurar a foto na sessão dela seria mandar sair da tela que
-            mostra o problema. */}
-        {l.url && <button class="cp-ajustar" onClick={() => aoAjustar(l.d)}>Ajustar</button>}
+            mostra o problema.
+
+            Apagar mora ao lado pelo mesmo motivo — é aqui que a foto antiga
+            aparece, e a tela de captura só abre no dia de hoje. Vem DEPOIS de
+            ajustar, como na captura: quase todo motivo para apagar (torta,
+            longe) é um motivo para ajustar primeiro. Aparece mesmo sem os
+            bytes: uma foto que não baixa também precisa de saída. */}
+        {l.tem && (
+          <span class="cp-acoes">
+            {l.url && <button class="cp-ajustar" onClick={() => aoAjustar(l.d)}>Ajustar</button>}
+            <button class="cp-ajustar cp-apagar" data-a="apaga-comparada"
+                    onClick={() => aoApagar(l.d)}>Apagar</button>
+          </span>
+        )}
       </figcaption>
     </figure>
   );
@@ -131,9 +143,9 @@ export function Comparar({ ctx }) {
               : (
                 <div class="cp-par">
                   <Lado l={c.de} aoAjustar={d => ctx.abreAjuste(d, c.pose)}
-                        aoTentar={ctx.tentaFotos} />
+                        aoApagar={ctx.apagaFotoComparada} aoTentar={ctx.tentaFotos} />
                   <Lado l={c.ate} aoAjustar={d => ctx.abreAjuste(d, c.pose)}
-                        aoTentar={ctx.tentaFotos} />
+                        aoApagar={ctx.apagaFotoComparada} aoTentar={ctx.tentaFotos} />
                 </div>
               )}
 

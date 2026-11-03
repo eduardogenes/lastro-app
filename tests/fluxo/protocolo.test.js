@@ -766,6 +766,71 @@ test('o par curto que ele escolheu: a tela avisa, não impede, e volta ao longo 
   a.fechar();
 });
 
+// ---------- apagar pela Comparar ----------
+// A tela de captura só abre no dia de hoje: a foto de uma sessão passada não
+// tinha saída nenhuma no app (pedido do dono, 03/11). A Comparar é onde ela
+// aparece, e é de lá que sai — pelo mesmo verbo da captura.
+
+test('apagar uma foto antiga pela Comparar: sai da sessão dela, com lápide, e o par volta ao padrão', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  const datas = [56, 28, 14].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  await a.esperar(60);
+
+  const botoes = a.$$('[data-a="apaga-comparada"]');
+  assert.strictEqual(botoes.length, 2, 'um em cada lado do par');
+  a.clicar(botoes[0]);                              // o lado "de": a mais antiga
+  await a.esperar(120);
+
+  assert.ok(a.perguntas().some(p => /^Apagar a foto de frente relaxado de /.test(p)),
+    'com a mesma confirmação da captura: ' + JSON.stringify(a.perguntas()));
+  assert.deepStrictEqual(a.S().protocolo.sessoes.map(s => s.d), [datas[1], datas[2]],
+    'a sessão saiu junto, porque era a única foto dela');
+  assert.ok(a.S().apagados['corpo:' + datas[0] + ':frente-relaxado'], 'com lápide da foto');
+  assert.ok(a.S().apagados['corpo:' + datas[0]], 'e da sessão');
+  assert.strictEqual(a.vista().comparar.de, datas[1], 'o par não aponta mais para a foto que saiu');
+  assert.strictEqual(a.vista().comparar.ate, datas[2]);
+  a.fechar();
+});
+
+test('apagar na Comparar uma foto de sessão que tem outras poses mantém a sessão', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  const datas = [42, 14].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  a.E(`S.protocolo.sessoes[0].fotos['perfil-direito'] = { v: 9, ext: 'webp' }`);
+  a.v('ctx.abreComparar');
+  await a.v('ctx.apagaFotoComparada', datas[0]);
+  await a.esperar(60);
+
+  const s = a.S().protocolo.sessoes.filter(x => x.d === datas[0])[0];
+  assert.ok(s, 'a sessão continua');
+  assert.deepStrictEqual(Object.keys(s.fotos), ['perfil-direito'], 'só a pose comparada saiu');
+  // com uma sessão só nesta pose, não há par: a tela mostra o vazio que já sabe mostrar
+  assert.strictEqual(a.vJ('ctx.comparacao').par, false);
+  a.fechar();
+});
+
+test('recusar a confirmação na Comparar não apaga nada', async () => {
+  const a = await app({ aba: 'corpo', confirmar: false });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  const datas = [28, 14].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  await a.v('ctx.apagaFotoComparada', datas[1]);
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().protocolo.sessoes.length, 2);
+  assert.strictEqual(a.S().apagados['corpo:' + datas[1] + ':frente-relaxado'], undefined);
+  assert.strictEqual(a.vista().comparar.ate, datas[1], 'e o par fica onde estava');
+  a.fechar();
+});
+
 test('par longo que não é o mais longo não ganha aviso; par de menos de 10 dias não serve nem à pergunta', async () => {
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
