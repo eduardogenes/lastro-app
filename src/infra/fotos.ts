@@ -21,6 +21,7 @@
 // pela rede e não coloca endereço externo no bundle.
 
 import type { FotoRef, IdEx } from '../dominio/tipos';
+import { desenhaQuadro, tamanhoDoQuadro } from './camera';
 
 /** O cache não leva versão no nome: é dado do usuário, não asset do build. */
 export const CACHE_FOTOS = 'lastro-fotos';
@@ -245,10 +246,16 @@ export interface Reduzida {
   /** largura e altura do que foi gravado: é por elas que se sabe se a foto saiu deitada */
   l: number;
   a: number;
+  /**
+   * O tamanho que o navegador DISSE que a fonte tinha, antes de qualquer
+   * correção. É diagnóstico: guardado com a foto, deixa ver nos dados se o
+   * vídeo voltou a se anunciar deitado com o celular em pé.
+   */
+  fonte: { l: number; a: number };
 }
 
 /** Uma origem pronta para desenhar, com o tamanho em que ela é VISTA. */
-interface Origem { img: CanvasImageSource; l: number; a: number; solta: () => void; }
+interface Origem { img: CanvasImageSource; l: number; a: number; disse: { l: number; a: number }; solta: () => void; }
 
 function ehVideo(x: unknown): x is HTMLVideoElement {
   return typeof HTMLVideoElement !== 'undefined' && x instanceof HTMLVideoElement;
@@ -278,41 +285,63 @@ function pelaImagem(arquivo: Blob): Promise<Origem | null> {
   img.src = url;
   return img.decode().then(function () {
     if (!img.naturalWidth || !img.naturalHeight) { URL.revokeObjectURL(url); return null; }
-    return { img: img, l: img.naturalWidth, a: img.naturalHeight, solta: function () { URL.revokeObjectURL(url); } };
+    const t = { l: img.naturalWidth, a: img.naturalHeight };
+    return { img: img, l: t.l, a: t.a, disse: t, solta: function () { URL.revokeObjectURL(url); } };
   }, function () { URL.revokeObjectURL(url); return null; });
 }
 
 /**
- * Abre o que vai ser reduzido.
+ * Um quadro do vídeo da câmera, congelado num canvas EM PÉ.
  *
- * O <video> da câmera interna é COPIADO num canvas antes de tudo, no tamanho que
- * ele diz ter (`videoWidth`): é um quadro só, congelado. Desenhar o vídeo direto
- * em cada passo da redução pegaria quadros diferentes — e o JPEG, que redesenha
- * sobre o fundo, sairia de um instante diferente do que foi medido.
+ * Congelado porque desenhar o vídeo direto em cada passo da redução pegaria
+ * quadros diferentes — e o JPEG, que redesenha sobre o fundo, sairia de um
+ * instante diferente do que foi medido.
+ *
+ * Em pé, e pela MESMA função que desenha a tela da câmera (`desenhaQuadro`, em
+ * `./camera.ts`, que explica o defeito medido no iPhone): o que se vê
+ * enquadrando é o que fica guardado.
  */
-async function abre(fonte: ImageBitmapSource): Promise<Origem> {
+function quadroDoVideo(v: HTMLVideoElement): Origem {
+  const disse = { l: v.videoWidth, a: v.videoHeight };
+  const t = tamanhoDoQuadro(v);
+  const quadro = document.createElement('canvas');
+  quadro.width = t.l; quadro.height = t.a;
+  const c = quadro.getContext('2d');
+  if (!c) throw new Error('sem canvas');
+  desenhaQuadro(c, v, t.l, t.a);
+  return { img: quadro, l: t.l, a: t.a, disse: disse, solta: function () {} };
+}
+
+/** Abre o que vai ser reduzido. `emPe` só vale para o vídeo da câmera do protocolo. */
+async function abre(fonte: ImageBitmapSource, emPe: boolean): Promise<Origem> {
   if (ehVideo(fonte)) {
+    if (emPe) return quadroDoVideo(fonte);
     const l = fonte.videoWidth, a = fonte.videoHeight;
     const quadro = document.createElement('canvas');
     quadro.width = l; quadro.height = a;
     const c = quadro.getContext('2d');
     if (!c) throw new Error('sem canvas');
     c.drawImage(fonte, 0, 0, l, a);
-    return { img: quadro, l: l, a: a, solta: function () {} };
+    return { img: quadro, l: l, a: a, disse: { l: l, a: a }, solta: function () {} };
   }
   if (typeof Blob !== 'undefined' && fonte instanceof Blob) {
     const pela = await pelaImagem(fonte);
     if (pela) return pela;
   }
   const b = await createImageBitmap(fonte);
-  return { img: b, l: b.width, a: b.height, solta: function () { if (typeof b.close === 'function') b.close(); } };
+  return { img: b, l: b.width, a: b.height, disse: { l: b.width, a: b.height },
+           solta: function () { if (typeof b.close === 'function') b.close(); } };
 }
 
-export async function reduzPara(fonte: ImageBitmapSource, ladoMaior: number): Promise<Reduzida> {
+/**
+ * @param opcoes.emPe o vídeo vira um quadro em pé (ver `quadroDoVideo`). Só a
+ *   câmera do protocolo pede: a foto do aparelho e a da lousa podem ser deitadas.
+ */
+export async function reduzPara(fonte: ImageBitmapSource, ladoMaior: number, opcoes?: { emPe?: boolean }): Promise<Reduzida> {
   // `ImageBitmapSource` e não `Blob`: a câmera interna entrega um <video>, e
   // deixá-la passar direto evita uma codificação a mais só para virar arquivo.
   // O resto do caminho — passos de redução, WebP/JPEG, achatamento — é o mesmo.
-  const o = await abre(fonte);
+  const o = await abre(fonte, !!(opcoes && opcoes.emPe));
   try {
     if (!o.l || !o.a) throw new Error('a imagem chegou sem tamanho');
     const escala = Math.min(1, ladoMaior / Math.max(o.l, o.a));
@@ -332,7 +361,7 @@ export async function reduzPara(fonte: ImageBitmapSource, ladoMaior: number): Pr
         ok(b && b.type === 'image/webp' ? b : null);
       }, 'image/webp', QUALIDADE);
     });
-    if (webp) return { blob: webp, ext: 'webp', brilho: brilho, l: l, a: a };
+    if (webp) return { blob: webp, ext: 'webp', brilho: brilho, l: l, a: a, fonte: o.disse };
 
     // Sem WebP, sobra JPEG — que não tem transparência, e pinta de PRETO o que
     // era transparente. Redesenha sobre o fundo do app para o recorte se apoiar
@@ -342,7 +371,7 @@ export async function reduzPara(fonte: ImageBitmapSource, ladoMaior: number): Pr
       tela.toBlob(function (b) { ok(b); }, 'image/jpeg', QUALIDADE);
     });
     if (!jpeg) throw new Error('não deu para codificar a imagem');
-    return { blob: jpeg, ext: 'jpeg', brilho: brilho, l: l, a: a };
+    return { blob: jpeg, ext: 'jpeg', brilho: brilho, l: l, a: a, fonte: o.disse };
   } finally {
     o.solta();
   }

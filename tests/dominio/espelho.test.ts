@@ -40,7 +40,7 @@ function estado() {
         sessoes: [{
           d: '2026-10-20', t: T - 8 * DIA,
           fotos: {
-            'frente-relaxado': { v: new Date(2026, 9, 20, 21, 14).getTime(), ext: 'webp' },
+            'frente-relaxado': { v: new Date(2026, 9, 20, 21, 14).getTime(), ext: 'webp', cap: { via: 'app', l: 1080, a: 1440 } },
             'perfil-direito': { v: new Date(2026, 9, 20, 21, 16).getTime(), ext: 'jpeg', enq: { r: 2, z: 1.1, cx: 0.5, cy: 0.5, m: 1 } }
           }
         }]
@@ -130,8 +130,8 @@ describe('espelho — arquivos', () => {
       presentes: new Set(['corpo/fotos/2026-10-20/frente-relaxado.webp']),
       faltando: new Set(['corpo/fotos/2026-10-20/perfil-direito.jpeg'])
     })['corpo/fotos.md'];
-    expect(f).toContain('| Frente relaxado | 21:14 | [frente-relaxado.webp](fotos/2026-10-20/frente-relaxado.webp) |');
-    expect(f).toContain('| Perfil direito | 21:16 | ainda não subiu para a nuvem | giro 2°, zoom 1,1× |');
+    expect(f).toContain('| Frente relaxado | 21:14 | do app | [frente-relaxado.webp](fotos/2026-10-20/frente-relaxado.webp) |');
+    expect(f).toContain('| Perfil direito | 21:16 |  | ainda não subiu para a nuvem | giro 2°, zoom 1,1× |');
     expect(f).toMatch(/## \w{3}, 20\/10\/2026 — 2 de \d+ poses/);
   });
 

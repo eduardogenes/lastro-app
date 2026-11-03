@@ -766,6 +766,9 @@ function ajusteDaFoto(f: FotoRef): string {
   return p.join(', ');
 }
 
+/** A câmera que tirou a foto, quando o app registrou (fotos a partir de 03/11/2026). */
+const CAMERA: Record<string, string> = { app: 'do app', sistema: 'do sistema' };
+
 function fotosDoCorpo(b: Base, ctx: Contexto): string {
   const S = b.S;
   const proto = obj<unknown>(S.protocolo);
@@ -776,7 +779,8 @@ function fotosDoCorpo(b: Base, ctx: Contexto): string {
   const L = cabeca('Fotos do corpo', [
     'Uma sessão de fotos a cada ' + CADENCIA_DIAS + ' dias, sempre as mesmas poses, no mesmo lugar marcado no chão.',
     'Os arquivos são as fotos originais. Quando a coluna "Ajuste no app" tem algo, o app mostra a foto girada ou recortada, mas o arquivo não muda.',
-    'A hora de cada foto importa: luz e hora do dia mudam o que a foto mostra.'
+    'A hora de cada foto importa: luz e hora do dia mudam o que a foto mostra.',
+    'A coluna "Câmera" diz se a foto saiu da câmera do app (um quadro do vídeo, com menos processamento) ou da câmera do sistema; vazia nas fotos de antes de 03/11/2026.'
   ]);
 
   L.push('## O protocolo', '', '| Pose | Bloco | Giro | O que mostra |', '|---|---|---|---|');
@@ -791,14 +795,15 @@ function fotosDoCorpo(b: Base, ctx: Contexto): string {
     const feitas = ids.filter(function (id) { return fotos[id]; });
     L.push('## ' + dataIsoBR(s.d) + ' — ' + feitas.length + ' de ' + ordem.length + ' poses', '');
     if (s.obs) L.push('Nota: ' + cel(s.obs), '');
-    L.push('| Pose | Hora | Arquivo | Ajuste no app |', '|---|---|---|---|');
+    L.push('| Pose | Hora | Câmera | Arquivo | Ajuste no app |', '|---|---|---|---|---|');
     ids.forEach(function (id) {
       const p = PROTOCOLO.filter(function (x) { return x.id === id; })[0];
       const f = fotos[id];
-      if (!f) { L.push('| ' + cel(p ? p.n : id) + ' | — | não tirada | |'); return; }
+      if (!f) { L.push('| ' + cel(p ? p.n : id) + ' | — | | não tirada | |'); return; }
       const caminho = 'fotos/' + s.d + '/' + segmento(id) + '.' + segmento(f.ext);
       const sit = situacaoDaFoto('corpo/' + caminho, ctx);
-      L.push('| ' + [cel(p ? p.n : id), numero(f.v) ? fmtHora(f.v) : '', sit ? cel(sit) : '[' + segmento(id) + '.' + segmento(f.ext) + '](' + caminho + ')', ajusteDaFoto(f)].join(' | ') + ' |');
+      L.push('| ' + [cel(p ? p.n : id), numero(f.v) ? fmtHora(f.v) : '', CAMERA[(f.cap && f.cap.via) || ''] || '',
+        sit ? cel(sit) : '[' + segmento(id) + '.' + segmento(f.ext) + '](' + caminho + ')', ajusteDaFoto(f)].join(' | ') + ' |');
     });
     L.push('');
   });

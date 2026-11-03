@@ -231,6 +231,10 @@
   display: block; width: 100%; height: 100%;
   object-fit: cover; background: var(--ins-foto-fundo);
 }
+/* A tela de verdade: o canvas pintado com o mesmo quadro que vira a foto (ver
+   `desenhaQuadro`). Fica por cima do <video>, que continua na página e
+   tocando — vídeo escondido no iOS para de entregar quadro. */
+.cam-tela { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
 .cam-ghost { position: absolute; inset: 0; border: 0; pointer-events: none; }
 
 /* A contagem toma o quadro porque a três metros ela é a única coisa legível

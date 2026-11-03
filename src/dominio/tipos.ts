@@ -342,6 +342,16 @@ export interface FotoRef {
   ext: string;
   /** o enquadramento ajustado, quando existe. Ausente = "a foto como saiu". */
   enq?: Enquadramento;
+  /**
+   * Como a foto de corpo foi capturada: pela câmera de dentro do app ou pela do
+   * sistema, e o tamanho que o navegador DISSE que a fonte tinha.
+   *
+   * Diagnóstico, nascido em 03/11: o vídeo do iPhone às vezes se anunciava
+   * deitado com o celular em pé, e as fotos saíam cortadas. Com isto gravado,
+   * os dados mostram se o defeito voltou, sem ninguém precisar testar à mão.
+   * Ausente nas fotos anteriores e nas de aparelho.
+   */
+  cap?: { via: 'app' | 'sistema'; l: number; a: number };
 }
 
 /** id de uma pose do protocolo, derivado do nome uma vez só. */

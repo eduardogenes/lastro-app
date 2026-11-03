@@ -65,7 +65,7 @@ export function reduz(arquivo: Blob): Promise<Reduzida> {
 
 /** O mesmo, a partir do quadro vivo da câmera interna. */
 export function reduzDoVideo(v: CanvasImageSource): Promise<Reduzida> {
-  return reduzPara(v as ImageBitmapSource, LADO_MAIOR);
+  return reduzPara(v as ImageBitmapSource, LADO_MAIOR, { emPe: true });
 }
 
 /** O endereço da foto, se ela já foi lida para a memória. Síncrono de propósito. */

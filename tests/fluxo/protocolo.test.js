@@ -163,10 +163,10 @@ test('a foto de corpo é gravada maior que a do aparelho', async () => {
 });
 
 // ---------- a foto deitada ----------
-// Medido em 03/11: com o celular parado e em pé, duas de quatro fotos chegaram
-// DEITADAS — a imagem em pé cobrindo um quadro deitado, cortada para a faixa do
-// meio e ampliada 1,3×. Pelos dois caminhos. O app só funciona em retrato, então
-// foto de corpo deitada é sempre defeito, e não é guardada.
+// Medido em 03/11: com o celular parado e em pé, quatro de oito fotos chegaram
+// DEITADAS — a imagem em pé preenchendo um quadro deitado, cortada para a faixa
+// do meio e ampliada 1,3×. Três pela câmera do app, uma pela do sistema. O app
+// só funciona em retrato, então foto de corpo deitada é sempre defeito.
 
 test('foto da câmera do sistema que chega deitada não é guardada, e a tela diz', async () => {
   const a = await app({ aba: 'corpo' });
@@ -183,36 +183,48 @@ test('foto da câmera do sistema que chega deitada não é guardada, e a tela di
 
   await tirar(a);                                   // de novo, agora em pé
   await a.esperar(60);
-  assert.ok(a.S().protocolo.sessoes[0].fotos['frente-relaxado'], 'a de pé entra normalmente');
+  const ref = a.S().protocolo.sessoes[0].fotos['frente-relaxado'];
+  assert.ok(ref, 'a de pé entra normalmente');
+  assert.deepStrictEqual(ref.cap, { via: 'sistema', l: 3000, a: 4000 }, 'e diz de que câmera veio');
   a.fechar();
 });
 
-test('quadro deitado na câmera do app: tenta outros quadros e guarda o primeiro em pé', async () => {
-  // No vídeo o defeito é passageiro. Ele está a três metros: esperar um quadro
-  // a mais custa menos que voltar até o celular.
+/** O app no iPhone: tela em pé e dedo como ponteiro. */
+function celularEmPe(a) {
+  a.E(`globalThis.matchMedia = q => ({ matches: /portrait|coarse|no-preference/.test(q), media: q,
+        addEventListener() {}, removeEventListener() {} })`);
+}
+
+test('no celular em pé, o vídeo que se anuncia deitado vira foto em pé, com a cena inteira', async () => {
+  // Medido em 03/11: o vídeo dizia 1440x1080 com o conteúdo em pé, e o Safari
+  // preenche o quadro que recebe. Montado em pé, o mesmo preenchimento devolve
+  // a cena inteira — e não a faixa do meio ampliada 1,3×.
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
+  celularEmPe(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   a.v('ctx.setTimerDaCamera', 0);
-  a.E('globalThis.__quadro = [1440, 1080]');
+  a.E('globalThis.__quadro = [1440, 1080]; globalThis.__passos = []');
   a.v('ctx.disparaCamera');
-  await a.esperar(100);
-  a.E('globalThis.__quadro = null');                // o quadro seguinte vem em pé
-  await a.esperar(500);
+  await a.esperar(150);
 
   const ref = a.S().protocolo.sessoes[0].fotos['frente-relaxado'];
   assert.ok(ref, 'guardou');
-  const m = a.J('globalThis.__medida');
-  assert.ok(m.a > m.l, 'e o que guardou está em pé: ' + JSON.stringify(m));
+  assert.strictEqual(a.J('globalThis.__passos')[0], '1080x1440', 'o quadro foi montado em pé');
+  assert.deepStrictEqual(a.J('globalThis.__medida'), { l: 1080, a: 1440 }, 'e a foto saiu em pé');
+  assert.deepStrictEqual(ref.cap, { via: 'app', l: 1440, a: 1080 },
+    'com o que o navegador disse gravado junto, para os dados mostrarem se o defeito voltar');
   assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'e a sessão seguiu');
   a.fechar();
 });
 
-test('quadro que continua deitado: não guarda, a voz avisa e a pose fica', async () => {
+test('fora do celular, a webcam deitada de verdade sai no recorte 3:4 do meio, como a tela mostra', async () => {
+  // No notebook a webcam é deitada e a janela também: montar em pé esticaria a
+  // imagem. O que a tela da câmera mostra é o meio, em 3:4 — e é isso que fica.
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
@@ -221,15 +233,12 @@ test('quadro que continua deitado: não guarda, a voz avisa e a pose fica', asyn
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   a.v('ctx.setTimerDaCamera', 0);
-  a.E('globalThis.__quadro = [1440, 1080]');
+  a.E('globalThis.__quadro = [1920, 1080]');
   a.v('ctx.disparaCamera');
-  await a.esperar(1600);                            // as tentativas somam 1 s
+  await a.esperar(150);
 
-  assert.strictEqual(a.S().protocolo.sessoes.length, 0, 'nada foi guardado');
-  assert.strictEqual(a.registro.obturador, 0, 'e nem soou como guardada');
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-relaxado', 'a pose fica para tirar de novo');
-  assert.strictEqual(a.vJ('ctx.cameraViva').contagem, null, 'e o botão volta');
-  assert.strictEqual(a.registro.falas.slice(-1)[0].t, 'A foto saiu cortada e não foi guardada. Vamos de novo.');
+  assert.deepStrictEqual(a.J('globalThis.__medida'), { l: 810, a: 1080 }, 'o meio, em 3:4');
+  assert.deepStrictEqual(a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap, { via: 'app', l: 1920, a: 1080 });
   a.fechar();
 });
 

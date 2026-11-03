@@ -25,6 +25,32 @@ const TEMPOS = [0, 3, 10];
 export function Camera({ ctx }) {
   const d = ctx.cameraViva();
   const video = useRef(null);
+  const tela = useRef(null);
+
+  // A TELA DA CÂMERA é um canvas pintado a cada quadro pela MESMA função que
+  // monta a foto (`desenhaQuadro`, em infra/camera.ts). Mostrar o <video> direto
+  // deixava o Safari decidir o corte: no iPhone, medido em 03/11, a tela
+  // mostrava 55% × 55% do que a câmera do sistema mostra — 1,8× mais perto — e
+  // o que se enquadrava não era o que se guardava. O <video> continua embaixo,
+  // tocando: é de onde os quadros saem, e é o que aparece até o primeiro quadro
+  // pintado.
+  //
+  // O ritmo é o do VÍDEO, não o da tela: `requestVideoFrameCallback` chama a
+  // cada quadro novo da câmera, e só então. Isto não é movimento de interface —
+  // é a imagem da câmera —, e por isso não passa pela porta de `movimento.js`.
+  // Sem esse recurso, cerca de 30 quadros por segundo bastam para enquadrar.
+  useEffect(function () {
+    let vivo = true, t = 0;
+    const pinta = function () {
+      if (!vivo) return;
+      const v = video.current;
+      if (v && tela.current) ctx.pintaTelaDaCamera(tela.current, v);
+      if (v && typeof v.requestVideoFrameCallback === 'function') v.requestVideoFrameCallback(pinta);
+      else t = setTimeout(pinta, 33);
+    };
+    pinta();
+    return function () { vivo = false; clearTimeout(t); };
+  }, []);
 
   // O stream é preso ao <video> depois da montagem, e não por atributo: ele é
   // um objeto vivo, não uma URL, e o Preact não tem como escrevê-lo no JSX.
@@ -73,6 +99,7 @@ export function Camera({ ctx }) {
       {d.giro && <p class="cam-giro" aria-live="polite">↻ gire {d.giro}°</p>}
       <div class="cam-quadro">
         <video ref={video} class="cam-video" autoplay playsinline muted />
+        <canvas ref={tela} class="cam-tela" aria-hidden="true" />
         {/* O clarão do disparo: um nó por foto (a chave é o número do
             disparo), e quem o apaga é a animação, não um relógio. */}
         {d.clarao && <div key={d.disparo} class="cam-clarao" aria-hidden="true" />}

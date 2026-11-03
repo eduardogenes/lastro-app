@@ -101,3 +101,87 @@ export function fecha(stream: MediaStream | null | undefined): void {
 export function pronto(v: HTMLVideoElement | null | undefined): boolean {
   return !!v && v.readyState >= 2 && !!v.videoWidth && !!v.videoHeight;
 }
+
+// ---------------------------------------------------------------------------
+// O QUADRO EM PÉ — o mesmo para a tela da câmera e para a foto.
+//
+// Medido em 03/11 num iPhone 11 Pro Max, com o app em pé: a tela da câmera
+// mostrava 55% da largura e 55% da altura do que a câmera do sistema mostra,
+// do mesmo lugar — 1,8× mais perto. E três de quatro fotos saíam deitadas, com
+// a faixa do meio da altura ampliada 1,3×.
+//
+// A causa é uma só. O vídeo se anunciava DEITADO (`videoWidth > videoHeight`)
+// com o conteúdo em pé, e o Safari preenche o quadro que recebe: a imagem em pé
+// cobria um quadro deitado, perdendo a parte de cima e a de baixo. Na foto, era
+// isso. Na tela, o `object-fit: cover` do quadro 3:4 ainda cortava os lados
+// desse quadro deitado — dois cortes, 55% × 55%.
+//
+// O conserto é dar ao Safari um quadro EM PÉ para preencher: aí o mesmo
+// preenchimento devolve a cena inteira. E a tela passa a ser desenhada por esta
+// mesma função, num canvas, em vez de mostrar o <video> direto — o que se vê
+// enquadrando é, por construção, o que fica guardado.
+
+/**
+ * O celular está em pé? Retrato na tela e dedo como ponteiro.
+ *
+ * As duas juntas separam o caso que importa — o iPhone, onde o app só
+ * funciona em pé e a câmera gira com o aparelho — do notebook, onde a webcam é
+ * deitada de verdade e a janela também.
+ */
+export function celularEmPe(): boolean {
+  try {
+    return typeof matchMedia === 'function' &&
+           matchMedia('(orientation: portrait)').matches && matchMedia('(pointer: coarse)').matches;
+  } catch (e) { return false; }
+}
+
+/** O vídeo se anuncia deitado com o conteúdo em pé: o caso medido no iPhone. */
+function anunciaDeitado(v: HTMLVideoElement): boolean {
+  return v.videoWidth > v.videoHeight && celularEmPe();
+}
+
+/** O tamanho, em pé, do quadro que sai deste vídeo para a FOTO. */
+export function tamanhoDoQuadro(v: HTMLVideoElement): { l: number; a: number } {
+  const vl = v.videoWidth, va = v.videoHeight;
+  if (va >= vl) return { l: vl, a: va };
+  if (anunciaDeitado(v)) return { l: va, a: vl };
+  // a webcam do notebook, deitada de verdade: o recorte 3:4 do meio
+  return { l: Math.round(va * 3 / 4), a: va };
+}
+
+/**
+ * Desenha um quadro do vídeo num retângulo l × a, preenchendo-o como o
+ * `object-fit: cover` preencheria: sem esticar, cortando só o que sobra.
+ */
+export function desenhaQuadro(c: CanvasRenderingContext2D, v: HTMLVideoElement, l: number, a: number): void {
+  const vl = v.videoWidth, va = v.videoHeight;
+  // O caso do iPhone: os números do vídeo estão trocados, então não servem para
+  // calcular recorte nenhum. O vídeo inteiro vai para o retângulo em pé, e o
+  // próprio Safari o preenche sem esticar.
+  if (anunciaDeitado(v)) { c.drawImage(v, 0, 0, l, a); return; }
+  const r = l / a, rv = vl / va;
+  let sx = 0, sy = 0, sw = vl, sh = va;
+  if (rv > r + 1e-3) { sw = va * r; sx = (vl - sw) / 2; }
+  else if (rv < r - 1e-3) { sh = vl / r; sy = (va - sh) / 2; }
+  if (!sx && !sy) c.drawImage(v, 0, 0, l, a);
+  else c.drawImage(v, sx, sy, sw, sh, 0, 0, l, a);
+}
+
+/**
+ * Pinta a tela da câmera: o quadro do vídeo num canvas do tamanho que ele
+ * ocupa na página. Densidade de até 2×: a tela é para enquadrar, e 3× custaria
+ * bateria a cada quadro sem mostrar nada que o alinhamento precise.
+ */
+export function pintaTela(tela: HTMLCanvasElement, v: HTMLVideoElement): boolean {
+  if (!pronto(v)) return false;
+  const caixa = tela.getBoundingClientRect();
+  // sem tamanho na página (ainda montando, ou fora dela) não há o que pintar
+  if (!caixa.width || !caixa.height) return false;
+  const d = Math.min(2, (typeof devicePixelRatio === 'number' && devicePixelRatio) || 1);
+  const l = Math.max(1, Math.round(caixa.width * d)), a = Math.max(1, Math.round(caixa.height * d));
+  if (tela.width !== l || tela.height !== a) { tela.width = l; tela.height = a; }
+  const c = tela.getContext('2d');
+  if (!c) return false;
+  desenhaQuadro(c, v, l, a);
+  return true;
+}

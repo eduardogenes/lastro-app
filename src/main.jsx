@@ -11236,6 +11236,12 @@ async function guardaFotoDaPose(d, pose, reduzida) {
   }
   ses.fotos = Object.assign({}, ses.fotos);
   ses.fotos[pose] = { v: v, ext: ext };
+  // Por qual câmera, e que tamanho o navegador disse que a fonte tinha: é o que
+  // deixa ver nos DADOS, sem pedir teste a ninguém, se o vídeo voltou a se
+  // anunciar deitado (ver `quadroDoVideo`). São uns 40 bytes por foto.
+  if (reduzida.via && reduzida.fonte) {
+    ses.fotos[pose].cap = { via: reduzida.via, l: reduzida.fonte.l, a: reduzida.fonte.a };
+  }
   ses.m = Date.now();
   CORPO.solta(d, pose);                // a versão anterior sai da memória
   await CORPO.carrega(d, pose, ses.fotos[pose]);
@@ -11253,14 +11259,15 @@ async function guardaFotoDaPose(d, pose, reduzida) {
  * A FOTO DEITADA (medida em 03/11).
  *
  * Toda foto do protocolo é tirada em pé — o app só funciona em retrato e pede
- * para desvirar o celular. Mesmo assim, de quatro fotos tiradas com o celular
- * parado no mesmo lugar, duas chegaram DEITADAS: o navegador entregou a imagem
- * em pé dentro de um quadro deitado, cobrindo-o, e o que ficaria guardado era
- * só a faixa do meio, ampliada 1,3×. Aconteceu pelos dois caminhos, a câmera do
- * sistema e a de dentro do app, sem erro nenhum.
+ * para desvirar o celular. Mesmo assim, de oito fotos tiradas com o celular
+ * parado e em pé, quatro chegaram DEITADAS: a imagem em pé preenchendo um
+ * quadro deitado, e o que ficaria guardado era só a faixa do meio, ampliada
+ * 1,3×. Três pela câmera do app, uma pela do sistema, sem erro nenhum.
  *
- * Então uma foto de corpo deitada é SEMPRE defeito, nunca escolha, e não é
- * guardada: guardá-la estragaria a comparação em silêncio, que é o único erro
+ * A câmera do app já monta o quadro em pé (`quadroDoVideo`), e a do sistema
+ * passou a ser lida pelo <img>. Isto aqui é a trava que sobra para a do
+ * sistema: se ainda assim chegar deitada, é defeito, nunca escolha, e não é
+ * guardada — guardá-la estragaria a comparação em silêncio, que é o único erro
  * que esta parte do app não pode cometer.
  */
 function deitada(r) { return !!r && r.l > r.a; }
@@ -11272,7 +11279,7 @@ async function tiraFotoDoCorpo(el) {
   if (!arquivo || !v) return;
   el.value = '';                       // permite repetir a mesma foto
   try {
-    const reduzida = await CORPO.reduz(arquivo);
+    const reduzida = Object.assign(await CORPO.reduz(arquivo), { via: 'sistema' });
     if (deitada(reduzida)) { toast(FOTO_DEITADA); return; }
     const r = await guardaFotoDaPose(v.d, v.pose, reduzida);
     render();
@@ -13105,6 +13112,8 @@ let streamCamera = null;
 let contagemT = null;
 
 CTX.streamDaCamera = function () { return streamCamera; };
+/** Pinta a tela da câmera com o mesmo quadro que vira a foto (ver `desenhaQuadro`). */
+CTX.pintaTelaDaCamera = function (tela, video) { return CAM.pintaTela(tela, video); };
 
 /** Desliga a câmera e cancela a contagem. Toda saída passa por aqui. */
 function encerraCamera() {
@@ -13271,9 +13280,6 @@ CTX.disparaCamera = function () {
   contaEDispara(c.timer);
 };
 
-/** Quantas vezes a câmera tenta outro quadro quando o primeiro sai deitado: até 1 s a mais. */
-const TENTATIVAS_DO_QUADRO = 4;
-
 async function capturaAgora() {
   const c = view.camera, v = view.protocolo;
   if (!c || !v) return;
@@ -13281,23 +13287,9 @@ async function capturaAgora() {
   const el = document.querySelector('.cam-video');
   if (!CAM.pronto(el)) { c.contagem = null; toast('A câmera ainda não está pronta.'); render(); return; }
   try {
-    let reduzida = await CORPO.reduzDoVideo(el);
-    // O QUADRO DEITADO (ver `deitada`): no vídeo ele é passageiro — o mesmo
-    // celular parado deu um quadro em pé e outro deitado, minutos depois. Então
-    // tenta de novo, alguns quadros adiante, antes de desistir; ele está a três
-    // metros, e voltar até o celular custa mais que esperar um segundo.
-    for (let i = 0; i < TENTATIVAS_DO_QUADRO && deitada(reduzida); i++) {
-      await new Promise(function (ok) { setTimeout(ok, 250); });
-      if (view.camera !== c || !CAM.pronto(el)) return;
-      reduzida = await CORPO.reduzDoVideo(el);
-    }
-    if (deitada(reduzida)) {
-      c.contagem = null;
-      falaTexto('A foto saiu cortada e não foi guardada. Vamos de novo.');
-      toast(FOTO_DEITADA);
-      render();
-      return;
-    }
+    // O quadro sai SEMPRE em pé (ver `quadroDoVideo` em infra/fotos.ts): era
+    // aqui que três de quatro fotos saíam deitadas e cortadas, em 03/11.
+    const reduzida = Object.assign(await CORPO.reduzDoVideo(el), { via: 'app' });
     // O QUADRO PRETO (a D, estado 6; F78): a foto não é guardada, a pose volta
     // para o fim da fila, e a voz diz — ele está a três metros e não vê a tela.
     if (quaseTodoPreto(reduzida.brilho)) {
