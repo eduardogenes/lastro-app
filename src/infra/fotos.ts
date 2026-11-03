@@ -178,11 +178,14 @@ function temCache(): boolean {
  * ao navegador a interpolação boa em vez da barata.
  */
 function desenha(
-  tela: HTMLCanvasElement, origem: CanvasImageSource,
+  tela: HTMLCanvasElement, origem: CanvasImageSource, l0: number, a0: number,
   lFim: number, aFim: number, fundo?: string
 ): CanvasRenderingContext2D {
-  let l = (origem as ImageBitmap).width;
-  let a = (origem as ImageBitmap).height;
+  // O tamanho da origem vem de quem a abriu, e não de `origem.width`: um <img>
+  // fora da página e um <video> não dizem o tamanho por ali (o do vídeo é o
+  // atributo, zero), e só quem abriu sabe o tamanho JÁ orientado.
+  let l = l0;
+  let a = a0;
   let atual: CanvasImageSource = origem;
 
   while (l > lFim * 2) {
@@ -234,48 +237,119 @@ function brilhoMedio(ctx: CanvasRenderingContext2D, l: number, a: number): numbe
   } catch (e) { return null; }
 }
 
-export async function reduzPara(
-  fonte: ImageBitmapSource, ladoMaior: number
-): Promise<{ blob: Blob; ext: string; brilho?: number | null }> {
+/** O que sai da redução: os bytes, o formato e o tamanho final, já orientado. */
+export interface Reduzida {
+  blob: Blob;
+  ext: string;
+  brilho?: number | null;
+  /** largura e altura do que foi gravado: é por elas que se sabe se a foto saiu deitada */
+  l: number;
+  a: number;
+}
+
+/** Uma origem pronta para desenhar, com o tamanho em que ela é VISTA. */
+interface Origem { img: CanvasImageSource; l: number; a: number; solta: () => void; }
+
+function ehVideo(x: unknown): x is HTMLVideoElement {
+  return typeof HTMLVideoElement !== 'undefined' && x instanceof HTMLVideoElement;
+}
+
+/**
+ * Um arquivo de foto aberto pelo <img>, e não por `createImageBitmap`.
+ *
+ * A foto do iPhone chega com os pixels deitados e uma etiqueta EXIF dizendo
+ * "gire 90°". O <img> é o caminho que todo navegador mais exercita para
+ * respeitar essa etiqueta, no tamanho (`naturalWidth`) e no desenho. O
+ * `createImageBitmap` do Safari, medido em 03/11 com duas fotos do mesmo
+ * celular parado, às vezes devolveu o tamanho DEITADO com o conteúdo de pé,
+ * cobrindo o quadro: a foto saía cortada para a faixa do meio e ampliada 1,3×,
+ * sem erro nenhum.
+ *
+ * `null` quando o ambiente não tem como decodificar assim (o jsdom dos testes,
+ * navegador antigo) — e aí o caminho de antes continua valendo.
+ */
+function pelaImagem(arquivo: Blob): Promise<Origem | null> {
+  if (typeof Image === 'undefined' || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
+    return Promise.resolve(null);
+  }
+  const img = new Image();
+  if (typeof img.decode !== 'function') return Promise.resolve(null);
+  const url = URL.createObjectURL(arquivo);
+  img.src = url;
+  return img.decode().then(function () {
+    if (!img.naturalWidth || !img.naturalHeight) { URL.revokeObjectURL(url); return null; }
+    return { img: img, l: img.naturalWidth, a: img.naturalHeight, solta: function () { URL.revokeObjectURL(url); } };
+  }, function () { URL.revokeObjectURL(url); return null; });
+}
+
+/**
+ * Abre o que vai ser reduzido.
+ *
+ * O <video> da câmera interna é COPIADO num canvas antes de tudo, no tamanho que
+ * ele diz ter (`videoWidth`): é um quadro só, congelado. Desenhar o vídeo direto
+ * em cada passo da redução pegaria quadros diferentes — e o JPEG, que redesenha
+ * sobre o fundo, sairia de um instante diferente do que foi medido.
+ */
+async function abre(fonte: ImageBitmapSource): Promise<Origem> {
+  if (ehVideo(fonte)) {
+    const l = fonte.videoWidth, a = fonte.videoHeight;
+    const quadro = document.createElement('canvas');
+    quadro.width = l; quadro.height = a;
+    const c = quadro.getContext('2d');
+    if (!c) throw new Error('sem canvas');
+    c.drawImage(fonte, 0, 0, l, a);
+    return { img: quadro, l: l, a: a, solta: function () {} };
+  }
+  if (typeof Blob !== 'undefined' && fonte instanceof Blob) {
+    const pela = await pelaImagem(fonte);
+    if (pela) return pela;
+  }
+  const b = await createImageBitmap(fonte);
+  return { img: b, l: b.width, a: b.height, solta: function () { if (typeof b.close === 'function') b.close(); } };
+}
+
+export async function reduzPara(fonte: ImageBitmapSource, ladoMaior: number): Promise<Reduzida> {
   // `ImageBitmapSource` e não `Blob`: a câmera interna entrega um <video>, e
   // deixá-la passar direto evita uma codificação a mais só para virar arquivo.
   // O resto do caminho — passos de redução, WebP/JPEG, achatamento — é o mesmo.
-  const bitmap = await createImageBitmap(fonte);
-  const escala = Math.min(1, ladoMaior / Math.max(bitmap.width, bitmap.height));
-  const l = Math.round(bitmap.width * escala);
-  const a = Math.round(bitmap.height * escala);
+  const o = await abre(fonte);
+  try {
+    if (!o.l || !o.a) throw new Error('a imagem chegou sem tamanho');
+    const escala = Math.min(1, ladoMaior / Math.max(o.l, o.a));
+    const l = Math.round(o.l * escala);
+    const a = Math.round(o.a * escala);
 
-  const tela = document.createElement('canvas');
-  const ctx = desenha(tela, bitmap, l, a);
-  const brilho = brilhoMedio(ctx, l, a);
+    const tela = document.createElement('canvas');
+    const ctx = desenha(tela, o.img, o.l, o.a, l, a);
+    const brilho = brilhoMedio(ctx, l, a);
 
-  const saida = await new Promise<{ blob: Blob; ext: string; brilho?: number | null } | null>(function (ok) {
-    tela.toBlob(function (b) {
-      // `toBlob` devolve PNG quando não sabe o tipo pedido, e PNG de foto é
-      // enorme: conferir o tipo do que voltou é o que evita guardar 200 KB
-      // achando que são 6. WebP também é o que preserva transparência, que é
-      // comum em print recortado.
-      if (b && b.type === 'image/webp') ok({ blob: b, ext: 'webp', brilho: brilho });
-      else ok(null);
-    }, 'image/webp', QUALIDADE);
-  });
-  if (saida) { if (typeof bitmap.close === 'function') bitmap.close(); return saida; }
+    const webp = await new Promise<Blob | null>(function (ok) {
+      tela.toBlob(function (b) {
+        // `toBlob` devolve PNG quando não sabe o tipo pedido, e PNG de foto é
+        // enorme: conferir o tipo do que voltou é o que evita guardar 200 KB
+        // achando que são 6. WebP também é o que preserva transparência, que é
+        // comum em print recortado.
+        ok(b && b.type === 'image/webp' ? b : null);
+      }, 'image/webp', QUALIDADE);
+    });
+    if (webp) return { blob: webp, ext: 'webp', brilho: brilho, l: l, a: a };
 
-  // Sem WebP, sobra JPEG — que não tem transparência, e pinta de PRETO o que
-  // era transparente. Redesenha sobre o fundo do app para o recorte se apoiar
-  // na cor certa em vez de num retângulo preto no meio da folha.
-  desenha(tela, bitmap, l, a, FUNDO);
-  if (typeof bitmap.close === 'function') bitmap.close();
-
-  const jpeg = await new Promise<Blob | null>(function (ok) {
-    tela.toBlob(function (b) { ok(b); }, 'image/jpeg', QUALIDADE);
-  });
-  if (!jpeg) throw new Error('não deu para codificar a imagem');
-  return { blob: jpeg, ext: 'jpeg', brilho: brilho };
+    // Sem WebP, sobra JPEG — que não tem transparência, e pinta de PRETO o que
+    // era transparente. Redesenha sobre o fundo do app para o recorte se apoiar
+    // na cor certa em vez de num retângulo preto no meio da folha.
+    desenha(tela, o.img, o.l, o.a, l, a, FUNDO);
+    const jpeg = await new Promise<Blob | null>(function (ok) {
+      tela.toBlob(function (b) { ok(b); }, 'image/jpeg', QUALIDADE);
+    });
+    if (!jpeg) throw new Error('não deu para codificar a imagem');
+    return { blob: jpeg, ext: 'jpeg', brilho: brilho, l: l, a: a };
+  } finally {
+    o.solta();
+  }
 }
 
 /** A foto do aparelho: teto de 1080, que é o que a miniatura precisa. */
-export function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }> {
+export function reduz(arquivo: Blob): Promise<Reduzida> {
   return reduzPara(arquivo, LADO_MAIOR);
 }
 

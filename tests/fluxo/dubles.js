@@ -60,9 +60,12 @@ export function cacheFalso(a) {
     };
     // createImageBitmap e canvas.toBlob não existem no jsdom
     globalThis.__passos = [];
-    // 4000x3000: o que uma foto de telefone realmente entrega
+    // 4000x3000: o que uma foto de telefone realmente entrega. O __fonte
+    // troca o tamanho — a foto do corpo é de pé, e um teste a manda deitada
+    // para ver o app recusar o corte que o Safari às vezes entrega
     globalThis.createImageBitmap = async function () {
-      return { width: 4000, height: 3000, close: function () {} };
+      const f = globalThis.__fonte || [4000, 3000];
+      return { width: f[0], height: f[1], close: function () {} };
     };
     const criar = document.createElement.bind(document);
     document.createElement = function (tag) {
@@ -175,10 +178,12 @@ export function cameraFalsa(a, opcoes) {
     // o <video> do jsdom não tem quadro; o app pergunta antes de capturar
     Object.defineProperty(globalThis.HTMLVideoElement.prototype, 'readyState',
       { configurable: true, get: function () { return ${o.semQuadro ? 0 : 4}; } });
+    // O __quadro deita o vídeo: é o quadro que o Safari às vezes entrega com
+    // o tamanho trocado. Sem ele, o retrato que a câmera do protocolo dá.
     Object.defineProperty(globalThis.HTMLVideoElement.prototype, 'videoWidth',
-      { configurable: true, get: function () { return ${o.semQuadro ? 0 : 1080}; } });
+      { configurable: true, get: function () { return ${o.semQuadro ? 0 : '(globalThis.__quadro || [1080, 1440])[0]'}; } });
     Object.defineProperty(globalThis.HTMLVideoElement.prototype, 'videoHeight',
-      { configurable: true, get: function () { return ${o.semQuadro ? 0 : 1440}; } });
+      { configurable: true, get: function () { return ${o.semQuadro ? 0 : '(globalThis.__quadro || [1080, 1440])[1]'}; } });
     globalThis.HTMLVideoElement.prototype.play = function () { return Promise.resolve(); };
   `);
 }

@@ -47,8 +47,14 @@ function semanaDe(n) {
 
 const guardadas = a => guardadasEm(a, 'lastro-corpo');
 
-/** Dispara a captura da pose em foco, pelo mesmo caminho que o `input` usa. */
-function tirar(a) {
+/**
+ * Dispara a captura da pose em foco, pelo mesmo caminho que o `input` usa.
+ *
+ * A foto chega EM PÉ (3000x4000), porque é assim que toda foto do protocolo é
+ * tirada; `fonte` muda o tamanho para o teste que precisa da foto deitada.
+ */
+function tirar(a, fonte = [3000, 4000]) {
+  a.E(`globalThis.__fonte = ${JSON.stringify(fonte)}`);
   return a.E(`tiraFotoDoCorpo({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
 }
 
@@ -152,7 +158,78 @@ test('a foto de corpo é gravada maior que a do aparelho', async () => {
 
   const m = a.J('globalThis.__medida');
   assert.strictEqual(Math.max(m.l, m.a), 1440, 'o lado maior manda: ' + JSON.stringify(m));
-  assert.strictEqual(m.a, 1080, 'e a proporção se mantém: 4000x3000 vira 1440x1080');
+  assert.strictEqual(m.l, 1080, 'e a proporção se mantém: 3000x4000 vira 1080x1440');
+  a.fechar();
+});
+
+// ---------- a foto deitada ----------
+// Medido em 03/11: com o celular parado e em pé, duas de quatro fotos chegaram
+// DEITADAS — a imagem em pé cobrindo um quadro deitado, cortada para a faixa do
+// meio e ampliada 1,3×. Pelos dois caminhos. O app só funciona em retrato, então
+// foto de corpo deitada é sempre defeito, e não é guardada.
+
+test('foto da câmera do sistema que chega deitada não é guardada, e a tela diz', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await tirar(a, [4000, 3000]);
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().protocolo.sessoes.length, 0, 'nada foi guardado');
+  assert.deepStrictEqual(guardadas(a), [], 'nem os bytes');
+  assert.match(a.toast(), /saiu cortada pelo navegador e não foi guardada\. Tire de novo/);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-relaxado', 'a pose continua a mesma, esperando a foto');
+
+  await tirar(a);                                   // de novo, agora em pé
+  await a.esperar(60);
+  assert.ok(a.S().protocolo.sessoes[0].fotos['frente-relaxado'], 'a de pé entra normalmente');
+  a.fechar();
+});
+
+test('quadro deitado na câmera do app: tenta outros quadros e guarda o primeiro em pé', async () => {
+  // No vídeo o defeito é passageiro. Ele está a três metros: esperar um quadro
+  // a mais custa menos que voltar até o celular.
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  a.v('ctx.setTimerDaCamera', 0);
+  a.E('globalThis.__quadro = [1440, 1080]');
+  a.v('ctx.disparaCamera');
+  await a.esperar(100);
+  a.E('globalThis.__quadro = null');                // o quadro seguinte vem em pé
+  await a.esperar(500);
+
+  const ref = a.S().protocolo.sessoes[0].fotos['frente-relaxado'];
+  assert.ok(ref, 'guardou');
+  const m = a.J('globalThis.__medida');
+  assert.ok(m.a > m.l, 'e o que guardou está em pé: ' + JSON.stringify(m));
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'e a sessão seguiu');
+  a.fechar();
+});
+
+test('quadro que continua deitado: não guarda, a voz avisa e a pose fica', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  a.v('ctx.setTimerDaCamera', 0);
+  a.E('globalThis.__quadro = [1440, 1080]');
+  a.v('ctx.disparaCamera');
+  await a.esperar(1600);                            // as tentativas somam 1 s
+
+  assert.strictEqual(a.S().protocolo.sessoes.length, 0, 'nada foi guardado');
+  assert.strictEqual(a.registro.obturador, 0, 'e nem soou como guardada');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-relaxado', 'a pose fica para tirar de novo');
+  assert.strictEqual(a.vJ('ctx.cameraViva').contagem, null, 'e o botão volta');
+  assert.strictEqual(a.registro.falas.slice(-1)[0].t, 'A foto saiu cortada e não foi guardada. Vamos de novo.');
   a.fechar();
 });
 

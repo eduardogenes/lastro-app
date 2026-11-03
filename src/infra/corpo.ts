@@ -15,7 +15,7 @@
 // volta. É a mesma relação que o app já tem com a nuvem em todo o resto —
 // exceto que aqui a poda é deliberada, e não um acidente do sistema.
 
-import { reduzPara, CABECALHO_DA_VERSAO } from './fotos';
+import { reduzPara, CABECALHO_DA_VERSAO, type Reduzida } from './fotos';
 import type { FotoRef, PoseId } from '../dominio/tipos';
 
 /** Cache próprio: dado do usuário, não asset do build — não leva versão no nome. */
@@ -59,12 +59,12 @@ function temCache(): boolean {
 }
 
 /** Reduz o que veio da câmera do sistema, no teto do corpo. */
-export function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string; brilho?: number | null }> {
+export function reduz(arquivo: Blob): Promise<Reduzida> {
   return reduzPara(arquivo, LADO_MAIOR);
 }
 
 /** O mesmo, a partir do quadro vivo da câmera interna. */
-export function reduzDoVideo(v: CanvasImageSource): Promise<{ blob: Blob; ext: string; brilho?: number | null }> {
+export function reduzDoVideo(v: CanvasImageSource): Promise<Reduzida> {
   return reduzPara(v as ImageBitmapSource, LADO_MAIOR);
 }
 
