@@ -24,7 +24,17 @@ export function temCamera(): boolean {
 }
 
 /**
- * O retrato que o protocolo quer, pedido como IDEAL e nunca como exigência.
+ * O tamanho pedido à câmera: 4:3 DEITADO, como o sensor é. Pedido como IDEAL e
+ * nunca como exigência.
+ *
+ * Deitado mesmo sendo a foto em pé, e esta é a linha que custou o dia 03/11. O
+ * pedido era 1080×1440, em pé. O iPhone recorta o SENSOR, que é deitado, no
+ * formato pedido e só DEPOIS gira para o celular em pé: o quadro que chegava era
+ * deitado, com a largura inteira e só a faixa do meio da altura (56%). Medido
+ * num iPhone 11 Pro Max contra a câmera do sistema, do mesmo lugar: a tela
+ * mostrava 55% × 55% da cena (1,8× mais perto), a foto saía deitada com a faixa
+ * ampliada 1,3×, e desenhá-la num quadro em pé a esticou 1,79×. Pedido no
+ * formato do sensor, nada é recortado, e o giro entrega o 4:3 inteiro em pé.
  *
  * Constraint exata (`exact`) faz o navegador recusar a câmera inteira quando o
  * aparelho não entrega aquele modo — e aí o app fica sem câmera por causa de
@@ -34,8 +44,8 @@ const PEDIDO: MediaStreamConstraints = {
   audio: false,
   video: {
     facingMode: { ideal: 'environment' },
-    width: { ideal: 1080 },
-    height: { ideal: 1440 }
+    width: { ideal: 1440 },
+    height: { ideal: 1080 }
   }
 };
 
@@ -105,47 +115,24 @@ export function pronto(v: HTMLVideoElement | null | undefined): boolean {
 // ---------------------------------------------------------------------------
 // O QUADRO EM PÉ — o mesmo para a tela da câmera e para a foto.
 //
-// Medido em 03/11 num iPhone 11 Pro Max, com o app em pé: a tela da câmera
-// mostrava 55% da largura e 55% da altura do que a câmera do sistema mostra,
-// do mesmo lugar — 1,8× mais perto. E três de quatro fotos saíam deitadas, com
-// a faixa do meio da altura ampliada 1,3×.
+// A tela da câmera é um canvas pintado por estas funções, e a foto sai delas
+// também: o que se vê enquadrando é, por construção, o que fica guardado. Antes
+// a tela era o <video> direto, e o corte dele era decidido pelo navegador — foi
+// assim que, em 03/11, a tela mostrava 55% × 55% da cena sem ninguém saber de
+// onde vinha o corte (a causa estava no pedido à câmera; ver `PEDIDO`).
 //
-// A causa é uma só. O vídeo se anunciava DEITADO (`videoWidth > videoHeight`)
-// com o conteúdo em pé, e o Safari preenche o quadro que recebe: a imagem em pé
-// cobria um quadro deitado, perdendo a parte de cima e a de baixo. Na foto, era
-// isso. Na tela, o `object-fit: cover` do quadro 3:4 ainda cortava os lados
-// desse quadro deitado — dois cortes, 55% × 55%.
-//
-// O conserto é dar ao Safari um quadro EM PÉ para preencher: aí o mesmo
-// preenchimento devolve a cena inteira. E a tela passa a ser desenhada por esta
-// mesma função, num canvas, em vez de mostrar o <video> direto — o que se vê
-// enquadrando é, por construção, o que fica guardado.
-
-/**
- * O celular está em pé? Retrato na tela e dedo como ponteiro.
- *
- * As duas juntas separam o caso que importa — o iPhone, onde o app só
- * funciona em pé e a câmera gira com o aparelho — do notebook, onde a webcam é
- * deitada de verdade e a janela também.
- */
-export function celularEmPe(): boolean {
-  try {
-    return typeof matchMedia === 'function' &&
-           matchMedia('(orientation: portrait)').matches && matchMedia('(pointer: coarse)').matches;
-  } catch (e) { return false; }
-}
-
-/** O vídeo se anuncia deitado com o conteúdo em pé: o caso medido no iPhone. */
-function anunciaDeitado(v: HTMLVideoElement): boolean {
-  return v.videoWidth > v.videoHeight && celularEmPe();
-}
+// A regra é uma: PREENCHER sem esticar, como o `object-fit: cover`. Vídeo em
+// pé (o caso do celular, com o pedido certo) vira a foto inteira. Vídeo deitado
+// (a webcam do notebook, ou o celular se um dia voltar a entregar deitado) vira
+// o recorte 3:4 do meio — que é exatamente o que a tela mostra. Esticar nunca:
+// desenhar o quadro deitado num retângulo em pé foi tentado em 03/11 e saiu
+// 1,79× alongado, porque o que o vídeo entrega já é o quadro deitado, e não há
+// cena escondida para recuperar.
 
 /** O tamanho, em pé, do quadro que sai deste vídeo para a FOTO. */
 export function tamanhoDoQuadro(v: HTMLVideoElement): { l: number; a: number } {
   const vl = v.videoWidth, va = v.videoHeight;
   if (va >= vl) return { l: vl, a: va };
-  if (anunciaDeitado(v)) return { l: va, a: vl };
-  // a webcam do notebook, deitada de verdade: o recorte 3:4 do meio
   return { l: Math.round(va * 3 / 4), a: va };
 }
 
@@ -155,10 +142,6 @@ export function tamanhoDoQuadro(v: HTMLVideoElement): { l: number; a: number } {
  */
 export function desenhaQuadro(c: CanvasRenderingContext2D, v: HTMLVideoElement, l: number, a: number): void {
   const vl = v.videoWidth, va = v.videoHeight;
-  // O caso do iPhone: os números do vídeo estão trocados, então não servem para
-  // calcular recorte nenhum. O vídeo inteiro vai para o retângulo em pé, e o
-  // próprio Safari o preenche sem esticar.
-  if (anunciaDeitado(v)) { c.drawImage(v, 0, 0, l, a); return; }
   const r = l / a, rv = vl / va;
   let sx = 0, sy = 0, sw = vl, sh = va;
   if (rv > r + 1e-3) { sw = va * r; sx = (vl - sw) / 2; }

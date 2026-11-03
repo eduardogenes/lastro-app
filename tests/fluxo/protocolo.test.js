@@ -189,42 +189,11 @@ test('foto da câmera do sistema que chega deitada não é guardada, e a tela di
   a.fechar();
 });
 
-/** O app no iPhone: tela em pé e dedo como ponteiro. */
-function celularEmPe(a) {
-  a.E(`globalThis.matchMedia = q => ({ matches: /portrait|coarse|no-preference/.test(q), media: q,
-        addEventListener() {}, removeEventListener() {} })`);
-}
-
-test('no celular em pé, o vídeo que se anuncia deitado vira foto em pé, com a cena inteira', async () => {
-  // Medido em 03/11: o vídeo dizia 1440x1080 com o conteúdo em pé, e o Safari
-  // preenche o quadro que recebe. Montado em pé, o mesmo preenchimento devolve
-  // a cena inteira — e não a faixa do meio ampliada 1,3×.
-  const a = await app({ aba: 'corpo' });
-  cacheFalso(a);
-  cameraFalsa(a);
-  celularEmPe(a);
-  a.v('ctx.abreProtocolo');
-  a.v('ctx.comecaSessaoDeFotos');
-  await a.v('ctx.abreCamera');
-  await a.esperar(60);
-  a.v('ctx.setTimerDaCamera', 0);
-  a.E('globalThis.__quadro = [1440, 1080]; globalThis.__passos = []');
-  a.v('ctx.disparaCamera');
-  await a.esperar(150);
-
-  const ref = a.S().protocolo.sessoes[0].fotos['frente-relaxado'];
-  assert.ok(ref, 'guardou');
-  assert.strictEqual(a.J('globalThis.__passos')[0], '1080x1440', 'o quadro foi montado em pé');
-  assert.deepStrictEqual(a.J('globalThis.__medida'), { l: 1080, a: 1440 }, 'e a foto saiu em pé');
-  assert.deepStrictEqual(ref.cap, { via: 'app', l: 1440, a: 1080 },
-    'com o que o navegador disse gravado junto, para os dados mostrarem se o defeito voltar');
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'e a sessão seguiu');
-  a.fechar();
-});
-
-test('fora do celular, a webcam deitada de verdade sai no recorte 3:4 do meio, como a tela mostra', async () => {
-  // No notebook a webcam é deitada e a janela também: montar em pé esticaria a
-  // imagem. O que a tela da câmera mostra é o meio, em 3:4 — e é isso que fica.
+test('vídeo deitado sai no recorte 3:4 do meio, como a tela mostra, e nunca esticado', async () => {
+  // A webcam do notebook é deitada; o celular também entregou deitado em 03/11,
+  // com o pedido errado. Esticar o quadro deitado num retângulo em pé foi
+  // tentado e saiu 1,79× alongado: o que fica é o meio em 3:4, que é o que a
+  // tela da câmera mostra.
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
@@ -1346,7 +1315,7 @@ test('sem getUserMedia, a câmera do sistema volta a ser a principal', async () 
   a.fechar();
 });
 
-test('abrir a câmera pede a traseira, e em retrato', async () => {
+test('abrir a câmera pede a traseira, no formato do sensor', async () => {
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
@@ -1360,7 +1329,11 @@ test('abrir a câmera pede a traseira, e em retrato', async () => {
   assert.strictEqual(pedido.video.facingMode.ideal, 'environment');
   // ideal, nunca exact: exigência faria o aparelho recusar a câmera inteira
   assert.ok(pedido.video.width.ideal && pedido.video.height.ideal);
-  assert.ok(pedido.video.height.ideal > pedido.video.width.ideal, 'retrato');
+  // DEITADO, como o sensor: pedido em pé, o iPhone recortava o sensor nesse
+  // formato antes de girar, e o quadro chegava com só 56% da altura da cena
+  // (medido em 03/11). O giro para o celular em pé é dele.
+  assert.ok(pedido.video.width.ideal > pedido.video.height.ideal, 'no formato do sensor, deitado');
+  assert.strictEqual(pedido.video.width.ideal / pedido.video.height.ideal, 4 / 3, '4:3, o quadro inteiro do sensor');
   assert.strictEqual(a.vJ('ctx.cameraViva').pronta, true);
   assert.ok(a.$('.cam-video'), 'o quadro vivo está na tela');
   a.fechar();
