@@ -13,7 +13,8 @@
     "test:dominio": "vitest run --project dominio",
     "test:fluxo": "npm run build && vitest run --project fluxo",
     "treino": "vite-node tests/gerar-treino.js",
-    "volume": "vite-node tests/gerar-volume.js"
+    "volume": "vite-node tests/gerar-volume.js",
+    "espelho": "vite-node ferramentas/espelho/espelho.ts"
   },
   "devDependencies": {
     "jsdom": "^24.0.0",

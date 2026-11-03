@@ -8,14 +8,11 @@
 // inteiro sem rede, e sincronizar é uma coisa que acontece por cima, quando dá.
 // Nada aqui pode fazer o app parar de gravar no aparelho.
 //
-// A chave abaixo é pública por design e vai no bundle. Quem protege os dados é
-// o RLS do banco, que só devolve a linha do usuário autenticado — e o cadastro
-// público está desligado no painel, então ela não abre porta para ninguém.
+// O endereço e a chave pública moram em `./supabase.ts`, que explica por que a
+// chave pode ir no bundle.
 
 import { DB } from './db';
-
-const URL_BASE = 'https://wetwqqrrgormwyktewlm.supabase.co';
-const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldHdxcXJyZ29ybXd5a3Rld2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1OTQzMDIsImV4cCI6MjEwMzE3MDMwMn0.5Tdn3OW4khACuUvOdbcSWyK_UC3v8pm46mwB3MliAj0';
+import { ANON, BUCKET_APARELHOS, BUCKET_CORPO, URL_BASE } from './supabase';
 
 /**
  * A sessão é DO APARELHO: não entra no estado sincronizado, e por isso tem
@@ -132,15 +129,12 @@ export interface LinhaDoEstado {
  * Elas atravessam a rede como DADO, não como asset: a cópia que a tela usa é a
  * do Cache Storage do aparelho, e sem rede tudo continua desenhando. Isto aqui
  * é só o que leva a foto de um aparelho para o outro.
- */
-const BUCKET = 'aparelhos';
-
-/**
- * As fotos do corpo. Bucket SEPARADO do de aparelhos, e não uma pasta dentro
+ *
+ * As do corpo vão para `BUCKET_CORPO`, separado deste e não uma pasta dentro
  * dele: são dois assuntos com sensibilidade diferente, e um bucket próprio é o
  * que permite apagar tudo de uma vez sem varrer nome de arquivo.
  */
-const BUCKET_CORPO = 'corpo';
+const BUCKET = BUCKET_APARELHOS;
 
 /**
  * O endereço de um objeto no Storage.
