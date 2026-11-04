@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Teste da câmera</title>
+<style>
+  /* Uma coluna, de cima para baixo: o botão, o vídeo, o veredito e o detalhe. Só modo claro. */
+  :root {
+    color-scheme: light;
+    --bg: #f2f5f7;
+    --card: #ffffff;
+    --fg: #17212b;
+    --muted: #5a6573;
+    --line: #d5dce3;
+    --accent: #1d6a86;
+    --ok: #23794a;
+    --no: #a8431b;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  html, body { background: var(--bg); color: var(--fg); margin: 0; }
+  body {
+    font: 16px/1.45 var(--font);
+    padding-block: max(20px, env(safe-area-inset-top, 0px)) max(28px, env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  main { max-width: 34rem; margin: 0 auto; display: grid; gap: 18px; }
+  h1 { font-size: 1.45rem; line-height: 1.2; margin: 0; text-wrap: balance; }
+  p { margin: 0; color: var(--muted); }
+  button {
+    font: 600 1.05rem var(--font); border: 0; border-radius: 10px; padding: 14px 18px;
+    background: var(--accent); color: #fff; min-height: 48px; cursor: pointer;
+  }
+  button.sec { background: var(--card); color: var(--accent); border: 1.5px solid var(--accent); }
+  button:disabled { opacity: .55; cursor: default; }
+  button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+  .acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+  video { width: 100%; max-width: 100%; aspect-ratio: 3 / 4; object-fit: cover; background: #dfe5ea; border-radius: 10px; }
+  .veredito { background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+  .linha { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 14px; border-top: 1px solid var(--line); }
+  .linha:first-child { border-top: 0; }
+  .linha span { min-width: 0; }
+  .valor { font-weight: 650; font-variant-numeric: tabular-nums; text-align: right; }
+  .sim { color: var(--ok); }
+  .nao { color: var(--no); }
+  .nota { grid-column: 1 / -1; color: var(--muted); font-size: .88rem; }
+  .status { font-size: .95rem; color: var(--muted); }
+  .status.erro { color: var(--no); }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  summary { cursor: pointer; font-weight: 600; }
+  pre { font: .78rem/1.4 var(--mono); white-space: pre-wrap; word-break: break-word; margin: 10px 0 0; max-height: 50vh; overflow: auto; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Teste da câmera</h1>
+  <p>Abra esta página no Safari do iPhone, pelo mesmo endereço do app, e toque em Testar. Ela pede a câmera de trás, mede o que o Safari entrega e não guarda nada.</p>
+
+  <div class="acoes">
+    <button id="testar" type="button">Testar a câmera</button>
+    <button id="copiar" type="button" class="sec" disabled>Copiar o resultado</button>
+  </div>
+  <div id="status" class="status" role="status">Nada testado ainda.</div>
+
+  <video id="video" playsinline muted autoplay></video>
+
+  <section class="veredito" id="veredito" aria-label="Resultado">
+    <div class="linha"><span>Foto de verdade sem sair do app (ImageCapture)</span><span class="valor" id="v-ic">—</span></div>
+    <div class="linha"><span>Maior imagem ao vivo</span><span class="valor" id="v-res">—</span></div>
+    <div class="linha"><span>Zoom 2× pela imagem ao vivo</span><span class="valor" id="v-zoom">—</span></div>
+    <div class="linha"><span>Quadro capturado (o que o app guarda hoje)</span><span class="valor" id="v-quadro">—</span></div>
+    <div class="linha"><span>Foto pelo takePhoto()</span><span class="valor" id="v-foto">—</span>
+      <span class="nota">Só aparece se o Safari tiver ImageCapture.</span></div>
+  </section>
+
+  <details>
+    <summary>Detalhe técnico</summary>
+    <pre id="bruto">—</pre>
+  </details>
+</main>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const video = $('video');
+  let resultado = null;
+
+  function marca(id, texto, ok) {
+    const el = $(id);
+    el.textContent = texto;
+    el.className = 'valor' + (ok === true ? ' sim' : ok === false ? ' nao' : '');
+  }
+  function status(texto, erro) {
+    const el = $('status');
+    el.textContent = texto;
+    el.className = 'status' + (erro ? ' erro' : '');
+  }
+  function simples(obj) {
+    // getSettings e getCapabilities devolvem dicionários; JSON resolve os dois
+    try { return JSON.parse(JSON.stringify(obj)); } catch (e) { return String(obj); }
+  }
+  function erroTexto(e) { return (e && e.name ? e.name + ': ' : '') + (e && e.message ? e.message : String(e)); }
+
+  async function testar() {
+    $('testar').disabled = true;
+    $('copiar').disabled = true;
+    status('Testando…');
+    const r = {
+      quando: new Date().toISOString(),
+      navegador: navigator.userAgent,
+      contextoSeguro: window.isSecureContext,
+      modoApp: window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
+      temImageCapture: 'ImageCapture' in window,
+      nivelPedePermissao: typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'
+    };
+    resultado = r;
+    marca('v-ic', r.temImageCapture ? 'sim' : 'não', r.temImageCapture);
+
+    if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      r.erro = 'Sem acesso à câmera: a página precisa estar num endereço https.';
+      status(r.erro, true);
+      fim(r);
+      return;
+    }
+
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 4032 }, height: { ideal: 3024 } }
+      });
+    } catch (e) {
+      r.erro = 'A câmera não abriu: ' + erroTexto(e);
+      status(r.erro, true);
+      fim(r);
+      return;
+    }
+
+    const track = stream.getVideoTracks()[0];
+    video.srcObject = stream;
+    try { await video.play(); } catch (e) { r.playErro = erroTexto(e); }
+    if (!video.videoWidth) {
+      await new Promise((ok) => { video.onloadedmetadata = ok; setTimeout(ok, 3000); });
+    }
+
+    r.camera = track.label;
+    r.ajustes = simples(track.getSettings ? track.getSettings() : {});
+    r.capacidades = track.getCapabilities ? simples(track.getCapabilities()) : 'sem getCapabilities';
+    r.imagemAoVivo = video.videoWidth + '×' + video.videoHeight;
+
+    const caps = typeof r.capacidades === 'object' ? r.capacidades : {};
+    const maxW = caps.width && caps.width.max, maxH = caps.height && caps.height.max;
+    marca('v-res', r.imagemAoVivo + (maxW && maxH ? ' (máx. ' + maxW + '×' + maxH + ')' : ''));
+
+    // quadro capturado, como o app faz hoje
+    try {
+      const c = document.createElement('canvas');
+      c.width = video.videoWidth; c.height = video.videoHeight;
+      c.getContext('2d').drawImage(video, 0, 0);
+      r.quadroCapturado = c.width + '×' + c.height;
+      marca('v-quadro', r.quadroCapturado);
+    } catch (e) {
+      r.quadroErro = erroTexto(e);
+      marca('v-quadro', 'falhou', false);
+    }
+
+    // zoom 2× pela imagem ao vivo
+    if (caps.zoom && typeof caps.zoom.max === 'number') {
+      const alvo = Math.min(2, caps.zoom.max);
+      try {
+        await track.applyConstraints({ advanced: [{ zoom: alvo }] });
+        r.zoomAplicado = track.getSettings().zoom;
+        r.imagemComZoom = video.videoWidth + '×' + video.videoHeight;
+        const ok = r.zoomAplicado >= 1.99;
+        marca('v-zoom', ok ? 'sim (de ' + caps.zoom.min + ' a ' + caps.zoom.max + ')' : 'só até ' + caps.zoom.max, ok);
+      } catch (e) {
+        r.zoomErro = erroTexto(e);
+        marca('v-zoom', 'recusou', false);
+      }
+    } else {
+      r.zoom = 'não informado pelo Safari';
+      marca('v-zoom', 'não informado', false);
+    }
+
+    // foto de verdade sem sair do app
+    if (r.temImageCapture) {
+      try {
+        const ic = new ImageCapture(track);
+        if (ic.getPhotoCapabilities) r.fotoCapacidades = simples(await ic.getPhotoCapabilities());
+        const blob = await ic.takePhoto();
+        let dims = '?';
+        try { const bmp = await createImageBitmap(blob); dims = bmp.width + '×' + bmp.height; } catch (e) { r.bitmapErro = erroTexto(e); }
+        r.takePhoto = dims + ', ' + Math.round(blob.size / 1024) + ' KB, ' + (blob.type || 'tipo ?');
+        marca('v-foto', dims, true);
+      } catch (e) {
+        r.takePhotoErro = erroTexto(e);
+        marca('v-foto', 'falhou', false);
+      }
+    } else {
+      marca('v-foto', 'não tem', false);
+    }
+
+    try {
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      r.cameras = devs.filter((d) => d.kind === 'videoinput').map((d) => d.label || '(sem nome)');
+    } catch (e) { r.camerasErro = erroTexto(e); }
+
+    stream.getTracks().forEach((t) => t.stop());
+    video.srcObject = null;
+    status('Pronto. Toque em Copiar o resultado e cole na conversa.');
+    fim(r);
+  }
+
+  function fim(r) {
+    $('bruto').textContent = JSON.stringify(r, null, 2);
+    $('testar').disabled = false;
+    $('copiar').disabled = false;
+  }
+
+  async function copiar() {
+    const texto = $('bruto').textContent;
+    try {
+      await navigator.clipboard.writeText(texto);
+      status('Resultado copiado.');
+    } catch (e) {
+      const d = $('bruto').closest('details');
+      d.open = true;
+      const sel = window.getSelection(), range = document.createRange();
+      range.selectNodeContents($('bruto'));
+      sel.removeAllRanges(); sel.addRange(range);
+      status('Não deu para copiar sozinho: o texto ficou selecionado; copie pelo menu.', true);
+    }
+  }
+
+  $('testar').addEventListener('click', testar);
+  $('copiar').addEventListener('click', copiar);
+})();
+</script>
+</body>
+</html>
