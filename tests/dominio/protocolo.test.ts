@@ -48,13 +48,21 @@ test('a montagem não troca lente por distância: é a 1×, sempre, nos dois mod
   (['alguem', 'sozinho'] as const).forEach(q => {
     const itens = montagem(q);
     const texto = itens.map(i => i.valor + ' ' + i.nota).join(' ');
-    assert.ok(!/(^|[^\d,])(2,5|3) m/.test(texto), q + ': ' + texto);
+    assert.ok(!/(2,5|3) m com a/.test(texto), q + ': ' + texto);
     const lente = itens.filter(i => i.k === 'lente')[0];
     assert.strictEqual(lente.valor, 'a 1×, sempre');
     assert.ok(/Não troque para a 2× nem para a 0,5×/.test(lente.nota));
     // a lente fica na linha do quadril, e não no umbigo
     const alt = itens.filter(i => i.k === 'alt')[0];
     assert.ok(/quadril|mesmo espaço/.test(alt.nota) && !/^Umbigo/.test(alt.nota), alt.nota);
+  });
+});
+
+test('cômodo pequeno: encurta a parede, nunca a lente', () => {
+  // D2 (decisão do dono, 04/11): a 0,5× obriga a chegar a uns 70 cm
+  (['alguem', 'sozinho'] as const).forEach(q => {
+    const parede = montagem(q).filter(i => i.k === 'parede')[0];
+    assert.ok(/encurte até 40 cm/.test(parede.nota) && /Nunca troque para a 0,5×/.test(parede.nota), parede.nota);
   });
 });
 

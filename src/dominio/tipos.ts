@@ -352,6 +352,16 @@ export interface FotoRef {
    * Ausente nas fotos anteriores e nas de aparelho.
    */
   cap?: Captura;
+  /**
+   * O ORIGINAL da foto, quando a câmera do app tirou uma foto de verdade
+   * (`takePhoto`, desde 04/11): o JPEG como o iPhone entregou, na resolução
+   * cheia do sensor, sem recomprimir. Mora num arquivo à parte, com a versão
+   * no nome (`<pose>.orig.<v>.<ext>`), e só no bucket: sobe na reconciliação e
+   * sai do aparelho quando o servidor confirma. A tela continua na cópia de
+   * 1440 px; o original é para a avaliação (`recomendacoes-quem-fotografa.md`,
+   * F27). Ausente nas fotos do quadro do vídeo e nas tiradas sem conta.
+   */
+  orig?: { ext: string; l: number; a: number };
 }
 
 /**
@@ -366,6 +376,12 @@ export interface Captura {
   via: 'app' | 'sistema';
   l: number;
   a: number;
+  /**
+   * Na câmera do app, de onde vieram os pixels (desde 04/11): `foto`, a foto de
+   * verdade do `takePhoto`, ou `quadro`, um quadro do vídeo — a reserva quando
+   * a foto falha, sai deitada ou fora de 3:4.
+   */
+  origem?: 'foto' | 'quadro';
   /** o nome da lente: o rótulo da câmera (app) ou o LensModel do EXIF (sistema) */
   lente?: string;
   /** a distância focal equivalente em 35 mm, do EXIF: 26 é a 1×, 52 a 2× */

@@ -1456,6 +1456,21 @@ function apagaDaNuvemDepois(d, pose, ext) {
   delete sync.fotos['corpo:' + d + ':' + pose];
   gravaSync();
 }
+/**
+ * O ORIGINAL de uma foto (F27) também sai do bucket: ao ser refeita, ao ser
+ * apagada, com o histórico. O nome dele leva a versão, então o pedido nunca
+ * alcança o original de uma foto nova no mesmo lugar.
+ */
+function apagaOriginalDaNuvemDepois(d, pose, v, ext) {
+  if (!Array.isArray(sync.apagar)) sync.apagar = [];
+  const e = CORPO.extDoOriginal(v, ext);
+  if (!sync.apagar.some(function (x) { return x.d === d && x.pose === pose && x.ext === e; })) {
+    sync.apagar.push({ d: d, pose: pose, ext: e });
+  }
+  const k = 'corpo-orig:' + d + ':' + pose;
+  if (sync.fotos[k] === v) delete sync.fotos[k];
+  gravaSync();
+}
 async function apagaPendentesDaNuvem() {
   if (!NUVEM.sessao() || !Array.isArray(sync.apagar)) return true;
   while (sync.apagar.length) {
@@ -1595,6 +1610,30 @@ async function reconciliaCorpo() {
     }
   }
   conta();
+
+  // Os ORIGINAIS (F27): sobem depois das fotos da tela, que são as que a
+  // comparação usa, e saem do aparelho assim que o servidor confirma — são uns
+  // 4,7 MB cada, e aqui não há nada que os mostre. O que não está aqui (tirado
+  // no outro aparelho, ou já subido) não tem o que fazer.
+  for (let i = sessoes.length - 1; i >= 0; i--) {
+    const ses = sessoes[i];
+    for (const pose of Object.keys(ses.fotos || {})) {
+      const ref = ses.fotos[pose];
+      if (!ref || !ref.v || !ref.orig) continue;
+      const bytes = await CORPO.leOriginal(ses.d, pose, ref.orig.ext, ref.v);
+      if (desligado) return;
+      if (!bytes) continue;
+      const k = 'corpo-orig:' + ses.d + ':' + pose;
+      if (sync.fotos[k] !== ref.v) {
+        const r = await NUVEM.subirCorpo(ses.d, pose, bytes, CORPO.extDoOriginal(ref.v, ref.orig.ext));
+        if (desligado) return;
+        if (!r.ok) return;                    // sem rede: o original fica, e a poda espera
+        sync.fotos[k] = ref.v; gravaSync();
+      }
+      await CORPO.esqueceOriginal(ses.d, pose, ref.orig.ext, ref.v);
+      if (desligado) return;
+    }
+  }
 
   // A poda espera todo mundo confirmado. Uma foto que não subiu segura o cache
   // inteiro por um ciclo, e é exatamente isso que se quer.
@@ -7149,6 +7188,7 @@ async function wipe() {
     Object.keys(ses.fotos || {}).forEach(function (pose) {
       const ref = ses.fotos[pose];
       if (ref && ref.v) apagaDaNuvemDepois(ses.d, pose, ref.ext || 'webp');
+      if (ref && ref.v && ref.orig) apagaOriginalDaNuvemDepois(ses.d, pose, ref.v, ref.orig.ext);
     });
   });
   if (NUVEM.sessao()) apagaPendentesDaNuvem();
@@ -11228,6 +11268,14 @@ async function guardaFotoDaPose(d, pose, reduzida) {
   const v = morte + 1;
   try { await CORPO.guarda(d, pose, blob, ext, v); }
   catch (e) { marcaPoseNaoGuardada(pose, 'foto', reduzida); return { parou: true }; }
+  // O original (F27) vem depois, e é opcional: sem espaço para ele, a foto da
+  // tela já está guardada, e ela é a que a sessão precisa.
+  let orig = null;
+  const o = reduzida.original;
+  if (o && o.blob) {
+    try { await CORPO.guardaOriginal(d, pose, o.blob, o.ext, v); orig = { ext: o.ext, l: o.l, a: o.a }; }
+    catch (e) { orig = null; }
+  }
 
   const ses = sessaoFotoOuCria(d);
   const antiga = ses.fotos[pose];
@@ -11237,9 +11285,15 @@ async function guardaFotoDaPose(d, pose, reduzida) {
     lapide(chaveDeFotoDoCorpo(d, pose), morte);
     // no outro formato, a anterior ocuparia outro lugar no bucket para sempre
     if (antiga.ext && antiga.ext !== ext) apagaDaNuvemDepois(d, pose, antiga.ext);
+    // o original da anterior tem nome próprio: sai daqui e do bucket
+    if (antiga.orig && antiga.v) {
+      CORPO.esqueceOriginal(d, pose, antiga.orig.ext, antiga.v).catch(function () {});
+      apagaOriginalDaNuvemDepois(d, pose, antiga.v, antiga.orig.ext);
+    }
   }
   ses.fotos = Object.assign({}, ses.fotos);
   ses.fotos[pose] = { v: v, ext: ext };
+  if (orig) ses.fotos[pose].orig = orig;
   // Por qual câmera, e que tamanho o navegador disse que a fonte tinha: é o que
   // deixa ver nos DADOS, sem pedir teste a ninguém, se o vídeo voltou a se
   // anunciar deitado (ver `quadroDoVideo`). São uns 40 bytes por foto.
@@ -11285,6 +11339,7 @@ function deitada(r) { return !!r && r.l > r.a; }
  */
 function registroDaCaptura(r) {
   const cap = { via: r.via, l: r.fonte.l, a: r.fonte.a };
+  if (r.origem === 'foto' || r.origem === 'quadro') cap.origem = r.origem;
   if (r.lente) cap.lente = r.lente;
   if (typeof r.mm === 'number') cap.mm = r.mm;
   if (typeof r.zoom === 'number') cap.zoom = r.zoom;
@@ -11342,6 +11397,7 @@ async function apagaFotoDoCorpo(d, pose) {
   const ses = sessaoDe(S.protocolo.sessoes, d);
   if (!ses || !ses.fotos[pose]) return false;
   const ext = ses.fotos[pose].ext;
+  const orig = ses.fotos[pose].orig, versao = ses.fotos[pose].v;
   lapide(chaveDeFotoDoCorpo(d, pose));
   ses.fotos = Object.assign({}, ses.fotos);
   delete ses.fotos[pose];
@@ -11350,6 +11406,10 @@ async function apagaFotoDoCorpo(d, pose) {
   await CORPO.esquece(d, pose, ext);
   // e sai do bucket também, na próxima reconciliação com rede
   apagaDaNuvemDepois(d, pose, ext);
+  if (orig && versao) {
+    await CORPO.esqueceOriginal(d, pose, orig.ext, versao);
+    apagaOriginalDaNuvemDepois(d, pose, versao, orig.ext);
+  }
   // sessão sem foto nenhuma não sobrevive à última: ela nasce na primeira
   if (!Object.keys(ses.fotos).length) {
     lapide(chaveDeSessaoFoto(d));
@@ -13167,9 +13227,42 @@ CTX.setQuemTira = function (q) {
     clearTimeout(falaT); falaT = null;
     clearTimeout(miniaturaT); miniaturaT = null;
     Object.assign(c, { quem: q, contagem: null, seguido: false, torta: null, miniatura: null, ajuste: false });
+    const v = view.protocolo;
+    if (v) {
+      c.fantasmaD = fantasmaDaPose(v.pose, v.d, q);
+      garanteBytesDoCorpo(c.fantasmaD ? [c.fantasmaD] : []);
+    }
   }
   render();
 };
+
+/**
+ * A SOBREPOSTA de cada modo (D1, decisão do dono em 04/11).
+ *
+ * Com alguém tirando, quem decide a distância são as linhas de cabeça e pés —
+ * e uma foto anterior às linhas briga com elas: a frente de 29/10 tem o corpo
+ * em 87% do quadro, as linhas pedem 92%, e encaixar a pessoa nela deixaria
+ * quem fotografa uns 6% mais longe do que as linhas mandam. Então, nesse
+ * modo, só serve de sobreposta a foto tirada COM as linhas: pela câmera do
+ * app, de 04/11 em diante. A anterior mais recente que serve; sem nenhuma,
+ * sobreposta nenhuma — e ela volta sozinha a partir da primeira sessão assim.
+ *
+ * Sozinho, a sobreposta continua sendo a vizinha de sempre: ali ela acerta o
+ * apoio contra a sala, uma vez, antes de a pessoa se afastar.
+ */
+const INICIO_DAS_LINHAS = new Date(2026, 10, 4).getTime();
+function comAsLinhas(ref) { return !!(ref && ref.v >= INICIO_DAS_LINHAS && ref.cap && ref.cap.via === 'app'); }
+function fantasmaDaPose(pose, d, quem) {
+  if (quem !== 'alguem') {
+    const viz = vizinhaComAPose(S.protocolo.sessoes, pose, d);
+    return viz ? viz.d : null;
+  }
+  const servem = comAPose(S.protocolo.sessoes, pose)
+    .filter(function (s) { return s.d !== d && comAsLinhas(s.fotos[pose]); });
+  if (!servem.length) return null;
+  const antes = servem.filter(function (s) { return s.d < d; });
+  return (antes.length ? antes[antes.length - 1] : servem[0]).d;
+}
 
 CTX.streamDaCamera = function () { return streamCamera; };
 /** Pinta a tela da câmera com o mesmo quadro que vira a foto (ver `desenhaQuadro`). */
@@ -13232,11 +13325,11 @@ CTX.abreCamera = async function () {
   // A permissão de movimento só pode ser pedida DENTRO do toque (iOS): antes
   // de qualquer await, ou o pedido é recusado sem nem perguntar.
   const podeNivel = NIVEL.pedePermissao();
-  const viz = vizinhaComAPose(S.protocolo.sessoes, v.pose, v.d);
+  const fd = fantasmaDaPose(v.pose, v.d, quemTira);
   const hoje = sessaoDe(S.protocolo.sessoes, v.d);
   view.camera = {
     erro: null, pronta: false,
-    fantasma: true, fantasmaD: viz ? viz.d : null,
+    fantasma: true, fantasmaD: fd,
     opacidade: 45, grade: false,
     // 10s por padrão: é quanto leva para andar três metros e parar de balançar
     timer: 10, contagem: null,
@@ -13250,7 +13343,7 @@ CTX.abreCamera = async function () {
   };
   movimento = NIVEL.criaMovimento();
   entraNoDestino('camera'); render();
-  garanteBytesDoCorpo(viz ? [v.d, viz.d] : [v.d]);
+  garanteBytesDoCorpo(fd ? [v.d, fd] : [v.d]);
 
   const r = await CAM.abre();
   if (!view.camera) { if (r.ok) CAM.fecha(r.stream); return; }   // saiu enquanto abria
@@ -13506,7 +13599,7 @@ async function capturaAgora() {
   try {
     // O quadro sai SEMPRE em pé (ver `quadroDoVideo` em infra/fotos.ts): era
     // aqui que três de quatro fotos saíam deitadas e cortadas, em 03/11.
-    const reduzida = Object.assign(await CORPO.reduzDoVideo(el), { via: 'app' }, dados);
+    const reduzida = await pixelsDaCamera(el, dados);
     // O QUADRO PRETO (a D, estado 6; F78): a foto não é guardada, a pose volta
     // para o fim da fila, e a voz diz — ele está a três metros e não vê a tela.
     if (quaseTodoPreto(reduzida.brilho)) {
@@ -13553,6 +13646,46 @@ async function capturaAgora() {
 }
 
 /**
+ * OS PIXELS DA FOTO (F27): a foto de verdade, pelo `takePhoto` da câmera
+ * aberta, ou o quadro do vídeo como reserva.
+ *
+ * O quadro é pego JÁ, no instante do toque, antes de pedir a foto — se ela
+ * falhar, a reserva é do mesmo instante, e não de depois da espera. A foto só
+ * vale se chegar em pé e em 3:4, como o quadro que a tela mostrava; senão ela
+ * não é a foto que quem fotografou enquadrou.
+ *
+ * O original só fica quando há nuvem para recebê-lo: sem conta, 4,7 MB por
+ * foto ficariam acumulando no aparelho, sem destino. A cópia da tela, reduzida
+ * da foto de verdade, é melhor que a do quadro do mesmo jeito.
+ */
+async function pixelsDaCamera(el, dados) {
+  const t0 = Date.now();
+  const pQuadro = CORPO.reduzDoVideo(el);
+  pQuadro.catch(function () {});
+  const foto = await CAM.tiraFoto(streamCamera);
+  let r = null, original = null;
+  if (foto) {
+    try {
+      const daFoto = await CORPO.reduz(foto);
+      if (!deitada(daFoto) && daFoto.a && Math.abs(daFoto.l / daFoto.a - 0.75) < 0.02) { r = daFoto; original = foto; }
+    } catch (e) {}
+  }
+  if (!r) r = await pQuadro;
+  const out = Object.assign(r, { via: 'app', origem: original ? 'foto' : 'quadro' }, dados);
+  if (original) {
+    // a foto leva uma fração de segundo depois do toque, e o empurrão do dedo
+    // pode entrar nela: o tremor é o maior do toque até ela voltar
+    const durante = movimento.maxEntre(t0, Date.now());
+    if (durante != null) {
+      const toque = Math.round(Math.max(out.mov ? out.mov.toque : 0, durante) * 10) / 10;
+      out.mov = { toque: toque, seg: out.mov ? out.mov.seg : Math.round(durante * 100) / 100 };
+    }
+    if (NUVEM.sessao()) out.original = { blob: original, ext: CORPO.extDoTipo(original.type), l: r.fonte.l, a: r.fonte.a };
+  }
+  return out;
+}
+
+/**
  * Guarda a foto da pose em foco e segue para a próxima: o obturador, o clarão,
  * o giro na tela e a fala da pose nova. Sozinho, a fala puxa a contagem; com
  * alguém tirando, a miniatura fica no canto e a fala espera 1,5 s, tempo de
@@ -13568,10 +13701,9 @@ async function guardaESegue(c, v, reduzida, jaClicou) {
   const prox = r;
   // a sessão continua AQUI: são várias poses, e sair e voltar a cada uma seria
   // pior que o problema que esta tela resolve
-  const viz = prox ? vizinhaComAPose(S.protocolo.sessoes, prox, v.d) : null;
   if (prox) {
-    c.fantasmaD = viz ? viz.d : null;
-    garanteBytesDoCorpo(viz ? [viz.d] : []);
+    c.fantasmaD = fantasmaDaPose(prox, v.d, c.quem);
+    garanteBytesDoCorpo(c.fantasmaD ? [c.fantasmaD] : []);
   }
   if (!jaClicou) obturador();
   clarao();
@@ -13629,9 +13761,8 @@ function voltaParaPose(c, v, pose) {
   c.anunciada = null;
   v.pose = pose;
   c.giro = null;
-  const viz = vizinhaComAPose(S.protocolo.sessoes, pose, v.d);
-  c.fantasmaD = viz ? viz.d : null;
-  garanteBytesDoCorpo(viz ? [viz.d] : []);
+  c.fantasmaD = fantasmaDaPose(pose, v.d, c.quem);
+  garanteBytesDoCorpo(c.fantasmaD ? [c.fantasmaD] : []);
   render();
   const lista = posesDo(S.protocolo.poses);
   const i = lista.findIndex(function (p) { return p.id === pose; });
@@ -13737,7 +13868,9 @@ CTX.cameraViva = function () {
   const i = Math.max(0, lista.findIndex(function (p) { return p.id === v.pose; }));
   const ses = sessaoDe(S.protocolo.sessoes, v.d);
   const outra = c.fantasmaD ? sessaoDe(S.protocolo.sessoes, c.fantasmaD) : null;
-  const refOutra = outra ? outra.fotos[v.pose] : null;
+  const refOutra0 = outra ? outra.fotos[v.pose] : null;
+  // com alguém tirando, só a foto tirada com as linhas (D1, ver `fantasmaDaPose`)
+  const refOutra = c.quem === 'alguem' && !comAsLinhas(refOutra0) ? null : refOutra0;
 
   return {
     naoGuardada: avisoDaPoseNaoGuardada(lista),
@@ -13751,7 +13884,11 @@ CTX.cameraViva = function () {
     grade: c.grade,
     fantasma: c.fantasma,
     fantasmaD: c.fantasmaD,
-    datas: datasDoFantasma(v.d, v.pose),
+    datas: datasDoFantasma(v.d, v.pose).filter(function (o) {
+      if (c.quem !== 'alguem') return true;
+      const s = sessaoDe(S.protocolo.sessoes, o.d);
+      return comAsLinhas(s && s.fotos[v.pose]);
+    }),
     // A sobreposta vai CRUA, sem o ajuste que ela ganhou depois (aprovado em
     // 03/11): o quadro vivo também é cru, e é contra a sala da foto como saiu
     // que o celular se posiciona. Com o zoom do ajuste por cima, a sala não

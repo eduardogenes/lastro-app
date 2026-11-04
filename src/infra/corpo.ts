@@ -155,6 +155,43 @@ export async function esquece(d: string, pose: PoseId, ext: string): Promise<voi
   await c.delete(chave(d, pose, ext === 'webp' ? 'jpeg' : 'webp'));
 }
 
+// ---------- o original (F27) ----------
+// O JPEG da foto de verdade, como o iPhone entregou. É grande (uns 4,7 MB) e só
+// serve à avaliação, não à tela: fica aqui só até subir para o bucket. O nome
+// leva a VERSÃO da foto, e não só a pose: refazer uma foto não pode deixar, no
+// mesmo nome, o original da anterior esperando a vez de ser trocado — quem
+// baixasse nesse meio-tempo levaria o original de outra foto.
+
+/** O "formato" do original no nome do arquivo: `orig.<v>.<ext>`, depois da pose. */
+export function extDoOriginal(v: number, ext: string): string { return 'orig.' + v + '.' + (ext || 'jpeg'); }
+
+/** O formato pelo tipo que a câmera disse. JPEG quando ela não disse. */
+export function extDoTipo(tipo: string | null | undefined): string {
+  const t = String(tipo || '').toLowerCase();
+  if (t === 'image/png') return 'png';
+  if (t === 'image/heic' || t === 'image/heif') return 'heic';
+  if (t === 'image/webp') return 'webp';
+  return 'jpeg';
+}
+
+export async function guardaOriginal(d: string, pose: PoseId, blob: Blob, ext: string, v: number): Promise<void> {
+  return guarda(d, pose, blob, extDoOriginal(v, ext), v);
+}
+
+export async function leOriginal(d: string, pose: PoseId, ext: string, v: number): Promise<Blob | null> {
+  return le(d, pose, extDoOriginal(v, ext));
+}
+
+/**
+ * Esquece o original daqui. Não passa por `esquece`, que apaga junto "o outro
+ * formato" da foto — com o nome do original, isso levaria a foto da tela.
+ */
+export async function esqueceOriginal(d: string, pose: PoseId, ext: string, v: number): Promise<void> {
+  if (!temCache()) return;
+  const c = await caches.open(CACHE_CORPO);
+  await c.delete(chave(d, pose, extDoOriginal(v, ext)));
+}
+
 /**
  * Tira do cache os bytes das sessões que não estão em `manter`.
  *

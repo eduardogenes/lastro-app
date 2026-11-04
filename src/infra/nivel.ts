@@ -115,6 +115,11 @@ export function criaMovimento() {
       const corte = t - 1000;
       while (amostras.length && amostras[0].t < corte) amostras.shift();
     },
+    /** O maior giro entre dois instantes: do toque até a foto voltar (F27). */
+    maxEntre: function (t0: number, t1: number): number | null {
+      const j = amostras.filter(function (a) { return a.t >= t0 && a.t <= t1; });
+      return j.length ? Math.max.apply(null, j.map(function (a) { return a.v; })) : null;
+    },
     resumo: function (t: number): Movimento | null {
       const janela = amostras.filter(function (a) { return a.t >= t - 1000 && a.t <= t; });
       if (!janela.length) return null;

@@ -89,7 +89,10 @@ export function montagem(quem: QuemTira): ItemDeMontagem[] {
 
 const LENTE: ItemDeMontagem = { k: 'lente', rotulo: 'lente e câmera', valor: 'a 1×, sempre',
   nota: 'Não troque para a 2× nem para a 0,5×, nem entre a câmera do app e a do sistema: cada uma desenha o corpo de um jeito, e a comparação passa a medir a câmera. A câmera do app fica na 1× sozinha e anota a lente.' };
-const PAREDE = 'Encostado, a sombra desenha um contorno falso no ombro e na cintura.';
+// D2 (decisão do dono, 04/11): no cômodo que não comporta a montagem na 1×,
+// quem cede é a parede, nunca a lente — a 0,5× obriga a chegar a uns 70 cm, e
+// a perspectiva deforma o corpo.
+const PAREDE = 'Encostado, a sombra desenha um contorno falso no ombro e na cintura. Se o cômodo não comportar a montagem (uns 3 m da parede até atrás do celular), encurte até 40 cm. Nunca troque para a 0,5× para caber.';
 const LUZ = 'O ideal é uma lâmpada difusa atrás do celular, um pouco acima da lente, com a do teto apagada.';
 const HORA: ItemDeMontagem = { k: 'hora', rotulo: 'horário', valor: 'uma janela de 2 h',
   nota: 'Escolha uma e fique nela. O app anota a hora de cada foto e mostra na comparação: a barriga muda ao longo do dia. Se der, umas 3 h longe de refeição grande e do treino.' };

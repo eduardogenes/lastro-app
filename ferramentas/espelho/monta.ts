@@ -37,6 +37,7 @@ import { CADENCIA_PADRAO, cadenciaPrevista } from '../../src/dominio/dia';
 import { DIAS_CURTOS, DIAS_LONGOS, MESES, fmtDesc, fmtDur, fmtHora } from '../../src/dominio/formato';
 import { BUCKET_APARELHOS, BUCKET_CORPO } from '../../src/infra/supabase';
 import { APOIADO, NIVEL_FRENTE, NIVEL_LADO, TREMOR, noNivel } from '../../src/infra/nivel';
+import { extDoOriginal } from '../../src/infra/corpo';
 
 // ---------------------------------------------------------------------------
 // O que entra e o que sai
@@ -281,6 +282,11 @@ export function fotosDoEstado(S: Partial<Estado>): FotoAlvo[] {
       if (!f || numero(f.v) == null || !f.ext) return;
       const arquivo = segmento(pose) + '.' + segmento(f.ext);
       r.push({ caminho: 'corpo/fotos/' + s.d + '/' + arquivo, bucket: BUCKET_CORPO, partes: [s.d, pose + '.' + f.ext], v: f.v });
+      // o original da foto de verdade (F27), ao lado, com a resolução cheia
+      if (f.orig && f.orig.ext) {
+        r.push({ caminho: 'corpo/fotos/' + s.d + '/' + segmento(pose) + '.original.' + segmento(f.orig.ext), bucket: BUCKET_CORPO,
+                 partes: [s.d, pose + '.' + extDoOriginal(f.v, f.orig.ext)], v: f.v });
+      }
     });
   });
 
@@ -781,6 +787,7 @@ function cameraDaFoto(f: FotoRef): string {
   if (c.lente) p.push(c.lente);
   if (numero(c.mm)) p.push(c.mm + ' mm');
   if (typeof c.zoom === 'number' && isFinite(c.zoom)) p.push('zoom ' + br(c.zoom, 2) + '×');
+  if (c.origem) p.push(c.origem === 'foto' ? 'foto do sensor' : 'quadro do vídeo');
   if (c.modo) p.push(MODO[c.modo] || '');
   // apoiado ou na mão, pelo maior giro do segundo antes do toque; e o tremor
   // do instante do toque (ver infra/nivel.ts)
@@ -813,6 +820,7 @@ function fotosDoCorpo(b: Base, ctx: Contexto): string {
     'Os arquivos são as fotos originais. Quando a coluna "Ajuste no app" tem algo, o app mostra a foto girada ou recortada, mas o arquivo não muda.',
     'A hora de cada foto importa: luz e hora do dia mudam o que a foto mostra.',
     'A coluna "Câmera" diz se a foto saiu da câmera do app (um quadro do vídeo, com menos processamento) ou da câmera do sistema; vazia nas fotos de antes de 03/11/2026. Desde 04/11/2026 ela traz também a lente: o nome que o aparelho dá a ela, a focal equivalente em 35 mm (26 mm é a 1×, 52 mm a 2×) e o zoom, quando o aparelho informa.',
+    'Desde 04/11/2026, a câmera do app tira a foto de verdade do sensor ("foto do sensor" na coluna "Câmera"); quando ela falha, fica um quadro do vídeo ("quadro do vídeo"). A foto do sensor tem também o ORIGINAL, na resolução cheia e sem recompressão, ao lado da cópia de 1440 px: `<pose>.original.jpeg`. Ele pode trazer a orientação na etiqueta EXIF em vez de nos pixels. Só existe quando o celular tinha a conta da nuvem.',
     'A coluna "Câmera" diz também quem disparou ("alguém tirou" ou "sozinho"), se o celular estava apoiado ou na mão (pelo giroscópio, no segundo antes do toque) e quando a foto pode ter tremido (giro acima de ' + TREMOR + '°/s no toque). Só na câmera do app, desde 04/11/2026.',
     'A coluna "Nível" é a inclinação do celular no disparo, medida pelo sensor (só na câmera do app, desde 04/11/2026): de lado, no plano da tela, e para a frente ou para trás. Só o tamanho, sem o sentido. Está no nível até ' + NIVEL_LADO + '° de lado e ' + NIVEL_FRENTE + '° para a frente. Foto fora disso só é guardada quando quem fotografa vê o aviso e escolhe registrar assim, e a coluna diz "(fora do nível)".'
   ]);

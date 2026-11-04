@@ -44,8 +44,12 @@ const PEDIDO: MediaStreamConstraints = {
   audio: false,
   video: {
     facingMode: { ideal: 'environment' },
-    width: { ideal: 1440 },
-    height: { ideal: 1080 }
+    // O sensor inteiro (04/11, F27): no iPhone dele a imagem ao vivo vem em
+    // 3024×4032 a 30 quadros, e foi assim que o `takePhoto` funcionou no teste
+    // (`public/teste-camera.html`). É também a reserva: quando a foto de
+    // verdade falha, o quadro do vídeo já vem na resolução cheia.
+    width: { ideal: 4032 },
+    height: { ideal: 3024 }
   }
 };
 
@@ -148,6 +152,36 @@ export async function fixaZoom(stream: MediaStream | null | undefined): Promise<
     return true;
   } catch (e) {
     return false;
+  }
+}
+
+/**
+ * A FOTO DE VERDADE, sem sair da tela do app (F27): o `takePhoto` da câmera
+ * que já está aberta. No iPhone dele (iOS 18.5, 04/11) ela devolveu um JPEG de
+ * 3024×4032 com o processamento da câmera do sistema — menos ruído à noite, e
+ * 7,8 vezes os pixels do quadro que o app guardava.
+ *
+ * Nunca estoura e nunca espera para sempre: sem o recurso, com erro, ou sem
+ * resposta no prazo, devolve `null`, e quem chamou fica com o quadro do vídeo.
+ */
+export async function tiraFoto(stream: MediaStream | null | undefined, prazo?: number): Promise<Blob | null> {
+  try {
+    const IC = (globalThis as unknown as { ImageCapture?: new (t: MediaStreamTrack) => { takePhoto?: () => Promise<Blob> } }).ImageCapture;
+    const t = stream && typeof stream.getVideoTracks === 'function' ? stream.getVideoTracks()[0] : null;
+    if (typeof IC !== 'function' || !t || t.readyState === 'ended') return null;
+    const ic = new IC(t);
+    if (typeof ic.takePhoto !== 'function') return null;
+    const pedido = ic.takePhoto();
+    // a promessa que perdeu a corrida ainda pode falhar depois: sem isto, vira
+    // rejeição solta
+    pedido.catch(function () {});
+    const foto = await Promise.race([
+      pedido,
+      new Promise<null>(function (ok) { setTimeout(function () { ok(null); }, prazo || 5000); })
+    ]);
+    return foto && typeof Blob !== 'undefined' && foto instanceof Blob && foto.size > 0 ? foto : null;
+  } catch (e) {
+    return null;
   }
 }
 

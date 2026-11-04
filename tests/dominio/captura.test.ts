@@ -9,7 +9,7 @@
 import { describe, expect, it } from 'vitest';
 import { angulos, criaMovimento, foraDoNivel, noNivel, velocidade } from '../../src/infra/nivel';
 import { leExif } from '../../src/infra/exif';
-import { fixaZoom, lenteDe } from '../../src/infra/camera';
+import { fixaZoom, lenteDe, tiraFoto } from '../../src/infra/camera';
 
 const G = 9.81;
 const rad = (g: number) => g * Math.PI / 180;
@@ -79,6 +79,43 @@ describe('o giro do celular, pelo giroscópio', () => {
     m.registra(0.05, 2000);
     expect(m.resumo(2000)).toEqual({ toque: 0.1, seg: 0.08 });
     expect(criaMovimento().resumo(2000)).toBeNull();
+  });
+});
+
+describe('a foto de verdade, pelo takePhoto', () => {
+  const faixa = { readyState: 'live' } as unknown as MediaStreamTrack;
+  const stream = { getVideoTracks: () => [faixa] } as unknown as MediaStream;
+  const comCaptura = (takePhoto: () => Promise<Blob>) => {
+    (globalThis as any).ImageCapture = function () { (this as any).takePhoto = takePhoto; };
+  };
+  const semCaptura = () => { delete (globalThis as any).ImageCapture; };
+
+  it('devolve o JPEG que a câmera entregou', async () => {
+    comCaptura(async () => new Blob(['jpeg'], { type: 'image/jpeg' }));
+    const f = await tiraFoto(stream);
+    expect(f && f.type).toBe('image/jpeg');
+    semCaptura();
+  });
+
+  it('sem o recurso, com erro ou sem resposta no prazo: null, e quem chamou fica com o quadro', async () => {
+    semCaptura();
+    expect(await tiraFoto(stream)).toBeNull();
+    comCaptura(async () => { throw new Error('ocupada'); });
+    expect(await tiraFoto(stream)).toBeNull();
+    comCaptura(() => new Promise<Blob>(() => {}));
+    expect(await tiraFoto(stream, 20)).toBeNull();
+    comCaptura(async () => new Blob([], { type: 'image/jpeg' }));
+    expect(await tiraFoto(stream)).toBeNull();
+    expect(await tiraFoto(null)).toBeNull();
+    semCaptura();
+  });
+
+  it('o giro do toque até a foto voltar é o maior da janela', () => {
+    const m = criaMovimento();
+    m.registra(0.5, 1000); m.registra(6, 1200); m.registra(1, 1500);
+    expect(m.maxEntre(1100, 1600)).toBe(6);
+    expect(m.maxEntre(1300, 1600)).toBe(1);
+    expect(m.maxEntre(2000, 3000)).toBeNull();
   });
 });
 

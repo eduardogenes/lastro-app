@@ -215,7 +215,7 @@ test('vídeo deitado sai no recorte 3:4 do meio, como a tela mostra, e nunca est
   await a.esperar(150);
 
   assert.deepStrictEqual(a.J('globalThis.__medida'), { l: 810, a: 1080 }, 'o meio, em 3:4');
-  assert.deepStrictEqual(a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap, { via: 'app', l: 1920, a: 1080, lente: 'Câmera Traseira', modo: 'sozinho' });
+  assert.deepStrictEqual(a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap, { via: 'app', l: 1920, a: 1080, origem: 'quadro', lente: 'Câmera Traseira', modo: 'sozinho' });
   a.fechar();
 });
 
@@ -1723,6 +1723,7 @@ test('a câmera abre com a sobreposta da sessão vizinha', async () => {
 
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);   // a sobreposta de antes das linhas é a do modo sozinho (D1)
   await a.v('ctx.abreCamera');
   await a.esperar(80);
 
@@ -2106,6 +2107,7 @@ test('ctx.setDataDoFantasmaDaCamera troca a sobreposição e busca os bytes dela
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
   await a.esperar(80);
+  sozinho(a);   // a sobreposta de antes das linhas é a do modo sozinho (D1)
   await a.v('ctx.abreCamera');
   await a.esperar(80);
   assert.strictEqual(a.vista().camera.fantasmaD, datas[2],
@@ -2565,7 +2567,7 @@ test('a foto da câmera do app leva a lente e o nível do celular no disparo', a
   a.v('ctx.disparaCamera');
   await a.esperar(120);
   const cap = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap;
-  assert.deepStrictEqual(cap, { via: 'app', l: 1080, a: 1440, lente: 'Câmera Traseira', zoom: 1, nivel: { lado: 3, frente: 0 }, modo: 'sozinho' });
+  assert.deepStrictEqual(cap, { via: 'app', l: 1080, a: 1440, origem: 'quadro', lente: 'Câmera Traseira', zoom: 1, nivel: { lado: 3, frente: 0 }, modo: 'sozinho' });
 
   // no nível, a tela diz só isso
   a.E(`const e = new Event('devicemotion'); e.accelerationIncludingGravity = { x: 0, y: 9.81, z: 0 };
@@ -2629,6 +2631,7 @@ test('a sobreposta da câmera vai crua, sem o zoom do ajuste que ela ganhou depo
   await semear(a, velha, 'frente-relaxado');
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);   // a sobreposta de antes das linhas é a do modo sozinho (D1)
   await a.v('ctx.abreCamera');
   await a.esperar(120);
   const img = a.$('.cam-ghost .fa-img') || a.$('.cam-ghost');
@@ -2912,5 +2915,166 @@ test('trocar para sozinho no meio larga a foto torta e volta à sessão num toqu
   assert.strictEqual(c.quem, 'sozinho');
   assert.strictEqual(a.texto('.cam-disparo'), 'tirar as 9 fotos');
   assert.ok(/A primeira contagem/.test(a.doc.body.textContent));
+  a.fechar();
+});
+
+// ---------- a foto de verdade (F27) ----------
+// O `takePhoto` da câmera aberta: a foto com o processamento da câmera do
+// sistema, e o original guardado à parte, só para subir ao bucket.
+
+/** Uma câmera que tira foto de verdade: um JPEG do tamanho pedido, ou a falha. */
+function comFotoDeVerdade(a, { falha = false, tamanho = [3024, 4032] } = {}) {
+  a.E(`globalThis.__fonte = ${JSON.stringify(tamanho)};
+       window.ImageCapture = function () {
+         this.takePhoto = async function () {
+           if (${falha}) throw new Error('a câmera recusou');
+           return new Blob(['jpeg do sensor'], { type: 'image/jpeg' });
+         };
+       };`);
+}
+const cacheDoCorpo = a => a.J(`Object.keys((globalThis.__caches || {})['lastro-corpo'] || {})`).sort();
+
+test('com conta, a foto de verdade guarda o original, que sobe e sai do aparelho', async () => {
+  const a = await app({ aba: 'corpo' });
+  await cameraComAlguem(a);
+  nuvemComBucket(a);
+  comFotoDeVerdade(a);
+  a.v('ctx.ajustado');
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+
+  const ref = a.S().protocolo.sessoes[0].fotos['frente-relaxado'];
+  assert.strictEqual(ref.cap.origem, 'foto');
+  assert.deepStrictEqual([ref.cap.l, ref.cap.a], [3024, 4032], 'o tamanho do sensor');
+  assert.deepStrictEqual(ref.orig, { ext: 'jpeg', l: 3024, a: 4032 });
+  const nome = 'frente-relaxado.orig.' + ref.v + '.jpeg';
+  assert.ok(cacheDoCorpo(a).includes('./corpo/' + hoje() + '/' + nome), 'o original espera aqui: ' + cacheDoCorpo(a));
+
+  await a.v('reconciliaCorpo');
+  await a.esperar(60);
+  assert.ok(a.J('globalThis.__bucketCorpo')[hoje() + '/' + nome], 'subiu com a versão no nome');
+  assert.ok(a.J('globalThis.__bucketCorpo')[hoje() + '/frente-relaxado.webp'], 'e a cópia da tela também');
+  assert.strictEqual(a.dado('sync').fotos['corpo-orig:' + hoje() + ':frente-relaxado'], ref.v);
+  assert.deepStrictEqual(cacheDoCorpo(a), ['./corpo/' + hoje() + '/frente-relaxado.webp'], 'o original saiu do aparelho');
+  a.fechar();
+});
+
+test('sem conta, a foto de verdade vale para a tela, e o original não fica acumulando aqui', async () => {
+  const a = await app({ aba: 'corpo' });
+  await cameraComAlguem(a);
+  comFotoDeVerdade(a);
+  a.v('ctx.ajustado');
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  const ref = a.S().protocolo.sessoes[0].fotos['frente-relaxado'];
+  assert.strictEqual(ref.cap.origem, 'foto');
+  assert.strictEqual(ref.orig, undefined);
+  assert.deepStrictEqual(cacheDoCorpo(a), ['./corpo/' + hoje() + '/frente-relaxado.webp']);
+  a.fechar();
+});
+
+test('foto de verdade que falha, chega deitada ou fora de 3:4: fica o quadro do vídeo, sem original', async () => {
+  for (const caso of [{ falha: true }, { tamanho: [4032, 3024] }, { tamanho: [3024, 5376] }]) {
+    const a = await app({ aba: 'corpo' });
+    await cameraComAlguem(a);
+    nuvemComBucket(a);
+    comFotoDeVerdade(a, caso);
+    a.v('ctx.ajustado');
+    a.v('ctx.disparaCamera');
+    await a.esperar(150);
+    const ref = a.S().protocolo.sessoes[0].fotos['frente-relaxado'];
+    assert.strictEqual(ref.cap.origem, 'quadro', JSON.stringify(caso));
+    assert.strictEqual(ref.orig, undefined);
+    assert.ok(!cacheDoCorpo(a).some(k => /orig/.test(k)));
+    a.fechar();
+  }
+});
+
+test('refazer leva o original da foto anterior, daqui e do bucket', async () => {
+  const a = await app({ aba: 'corpo' });
+  await cameraComAlguem(a);
+  nuvemComBucket(a);
+  comFotoDeVerdade(a);
+  a.v('ctx.ajustado');
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  const v1 = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].v;
+  await a.v('reconciliaCorpo');
+  await a.esperar(60);
+  assert.ok(a.J('globalThis.__bucketCorpo')[hoje() + '/frente-relaxado.orig.' + v1 + '.jpeg']);
+
+  a.v('ctx.refazUltima');
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  const v2 = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].v;
+  assert.ok(v2 > v1);
+  await a.v('reconciliaCorpo');
+  await a.esperar(60);
+  const b = a.J('globalThis.__bucketCorpo');
+  assert.ok(!b[hoje() + '/frente-relaxado.orig.' + v1 + '.jpeg'], 'o da anterior saiu do bucket');
+  assert.ok(b[hoje() + '/frente-relaxado.orig.' + v2 + '.jpeg'], 'o da nova subiu');
+  a.fechar();
+});
+
+test('apagar a foto apaga o original junto', async () => {
+  const a = await app({ aba: 'corpo' });
+  await cameraComAlguem(a);
+  nuvemComBucket(a);
+  comFotoDeVerdade(a);
+  a.v('ctx.ajustado');
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  const v = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].v;
+  await a.v('reconciliaCorpo');
+  await a.esperar(60);
+  await a.v('ctx.apagaFotoDoCorpo', 'frente-relaxado');
+  await a.v('reconciliaCorpo');
+  await a.esperar(60);
+  assert.deepStrictEqual(Object.keys(a.J('globalThis.__bucketCorpo')).filter(k => k.startsWith(hoje())), []);
+  assert.ok(!cacheDoCorpo(a).some(k => k.includes('.orig.' + v)));
+  a.fechar();
+});
+
+// ---------- a sobreposta com alguém tirando (D1) ----------
+
+test('com alguém tirando, a sobreposta só vem de foto tirada com as linhas; sozinho, a vizinha de sempre', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  const comLinhas = diasAtras(28), semLinhas = diasAtras(14);
+  const depoisDasLinhas = new Date(2026, 10, 10).getTime();
+  a.E(`S.protocolo.sessoes = [
+    { d: '${comLinhas}', t: 1, m: 1, fotos: { 'frente-relaxado': { v: ${depoisDasLinhas}, ext: 'webp', cap: { via: 'app', l: 1080, a: 1440 } } } },
+    { d: '${semLinhas}', t: 2, m: 2, fotos: { 'frente-relaxado': { v: 2, ext: 'webp' } } }
+  ]`);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  let c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.fantasmaD, comLinhas, 'pula a de antes das linhas');
+  assert.deepStrictEqual(c.datas.map(o => o.d), [comLinhas], 'e nem a oferece');
+
+  a.v('ctx.setQuemTira', 'sozinho');
+  c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.fantasmaD, semLinhas, 'sozinho, a vizinha');
+  assert.strictEqual(c.datas.length, 2);
+  a.fechar();
+});
+
+test('com alguém tirando e nenhuma foto com as linhas, não há sobreposta', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  comSessoes(a, [diasAtras(14)], 'frente-relaxado');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  const c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.fantasmaD, null);
+  assert.strictEqual(c.refUrl, null);
+  assert.ok(!a.$('.cam-ghost'));
+  assert.ok(!a.$$('.aj-modos button').some(b => b.textContent === 'sobrepor'), 'sem o que sobrepor, nem o botão');
   a.fechar();
 });

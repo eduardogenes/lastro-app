@@ -67,6 +67,19 @@ describe('espelho — fotos', () => {
     expect(ap!.caminho).toBe('treino/aparelhos/' + a0 + '.webp');
   });
 
+  it('o original da foto de verdade vem ao lado da cópia, com a versão no nome do bucket', () => {
+    const { S } = estado();
+    const fotos = (S as any).protocolo.sessoes[0].fotos;
+    fotos['frente-relaxado'].orig = { ext: 'jpeg', l: 3024, a: 4032 };
+    const v = fotos['frente-relaxado'].v;
+    const orig = fotosDoEstado(S as never).find(x => x.caminho.endsWith('.original.jpeg'))!;
+    expect(orig.caminho).toBe('corpo/fotos/2026-10-20/frente-relaxado.original.jpeg');
+    expect(orig.partes).toEqual(['2026-10-20', 'frente-relaxado.orig.' + v + '.jpeg']);
+    expect(orig.v).toBe(v);
+    fotos['frente-relaxado'].cap = { via: 'app', l: 3024, a: 4032, origem: 'foto', modo: 'alguem' };
+    expect(montaArquivos(S, { agora: T })['corpo/fotos.md']).toContain('| do app · foto do sensor · alguém tirou |');
+  });
+
   it('um id com ../ não sai da pasta', () => {
     const { S } = estado();
     const f = fotosDoEstado(S as never);

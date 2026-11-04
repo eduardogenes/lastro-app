@@ -87,18 +87,32 @@ O dono decidiu duas coisas antes do relatório:
   - "pés juntos" no duplo bíceps de costas;
   - "mãos só apoiadas, sem apertar" na das mãos na cintura.
 
+### Depois, no mesmo dia (aprovado pelo dono em 04/11)
+
+- [x] **F27, a foto de verdade:**
+  - A câmera do app usa o `takePhoto()` da câmera aberta, com o processamento da câmera do sistema. A tela continua com as linhas, o nível, a sobreposta e a voz.
+  - A imagem ao vivo passou a ser pedida no sensor inteiro (4032×3024), como na página de teste que funcionou no iPhone.
+  - O quadro do vídeo é pego no instante do toque e fica de reserva: vale quando a foto falha, não responde em 5 s, chega deitada ou fora de 3:4.
+  - `Captura.origem` diz qual dos dois ficou, e o tremor passa a valer do toque até a foto voltar.
+- [x] **O original:**
+  - É o JPEG como veio, sem recomprimir, guardado à parte (`FotoRef.orig`) com a versão no nome: `<pose>.orig.<v>.jpeg`.
+  - Sobe ao bucket na reconciliação e sai do aparelho quando o servidor confirma.
+  - Refazer, apagar a foto ou apagar o histórico tiram o original do bucket também.
+  - Só fica quando há conta na nuvem. Sem conta, uns 43 MB por sessão se acumulariam no aparelho sem destino; a cópia da tela, reduzida da foto de verdade, vale igual.
+  - O espelho baixa o original como `<pose>.original.jpeg`, ao lado da cópia.
+- [x] **D1:** com alguém tirando, a sobreposta só vem de foto tirada com as linhas: pela câmera do app, de 04/11 em diante. Sem nenhuma assim, não há sobreposta. Sozinho, continua a vizinha.
+- [x] **D2:** no cômodo pequeno, a montagem manda encurtar a distância da parede até 40 cm, nunca usar a 0,5×.
+
 ### Falta, com alguém tirando
 
-- [ ] F27: foto de verdade pelo `takePhoto()`, guardando o JPEG original de 3024×4032 junto da cópia de 1440 px. O teste em `public/teste-camera.html` mostrou que o Safari do iPhone tem o recurso. É uma peça à parte, porque mexe no armazenamento: uns 43 MB por sessão no bucket.
 - [ ] F14: na comparação, desfazer a inclinação para a frente pelo ângulo gravado. Precisa do sentido do giro.
 - [ ] F23–F26: selos e avisos da comparação:
   - sessão antiga sem nível gravado;
   - modos diferentes;
   - inclinações diferentes;
   - foto que pode ter tremido.
-- [ ] Pede decisão do dono:
-  - D1: esconder a sobreposta quando ela for de antes das linhas;
-  - D2: cômodo pequeno, encurtar a distância da parede e nunca usar a 0,5×.
+- [ ] `public/teste-camera.html`: o agente diz que já pode sair. Ficou, porque é do dono e serve para diagnosticar a câmera de novo.
+- [ ] A primeira sessão com a foto de verdade confirma, pelos dados, se ela tem o mesmo enquadramento que a tela mostrava (`cap.origem`, `cap.l` × `cap.a` e as fotos no espelho).
 
 ## Segunda leva: depende de ver o corpo na imagem
 
@@ -124,7 +138,7 @@ Pede um modelo de pontos do esqueleto rodando no aparelho, dentro do PWA e sem r
 - [ ] R34 e R35: pares padrão "esta × 14 dias antes" e "esta × primeira do protocolo", com selo de comparabilidade.
 - [ ] R39: janela de horário escolhida na montagem, e a marca "fora da sua janela".
 - [ ] R7: Wake Lock e teste de volume no começo da sessão.
-- [ ] R32: guardar o original maior quando vier da câmera do sistema (custa espaço no bucket).
+- [ ] R32: guardar o original maior quando vier da câmera do sistema (custa espaço no bucket). Na câmera do app, já entrou com a F27.
 
 ## Como saber se a primeira leva funcionou
 
