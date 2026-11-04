@@ -7,9 +7,9 @@
 // e que, quando o aparelho não informa, a foto é guardada igual, sem o dado.
 
 import { describe, expect, it } from 'vitest';
-import { angulos, noNivel } from '../../src/infra/nivel';
+import { angulos, criaMovimento, foraDoNivel, noNivel, velocidade } from '../../src/infra/nivel';
 import { leExif } from '../../src/infra/exif';
-import { lenteDe } from '../../src/infra/camera';
+import { fixaZoom, lenteDe } from '../../src/infra/camera';
 
 const G = 9.81;
 const rad = (g: number) => g * Math.PI / 180;
@@ -43,10 +43,67 @@ describe('o nível pela gravidade', () => {
     expect(angulos(NaN, G, 0)).toBeNull();
   });
 
-  it('no nível é até 1° nas duas', () => {
-    expect(noNivel({ lado: 1, frente: 0.4 })).toBe(true);
-    expect(noNivel({ lado: 1.1, frente: 0 })).toBe(false);
+  it('no nível é até 1° para a frente e até 2° de lado', () => {
+    // F9: para a frente muda a proporção do corpo; de lado só gira a foto
+    expect(noNivel({ lado: 2, frente: 1 })).toBe(true);
+    expect(noNivel({ lado: 2.1, frente: 0 })).toBe(false);
+    expect(noNivel({ lado: 0, frente: 1.1 })).toBe(false);
     expect(noNivel(null)).toBe(false);
+  });
+
+  it('quem já estava no nível só sai depois da folga, e o verde não pisca', () => {
+    expect(noNivel({ lado: 0, frente: 1.2 }, true)).toBe(true);
+    expect(noNivel({ lado: 0, frente: 1.2 }, false)).toBe(false);
+    expect(noNivel({ lado: 2.31, frente: 0 }, true)).toBe(false);
+  });
+
+  it('o que passou da régua, em palavras, para o aviso de foto torta', () => {
+    expect(foraDoNivel({ lado: 0.5, frente: 1.44 })).toBe('frente 1,4°');
+    expect(foraDoNivel({ lado: 2.6, frente: 1.2 })).toBe('de lado 2,6° · frente 1,2°');
+    expect(foraDoNivel({ lado: 1, frente: 0.2 })).toBe('');
+  });
+});
+
+describe('o giro do celular, pelo giroscópio', () => {
+  it('a velocidade junta os três eixos; sem leitura, null', () => {
+    expect(velocidade({ alpha: 3, beta: 4, gamma: 0 })).toBe(5);
+    expect(velocidade({ alpha: null, beta: 1, gamma: 1 })).toBeNull();
+    expect(velocidade(null)).toBeNull();
+  });
+
+  it('no toque: o giro do instante e o maior do segundo antes', () => {
+    const m = criaMovimento();
+    m.registra(6, 900);             // mais de um segundo antes: sai da janela
+    m.registra(0.04, 1500);
+    m.registra(0.08, 1900);
+    m.registra(0.05, 2000);
+    expect(m.resumo(2000)).toEqual({ toque: 0.1, seg: 0.08 });
+    expect(criaMovimento().resumo(2000)).toBeNull();
+  });
+});
+
+describe('a câmera na 1×', () => {
+  const faixa = (zoom: { min: number; max: number } | null) => {
+    const pedidos: unknown[] = [];
+    return {
+      pedidos,
+      stream: { getVideoTracks: () => [{
+        getCapabilities: () => (zoom ? { zoom } : {}),
+        applyConstraints: async (c: unknown) => { pedidos.push(c); }
+      }] } as unknown as MediaStream
+    };
+  };
+  it('pede o zoom 1 quando a câmera deixa escolher', async () => {
+    const f = faixa({ min: 0.5, max: 10 });
+    expect(await fixaZoom(f.stream)).toBe(true);
+    expect(f.pedidos).toEqual([{ advanced: [{ zoom: 1 }] }]);
+  });
+  it('sem zoom, ou sem a 1× na faixa, deixa como abriu', async () => {
+    const a = faixa(null), b = faixa({ min: 2, max: 6 });
+    expect(await fixaZoom(a.stream)).toBe(false);
+    expect(await fixaZoom(b.stream)).toBe(false);
+    expect(a.pedidos.length + b.pedidos.length).toBe(0);
+    expect(await fixaZoom(null)).toBe(false);
   });
 });
 

@@ -39,11 +39,25 @@ function Pontos({ pontos, aoIr }) {
  * Aparece uma vez, antes da primeira foto, e some depois — perguntar a cada
  * sessão o que é fixo por definição seria o oposto de não perguntar o que já se
  * sabe. Quem segura o celular lê isto em voz alta.
+ *
+ * Primeiro, QUEM TIRA (04/11): com alguém segurando o celular a montagem é
+ * outra — a cadeira marcada, a regra do centro, as linhas como régua. A escolha
+ * fica no aparelho e vale para as próximas sessões.
  */
-function Montagem({ m, aoComecar }) {
+function Montagem({ m, aoComecar, aoEscolher }) {
   return (
     <>
-      <Secao primeira rotulo="antes da primeira foto" nota="o que fica congelado">
+      <Secao primeira rotulo="quem tira as fotos">
+        <div class="pr-quem" role="radiogroup" aria-label="quem tira as fotos">
+          <button role="radio" aria-checked={m.quem === 'alguem'}
+                  class={'ins-chip' + (m.quem === 'alguem' ? ' on' : '')}
+                  onClick={() => aoEscolher('alguem')}>Alguém tira para mim</button>
+          <button role="radio" aria-checked={m.quem === 'sozinho'}
+                  class={'ins-chip' + (m.quem === 'sozinho' ? ' on' : '')}
+                  onClick={() => aoEscolher('sozinho')}>Tiro sozinho</button>
+        </div>
+      </Secao>
+      <Secao rotulo="antes da primeira foto" nota="o que fica congelado">
         <div class="pr-setup">
           {m.itens.map(i => (
             <div class="pr-setup-l" key={i.k}>
@@ -79,7 +93,7 @@ export function Protocolo({ ctx }) {
     return (
       <TelaCheia olho="protocolo" meta={d.meta} titulo="A montagem"
                  aoVoltar={ctx.fechaProtocolo} corpo="hwrap">
-        <Montagem m={d.montagem} aoComecar={ctx.comecaSessaoDeFotos} />
+        <Montagem m={d.montagem} aoComecar={ctx.comecaSessaoDeFotos} aoEscolher={ctx.setQuemTira} />
       </TelaCheia>
     );
   }

@@ -39,6 +39,67 @@ Nesta leva entrou só o que não depende de detectar o corpo na imagem.
   - câmera do sistema: o LensModel e a focal em 35 mm, lidos do EXIF antes da redução.
   - O espelho mostra as duas colunas novas, "Câmera" (com a lente) e "Nível".
 
+## Com alguém tirando (04/11/2026): entrou no app
+
+Na vida real, quase sempre outra pessoa segura o celular. A primeira leva supunha o celular apoiado e a pessoa sozinha, e o dono apontou isso no mesmo dia. O modo com alguém tirando virou o padrão, e o sozinho ficou como estava.
+
+O mesmo agente reviu a captura pelo lado de quem fotografa. O relatório está em `~/Lastro/corpo/recomendacoes-quem-fotografa.md`, fora do repositório. Nas fotos antigas, o fundo se mexe entre as fotos de todas as sessões medidas: todas foram tiradas com o celular na mão, sem lugar marcado para quem segurava. Os números F remetem a esse relatório.
+
+O dono decidiu duas coisas antes do relatório:
+- a foto nunca sai sozinha quando alguém tira: sai no toque;
+- se o toque vier fora do nível, a foto sai, mas o app avisa que ela saiu torta e pergunta. "Repetir" leva o destaque; "Registrar assim" guarda a inclinação verdadeira junto.
+
+- [x] **Escolha de quem tira:**
+  - "Alguém tira para mim" (padrão) ou "Tiro sozinho", na montagem e na câmera;
+  - a escolha fica no aparelho, e não no estado que sincroniza;
+  - cada foto grava o modo (`Captura.modo`).
+- [x] **Montagem de quem fotografa** (F1–F4, F6, F7, F11):
+  - cadeira marcada com fita, com os cotovelos nos joelhos;
+  - a altura pela regra do centro e a distância pelas linhas;
+  - pegada com as duas mãos;
+  - apoio como "melhor ainda", nunca como regra;
+  - quem fotografa fora da frente da luz;
+  - os punhos podem passar da linha de cima.
+- [x] **Lente 1× sempre** (F5): a montagem dos dois modos diz isso, e a câmera do app pede o zoom 1 ao abrir e grava o que a câmera devolveu.
+- [x] **Ajuste uma vez, na primeira pose** (F2, F3):
+  - quatro passos na tela e o botão "Ajustado";
+  - a voz pede para a pessoa esperar;
+  - marcas de "quadril" no meio das bordas.
+  - Câmera reaberta no meio da sessão não repete o ajuste.
+- [x] **Um toque, uma foto** (F8): sem contagem e sem sequência. A foto é o quadro do instante em que o dedo encosta, e o nível e o giro são lidos antes de montar o quadro.
+- [x] **Nível com uma régua para cada direção** (F9):
+  - até 1° para a frente e até 2° de lado, nos dois modos;
+  - o verde só apaga 0,3° depois da régua.
+  - O agente aceita até 5° de lado porque a comparação endireitaria sozinha pelo ângulo gravado. Isso pede o sentido do giro, que o sensor não garante (ver `src/infra/nivel.ts`), e por isso a régua de lado ficou em 2°.
+- [x] **Foto torta:** o aviso com "Repetir" e "Registrar assim". O espelho marca "(fora do nível)".
+- [x] **O que conferir** (F15–F18):
+  - o erro comum em cima do quadro;
+  - embaixo, a linha fixa «nível verde · cabeça e pés nas linhas» e a linha da pose (`Pose.confira`).
+- [x] **Miniatura** (F17): 3 s no canto, com Refazer. Com a miniatura à vista, a linha de conferência é a da foto que saiu.
+- [x] **Tremor e apoio pelo giroscópio** (F12, F13): `Captura.mov` grava o giro no toque e o maior do segundo antes. A miniatura avisa «pode ter tremido» acima de 4°/s, e o espelho diz "apoiado" ou "na mão".
+- [x] **Voz** (F19–F22):
+  - fala só com a pessoa fotografada e não se repete sozinha; há um botão "repetir a fala";
+  - a pose seguinte espera 1,5 s depois do clique;
+  - Refazer diz "Vamos repetir a pose N" e manda girar de volta se a pessoa já tinha girado;
+  - o fim diz "Pronto. Sessão completa.", nos dois modos.
+- [x] **Frases revistas, nos dois modos** (F21, F22):
+  - abdômen: "olhe para a frente", não "para o celular", que baixava a cabeça uns 28°;
+  - "pés juntos" no duplo bíceps de costas;
+  - "mãos só apoiadas, sem apertar" na das mãos na cintura.
+
+### Falta, com alguém tirando
+
+- [ ] F27: foto de verdade pelo `takePhoto()`, guardando o JPEG original de 3024×4032 junto da cópia de 1440 px. O teste em `public/teste-camera.html` mostrou que o Safari do iPhone tem o recurso. É uma peça à parte, porque mexe no armazenamento: uns 43 MB por sessão no bucket.
+- [ ] F14: na comparação, desfazer a inclinação para a frente pelo ângulo gravado. Precisa do sentido do giro.
+- [ ] F23–F26: selos e avisos da comparação:
+  - sessão antiga sem nível gravado;
+  - modos diferentes;
+  - inclinações diferentes;
+  - foto que pode ter tremido.
+- [ ] Pede decisão do dono:
+  - D1: esconder a sobreposta quando ela for de antes das linhas;
+  - D2: cômodo pequeno, encurtar a distância da parede e nunca usar a 0,5×.
+
 ## Segunda leva: depende de ver o corpo na imagem
 
 Pede um modelo de pontos do esqueleto rodando no aparelho, dentro do PWA e sem rede. É um projeto à parte, e o custo dele (tamanho do modelo, bateria, desempenho no iPhone 11) precisa ser medido antes.

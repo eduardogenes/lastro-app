@@ -130,6 +130,27 @@ export function lenteDe(stream: MediaStream | null | undefined): { nome?: string
   }
 }
 
+/**
+ * Põe a câmera na 1×, quando ela deixa escolher.
+ *
+ * O protocolo é sempre na 1× (`recomendacoes-quem-fotografa.md`, F5): no
+ * iPhone, a câmera tripla vai de 0,5× a 10×, e o Safari não promete abrir na
+ * 1×. Pedido toda vez, mesmo já estando nela, e lido de volta por `lenteDe`.
+ * Nunca estoura: sem o recurso, a câmera fica como abriu.
+ */
+export async function fixaZoom(stream: MediaStream | null | undefined): Promise<boolean> {
+  try {
+    const t = stream && typeof stream.getVideoTracks === 'function' ? stream.getVideoTracks()[0] : null;
+    if (!t || typeof t.getCapabilities !== 'function' || typeof t.applyConstraints !== 'function') return false;
+    const z = (t.getCapabilities() as MediaTrackCapabilities & { zoom?: { min?: number; max?: number } }).zoom;
+    if (!z || typeof z.min !== 'number' || typeof z.max !== 'number' || z.min > 1 || z.max < 1) return false;
+    await t.applyConstraints({ advanced: [{ zoom: 1 } as MediaTrackConstraintSet] });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 /** O vídeo já tem quadro para capturar? Antes disso a captura sai preta. */
 export function pronto(v: HTMLVideoElement | null | undefined): boolean {
   return !!v && v.readyState >= 2 && !!v.videoWidth && !!v.videoHeight;

@@ -18,7 +18,7 @@
 // Recebem dado e devolvem decisão: não leem estado global nem tocam em DOM.
 
 import { weekStart } from './formato';
-import type { Marca, Pose, PoseId, SessaoFoto } from './tipos';
+import type { Marca, Pose, PoseId, QuemTira, SessaoFoto } from './tipos';
 
 /** O intervalo do protocolo. Duas semanas: menos que isso é ruído de água e sono. */
 export const CADENCIA_DIAS = 14;
@@ -44,23 +44,81 @@ export interface ItemDeMontagem { k: string; rotulo: string; valor: string; nota
  *   no umbigo o corpo caía baixo no quadro, com os pés a 2–5% da borda.
  * - a luz frontal nunca foi seguida (as 70 fotos são de luz de teto): a regra
  *   que serve é a MESMA luz, e a frontal fica como o ideal.
+ *
+ * E em 04/11 mesmo, a segunda revisão: quase sempre OUTRA PESSOA segura o
+ * celular, e esse virou o padrão (`QuemTira`). O mesmo agente reviu a montagem
+ * pelo lado de quem fotografa (`~/Lastro/corpo/recomendacoes-quem-fotografa.md`,
+ * F1–F7 e F11): quem fotografa senta numa cadeira marcada, acerta a altura pela
+ * regra do centro e a distância pelas linhas, e não sai do lugar até o fim. As
+ * fotos antigas mostram por quê: o fundo se mexe entre as fotos de TODAS as
+ * sessões medidas — todas foram com o celular na mão, sem lugar marcado para
+ * quem segurava. E a lente passou a ser só a 1× (F5).
  */
-export const MONTAGEM: ItemDeMontagem[] = [
-  { k: 'dist', rotulo: 'câmera → marca', valor: 'a mesma sempre',
-    nota: 'Marque no chão o lugar do apoio. A distância certa é a que põe o corpo inteiro em quase toda a altura do quadro, com um dedo de folga em cima e embaixo. Mais longe distorce menos: com a lente 2×, uns 3 m.' },
-  { k: 'lente', rotulo: 'lente e câmera', valor: 'sempre as mesmas',
-    nota: 'Não troque entre 1× e 2×, nem entre a câmera do app e a do sistema: cada uma desenha o corpo de um jeito, e a comparação passa a medir a câmera. O app anota qual foi usada.' },
-  { k: 'alt', rotulo: 'altura da lente', valor: 'metade da sua altura',
-    nota: 'Na linha do quadril, um palmo abaixo do umbigo. Celular em pé e no nível: a câmera do app mostra o nível.' },
-  { k: 'parede', rotulo: 'corpo → parede', valor: '80 cm',
-    nota: 'Encostado, a sombra desenha um contorno falso no ombro e na cintura.' },
-  { k: 'luz', rotulo: 'luz', valor: 'a mesma sempre',
-    nota: 'O ideal é uma lâmpada difusa atrás do celular, um pouco acima da lente, com a do teto apagada. Se for a do teto, sempre a mesma lâmpada e você sempre na marca: luz de cima muda a definição do abdômen a cada palmo que você anda.' },
-  { k: 'hora', rotulo: 'horário', valor: 'uma janela de 2 h',
-    nota: 'Escolha uma e fique nela. O app anota a hora de cada foto e mostra na comparação: a barriga muda ao longo do dia. Se der, umas 3 h longe de refeição grande e do treino.' },
-  { k: 'roupa', rotulo: 'roupa', valor: 'sempre a mesma peça',
-    nota: 'Justa, lisa e de cor média, cinza ou azul. Branca estoura na luz e apaga a linha do elástico; preta esconde o contorno. Elástico logo acima do osso do quadril, e sempre descalço.' }
+export function montagem(quem: QuemTira): ItemDeMontagem[] {
+  if (quem === 'sozinho') return [
+    { k: 'dist', rotulo: 'câmera → marca', valor: 'a mesma sempre',
+      nota: 'Marque no chão o lugar do apoio. A certa é a que põe a cabeça e os pés nas linhas da câmera do app: com a 1×, perto de 0,82 × a sua altura (1,43 m para quem tem 1,75 m).' },
+    LENTE,
+    { k: 'alt', rotulo: 'altura da lente', valor: 'metade da sua altura',
+      nota: 'Na linha do quadril, um palmo abaixo do umbigo. Celular em pé e no nível: a câmera do app mostra o nível. Na altura certa, sobra o mesmo espaço acima da cabeça e abaixo dos pés.' },
+    { k: 'parede', rotulo: 'corpo → parede', valor: '80 cm', nota: PAREDE },
+    { k: 'luz', rotulo: 'luz', valor: 'a mesma sempre',
+      nota: LUZ + ' Se for a do teto, sempre a mesma lâmpada e você sempre na marca: luz de cima muda a definição do abdômen a cada palmo que você anda.' },
+    HORA,
+    ROUPA
+  ];
+  return [
+    { k: 'quem', rotulo: 'quem fotografa', valor: 'sentado, sempre na mesma cadeira',
+      nota: 'Na primeira vez, marque com fita onde ficam os pés da frente da cadeira. Cotovelos apoiados nos joelhos. Se a pessoa fotografada for alta, ajoelhe num joelho só, com os cotovelos colados nas costelas.' },
+    { k: 'dist', rotulo: 'distância', valor: 'a das linhas',
+      nota: 'A cabeça e os pés encostam nas linhas da câmera do app; se não encostarem, chegue a cadeira para a frente ou para trás. Com a 1×, fica perto de 0,82 × a altura da pessoa: 1,43 m para quem tem 1,75 m. A linha de cima é para a cabeça: os punhos podem passar.' },
+    { k: 'alt', rotulo: 'altura da lente', valor: 'a do centro',
+      nota: 'Com o nível verde, suba ou desça as mãos até sobrar o mesmo espaço acima da cabeça e abaixo dos pés: a lente fica na linha do quadril, qualquer que seja a altura de cada um. Acerte uma vez, na primeira pose, e não saia do lugar até o fim.' },
+    { k: 'pegada', rotulo: 'como segurar', valor: 'duas mãos, cotovelos nos joelhos',
+      nota: 'Celular em pé, seguro pela metade de baixo, dedos longe da lente. Solte o ar e toque de leve.' },
+    LENTE,
+    { k: 'apoio', rotulo: 'apoio', valor: 'melhor ainda, se der',
+      nota: 'Se puder apoiar o celular na altura certa, apoie. Quem fotografa continua conferindo e tocando.' },
+    { k: 'parede', rotulo: 'pessoa → parede', valor: '80 cm', nota: PAREDE },
+    { k: 'luz', rotulo: 'luz', valor: 'a mesma sempre',
+      nota: LUZ + ' Quem fotografa não fica entre a luz e a pessoa, e nada de lanterna ou de outra luz.' },
+    HORA,
+    ROUPA
+  ];
+}
+
+const LENTE: ItemDeMontagem = { k: 'lente', rotulo: 'lente e câmera', valor: 'a 1×, sempre',
+  nota: 'Não troque para a 2× nem para a 0,5×, nem entre a câmera do app e a do sistema: cada uma desenha o corpo de um jeito, e a comparação passa a medir a câmera. A câmera do app fica na 1× sozinha e anota a lente.' };
+const PAREDE = 'Encostado, a sombra desenha um contorno falso no ombro e na cintura.';
+const LUZ = 'O ideal é uma lâmpada difusa atrás do celular, um pouco acima da lente, com a do teto apagada.';
+const HORA: ItemDeMontagem = { k: 'hora', rotulo: 'horário', valor: 'uma janela de 2 h',
+  nota: 'Escolha uma e fique nela. O app anota a hora de cada foto e mostra na comparação: a barriga muda ao longo do dia. Se der, umas 3 h longe de refeição grande e do treino.' };
+const ROUPA: ItemDeMontagem = { k: 'roupa', rotulo: 'roupa', valor: 'sempre a mesma peça',
+  nota: 'Justa, lisa e de cor média, cinza ou azul. Branca estoura na luz e apaga a linha do elástico; preta esconde o contorno. Elástico logo acima do osso do quadril, e sempre descalço.' };
+
+/**
+ * O ajuste de quem fotografa, uma vez, na primeira pose (F2 e F3): depois dele
+ * ninguém sai do lugar, e as outras oito poses só se conferem. A ordem importa:
+ * a altura primeiro, pela regra do centro — com o celular no nível, o meio da
+ * tela é a altura da lente —, e a distância depois, que não tira o quadril do
+ * meio porque o corpo cresce e encolhe em volta dele.
+ */
+export const PASSOS_DO_AJUSTE: string[] = [
+  'Deixe o nível verde.',
+  'Suba ou desça as mãos até sobrar o mesmo espaço acima da cabeça e abaixo dos pés.',
+  'Se a cabeça e os pés não encostarem nas linhas, chegue a cadeira para a frente ou para trás.',
+  'Toque em Ajustado. Depois, não saia do lugar até o fim.'
 ];
+
+/** A linha que vale em toda pose, antes da linha da pose (F15). */
+export const CONFERE_SEMPRE = 'nível verde · cabeça e pés nas linhas';
+
+/**
+ * As falas de quem tem alguém fotografando (F22). Todas para a pessoa
+ * fotografada: quem fotografa lê a tela (F19).
+ */
+export const FALA_DO_AJUSTE = 'Fique no T, de frente para o celular, braços soltos. Espere o ajuste.';
+export const FALA_DO_FIM = 'Pronto. Sessão completa.';
 
 /**
  * As poses, na ordem de execução.
@@ -78,6 +136,13 @@ export const MONTAGEM: ItemDeMontagem[] = [
  * costas, "marque passo" no perfil natural, e uma frase de voz para cada uma.
  * As nove continuam: a auditoria sugeriu tirar a das mãos na cintura, e ele
  * decidiu mantê-la (04/11).
+ *
+ * Na revisão de quem fotografa (04/11, F16 e F21–F22): cada pose ganhou a
+ * linha que quem fotografa confere (`confira`); no abdômen, "olhe para o
+ * celular" virou "olhe para a frente" — com a lente no quadril, olhar para o
+ * celular baixava a cabeça uns 28°, o erro que a frase queria evitar; e na das
+ * mãos na cintura a voz pede "mãos só apoiadas, sem apertar", porque ela vinha
+ * virando uma pinça da dobra.
  */
 export const PROTOCOLO: Pose[] = [
   {
@@ -89,6 +154,7 @@ export const PROTOCOLO: Pose[] = [
       'Solte o ar normalmente e segure, sem forçar, até o disparo.'
     ],
     voz: 'Braços soltos, um palmo do corpo. Solte o ar e segure.',
+    confira: 'pés no T · braços um palmo do corpo',
     revela: 'cintura, simetria de ombro, distribuição de gordura',
     erro: 'colar os braços no corpo, que esconde o contorno da cintura'
   },
@@ -101,6 +167,7 @@ export const PROTOCOLO: Pose[] = [
       'Suba devagar: movimento brusco muda o enquadramento.'
     ],
     voz: 'Cotovelos na altura do ombro. Contraia.',
+    confira: 'cotovelos na altura do ombro · pés no T',
     revela: 'braço, ombro, largura do dorsal, peito',
     erro: 'cotovelo alto demais, que some com o trapézio'
   },
@@ -110,10 +177,11 @@ export const PROTOCOLO: Pose[] = [
     como: [
       'Mãos atrás da cabeça, dedos entrelaçados, cotovelos abertos.',
       'Perna esquerda meio pé à frente — sempre a esquerda —, joelho travado, coxa contraída.',
-      'Olhe para o celular, queixo paralelo ao chão.',
+      'Olhe para a frente, na altura dos olhos, queixo paralelo ao chão.',
       'Solte todo o ar e contraia o abdômen com o pulmão vazio.'
     ],
-    voz: 'Mãos atrás da cabeça. Perna esquerda meio pé à frente. Olhe para o celular. Solte todo o ar e contraia.',
+    voz: 'Mãos atrás da cabeça. Perna esquerda meio pé à frente. Olhe para a frente. Solte todo o ar e contraia.',
+    confira: 'queixo reto, olhar para a frente · perna esquerda meio pé à frente',
     revela: 'definição abdominal e serrátil — o mais sensível a gordura',
     erro: 'baixar a cabeça para olhar o abdômen, que encurta a dobra dele'
   },
@@ -126,6 +194,7 @@ export const PROTOCOLO: Pose[] = [
       'Olhe para a frente. Postura natural, sem empinar nem encolher a barriga.'
     ],
     voz: 'Braços esticados à frente, na altura do ombro. Olhe para a frente.',
+    confira: 'um braço esconde o outro · mãos dentro da tela',
     revela: 'espessura da cintura de perfil — onde a mudança aparece primeiro',
     erro: 'girar 60° em vez de 90° e achar que emagreceu'
   },
@@ -137,7 +206,8 @@ export const PROTOCOLO: Pose[] = [
       'Marque passo três vezes sem sair do T, e pare — assim você cai na sua postura real.',
       'Olhe para um ponto fixo à frente, na altura dos olhos.'
     ],
-    voz: 'Braços soltos. Marque passo três vezes, sem sair do lugar. Olhe para um ponto fixo.',
+    voz: 'Braços soltos. Marque passo três vezes, sem sair do lugar. Olhe para a frente.',
+    confira: 'pés na marca · olhar para a frente, sem posar',
     revela: 'alinhamento de orelha, ombro, quadril e tornozelo',
     erro: 'corrigir a postura na hora e perder o dado'
   },
@@ -150,6 +220,7 @@ export const PROTOCOLO: Pose[] = [
       'Ombros onde eles caem sozinhos.'
     ],
     voz: 'Braços soltos, um palmo do corpo. Cabeça reta.',
+    confira: 'braços um palmo do corpo · cabeça reta',
     revela: 'simetria das escápulas, lombar, contorno do glúteo',
     erro: 'olhar por cima do ombro e torcer o tronco'
   },
@@ -161,7 +232,8 @@ export const PROTOCOLO: Pose[] = [
       'Afaste as escápulas como se puxasse os cotovelos para trás e para fora.',
       'Pés juntos no T, os dois apoiados no chão.'
     ],
-    voz: 'Cotovelos na altura do ombro. Abra as costas.',
+    voz: 'Cotovelos na altura do ombro. Pés juntos. Abra as costas.',
+    confira: 'cotovelos na altura do ombro · pés juntos no T',
     revela: 'espessura do dorsal, trapézio e erector',
     erro: 'cotovelos em alturas diferentes'
   },
@@ -169,11 +241,12 @@ export const PROTOCOLO: Pose[] = [
     id: 'costas-maos-na-cintura', n: 'Costas mãos na cintura', bloco: 'músculo', giro: 180,
     bracos: 'polegares na cintura',
     como: [
-      'Polegares logo acima da crista ilíaca, mãos abertas.',
+      'Polegares logo acima da crista ilíaca, mãos abertas e só apoiadas, sem apertar a pele.',
       'Empurre os cotovelos para a frente e para fora, abrindo a largura.',
       'Cintura contraída — o contraste é a informação aqui.'
     ],
-    voz: 'Polegares logo acima do osso do quadril, mãos abertas. Cotovelos para a frente e para fora.',
+    voz: 'Polegares logo acima do osso do quadril. Mãos só apoiadas, sem apertar.',
+    confira: 'mãos só apoiadas, sem beliscar · cintura à mostra',
     revela: 'a relação ombro/cintura, que muda mesmo com o peso parado',
     erro: 'subir as mãos para as costelas e falsear a largura'
   },
@@ -186,6 +259,7 @@ export const PROTOCOLO: Pose[] = [
       'Confira que os pés voltaram para o T antes do disparo.'
     ],
     voz: 'Braços esticados à frente, na altura do ombro. Olhe para a frente.',
+    confira: 'um braço esconde o outro · mãos dentro da tela',
     revela: 'a assimetria entre os lados, invisível na foto de frente',
     erro: 'pular esta foto por parecer repetida — ela é a que fecha o par'
   }

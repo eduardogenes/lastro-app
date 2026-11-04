@@ -4,17 +4,19 @@
 // enquadramento dentro do que a foto pegou; alinhar ANTES do disparo conserta a
 // foto. Nenhum recorte devolve o pé que saiu do quadro.
 //
-// Duas coisas fazem esta tela funcionar de verdade, e as duas são consequência
-// de ele estar sozinho a três metros do celular:
+// Dois modos, porque são duas situações (04/11):
 //
-// O TEMPORIZADOR não é conveniência. A três metros ninguém alcança o botão, e
-// sem contagem esta tela seria bonita e inútil — a câmera do sistema, que tem
-// temporizador, continuaria sendo a única saída.
+// ALGUÉM TIRA, o padrão. Outra pessoa segura o celular, sentada no lugar
+// marcado (`recomendacoes-quem-fotografa.md`). A sessão começa pelo ajuste de
+// altura e distância, e depois cada toque é UMA foto — nada sai sozinho. Quem
+// fotografa lê a tela: o erro comum em cima, a linha do que conferir embaixo,
+// a miniatura com Refazer, e o aviso de foto torta, que pergunta antes de
+// guardar. A voz fala só com a pessoa fotografada.
 //
-// E a sessão CONTINUA aqui dentro, sozinha. Um toque e as poses saem uma atrás
-// da outra: depois de cada disparo a voz diz o giro e a pose seguinte, e a
-// contagem curta começa quando a voz acaba. Ir até o celular a cada pose seria
-// pior que o problema que a tela resolve.
+// SOZINHO. O celular apoiado e a pessoa a três metros, onde ninguém alcança o
+// botão: aí o TEMPORIZADOR não é conveniência, e a sessão CONTINUA aqui
+// dentro, sozinha — depois de cada disparo a voz diz o giro e a pose seguinte,
+// e a contagem curta começa quando a voz acaba.
 
 import { useEffect, useRef } from 'preact/hooks';
 import { FotoAjustada } from '../instrumento/fotoajustada.jsx';
@@ -66,6 +68,7 @@ export function Camera({ ctx }) {
   });
 
   if (!d) return null;
+  const alguem = d.quem === 'alguem';
 
   if (d.erro) {
     return (
@@ -97,8 +100,11 @@ export function Camera({ ctx }) {
           O GIRO até a pose nova (estado 4): a maior coisa da tela, lida a três
           metros. */}
       {d.preta && <p class="cam-preta" role="status">A {d.preta.toLowerCase()} saiu preta. Ela volta no fim.</p>}
-      {d.giroTxt && <p class="cam-giro" aria-live="polite">{d.giroTxt}</p>}
-      <div class="cam-quadro">
+      {d.giroTxt && <p class={'cam-giro' + (alguem ? ' perto' : '')} aria-live="polite">{d.giroTxt}</p>}
+      {/* Para quem fotografa, em cima do quadro: o erro que mais aparece nesta
+          pose (F18). No ajuste não há pose ainda para errar. */}
+      {alguem && !d.ajuste && <p class="cam-erro ins-body-sm ins-t2">erro comum · {d.erroComum}</p>}
+      <div class={'cam-quadro' + (alguem ? ' perto' : '')}>
         <video ref={video} class="cam-video" autoplay playsinline muted />
         <canvas ref={tela} class="cam-tela" aria-hidden="true" />
         {/* O clarão do disparo: um nó por foto (a chave é o número do
@@ -120,6 +126,9 @@ export function Camera({ ctx }) {
         <div class="cam-guias" aria-hidden="true">
           <i class="cam-guia cam-guia-cabeca"><span>cabeça</span></i>
           <i class="cam-guia cam-guia-pes"><span>pés</span></i>
+          {/* A regra do centro (F3): com o celular no nível, o meio da tela é a
+              altura da lente. O quadril da pessoa aqui, e a lente está nele. */}
+          <i class="cam-quadril cam-quadril-e" /><i class="cam-quadril cam-quadril-d"><span>quadril</span></i>
         </div>
 
         {d.grade && (
@@ -145,20 +154,69 @@ export function Camera({ ctx }) {
             <span>{d.contagem || '·'}</span>
           </div>
         )}
+
+        {/* A FOTO QUE ACABOU DE SAIR, 3 s no canto (F17): quem fotografa vê
+            o pé fora, o braço colado, e refaz antes de a pessoa mudar de pose.
+            A que pode ter tremido (F12) diz, e o Refazer dela leva o destaque. */}
+        {d.miniatura && (
+          <div class="cam-mini">
+            {d.miniatura.url && <img src={d.miniatura.url} alt={'Acabou de sair: ' + d.miniatura.pose} />}
+            {d.miniatura.tremida && <span class="cam-mini-aviso">pode ter tremido</span>}
+            <button class={d.miniatura.tremida ? 'ins-btn-primary' : 'ins-btn-secondary'}
+                    onClick={ctx.refazUltima}>Refazer</button>
+          </div>
+        )}
       </div>
+
+      {/* O AJUSTE, uma vez, na primeira pose (F3): a altura pela regra do
+          centro, a distância pelas linhas, e ninguém sai do lugar até o fim. */}
+      {alguem && d.ajuste && (
+        <ol class="cam-ajuste">
+          {d.ajuste.map((l, k) => <li key={k} class="ins-body-sm ins-t1">{l}</li>)}
+        </ol>
+      )}
+      {/* O que conferir antes do toque (F15, F16): fora da imagem, porque texto
+          por cima taparia justamente a cabeça e os pés. Com a miniatura no
+          canto, a linha é a da foto que acabou de sair. */}
+      {alguem && !d.ajuste && !d.torta && (
+        <div class="cam-confira" aria-live="polite">
+          <span class="ins-label">{d.miniatura ? 'confira na foto' : 'confira antes de tocar'}</span>
+          {d.confira.map((l, k) => <p key={k} class="cam-confira-l">{l}</p>)}
+        </div>
+      )}
 
       {/* O disparo logo abaixo do quadro, e preso ao fundo da tela quando a
           tela rola: antes ele ficava 200 px abaixo da dobra, e para tocá-lo o
           quadro saía de vista. Durante a sequência ele vira o "parar" — da
           contagem e de tudo que viria depois dela. */}
-      {(d.contagem != null || d.seguido)
+      {/* A FOTO TORTA (pedido do dono, 04/11): a foto saiu, mas não é
+          guardada sem pergunta. Repetir é o caminho certo e leva o destaque;
+          registrar assim grava a inclinação verdadeira junto. */}
+      {d.torta ? (
+        <div class="cam-torta" role="alert">
+          <p class="ins-body ins-t1"><b>A foto saiu torta:</b> {d.torta.txt}.</p>
+          <div class="cam-torta-b">
+            <button class="ins-btn-primary" onClick={ctx.repeteTorta}>Repetir</button>
+            <button class="ins-btn-secondary" onClick={ctx.registraTorta}>Registrar assim</button>
+          </div>
+        </div>
+      ) : (d.contagem != null || d.seguido)
         ? <button class="ins-btn-secondary cam-disparo" onClick={ctx.cancelaDisparo}>Parar</button>
-        : (
-          <button class="ins-btn-primary cam-disparo" disabled={!d.pronta}
-                  onClick={ctx.disparaCamera}>
-            {d.pronta ? d.rotulo : 'abrindo a câmera…'}
-          </button>
-        )}
+        : (alguem && d.ajuste)
+          ? (
+            <button class="ins-btn-primary cam-disparo" disabled={!d.pronta} onClick={ctx.ajustado}>
+              {d.pronta ? d.rotulo : 'abrindo a câmera…'}
+            </button>
+          )
+          : (
+            // Com alguém tirando, a foto sai quando o dedo ENCOSTA (F8): o
+            // clique do mesmo toque, depois, não dispara de novo.
+            <button class="ins-btn-primary cam-disparo" disabled={!d.pronta || d.guardando}
+                    onPointerDown={alguem ? (e => { if (e.isPrimary !== false && (e.pointerType !== 'mouse' || e.button === 0)) ctx.disparaCamera('toque'); }) : undefined}
+                    onClick={() => ctx.disparaCamera()}>
+              {d.pronta ? d.rotulo : 'abrindo a câmera…'}
+            </button>
+          )}
 
       {/* A POSE QUE NÃO COUBE (a D, `sessao-fotos.html`, estado 9): a sessão
           parou, e a tela diz qual e por quê, com a saída ao lado. */}
@@ -175,6 +233,9 @@ export function Camera({ ctx }) {
         </div>
       )}
       <div class="aj-modos">
+        {/* A fala não se repete sozinha (F20): quem fotografa pede quando a
+            pessoa não ouviu. */}
+        {alguem && <button class="ins-chip" onClick={ctx.repeteFala}>repetir a fala</button>}
         <button class={'ins-chip' + (d.grade ? ' on' : '')}
                 onClick={() => ctx.setGradeDaCamera(!d.grade)}>grade</button>
         {d.datas.length > 0 && (
@@ -201,25 +262,49 @@ export function Camera({ ctx }) {
         </>
       )}
 
-      <Secao rotulo="A primeira contagem" nota="depois dela, as poses seguem sozinhas">
+      <Secao rotulo="Quem tira">
         <div class="cam-tempos">
-          {TEMPOS.map(t => (
-            <button key={t} class={'ins-chip' + (d.timer === t ? ' on' : '')}
-                    onClick={() => ctx.setTimerDaCamera(t)}>
-              {t === 0 ? 'sem' : t + 's'}
-            </button>
-          ))}
+          <button class={'ins-chip' + (alguem ? ' on' : '')} onClick={() => ctx.setQuemTira('alguem')}>alguém tira para mim</button>
+          <button class={'ins-chip' + (!alguem ? ' on' : '')} onClick={() => ctx.setQuemTira('sozinho')}>tiro sozinho</button>
         </div>
       </Secao>
 
-      <Procedencia>
-        um toque tira a sessão inteira: a voz diz o giro e a pose seguinte, e a
-        contagem curta começa quando ela termina
-      </Procedencia>
-      <Procedencia>
-        posicione o celular até a sala coincidir com a sobreposta — é o
-        enquadramento que se está acertando aqui, não a pose
-      </Procedencia>
+      {!alguem && (
+        <Secao rotulo="A primeira contagem" nota="depois dela, as poses seguem sozinhas">
+          <div class="cam-tempos">
+            {TEMPOS.map(t => (
+              <button key={t} class={'ins-chip' + (d.timer === t ? ' on' : '')}
+                      onClick={() => ctx.setTimerDaCamera(t)}>
+                {t === 0 ? 'sem' : t + 's'}
+              </button>
+            ))}
+          </div>
+        </Secao>
+      )}
+
+      {alguem ? (
+        <>
+          <Procedencia>
+            um toque, uma foto: nada sai sozinho. A voz fala só com quem está
+            sendo fotografado; quem fotografa lê a tela
+          </Procedencia>
+          <Procedencia>
+            fora do nível, a foto sai, e o app pergunta antes de guardar. As
+            linhas decidem a distância; a sobreposta ajuda a achar o lugar
+          </Procedencia>
+        </>
+      ) : (
+        <>
+          <Procedencia>
+            um toque tira a sessão inteira: a voz diz o giro e a pose seguinte, e a
+            contagem curta começa quando ela termina
+          </Procedencia>
+          <Procedencia>
+            posicione o celular até a sala coincidir com a sobreposta — é o
+            enquadramento que se está acertando aqui, não a pose
+          </Procedencia>
+        </>
+      )}
       <Procedencia>
         o quadro vivo tem menos resolução que a câmera do sistema. Vale pela
         consistência: nenhum recorte depois devolve o pé que saiu do quadro

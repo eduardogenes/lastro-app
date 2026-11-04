@@ -85,6 +85,8 @@
 .pr-sobre button { flex: 1 1 0; }
 
 /* ---------- a montagem ---------- */
+/* Quem tira: duas opções lado a lado, do mesmo tamanho. */
+.pr-quem { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-2); }
 .pr-setup { display: grid; gap: 1px; background: var(--ins-fio); }
 .pr-setup-l {
   background: var(--ins-tela); padding: var(--ins-5) 0;
@@ -295,4 +297,55 @@
   border: 1px solid var(--ins-atencao-fio);
 }
 .cam-nivel.ok { color: var(--ins-sobre-acento); background: var(--ins-acento); border-color: var(--ins-acento); }
+
+/* ---- Com alguém tirando (04/11) -------------------------------------------
+   Quem fotografa lê a tela com o celular na mão, a um palmo e meio do rosto:
+   o texto vai FORA da imagem (o de cima tapa a cabeça, o de baixo os pés), em
+   letra de ler e com no máximo duas linhas por bloco. Por isso o quadro cede
+   mais altura que no modo sozinho: o erro comum em cima e a conferência
+   embaixo cabem com ele e com o disparo. */
+.cam-quadro.perto { width: min(100%, calc((100svh - 450px) * 3 / 4)); }
+.cam-giro.perto { font: 600 var(--ins-t-nome)/1.3 var(--ins-fonte); letter-spacing: 0; }
+.cam-erro { margin: 0 0 var(--ins-2); }
+
+/* A regra do centro: duas marcas curtas na metade da altura, nas bordas. */
+.cam-quadril {
+  position: absolute; top: 50%; width: 6%;
+  height: var(--ins-indicator); background: var(--ins-acento); opacity: .7;
+}
+.cam-quadril-e { left: 0; }
+.cam-quadril-d { right: 0; }
+.cam-quadril span {
+  position: absolute; right: 0; bottom: var(--ins-1); padding: 0 var(--ins-1);
+  font: 600 var(--ins-t-meta)/1.4 var(--ins-fonte);
+  color: var(--ins-foto-tinta); background: var(--ins-foto-veu);
+}
+
+.cam-ajuste { margin: var(--ins-3) 0 0; padding-left: 1.4em; display: grid; gap: var(--ins-1); }
+
+.cam-confira { margin-top: var(--ins-3); display: grid; gap: var(--ins-1); }
+.cam-confira-l { margin: 0; font: 600 var(--ins-t-nome)/1.3 var(--ins-fonte); color: var(--ins-tinta); }
+
+/* A miniatura: no canto de cima, à direita — o rótulo da cabeça fica à
+   esquerda, o nível no meio, e os pés embaixo. Pequena: o vivo continua sendo
+   o quadro. */
+.cam-mini {
+  position: absolute; top: calc(4% + var(--ins-2)); right: var(--ins-2);
+  width: 30%; display: grid; gap: var(--ins-1);
+  padding: var(--ins-1); border-radius: var(--ins-raio-2);
+  background: var(--ins-superficie); border: 1px solid var(--ins-fio-controle);
+}
+.cam-mini img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--ins-raio-1); }
+.cam-mini-aviso { font: 600 var(--ins-t-meta)/1.3 var(--ins-fonte); color: var(--ins-atencao-tinta); }
+.cam-mini button { padding-inline: var(--ins-2); }
+
+/* A foto torta: no lugar do disparo, onde o polegar já está. */
+.cam-torta {
+  margin-top: var(--ins-4); padding: var(--ins-3) var(--ins-4);
+  border-radius: var(--ins-raio-3);
+  background: var(--ins-atencao-fundo); border: 1px solid var(--ins-atencao-fio);
+  position: sticky; bottom: calc(var(--ins-3) + var(--sa-bottom)); z-index: 2;
+}
+.cam-torta p { margin: 0 0 var(--ins-3); color: var(--ins-atencao-tinta); }
+.cam-torta-b { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-3); }
 .cam-sair { display: block; width: 100%; margin-top: var(--ins-7); }

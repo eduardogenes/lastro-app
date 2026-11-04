@@ -89,7 +89,8 @@ import * as CAM from './infra/camera';
 import * as NIVEL from './infra/nivel';
 import { exifDoArquivo } from './infra/exif';
 import {
-  CADENCIA_DIAS, MONTAGEM, comAPose, completude,
+  CADENCIA_DIAS, CONFERE_SEMPRE, FALA_DO_AJUSTE, FALA_DO_FIM, PASSOS_DO_AJUSTE,
+  comAPose, completude, montagem as montagemDe,
   diasDesde as diasDesdeAFoto, instanteDaData, mediaDaSemana, parPadrao,
   poseDe, poses as posesDo, proximaPose, quaseTodoPreto, referencia, sessaoDe,
   ultima as ultimaSessaoFoto, vizinhaComAPose
@@ -589,6 +590,7 @@ async function load() {
   // O descanso que estava correndo. Depois do render, porque ele pinta na barra
   // que vive fora da árvore do Preact e precisa dela já montada.
   await retomaDescanso();
+  await lembraQuemTira();
   // Antes da primeira leitura de foto, e depois do render: a tela já está de pé
   // e não pode procurar os bytes no cache com o nome antigo.
   await FOTO.migraCache();
@@ -11287,6 +11289,8 @@ function registroDaCaptura(r) {
   if (typeof r.mm === 'number') cap.mm = r.mm;
   if (typeof r.zoom === 'number') cap.zoom = r.zoom;
   if (r.nivel) cap.nivel = { lado: r.nivel.lado, frente: r.nivel.frente };
+  if (r.modo === 'alguem' || r.modo === 'sozinho') cap.modo = r.modo;
+  if (r.mov) cap.mov = { toque: r.mov.toque, seg: r.mov.seg };
   return cap;
 }
 const FOTO_DEITADA = 'A foto saiu cortada pelo navegador e não foi guardada. Tire de novo.';
@@ -11420,7 +11424,7 @@ CTX.sessaoDeFotos = function () {
   const c = completude(ses, S.protocolo.poses);
 
   if (v.montagem) {
-    return { passo: 'montagem', meta: fmtDate(instanteDaData(v.d)), montagem: { itens: MONTAGEM,
+    return { passo: 'montagem', meta: fmtDate(instanteDaData(v.d)), montagem: { itens: montagemDe(quemTira), quem: quemTira,
       // a ordem das poses, numa linha (a D, estado 1): a rotação é contínua,
       // sempre para a esquerda
       total: lista.length,
@@ -13131,6 +13135,41 @@ CTX.ajusteEmEdicao = function () {
 
 let streamCamera = null;
 let contagemT = null;
+// Só com alguém tirando: a fala da pose seguinte espera 1,5 s depois do clique,
+// e a miniatura da foto fica 3 s no canto (F17, F20).
+let falaT = null, miniaturaT = null;
+// O giro do celular no último segundo, pelo giroscópio (ver `criaMovimento`).
+let movimento = NIVEL.criaMovimento();
+
+// ---------- quem tira as fotos ----------
+// Na vida real, OUTRA PESSOA segura o celular (04/11), e esse é o padrão; a
+// pessoa sozinha, com o celular apoiado e a contagem, é a exceção. A escolha
+// mora no APARELHO, e não no estado sincronizado: é do celular que fotografa,
+// e o computador não tem o que fazer com ela. Cada foto grava o modo dela
+// (`Captura.modo`), e é por lá que os dados ficam sabendo.
+const KEY_QUEM_TIRA = 'lastro-fotos-quem-v1';
+let quemTira = 'alguem';
+async function lembraQuemTira() {
+  try {
+    const r = await DB.get(KEY_QUEM_TIRA);
+    if (r && (r.value === 'alguem' || r.value === 'sozinho')) quemTira = r.value;
+  } catch (e) {}
+}
+CTX.setQuemTira = function (q) {
+  if (q !== 'alguem' && q !== 'sozinho') return;
+  quemTira = q;
+  try { DB.set(KEY_QUEM_TIRA, q); } catch (e) {}
+  const c = view.camera;
+  if (c && c.quem !== q) {
+    // trocar no meio para o que o outro modo tinha em andamento: a contagem e
+    // a sequência de um, a foto torta e a miniatura do outro
+    clearTimeout(contagemT); contagemT = null; sequencia++;
+    clearTimeout(falaT); falaT = null;
+    clearTimeout(miniaturaT); miniaturaT = null;
+    Object.assign(c, { quem: q, contagem: null, seguido: false, torta: null, miniatura: null, ajuste: false });
+  }
+  render();
+};
 
 CTX.streamDaCamera = function () { return streamCamera; };
 /** Pinta a tela da câmera com o mesmo quadro que vira a foto (ver `desenhaQuadro`). */
@@ -13139,6 +13178,8 @@ CTX.pintaTelaDaCamera = function (tela, video) { return CAM.pintaTela(tela, vide
 /** Desliga a câmera e cancela a contagem. Toda saída passa por aqui. */
 function encerraCamera() {
   clearTimeout(contagemT); contagemT = null;
+  clearTimeout(falaT); falaT = null;
+  clearTimeout(miniaturaT); miniaturaT = null;
   sequencia++;
   paraNivel(); paraNivel = function () {};
   CAM.fecha(streamCamera);
@@ -13149,14 +13190,18 @@ function encerraCamera() {
 // Aparece na câmera e fica gravado em cada foto (ver infra/nivel.ts). Ele muda
 // a cada quadro do sensor, e a tela só precisa dele quando o número que ela
 // mostra muda: o redesenho sai no máximo cinco vezes por segundo.
+//
+// O "no nível" (`nivelOk`) tem folga para sair (F9): é ele que a tela mostra,
+// e é ele que decide, no toque, se a foto saiu torta.
 let paraNivel = function () {};
 let nivelT = null;
 function recebeNivel(n) {
   const c = view.camera;
   if (!c) return;
-  const antes = c.nivel;
+  const antes = c.nivel, okAntes = !!c.nivelOk;
   c.nivel = n;
-  const mudou = !antes !== !n || (n && antes && (antes.lado !== n.lado || antes.frente !== n.frente));
+  c.nivelOk = NIVEL.noNivel(n, okAntes);
+  const mudou = okAntes !== c.nivelOk || !antes !== !n || (n && antes && (antes.lado !== n.lado || antes.frente !== n.frente));
   if (!mudou || nivelT) return;
   nivelT = setTimeout(function () { nivelT = null; if (view.camera) render(); }, 200);
 }
@@ -13188,14 +13233,22 @@ CTX.abreCamera = async function () {
   // de qualquer await, ou o pedido é recusado sem nem perguntar.
   const podeNivel = NIVEL.pedePermissao();
   const viz = vizinhaComAPose(S.protocolo.sessoes, v.pose, v.d);
+  const hoje = sessaoDe(S.protocolo.sessoes, v.d);
   view.camera = {
     erro: null, pronta: false,
     fantasma: true, fantasmaD: viz ? viz.d : null,
     opacidade: 45, grade: false,
     // 10s por padrão: é quanto leva para andar três metros e parar de balançar
     timer: 10, contagem: null,
-    seguido: false, nivel: null, lente: null
+    seguido: false, nivel: null, nivelOk: false, lente: null,
+    quem: quemTira,
+    // Com alguém tirando, a sessão começa pelo AJUSTE (F2, F3): altura e
+    // distância uma vez, na primeira pose, e ninguém sai do lugar até o fim.
+    // Câmera reaberta no meio da sessão não repete: as fotos já têm o lugar.
+    ajuste: quemTira === 'alguem' && !(hoje && Object.keys(hoje.fotos).length),
+    torta: null, miniatura: null, guardando: false, anunciada: null
   };
+  movimento = NIVEL.criaMovimento();
   entraNoDestino('camera'); render();
   garanteBytesDoCorpo(viz ? [v.d, viz.d] : [v.d]);
 
@@ -13203,14 +13256,41 @@ CTX.abreCamera = async function () {
   if (!view.camera) { if (r.ok) CAM.fecha(r.stream); return; }   // saiu enquanto abria
   if (!r.ok) { view.camera.erro = r.msg; render(); return; }
   streamCamera = r.stream;
-  view.camera.pronta = true;
-  view.camera.lente = CAM.lenteDe(r.stream);
   const aberta = view.camera;
+  // a 1× antes de ler a lente: o que fica gravado é o zoom que a câmera
+  // devolveu depois do pedido (F5)
+  await CAM.fixaZoom(r.stream);
+  if (view.camera !== aberta) return;
+  aberta.pronta = true;
+  aberta.lente = CAM.lenteDe(r.stream);
   podeNivel.then(function (ok) {
-    if (ok && view.camera === aberta) { paraNivel(); paraNivel = NIVEL.escuta(recebeNivel); }
+    if (ok && view.camera === aberta) {
+      paraNivel();
+      paraNivel = NIVEL.escuta(recebeNivel, function (gps) { movimento.registra(gps, Date.now()); });
+    }
   });
   render();
+  if (aberta.ajuste) falaTexto(FALA_DO_AJUSTE);
+  else falaPose(v.pose);
+};
+
+/** Quem fotografa acertou altura e distância: a primeira pose começa (F22). */
+CTX.ajustado = function () {
+  const c = view.camera, v = view.protocolo;
+  if (!c || !v || !c.ajuste) return;
+  preparaAudio();
+  c.ajuste = false;
+  render();
   falaPose(v.pose);
+};
+
+/** A pessoa não ouviu: a fala de agora, de novo (F20). Nunca se repete sozinha. */
+CTX.repeteFala = function () {
+  const c = view.camera, v = view.protocolo;
+  if (!c || !v) return;
+  preparaAudio();
+  if (c.ajuste) falaTexto(FALA_DO_AJUSTE);
+  else falaPose(v.pose);
 };
 
 CTX.fechaCamera = function () {
@@ -13377,10 +13457,31 @@ function bipeDaContagem(n) {
   } catch (e) {}
 }
 
-CTX.disparaCamera = function () {
+/**
+ * O toque no disparo.
+ *
+ * Com alguém tirando, a foto é o quadro do instante em que o dedo ENCOSTA
+ * (F8): o toque empurra o celular, e o quadro que já estava pronto foi feito
+ * antes do empurrão. Por isso o botão chama com `'toque'` no `pointerdown`, e
+ * o clique que o mesmo toque gera logo depois não dispara de novo. O clique
+ * sozinho (teclado, leitor de tela) continua disparando.
+ */
+let toqueEm = -1e9;
+function agoraMs() { return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now(); }
+CTX.disparaCamera = function (origem) {
   const c = view.camera;
   if (!c || !c.pronta || c.contagem != null) return;
+  if (origem === 'toque') toqueEm = agoraMs();
+  else if (agoraMs() - toqueEm < 1000) return;
   preparaAudio();                      // o gesto de toque é o que libera o áudio
+  // Com alguém tirando, um toque é UMA foto, e nada sai sozinho (pedido do
+  // dono, 04/11): quem fotografa vê a pessoa e decide a hora.
+  if (c.quem === 'alguem') {
+    if (c.ajuste) { CTX.ajustado(); return; }
+    if (c.torta || c.guardando) return;
+    capturaAgora();
+    return;
+  }
   // um toque é a sessão inteira: depois desta foto, as que faltam seguem
   // sozinhas. E um toque novo vale mais que a continuação que esperava a voz.
   sequencia++;
@@ -13391,14 +13492,21 @@ CTX.disparaCamera = function () {
 
 async function capturaAgora() {
   const c = view.camera, v = view.protocolo;
-  if (!c || !v) return;
+  if (!c || !v || c.guardando) return;
   c.clarao = null;
   const el = document.querySelector('.cam-video');
   if (!CAM.pronto(el)) { c.contagem = null; toast('A câmera ainda não está pronta.'); render(); return; }
+  // O nível e o giro do INSTANTE do toque, lidos antes de montar o quadro
+  // (F8): a redução leva alguns milissegundos, e o empurrão do dedo entraria
+  // na leitura. Torta é o que a tela mostrava no toque — o "no nível" com a
+  // folga —, e só quando há leitura: sem sensor, não há como dizer.
+  const dados = dadosDaCamera(c);
+  const torta = c.quem === 'alguem' && !!c.nivel && !c.nivelOk;
+  c.guardando = true;
   try {
     // O quadro sai SEMPRE em pé (ver `quadroDoVideo` em infra/fotos.ts): era
     // aqui que três de quatro fotos saíam deitadas e cortadas, em 03/11.
-    const reduzida = Object.assign(await CORPO.reduzDoVideo(el), { via: 'app' }, dadosDaCamera(c));
+    const reduzida = Object.assign(await CORPO.reduzDoVideo(el), { via: 'app' }, dados);
     // O QUADRO PRETO (a D, estado 6; F78): a foto não é guardada, a pose volta
     // para o fim da fila, e a voz diz — ele está a três metros e não vê a tela.
     if (quaseTodoPreto(reduzida.brilho)) {
@@ -13417,44 +13525,167 @@ async function capturaAgora() {
         falaTexto('A foto saiu preta. Vamos de novo.', false, seguirDepoisDaFala(0));
       }
       c.preta = era;
+      c.guardando = false;
       render();
       return;
     }
-    const era = v.pose;
-    const r = await guardaFotoDaPose(v.d, v.pose, reduzida);
-    c.contagem = null;
-    // não coube: a sessão para aqui, e a tela diz (estado 9)
-    if (r && r.parou) { c.seguido = false; sequencia++; aviso(); render(); return; }
-    const prox = r;
-    // a sessão continua AQUI: são várias poses, e sair e voltar a cada uma seria
-    // pior que o problema que esta tela resolve
-    const viz = prox ? vizinhaComAPose(S.protocolo.sessoes, prox, v.d) : null;
-    if (prox) {
-      c.fantasmaD = viz ? viz.d : null;
-      garanteBytesDoCorpo(viz ? [viz.d] : []);
+    // A FOTO TORTA (pedido do dono, 04/11): a foto sai — quem tocou viu a
+    // pessoa pronta, e o clique avisa que ela pode soltar —, mas não é
+    // guardada sem pergunta. Quem fotografa escolhe entre repetir, que é o
+    // caminho certo e leva o destaque, e registrar assim mesmo, com a
+    // inclinação verdadeira gravada junto. A voz espera a resposta (F20).
+    if (torta) {
+      c.contagem = null;
+      c.torta = { reduzida: reduzida, pose: v.pose, txt: NIVEL.foraDoNivel(dados.nivel) };
+      c.guardando = false;
+      obturador();
+      render();
+      return;
     }
-    obturador(); clarao();
-    c.preta = null;
-    // o giro até a pose nova, grande na tela e dito junto (a D, estado 4)
-    c.giro = prox ? (giroEntre(era, prox) || null) : null;
-    if (prox) falaPose(prox, era, seguirDepoisDaFala(c.giro));
-    else c.seguido = false;
-    render();
-    if (!prox) toast('Sessão completa. As ' + posesDo(S.protocolo.poses).length + ' poses estão registradas.');
+    await guardaESegue(c, v, reduzida, false);
   } catch (e) {
     c.contagem = null;
     c.seguido = false;
+    c.guardando = false;
     toast('Não deu para guardar a foto.');
     render();
   }
 }
 
+/**
+ * Guarda a foto da pose em foco e segue para a próxima: o obturador, o clarão,
+ * o giro na tela e a fala da pose nova. Sozinho, a fala puxa a contagem; com
+ * alguém tirando, a miniatura fica no canto e a fala espera 1,5 s, tempo de
+ * quem fotografa tocar em Refazer antes de a pessoa mudar de posição (F20).
+ */
+async function guardaESegue(c, v, reduzida, jaClicou) {
+  const era = v.pose;
+  const r = await guardaFotoDaPose(v.d, era, reduzida);
+  c.contagem = null;
+  c.guardando = false;
+  // não coube: a sessão para aqui, e a tela diz (estado 9)
+  if (r && r.parou) { c.seguido = false; sequencia++; aviso(); render(); return; }
+  const prox = r;
+  // a sessão continua AQUI: são várias poses, e sair e voltar a cada uma seria
+  // pior que o problema que esta tela resolve
+  const viz = prox ? vizinhaComAPose(S.protocolo.sessoes, prox, v.d) : null;
+  if (prox) {
+    c.fantasmaD = viz ? viz.d : null;
+    garanteBytesDoCorpo(viz ? [viz.d] : []);
+  }
+  if (!jaClicou) obturador();
+  clarao();
+  c.preta = null;
+  // o giro até a pose nova, grande na tela e dito junto (a D, estado 4)
+  c.giro = prox ? (giroEntre(era, prox) || null) : null;
+  if (c.quem === 'alguem') {
+    mostraMiniatura(c, v.d, era, reduzida);
+    clearTimeout(falaT);
+    c.anunciada = null;
+    falaT = setTimeout(function () {
+      falaT = null;
+      if (view.camera !== c) return;
+      c.anunciada = prox;
+      if (prox) falaPose(prox, era);
+      else falaTexto(FALA_DO_FIM);
+    }, 1500);
+  } else if (prox) {
+    falaPose(prox, era, seguirDepoisDaFala(c.giro));
+  } else {
+    c.seguido = false;
+    falaTexto(FALA_DO_FIM);
+  }
+  render();
+  if (!prox) toast('Sessão completa. As ' + posesDo(S.protocolo.poses).length + ' poses estão registradas.');
+}
+
+/**
+ * A miniatura da foto que acabou de ser guardada, 3 s no canto do quadro, com
+ * Refazer (F17). Quem fotografa confere nela a linha da pose; a que pode ter
+ * tremido (F12) diz isso, e o Refazer dela leva o destaque.
+ */
+function mostraMiniatura(c, d, pose, reduzida) {
+  const ses = sessaoDe(S.protocolo.sessoes, d);
+  const ref = ses && ses.fotos[pose];
+  c.miniatura = {
+    pose: pose,
+    url: ref ? CORPO.urlDaFoto(d, pose, ref) : null,
+    tremida: !!(reduzida.mov && reduzida.mov.toque > NIVEL.TREMOR)
+  };
+  clearTimeout(miniaturaT);
+  miniaturaT = setTimeout(function () {
+    miniaturaT = null;
+    if (view.camera === c && c.miniatura && c.miniatura.pose === pose) { c.miniatura = null; render(); }
+  }, 3000);
+}
+
+/**
+ * Volta a uma pose para tirá-la de novo, e a voz diz (F22: "Vamos repetir a
+ * pose três", e a frase dela). Se a pessoa já tinha ouvido a pose seguinte e
+ * girado, a voz manda girar de volta.
+ */
+function voltaParaPose(c, v, pose) {
+  const giro = c.anunciada && c.anunciada !== pose ? giroEntre(c.anunciada, pose) : 0;
+  c.anunciada = null;
+  v.pose = pose;
+  c.giro = null;
+  const viz = vizinhaComAPose(S.protocolo.sessoes, pose, v.d);
+  c.fantasmaD = viz ? viz.d : null;
+  garanteBytesDoCorpo(viz ? [viz.d] : []);
+  render();
+  const lista = posesDo(S.protocolo.poses);
+  const i = lista.findIndex(function (p) { return p.id === pose; });
+  const p = lista[i];
+  if (p) falaTexto(giroFalado(giro) + 'Vamos repetir a pose ' + (i + 1) + '. ' +
+                   (p.voz || (Array.isArray(p.como) && p.como[0]) || ''));
+}
+
+/** Refazer a foto da miniatura: a fala da pose seguinte, se ainda não saiu, não sai. */
+CTX.refazUltima = function () {
+  const c = view.camera, v = view.protocolo;
+  if (!c || !v || !c.miniatura || c.guardando) return;
+  const pose = c.miniatura.pose;
+  clearTimeout(falaT); falaT = null;
+  clearTimeout(miniaturaT); miniaturaT = null;
+  c.miniatura = null;
+  voltaParaPose(c, v, pose);
+};
+
+/** A foto torta: repetir, o caminho certo. Nada é guardado. */
+CTX.repeteTorta = function () {
+  const c = view.camera, v = view.protocolo;
+  if (!c || !v || !c.torta) return;
+  const pose = c.torta.pose;
+  c.torta = null;
+  voltaParaPose(c, v, pose);
+};
+
+/** A foto torta: registrar assim mesmo, com a inclinação verdadeira no registro. */
+CTX.registraTorta = async function () {
+  const c = view.camera, v = view.protocolo;
+  if (!c || !v || !c.torta || c.guardando) return;
+  const t = c.torta;
+  c.torta = null;
+  c.guardando = true;
+  render();
+  try {
+    v.pose = t.pose;
+    await guardaESegue(c, v, t.reduzida, true);
+  } catch (e) {
+    c.guardando = false;
+    toast('Não deu para guardar a foto.');
+    render();
+  }
+};
+
 /** A lente e o nível no instante do disparo, para o registro da captura. */
 function dadosDaCamera(c) {
-  const r = {};
+  const r = { modo: c.quem };
   if (c.lente && c.lente.nome) r.lente = c.lente.nome;
   if (c.lente && typeof c.lente.zoom === 'number') r.zoom = c.lente.zoom;
   if (c.nivel) r.nivel = c.nivel;
+  const m = movimento.resumo(Date.now());
+  if (m) r.mov = m;
   return r;
 }
 
@@ -13531,8 +13762,24 @@ CTX.cameraViva = function () {
     timer: c.timer,
     contagem: c.contagem,
     seguido: !!c.seguido,
-    rotulo: rotuloDoDisparo(ses, lista, v.pose),
-    nivel: c.nivel ? { lado: fmtGrau(c.nivel.lado), frente: fmtGrau(c.nivel.frente), ok: NIVEL.noNivel(c.nivel) } : null,
+    quem: c.quem,
+    // Com alguém tirando, o botão é UMA foto; antes dela, o ajuste
+    rotulo: c.quem === 'alguem'
+      ? (c.ajuste ? 'Ajustado' : (ses && ses.fotos[v.pose]) ? 'refazer esta pose' : 'tirar a foto')
+      : rotuloDoDisparo(ses, lista, v.pose),
+    ajuste: c.quem === 'alguem' && c.ajuste ? PASSOS_DO_AJUSTE : null,
+    // o que quem fotografa confere antes do toque: a linha fixa e a da pose
+    // (F15, F16) — com a miniatura no canto, a da foto que acabou de sair —; e
+    // o erro comum em cima do quadro (F18)
+    confira: [CONFERE_SEMPRE, ((c.miniatura && lista.filter(function (p) { return p.id === c.miniatura.pose; })[0]) || lista[i]).confira].filter(Boolean),
+    erroComum: lista[i].erro,
+    torta: c.torta ? { txt: c.torta.txt } : null,
+    miniatura: c.miniatura ? {
+      url: c.miniatura.url, tremida: c.miniatura.tremida,
+      pose: (lista.filter(function (p) { return p.id === c.miniatura.pose; })[0] || {}).n || ''
+    } : null,
+    guardando: !!c.guardando,
+    nivel: c.nivel ? { lado: fmtGrau(c.nivel.lado), frente: fmtGrau(c.nivel.frente), ok: !!c.nivelOk } : null,
     clarao: !!c.clarao,
     // a chave do nó do clarão: um disparo, um nó, uma animação
     disparo: c.clarao || 0,

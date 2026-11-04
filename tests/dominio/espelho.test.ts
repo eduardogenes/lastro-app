@@ -141,8 +141,19 @@ describe('espelho — arquivos', () => {
     fotos['frente-relaxado'].cap = { via: 'app', l: 1080, a: 1440, lente: 'Câmera Traseira', zoom: 1, nivel: { lado: 0, frente: 1.25 } };
     fotos['perfil-direito'].cap = { via: 'sistema', l: 3024, a: 4032, lente: 'iPhone 11 Pro Max back triple camera 6mm f/2', mm: 52 };
     const f = montaArquivos(S, { agora: T })['corpo/fotos.md'];
-    expect(f).toContain('| Frente relaxado | 21:14 | do app · Câmera Traseira · zoom 1× | de lado 0° · frente 1,3° |');
+    expect(f).toContain('| Frente relaxado | 21:14 | do app · Câmera Traseira · zoom 1× | de lado 0° · frente 1,3° (fora do nível) |');
     expect(f).toContain('| Perfil direito | 21:16 | do sistema · iPhone 11 Pro Max back triple camera 6mm f/2 · 52 mm |  |');
+  });
+
+  it('quem disparou, apoiado ou na mão, e o tremor entram na coluna da câmera', () => {
+    const { S } = estado();
+    const fotos = (S as any).protocolo.sessoes[0].fotos;
+    fotos['frente-relaxado'].cap = { via: 'app', l: 1080, a: 1440, zoom: 1, modo: 'alguem',
+      nivel: { lado: 0.4, frente: 0.6 }, mov: { toque: 5.2, seg: 6.1 } };
+    fotos['perfil-direito'].cap = { via: 'app', l: 1080, a: 1440, modo: 'sozinho', mov: { toque: 0, seg: 0.03 } };
+    const f = montaArquivos(S, { agora: T })['corpo/fotos.md'];
+    expect(f).toContain('| Frente relaxado | 21:14 | do app · zoom 1× · alguém tirou · na mão · pode ter tremido (5,2°/s) | de lado 0,4° · frente 0,6° |');
+    expect(f).toContain('| Perfil direito | 21:16 | do app · sozinho · apoiado |  |');
   });
 
   it('só o LEIA-ME muda com a hora da geração', () => {

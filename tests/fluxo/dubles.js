@@ -170,11 +170,25 @@ export function cameraFalsa(a, opcoes) {
         globalThis.__faixasVivas++;
         // a faixa diz qual câmera é e o zoom, como o Safari diz: é o que vira
         // a lente no registro da foto
+        // Com \`faixaDeZoom\`, a câmera deixa escolher o zoom (o iPhone vai de
+        // 0,5× a 10×): o pedido fica em \`__zoomPedidos\`, e o zoom pedido é o
+        // que ela devolve depois
+        const faixaDeZoom = ${JSON.stringify(o.faixaDeZoom || null)};
+        globalThis.__zoomPedidos = [];
+        let zoom = ${o.zoom == null ? 'null' : Number(o.zoom)};
         const faixa = {
           label: ${JSON.stringify(o.rotulo || 'Câmera Traseira')},
-          getSettings: function () { return ${o.zoom == null ? '{}' : '{ zoom: ' + Number(o.zoom) + ' }'}; },
+          getSettings: function () { return zoom == null ? {} : { zoom: zoom }; },
           stop: function () { globalThis.__faixasVivas--; }
         };
+        if (faixaDeZoom) {
+          faixa.getCapabilities = function () { return { zoom: faixaDeZoom }; };
+          faixa.applyConstraints = async function (c) {
+            globalThis.__zoomPedidos.push(JSON.parse(JSON.stringify(c)));
+            const z = c && c.advanced && c.advanced[0] && c.advanced[0].zoom;
+            if (typeof z === 'number') zoom = z;
+          };
+        }
         return {
           getTracks: function () { return [faixa]; },
           getVideoTracks: function () { return [faixa]; }

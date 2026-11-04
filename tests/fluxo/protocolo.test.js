@@ -48,6 +48,13 @@ function semanaDe(n) {
 const guardadas = a => guardadasEm(a, 'lastro-corpo');
 
 /**
+ * O modo sozinho: o celular apoiado, a contagem e a sessão num toque. Desde
+ * 04/11 o padrão é alguém tirando, e os testes da contagem e da sequência
+ * escolhem este modo, como a pessoa escolhe na montagem.
+ */
+const sozinho = a => a.v('ctx.setQuemTira', 'sozinho');
+
+/**
  * Dispara a captura da pose em foco, pelo mesmo caminho que o `input` usa.
  *
  * A foto chega EM PÉ (3000x4000), porque é assim que toda foto do protocolo é
@@ -199,6 +206,7 @@ test('vídeo deitado sai no recorte 3:4 do meio, como a tela mostra, e nunca est
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   a.v('ctx.setTimerDaCamera', 0);
@@ -207,7 +215,7 @@ test('vídeo deitado sai no recorte 3:4 do meio, como a tela mostra, e nunca est
   await a.esperar(150);
 
   assert.deepStrictEqual(a.J('globalThis.__medida'), { l: 810, a: 1080 }, 'o meio, em 3:4');
-  assert.deepStrictEqual(a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap, { via: 'app', l: 1920, a: 1080, lente: 'Câmera Traseira' });
+  assert.deepStrictEqual(a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap, { via: 'app', l: 1920, a: 1080, lente: 'Câmera Traseira', modo: 'sozinho' });
   a.fechar();
 });
 
@@ -1379,6 +1387,7 @@ test('disparo sem temporizador guarda a foto e avança a pose', async () => {
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
 
@@ -1403,6 +1412,7 @@ test('o disparo é o obturador, um clarão e o bloco da pose fechando — não o
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
 
@@ -1453,6 +1463,7 @@ test('a pose que não coube não ganha obturador nem clarão: o bloco dela fica 
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   a.v('ctx.setTimerDaCamera', 0);
@@ -1482,6 +1493,7 @@ test('a foto preta não é guardada: a pose volta no fim da fila, e a voz diz', 
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   a.v('ctx.setTimerDaCamera', 0);
@@ -1528,6 +1540,7 @@ test('entre duas poses com giro, a tela mostra o giro grande e a voz diz', async
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
   a.E(`view.protocolo.pose = 'frente-abdomen-coxa'`);
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   a.v('ctx.setTimerDaCamera', 0);
@@ -1555,6 +1568,7 @@ test('a contagem diz os três últimos em voz', async () => {
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   a.v('ctx.setTimerDaCamera', 3);
@@ -1610,6 +1624,7 @@ test('a pose é dita em voz, ao abrir a câmera e a cada pose nova', async () =>
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
 
@@ -1633,6 +1648,7 @@ test('sem síntese de voz no aparelho, a câmera abre e dispara igual', async ()
   a.E('delete window.speechSynthesis; delete window.SpeechSynthesisUtterance');
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   assert.strictEqual(a.vJ('ctx.cameraViva').pronta, true);
@@ -1651,6 +1667,7 @@ test('a contagem pode ser cancelada antes de disparar', async () => {
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
 
@@ -1684,6 +1701,7 @@ test('sem quadro ainda, a captura recusa em vez de gravar preto', async () => {
   cameraFalsa(a, { semQuadro: true });
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
 
@@ -1730,6 +1748,7 @@ test('depois do disparo a sobreposta acompanha a nova pose', async () => {
 
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   assert.strictEqual(a.vJ('ctx.cameraViva').pose, 'Frente relaxado');
@@ -1751,6 +1770,7 @@ test('a foto da câmera interna entra pelo mesmo caminho da do sistema', async (
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   a.v('ctx.setTimerDaCamera', 0);
@@ -1772,6 +1792,7 @@ test('refazer pela câmera deixa lápide, como pelo sistema', async () => {
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('ctx.abreProtocolo');
   a.E(`view.protocolo.montagem = false; view.protocolo.pose = 'frente-relaxado'`);
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
 
@@ -2452,6 +2473,7 @@ async function cameraAberta(a, opcoes) {
   cameraFalsa(a, opcoes);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
+  sozinho(a);
   await a.v('ctx.abreCamera');
   await a.esperar(60);
 }
@@ -2530,20 +2552,20 @@ test('a foto da câmera do app leva a lente e o nível do celular no disparo', a
   await cameraAberta(a, { rotulo: 'Câmera Traseira', zoom: 1 });
   assert.strictEqual(a.vJ('ctx.cameraViva').nivel, null, 'sem leitura ainda, nada na tela');
 
-  // girado 2° no plano da tela, e reto para a frente
+  // girado 3° no plano da tela, e reto para a frente: de lado, a régua é 2°
   a.E(`const e = new Event('devicemotion');
-       e.accelerationIncludingGravity = { x: 9.81 * Math.sin(2 * Math.PI / 180), y: 9.81 * Math.cos(2 * Math.PI / 180), z: 0 };
+       e.accelerationIncludingGravity = { x: 9.81 * Math.sin(3 * Math.PI / 180), y: 9.81 * Math.cos(3 * Math.PI / 180), z: 0 };
        window.dispatchEvent(e);`);
   await a.esperar(260);
   let n = a.vJ('ctx.cameraViva').nivel;
-  assert.deepStrictEqual(n, { lado: '2°', frente: '0°', ok: false });
-  assert.strictEqual(a.texto('.cam-nivel'), 'de lado 2° · frente 0°', 'e a tela diz, em graus');
+  assert.deepStrictEqual(n, { lado: '3°', frente: '0°', ok: false });
+  assert.strictEqual(a.texto('.cam-nivel'), 'de lado 3° · frente 0°', 'e a tela diz, em graus');
 
   a.v('ctx.setTimerDaCamera', 0);
   a.v('ctx.disparaCamera');
   await a.esperar(120);
   const cap = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap;
-  assert.deepStrictEqual(cap, { via: 'app', l: 1080, a: 1440, lente: 'Câmera Traseira', zoom: 1, nivel: { lado: 2, frente: 0 } });
+  assert.deepStrictEqual(cap, { via: 'app', l: 1080, a: 1440, lente: 'Câmera Traseira', zoom: 1, nivel: { lado: 3, frente: 0 }, modo: 'sozinho' });
 
   // no nível, a tela diz só isso
   a.E(`const e = new Event('devicemotion'); e.accelerationIncludingGravity = { x: 0, y: 9.81, z: 0 };
@@ -2620,5 +2642,275 @@ test('as guias da cabeça e dos pés estão no quadro da câmera', async () => {
   const a = await app({ aba: 'corpo' });
   await cameraAberta(a);
   assert.ok(a.$('.cam-quadro .cam-guia-cabeca') && a.$('.cam-quadro .cam-guia-pes'));
+  a.fechar();
+});
+
+// ---------- com alguém tirando (04/11) ----------
+// O padrão desde 04/11: outra pessoa segura o celular. Um toque é uma foto,
+// nada sai sozinho, e a foto torta não é guardada sem pergunta (pedidos do
+// dono). O resto vem de `~/Lastro/corpo/recomendacoes-quem-fotografa.md`.
+
+/** A câmera aberta com alguém tirando — sem escolher nada, que é o padrão. */
+async function cameraComAlguem(a, opcoes) {
+  cacheFalso(a);
+  cameraFalsa(a, opcoes);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+}
+/** O celular parado nesta inclinação, em graus, e girando a `gps` graus por segundo. */
+async function celular(a, lado, frente, gps) {
+  a.E(`const e = new Event('devicemotion');
+       e.accelerationIncludingGravity = { x: 9.81 * Math.tan(${lado} * Math.PI / 180), y: 9.81, z: 9.81 * Math.tan(${frente} * Math.PI / 180) };
+       e.rotationRate = { alpha: ${gps || 0}, beta: 0, gamma: 0 };
+       for (let i = 0; i < 40; i++) window.dispatchEvent(e);`);
+  await a.esperar(260);
+}
+const falas = a => a.registro.falas.map(f => f.t);
+const ultimaFala = a => falas(a)[falas(a).length - 1];
+
+test('o padrão é alguém tirando: a montagem é a de quem fotografa, e a escolha fica no aparelho', async () => {
+  const a = await app({ aba: 'corpo' });
+  a.v('ctx.abreProtocolo');
+  let m = a.vJ('ctx.sessaoDeFotos').montagem;
+  assert.strictEqual(m.quem, 'alguem');
+  assert.ok(m.itens.some(i => i.k === 'quem' && /cadeira/.test(i.valor)), 'a cadeira marcada de quem fotografa');
+  assert.ok(/Alguém tira para mim/.test(a.texto('.pr-quem .on')));
+
+  a.v('ctx.setQuemTira', 'sozinho');
+  m = a.vJ('ctx.sessaoDeFotos').montagem;
+  assert.strictEqual(m.quem, 'sozinho');
+  assert.ok(!m.itens.some(i => i.k === 'quem'), 'sozinho, o celular está apoiado');
+  await a.esperar(20);
+  assert.strictEqual(a.E(`localStorage.getItem('lastro-fotos-quem-v1')`), 'sozinho', 'guardada neste aparelho');
+  assert.strictEqual(a.S().quemTira, undefined, 'e fora do estado que sincroniza');
+
+  // a abertura seguinte do app lê a escolha de volta
+  a.E(`quemTira = 'alguem'`);
+  await a.E('lembraQuemTira()');
+  assert.strictEqual(a.vJ('ctx.sessaoDeFotos').montagem.quem, 'sozinho');
+  a.fechar();
+});
+
+test('com alguém tirando, a sessão começa pelo ajuste, e a voz pede para esperar', async () => {
+  const a = await app({ aba: 'corpo' });
+  await cameraComAlguem(a);
+  let c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.quem, 'alguem');
+  assert.strictEqual(c.ajuste.length, 4, 'os quatro passos do ajuste');
+  assert.strictEqual(a.texto('.cam-disparo'), 'Ajustado');
+  assert.strictEqual(a.$$('.cam-ajuste li').length, 4);
+  assert.strictEqual(ultimaFala(a), 'Fique no T, de frente para o celular, braços soltos. Espere o ajuste.');
+  assert.ok(!/A primeira contagem/.test(a.doc.body.textContent), 'sem contagem: quem fotografa dispara');
+
+  a.v('ctx.ajustado');
+  c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.ajuste, null);
+  assert.strictEqual(a.texto('.cam-disparo'), 'tirar a foto', 'um toque, uma foto');
+  assert.ok(/^Pose 1 de 9\. Frente relaxado\./.test(ultimaFala(a)), ultimaFala(a));
+  assert.deepStrictEqual(a.$$('.cam-confira-l').map(e => e.textContent),
+    ['nível verde · cabeça e pés nas linhas', 'pés no T · braços um palmo do corpo']);
+  assert.ok(/^erro comum · colar os braços/.test(a.texto('.cam-erro')));
+  a.fechar();
+});
+
+test('câmera reaberta no meio da sessão não repete o ajuste', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.E(`S.protocolo.sessoes = [{ d: hojeISO(), t: 1, m: 1, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } }]`);
+  a.v('ctx.abreProtocolo');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  assert.strictEqual(a.vJ('ctx.cameraViva').ajuste, null);
+  assert.ok(/^Pose 2 de 9/.test(ultimaFala(a)), ultimaFala(a));
+  a.fechar();
+});
+
+test('com alguém tirando, um toque é uma foto: a miniatura fica no canto, e a pose seguinte espera 1,5 s', async () => {
+  const a = await app({ aba: 'corpo' });
+  await cameraComAlguem(a);
+  a.v('ctx.ajustado');
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.ok(a.S().protocolo.sessoes[0].fotos['frente-relaxado'], 'a foto foi guardada');
+  assert.strictEqual(a.registro.obturador, 1);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps');
+  let c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.seguido, false, 'nada de sequência');
+  assert.strictEqual(c.contagem, null);
+  assert.ok(a.$('.cam-mini button'), 'a miniatura, com Refazer');
+  assert.strictEqual(a.texto('.cam-mini button'), 'Refazer');
+  assert.strictEqual(a.texto('.cam-confira .ins-label'), 'confira na foto');
+  assert.strictEqual(a.$$('.cam-confira-l')[1].textContent, 'pés no T · braços um palmo do corpo', 'a linha da foto que saiu');
+  assert.ok(!falas(a).some(t => /^Pose 2/.test(t)), 'a pessoa ainda não ouviu a pose seguinte');
+
+  await a.esperar(1550);
+  assert.ok(/^Pose 2 de 9\. Frente duplo bíceps\./.test(ultimaFala(a)), ultimaFala(a));
+  await a.esperar(1600);
+  assert.strictEqual(a.vJ('ctx.cameraViva').miniatura, null, 'a miniatura saiu depois de 3 s');
+  assert.strictEqual(Object.keys(a.S().protocolo.sessoes[0].fotos).length, 1, 'e nenhuma outra foto saiu sozinha');
+  a.fechar();
+});
+
+test('o toque e o clique do mesmo dedo tiram uma foto só', async () => {
+  const a = await app({ aba: 'corpo' });
+  await cameraComAlguem(a);
+  a.v('ctx.ajustado');
+  a.v('ctx.disparaCamera', 'toque');
+  await a.esperar(120);
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.strictEqual(Object.keys(a.S().protocolo.sessoes[0].fotos).length, 1);
+  assert.strictEqual(a.registro.obturador, 1);
+  a.fechar();
+});
+
+test('refazer na miniatura volta para a pose, e a fala da seguinte não sai', async () => {
+  const a = await app({ aba: 'corpo' });
+  await cameraComAlguem(a);
+  a.v('ctx.ajustado');
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  a.v('ctx.refazUltima');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-relaxado');
+  assert.strictEqual(ultimaFala(a), 'Vamos repetir a pose 1. Braços soltos, um palmo do corpo. Solte o ar e segure.');
+  assert.strictEqual(a.vJ('ctx.cameraViva').miniatura, null);
+  await a.esperar(1600);
+  assert.ok(!falas(a).some(t => /^Pose 2/.test(t)), 'a fala da pose 2 morreu com o refazer');
+  assert.strictEqual(a.texto('.cam-disparo'), 'refazer esta pose');
+  a.fechar();
+});
+
+test('refazer depois de a pessoa já ter girado manda girar de volta', async () => {
+  const a = await app({ aba: 'corpo' });
+  await cameraComAlguem(a);
+  a.E(`S.protocolo.sessoes = [{ d: hojeISO(), t: 1, m: 1, fotos: {
+         'frente-relaxado': { v: 1, ext: 'webp' }, 'frente-duplo-biceps': { v: 2, ext: 'webp' } } }];
+       view.protocolo.pose = 'frente-abdomen-coxa'; view.camera.ajuste = false;`);
+  a.v('ctx.disparaCamera');
+  await a.esperar(1700);
+  assert.ok(/^Gire para a sua esquerda/.test(ultimaFala(a)), 'a pessoa ouviu o giro do perfil: ' + ultimaFala(a));
+  a.v('ctx.refazUltima');
+  assert.ok(/^Gire para a sua direita, um quarto de volta\. Pés na marca\. Vamos repetir a pose 3\./.test(ultimaFala(a)), ultimaFala(a));
+  a.fechar();
+});
+
+test('tocar fora do nível: a foto sai, o app avisa e pergunta, e Repetir não guarda nada', async () => {
+  const a = await app({ aba: 'corpo' });
+  a.E('window.DeviceMotionEvent = function () {}');
+  await cameraComAlguem(a);
+  a.v('ctx.ajustado');
+  await celular(a, 0, 1.5);
+  assert.strictEqual(a.vJ('ctx.cameraViva').nivel.ok, false);
+
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.strictEqual(a.S().protocolo.sessoes.length, 0, 'torta não é guardada sem pergunta');
+  assert.strictEqual(a.registro.obturador, 1, 'mas o clique sai: a pessoa pode soltar a pose');
+  assert.strictEqual(a.texto('.cam-torta p'), 'A foto saiu torta: frente 1,5°.');
+  const [repetir, registrar] = a.$$('.cam-torta button');
+  assert.strictEqual(repetir.textContent, 'Repetir');
+  assert.ok(repetir.classList.contains('ins-btn-primary'), 'repetir leva o destaque');
+  assert.strictEqual(registrar.textContent, 'Registrar assim');
+  assert.ok(registrar.classList.contains('ins-btn-secondary'));
+  assert.ok(!a.$('.cam-disparo'), 'o disparo espera a resposta');
+  const antes = falas(a).length;
+  a.v('ctx.disparaCamera');
+  await a.esperar(60);
+  assert.strictEqual(a.registro.obturador, 1, 'e um toque a mais não tira outra');
+
+  a.v('ctx.repeteTorta');
+  assert.strictEqual(a.vJ('ctx.cameraViva').torta, null);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-relaxado');
+  assert.ok(/^Vamos repetir a pose 1\./.test(ultimaFala(a)));
+  assert.strictEqual(falas(a).length, antes + 1);
+  assert.strictEqual(a.S().protocolo.sessoes.length, 0);
+
+  // no nível, sai sem pergunta, com a inclinação no registro
+  await celular(a, 0, 0);
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  const cap = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap;
+  assert.deepStrictEqual(cap.nivel, { lado: 0, frente: 0 });
+  assert.strictEqual(cap.modo, 'alguem');
+  a.fechar();
+});
+
+test('registrar assim guarda a foto torta com a inclinação verdadeira, e o clique não toca duas vezes', async () => {
+  const a = await app({ aba: 'corpo' });
+  a.E('window.DeviceMotionEvent = function () {}');
+  await cameraComAlguem(a);
+  a.v('ctx.ajustado');
+  await celular(a, 3, 0);
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.strictEqual(a.texto('.cam-torta p'), 'A foto saiu torta: de lado 3°.');
+  await a.v('ctx.registraTorta');
+  await a.esperar(60);
+  const cap = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap;
+  assert.deepStrictEqual(cap.nivel, { lado: 3, frente: 0 });
+  assert.strictEqual(a.registro.obturador, 1);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'e a sessão segue');
+  a.fechar();
+});
+
+test('o verde tem folga: quem já estava no nível segue verde um pouco além da régua', async () => {
+  const a = await app({ aba: 'corpo' });
+  a.E('window.DeviceMotionEvent = function () {}');
+  await cameraComAlguem(a);
+  await celular(a, 0, 0);
+  assert.strictEqual(a.vJ('ctx.cameraViva').nivel.ok, true);
+  await celular(a, 0, 1.2);
+  assert.strictEqual(a.vJ('ctx.cameraViva').nivel.ok, true, '1,2° para a frente, vindo do nível: ainda verde');
+  await celular(a, 0, 1.4);
+  assert.strictEqual(a.vJ('ctx.cameraViva').nivel.ok, false, 'passou da folga');
+  await celular(a, 0, 1.2);
+  assert.strictEqual(a.vJ('ctx.cameraViva').nivel.ok, false, 'e para voltar, tem de entrar na régua');
+  a.fechar();
+});
+
+test('o giroscópio entra no registro, e a foto que pode ter tremido avisa na miniatura', async () => {
+  const a = await app({ aba: 'corpo' });
+  a.E('window.DeviceMotionEvent = function () {}');
+  await cameraComAlguem(a);
+  a.v('ctx.ajustado');
+  await celular(a, 0, 0, 5);
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  const cap = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap;
+  assert.deepStrictEqual(cap.mov, { toque: 5, seg: 5 });
+  assert.strictEqual(a.texto('.cam-mini-aviso'), 'pode ter tremido');
+  assert.ok(a.$('.cam-mini button').classList.contains('ins-btn-primary'), 'o Refazer da tremida leva o destaque');
+  a.fechar();
+});
+
+test('a câmera do app fica na 1× e grava o zoom que a câmera devolveu', async () => {
+  const a = await app({ aba: 'corpo' });
+  await cameraComAlguem(a, { faixaDeZoom: { min: 0.5, max: 10 }, zoom: 0.5 });
+  assert.deepStrictEqual(a.E('JSON.stringify(__zoomPedidos)'), JSON.stringify([{ advanced: [{ zoom: 1 }] }]));
+  a.v('ctx.ajustado');
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.strictEqual(a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap.zoom, 1);
+  a.fechar();
+});
+
+test('trocar para sozinho no meio larga a foto torta e volta à sessão num toque', async () => {
+  const a = await app({ aba: 'corpo' });
+  a.E('window.DeviceMotionEvent = function () {}');
+  await cameraComAlguem(a);
+  a.v('ctx.ajustado');
+  await celular(a, 0, 2);
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.ok(a.vJ('ctx.cameraViva').torta);
+  a.v('ctx.setQuemTira', 'sozinho');
+  const c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.torta, null);
+  assert.strictEqual(c.quem, 'sozinho');
+  assert.strictEqual(a.texto('.cam-disparo'), 'tirar as 9 fotos');
+  assert.ok(/A primeira contagem/.test(a.doc.body.textContent));
   a.fechar();
 });

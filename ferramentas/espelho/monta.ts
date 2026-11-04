@@ -36,6 +36,7 @@ import {
 import { CADENCIA_PADRAO, cadenciaPrevista } from '../../src/dominio/dia';
 import { DIAS_CURTOS, DIAS_LONGOS, MESES, fmtDesc, fmtDur, fmtHora } from '../../src/dominio/formato';
 import { BUCKET_APARELHOS, BUCKET_CORPO } from '../../src/infra/supabase';
+import { APOIADO, NIVEL_FRENTE, NIVEL_LADO, TREMOR, noNivel } from '../../src/infra/nivel';
 
 // ---------------------------------------------------------------------------
 // O que entra e o que sai
@@ -780,14 +781,24 @@ function cameraDaFoto(f: FotoRef): string {
   if (c.lente) p.push(c.lente);
   if (numero(c.mm)) p.push(c.mm + ' mm');
   if (typeof c.zoom === 'number' && isFinite(c.zoom)) p.push('zoom ' + br(c.zoom, 2) + '×');
+  if (c.modo) p.push(MODO[c.modo] || '');
+  // apoiado ou na mão, pelo maior giro do segundo antes do toque; e o tremor
+  // do instante do toque (ver infra/nivel.ts)
+  if (c.mov && numero(c.mov.seg) != null) p.push(c.mov.seg < APOIADO ? 'apoiado' : 'na mão');
+  if (c.mov && numero(c.mov.toque) != null && c.mov.toque > TREMOR) p.push('pode ter tremido (' + br(c.mov.toque, 1) + '°/s)');
   return p.filter(Boolean).join(' · ');
 }
+
+const MODO: Record<string, string> = { alguem: 'alguém tirou', sozinho: 'sozinho' };
 
 /** A inclinação do celular no disparo, quando o app mediu (câmera do app, desde 04/11). */
 function nivelDaFoto(f: FotoRef): string {
   const n = f.cap && f.cap.nivel;
   if (!n || numero(n.lado) == null || numero(n.frente) == null) return '';
-  return 'de lado ' + br(n.lado, 1) + '° · frente ' + br(n.frente, 1) + '°';
+  const txt = 'de lado ' + br(n.lado, 1) + '° · frente ' + br(n.frente, 1) + '°';
+  // fora da régua: só chega aqui se quem fotografou viu o aviso e escolheu
+  // registrar assim
+  return noNivel(n) ? txt : txt + ' (fora do nível)';
 }
 
 function fotosDoCorpo(b: Base, ctx: Contexto): string {
@@ -802,7 +813,8 @@ function fotosDoCorpo(b: Base, ctx: Contexto): string {
     'Os arquivos são as fotos originais. Quando a coluna "Ajuste no app" tem algo, o app mostra a foto girada ou recortada, mas o arquivo não muda.',
     'A hora de cada foto importa: luz e hora do dia mudam o que a foto mostra.',
     'A coluna "Câmera" diz se a foto saiu da câmera do app (um quadro do vídeo, com menos processamento) ou da câmera do sistema; vazia nas fotos de antes de 03/11/2026. Desde 04/11/2026 ela traz também a lente: o nome que o aparelho dá a ela, a focal equivalente em 35 mm (26 mm é a 1×, 52 mm a 2×) e o zoom, quando o aparelho informa.',
-    'A coluna "Nível" é a inclinação do celular no disparo, medida pelo sensor (só na câmera do app, desde 04/11/2026): de lado, no plano da tela, e para a frente ou para trás. Só o tamanho, sem o sentido. Até 1° está no nível.'
+    'A coluna "Câmera" diz também quem disparou ("alguém tirou" ou "sozinho"), se o celular estava apoiado ou na mão (pelo giroscópio, no segundo antes do toque) e quando a foto pode ter tremido (giro acima de ' + TREMOR + '°/s no toque). Só na câmera do app, desde 04/11/2026.',
+    'A coluna "Nível" é a inclinação do celular no disparo, medida pelo sensor (só na câmera do app, desde 04/11/2026): de lado, no plano da tela, e para a frente ou para trás. Só o tamanho, sem o sentido. Está no nível até ' + NIVEL_LADO + '° de lado e ' + NIVEL_FRENTE + '° para a frente. Foto fora disso só é guardada quando quem fotografa vê o aviso e escolhe registrar assim, e a coluna diz "(fora do nível)".'
   ]);
 
   L.push('## O protocolo', '', '| Pose | Bloco | Giro | O que mostra |', '|---|---|---|---|');

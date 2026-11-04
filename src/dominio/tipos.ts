@@ -374,7 +374,25 @@ export interface Captura {
   zoom?: number;
   /** a inclinação do celular no disparo, em graus: de lado, e para a frente ou para trás */
   nivel?: { lado: number; frente: number };
+  /**
+   * Quem disparou (desde 04/11): outra pessoa com o celular, ou a própria
+   * pessoa com ele apoiado. Só na câmera do app, que é onde o modo existe.
+   */
+  modo?: QuemTira;
+  /**
+   * O quanto o celular girava, em graus por segundo, pelo giroscópio: no toque,
+   * e o maior valor do segundo antes dele. O primeiro diz se a foto pode ter
+   * tremido; o segundo, se o celular estava apoiado ou na mão. Gravados como
+   * número, e não como rótulo, para o corte poder mudar depois.
+   */
+  mov?: { toque: number; seg: number };
 }
+
+/**
+ * Quem tira as fotos do corpo. O padrão é `alguem`: na vida real, outra pessoa
+ * segura o celular (04/11). `sozinho` é o celular apoiado e a contagem.
+ */
+export type QuemTira = 'alguem' | 'sozinho';
 
 /** id de uma pose do protocolo, derivado do nome uma vez só. */
 export type PoseId = string;
@@ -398,6 +416,12 @@ export interface Pose {
    * primeira linha de `como`.
    */
   voz?: string;
+  /**
+   * O que quem fotografa confere antes do toque e de novo na miniatura: no
+   * máximo dois itens, separados por " · ". É tela, nunca voz — a pessoa
+   * fotografada ouviria "confira os pés" e baixaria a cabeça para olhar.
+   */
+  confira?: string;
   revela: string;
   erro: string;
 }

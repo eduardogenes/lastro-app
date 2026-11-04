@@ -25,8 +25,34 @@ export interface Nivel {
   frente: number;
 }
 
-/** Dentro disto, em graus, nas duas direções, o celular está no nível. */
-export const NIVEL_OK = 1;
+/**
+ * Até quantos graus o celular está no nível, uma régua para cada direção
+ * (`recomendacoes-quem-fotografa.md`, F9; antes era 1° nas duas).
+ *
+ * PARA A FRENTE pesa mais: o celular apontado para baixo aumenta a cabeça e o
+ * tronco e encolhe as pernas, e girar a foto depois não desfaz isso. Na 1×, a
+ * lente do protocolo, cada grau muda 2,1% da proporção entre a metade de cima e
+ * a de baixo do corpo.
+ *
+ * DE LADO só gira a foto, sem mudar proporção nenhuma, e o "Ajustar" endireita.
+ * O agente aceita até 5° porque a comparação endireitaria sozinha pelo ângulo
+ * gravado — mas isso pede o SENTIDO do giro, que este sensor não garante (ver o
+ * começo do arquivo). Enquanto a comparação não endireita, a régua de lado é a
+ * do alvo dele, 2°.
+ */
+export const NIVEL_FRENTE = 1;
+export const NIVEL_LADO = 2;
+/**
+ * O verde acende ao entrar na régua e só apaga depois de passar dela por esta
+ * folga (F9): com o celular na mão, o número dança em volta do limite, e o
+ * indicador piscaria a cada décimo.
+ */
+export const FOLGA_DO_NIVEL = 0.3;
+
+/** Acima disto, em graus por segundo no toque, a foto pode ter tremido (F12, na 1×). */
+export const TREMOR = 4;
+/** Abaixo disto, o maior giro do segundo antes do toque: o celular estava apoiado (F13). */
+export const APOIADO = 0.1;
 
 const GRAU = 180 / Math.PI;
 
@@ -47,9 +73,58 @@ export function angulos(x: number, y: number, z: number): Nivel | null {
   };
 }
 
-/** As duas dentro da tolerância? */
-export function noNivel(n: Nivel | null | undefined): boolean {
-  return !!n && n.lado <= NIVEL_OK && n.frente <= NIVEL_OK;
+/**
+ * As duas dentro da régua? Com `antes` (se estava no nível na leitura
+ * anterior), quem já estava verde só sai depois da folga.
+ */
+export function noNivel(n: Nivel | null | undefined, antes?: boolean): boolean {
+  if (!n) return false;
+  const f = antes ? FOLGA_DO_NIVEL : 0;
+  return n.lado <= NIVEL_LADO + f && n.frente <= NIVEL_FRENTE + f;
+}
+
+/** O que passou da régua, em palavras: "frente 1,4°", "de lado 2,6° · frente 1,2°". */
+export function foraDoNivel(n: Nivel | null | undefined): string {
+  if (!n) return '';
+  const g = function (x: number) { return String(Math.round(x * 10) / 10).replace('.', ',') + '°'; };
+  const partes: string[] = [];
+  if (n.lado > NIVEL_LADO) partes.push('de lado ' + g(n.lado));
+  if (n.frente > NIVEL_FRENTE) partes.push('frente ' + g(n.frente));
+  return partes.join(' · ');
+}
+
+/** O giro do celular num instante, em graus por segundo, pelos três eixos. */
+export function velocidade(r: { alpha?: number | null; beta?: number | null; gamma?: number | null } | null | undefined): number | null {
+  if (!r || r.alpha == null || r.beta == null || r.gamma == null) return null;
+  const a = Number(r.alpha), b = Number(r.beta), c = Number(r.gamma);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(c)) return null;
+  return Math.hypot(a, b, c);
+}
+
+export interface Movimento { toque: number; seg: number; }
+
+/**
+ * O giro do último segundo, para o registro do toque: o do instante e o maior
+ * da janela. O primeiro diz se pode ter tremido; o segundo, se estava apoiado.
+ */
+export function criaMovimento() {
+  let amostras: { t: number; v: number }[] = [];
+  return {
+    registra: function (v: number, t: number) {
+      amostras.push({ t: t, v: v });
+      const corte = t - 1000;
+      while (amostras.length && amostras[0].t < corte) amostras.shift();
+    },
+    resumo: function (t: number): Movimento | null {
+      const janela = amostras.filter(function (a) { return a.t >= t - 1000 && a.t <= t; });
+      if (!janela.length) return null;
+      const max = Math.max.apply(null, janela.map(function (a) { return a.v; }));
+      return {
+        toque: Math.round(janela[janela.length - 1].v * 10) / 10,
+        seg: Math.round(max * 100) / 100
+      };
+    }
+  };
 }
 
 /**
@@ -77,10 +152,13 @@ export function pedePermissao(): Promise<boolean> {
  * O vetor passa por um filtro curto: a mão que solta o celular no apoio faz o
  * número pular, e o que interessa é onde ele assenta.
  */
-export function escuta(aoMudar: (n: Nivel | null) => void): () => void {
+export function escuta(aoMudar: (n: Nivel | null) => void, aoGirar?: (grausPorSegundo: number) => void): () => void {
   if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return function () {};
   let s: { x: number; y: number; z: number } | null = null;
   const ouve = function (e: DeviceMotionEvent) {
+    // o giroscópio vem no mesmo evento, e sem filtro: tremor é o pico, não a média
+    const v = aoGirar ? velocidade(e && e.rotationRate) : null;
+    if (aoGirar && v != null) aoGirar(v);
     const a = e && e.accelerationIncludingGravity;
     if (!a || a.x == null || a.y == null || a.z == null) return;
     s = s

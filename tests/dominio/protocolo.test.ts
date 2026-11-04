@@ -7,7 +7,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import {
-  CADENCIA_DIAS, MONTAGEM, PROTOCOLO, comAPose, completude, dataLocal, diasDesde,
+  CADENCIA_DIAS, CONFERE_SEMPRE, PASSOS_DO_AJUSTE, PROTOCOLO, montagem, comAPose, completude, dataLocal, diasDesde,
   instanteDaData, mediaDaSemana, ordemPadrao, parPadrao, poseDe, poses,
   proximaPose, referencia, sessaoDe, ultima, vizinhaComAPose
 } from '../../src/dominio/protocolo';
@@ -42,14 +42,58 @@ test('toda pose pedida tem a frase da voz, curta', () => {
   });
 });
 
-test('a montagem não troca lente por distância', () => {
-  // "3 m com a 2× ou 2,5 m com a 1×" mostrava uma faixa 1,67× maior da cena
-  const texto = MONTAGEM.map(i => i.valor + ' ' + i.nota).join(' ');
-  assert.ok(!/2,5 m/.test(texto), texto);
-  assert.ok(/Não troque entre 1× e 2×/.test(texto));
-  // metade da altura é a linha do quadril, e não o umbigo
-  const alt = MONTAGEM.filter(i => i.k === 'alt')[0];
-  assert.ok(/quadril/.test(alt.nota) && !/^Umbigo/.test(alt.nota), alt.nota);
+test('a montagem não troca lente por distância: é a 1×, sempre, nos dois modos', () => {
+  // "3 m com a 2× ou 2,5 m com a 1×" mostrava uma faixa 1,67× maior da cena; e
+  // desde a revisão de quem fotografa (F5) a lente é só a 1×
+  (['alguem', 'sozinho'] as const).forEach(q => {
+    const itens = montagem(q);
+    const texto = itens.map(i => i.valor + ' ' + i.nota).join(' ');
+    assert.ok(!/(^|[^\d,])(2,5|3) m/.test(texto), q + ': ' + texto);
+    const lente = itens.filter(i => i.k === 'lente')[0];
+    assert.strictEqual(lente.valor, 'a 1×, sempre');
+    assert.ok(/Não troque para a 2× nem para a 0,5×/.test(lente.nota));
+    // a lente fica na linha do quadril, e não no umbigo
+    const alt = itens.filter(i => i.k === 'alt')[0];
+    assert.ok(/quadril|mesmo espaço/.test(alt.nota) && !/^Umbigo/.test(alt.nota), alt.nota);
+  });
+});
+
+test('com alguém tirando, a montagem é a de quem fotografa', () => {
+  // F1–F4, F6, F7: cadeira marcada, regra do centro, linhas como régua, pegada
+  const itens = montagem('alguem');
+  const k = itens.map(i => i.k);
+  ['quem', 'dist', 'alt', 'pegada', 'lente', 'apoio', 'parede', 'luz', 'hora', 'roupa']
+    .forEach(c => assert.ok(k.includes(c), 'falta ' + c));
+  const de = (c: string) => itens.filter(i => i.k === c)[0];
+  assert.ok(/cadeira/.test(de('quem').valor) && /fita/.test(de('quem').nota));
+  assert.strictEqual(de('dist').valor, 'a das linhas');
+  assert.ok(/punhos podem passar/.test(de('dist').nota), 'a linha de cima é para a cabeça (F11)');
+  assert.ok(/mesmo espaço acima da cabeça e abaixo dos pés/.test(de('alt').nota), 'a regra do centro (F3)');
+  assert.ok(/não fica entre a luz e a pessoa/.test(de('luz').nota), 'F7');
+  // sozinho, nada de cadeira: o celular está apoiado
+  assert.ok(!montagem('sozinho').some(i => i.k === 'quem' || i.k === 'pegada'));
+});
+
+test('cada pose tem a linha que quem fotografa confere, com no máximo dois itens', () => {
+  // F16: é tela, nunca voz — e cabe embaixo do quadro, em duas linhas no máximo
+  poses(null).forEach(p => {
+    assert.ok(p.confira, p.id + ' sem linha de conferência');
+    assert.ok(p.confira!.split(' · ').length <= 2, p.id + ': ' + p.confira);
+  });
+  assert.strictEqual(poseDe('costas-maos-na-cintura')!.confira, 'mãos só apoiadas, sem beliscar · cintura à mostra');
+  assert.strictEqual(CONFERE_SEMPRE, 'nível verde · cabeça e pés nas linhas');
+  assert.strictEqual(PASSOS_DO_AJUSTE.length, 4);
+});
+
+test('no abdômen a pessoa olha para a frente, e não para o celular', () => {
+  // F21: com a lente no quadril, olhar para o celular baixa a cabeça uns 28°
+  const p = poseDe('frente-abdomen-coxa')!;
+  assert.ok(!/celular/.test(p.voz! + p.como.join(' ')), p.voz);
+  assert.ok(/Olhe para a frente\./.test(p.voz!));
+  assert.ok(/Olhe para a frente, na altura dos olhos/.test(p.como.join(' ')));
+  // F22: pés juntos no duplo bíceps de costas, mãos só apoiadas na cintura
+  assert.ok(/Pés juntos/.test(poseDe('costas-duplo-biceps')!.voz!));
+  assert.ok(/sem apertar/.test(poseDe('costas-maos-na-cintura')!.voz!));
 });
 
 test('a ordem é uma rotação contínua, nunca volta para trás', () => {
