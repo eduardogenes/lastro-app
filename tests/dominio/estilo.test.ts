@@ -2839,3 +2839,19 @@ test('(k) o resto do lugar: o copo enche de baixo, a forma pousa, a frase da abe
   const chamam = (mj.match(/\n\s*mostraOTecladoInteiro\(\);/g) || []).length;
   assert.ok(abrem >= 6 && chamam === abrem, 'todo lugar que abre o teclado o traz inteiro para a tela: ' + abrem + ' abrem, ' + chamam + ' chamam');
 });
+
+test('duas fotos lado a lado ficam em metades, e o conteúdo não alarga uma delas', () => {
+  // Medido no iPhone em 04/11: com `1fr 1fr` (= `minmax(auto, 1fr)`), o Safari
+  // deu à referência quase a largura toda e espremeu a foto de hoje numa tira
+  // no canto. Com mínimo zero, a coluna não depende do mínimo do conteúdo.
+  const css = fonte('src/protocolo.css');
+  const regra = (sel: string) => {
+    const m = css.match(new RegExp(sel.replace(/\./g, '\\.') + '\\s*\\{([^}]*)\\}'));
+    assert.ok(m, 'a regra ' + sel + ' sumiu de src/protocolo.css');
+    return m![1];
+  };
+  ['.pr-fotos.dupla', '.cp-par'].forEach(sel => {
+    assert.match(regra(sel), /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/, sel);
+  });
+  ['.pr-fig', '.cp-lado'].forEach(sel => assert.match(regra(sel), /min-width:\s*0/, sel));
+});

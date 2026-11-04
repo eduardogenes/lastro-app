@@ -111,7 +111,7 @@ O dono decidiu duas coisas antes do relatório:
   - modos diferentes;
   - inclinações diferentes;
   - foto que pode ter tremido.
-- [ ] `public/teste-camera.html`: o agente diz que já pode sair. Ficou, porque é do dono e serve para diagnosticar a câmera de novo.
+- [x] `public/teste-camera.html` saiu (04/11, pedido do dono): cada foto já grava o que a página media.
 - [ ] A primeira sessão com a foto de verdade confirma, pelos dados, se ela tem o mesmo enquadramento que a tela mostrava (`cap.origem`, `cap.l` × `cap.a` e as fotos no espelho).
 
 ## Segunda leva: depende de ver o corpo na imagem

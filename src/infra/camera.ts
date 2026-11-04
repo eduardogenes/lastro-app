@@ -46,7 +46,7 @@ const PEDIDO: MediaStreamConstraints = {
     facingMode: { ideal: 'environment' },
     // O sensor inteiro (04/11, F27): no iPhone dele a imagem ao vivo vem em
     // 3024×4032 a 30 quadros, e foi assim que o `takePhoto` funcionou no teste
-    // (`public/teste-camera.html`). É também a reserva: quando a foto de
+    // (a página `teste-camera.html`, retirada depois). É também a reserva: quando a foto de
     // verdade falha, o quadro do vídeo já vem na resolução cheia.
     width: { ideal: 4032 },
     height: { ideal: 3024 }

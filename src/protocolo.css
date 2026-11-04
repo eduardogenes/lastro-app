@@ -36,8 +36,14 @@
 
 /* ---------- as fotos ---------- */
 .pr-fotos { display: grid; gap: var(--ins-3); }
-.pr-fotos.dupla { grid-template-columns: 1fr 1fr; }
-.pr-fig { margin: 0; display: flex; flex-direction: column; gap: var(--ins-2); }
+/* As duas fotos em METADES iguais, e `minmax(0, 1fr)` em vez de `1fr`, que é
+   `minmax(auto, 1fr)`: com `auto`, a coluna não encolhe abaixo do mínimo que o
+   conteúdo declara. O Safari do iPhone (iOS 18, 04/11) calcula esse mínimo
+   errado para o quadro 3:4 da referência — quase a largura toda —, e a foto de
+   hoje ficava espremida numa tira de 25 px no canto. Com mínimo zero, nenhum
+   motor tem conta a errar. */
+.pr-fotos.dupla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pr-fig { margin: 0; display: flex; flex-direction: column; gap: var(--ins-2); min-width: 0; }
 /* ---------- o quadro da foto ---------- */
 /* Toda foto do protocolo é desenhada aqui dentro. O quadro é 3:4 fixo e recorta
    o que sobra: é ele que dá ao ajuste um lado de referência estável, e é o que
@@ -105,13 +111,14 @@
 .cp-ate { flex: 0 0 auto; }
 .cp-modo { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
 
-.cp-par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-3); margin-top: var(--ins-7); }
+/* Metades iguais pelo mesmo motivo de `.pr-fotos.dupla`. */
+.cp-par { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ins-3); margin-top: var(--ins-7); }
 
 /* A pergunta da régua calórica, separada do que está acima por uma régua: ela
    não é leitura da foto, é o que se faz com a leitura. */
 .cp-gordura { margin-top: var(--ins-7); padding-top: var(--ins-5); border-top: 1px solid var(--ins-fio); }
 .cp-gordura .ins-label { display: block; margin-bottom: var(--ins-3); }
-.cp-lado { margin: 0; display: flex; flex-direction: column; gap: var(--ins-2); }
+.cp-lado { margin: 0; display: flex; flex-direction: column; gap: var(--ins-2); min-width: 0; }
 .cp-lado figcaption { display: flex; flex-direction: column; gap: var(--ins-1); }
 .cp-num { color: var(--ins-tinta-3); }
 .cp-num2 { color: var(--ins-tinta-3); }
