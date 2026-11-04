@@ -31,50 +31,66 @@ export interface ItemDeMontagem { k: string; rotulo: string; valor: string; nota
  * O que fica congelado entre uma sessão e outra.
  *
  * É documento, não registro: aparece antes da primeira foto e não é perguntado
- * de novo. Distância, altura da lente e direção da luz mudam a silhueta mais do
- * que duas semanas de treino — se variarem, a comparação mede a câmera.
+ * de novo. Distância, lente, altura da câmera e direção da luz mudam a silhueta
+ * mais do que duas semanas de treino — se variarem, a comparação mede a câmera.
  *
- * A altura da lente é a metade da altura DELE, e não a altura do peito que
- * quase todo guia repete: peito é regra de retrato. Para corpo inteiro, a lente
- * no meio distribui a distorção igualmente entre a cabeça e os pés.
+ * Revista em 04/11/2026 a partir da auditoria das 70 fotos feita pelo agente de
+ * avaliação física (docs/fotos/01-captura.md). Três coisas estavam erradas:
+ * - "3 m com a 2× ou 2,5 m com a 1×" não equivalem: a segunda mostra uma faixa
+ *   1,67× maior da cena. Não existe distância que troque de lente sem trocar a
+ *   perspectiva; o que se repete é a MESMA lente na MESMA distância.
+ * - "metade da altura" e "umbigo" eram a mesma frase e não são a mesma altura:
+ *   o umbigo fica a uns 60% do corpo, a metade é a linha do quadril. Com a lente
+ *   no umbigo o corpo caía baixo no quadro, com os pés a 2–5% da borda.
+ * - a luz frontal nunca foi seguida (as 70 fotos são de luz de teto): a regra
+ *   que serve é a MESMA luz, e a frontal fica como o ideal.
  */
 export const MONTAGEM: ItemDeMontagem[] = [
-  { k: 'dist', rotulo: 'câmera → marca', valor: '3,0 m',
-    nota: 'Com a lente 2× do celular. Só com a 1×, 2,5 m — e a grande-angular alarga o que estiver mais perto dela.' },
+  { k: 'dist', rotulo: 'câmera → marca', valor: 'a mesma sempre',
+    nota: 'Marque no chão o lugar do apoio. A distância certa é a que põe o corpo inteiro em quase toda a altura do quadro, com um dedo de folga em cima e embaixo. Mais longe distorce menos: com a lente 2×, uns 3 m.' },
+  { k: 'lente', rotulo: 'lente e câmera', valor: 'sempre as mesmas',
+    nota: 'Não troque entre 1× e 2×, nem entre a câmera do app e a do sistema: cada uma desenha o corpo de um jeito, e a comparação passa a medir a câmera. O app anota qual foi usada.' },
   { k: 'alt', rotulo: 'altura da lente', valor: 'metade da sua altura',
-    nota: 'Umbigo, não peito. Marque a altura na parede com fita.' },
+    nota: 'Na linha do quadril, um palmo abaixo do umbigo. Celular em pé e no nível: a câmera do app mostra o nível.' },
   { k: 'parede', rotulo: 'corpo → parede', valor: '80 cm',
     nota: 'Encostado, a sombra desenha um contorno falso no ombro e na cintura.' },
-  { k: 'luz', rotulo: 'luz', valor: 'uma fonte, frontal',
-    nota: 'Artificial é mais repetível que a do sol. Nada vindo de cima: luz de teto inventa definição abdominal.' },
-  { k: 'hora', rotulo: 'horário', valor: 'o que você conseguir repetir',
-    nota: 'O app anota a hora de cada foto e mostra na comparação. Manhã em jejum e noite depois de comer mudam a barriga: comparar sabendo a hora evita ler água como gordura.' },
-  { k: 'roupa', rotulo: 'roupa', valor: 'sempre a mesma',
-    nota: 'Peça justa, de cor lisa, e sempre descalço. Meia e chinelo mudam a linha da perna e a altura.' }
+  { k: 'luz', rotulo: 'luz', valor: 'a mesma sempre',
+    nota: 'O ideal é uma lâmpada difusa atrás do celular, um pouco acima da lente, com a do teto apagada. Se for a do teto, sempre a mesma lâmpada e você sempre na marca: luz de cima muda a definição do abdômen a cada palmo que você anda.' },
+  { k: 'hora', rotulo: 'horário', valor: 'uma janela de 2 h',
+    nota: 'Escolha uma e fique nela. O app anota a hora de cada foto e mostra na comparação: a barriga muda ao longo do dia. Se der, umas 3 h longe de refeição grande e do treino.' },
+  { k: 'roupa', rotulo: 'roupa', valor: 'sempre a mesma peça',
+    nota: 'Justa, lisa e de cor média, cinza ou azul. Branca estoura na luz e apaga a linha do elástico; preta esconde o contorno. Elástico logo acima do osso do quadril, e sempre descalço.' }
 ];
 
 /**
- * As nove poses, na ordem de execução.
+ * As poses, na ordem de execução.
  *
  * A ordem NÃO é agrupada por assunto — é uma rotação contínua 0° → 90° → 180°
- * → 270°. Ele gira sempre para o mesmo lado sem sair da marca do chão, e a
- * sessão inteira sai em menos de cinco minutos. Agrupar por bloco seria mais
- * bonito de ler e faria ele girar seis vezes.
+ * → 270°, sempre para a esquerda. Ele gira sempre para o mesmo lado sem sair
+ * da marca do chão, e a sessão inteira sai em menos de cinco minutos. Agrupar
+ * por bloco seria mais bonito de ler e faria ele girar seis vezes.
  *
  * `bloco` existe para a tela poder dizer a que pergunta a foto responde, não
  * para reordenar coisa nenhuma.
+ *
+ * Em 04/11/2026 (docs/fotos/01-captura.md): braços um palmo afastados nas
+ * relaxadas, cabeça e perna fixas no abdômen, pés no T no duplo bíceps de
+ * costas, "marque passo" no perfil natural, e uma frase de voz para cada uma.
+ * As nove continuam: a auditoria sugeriu tirar a das mãos na cintura, e ele
+ * decidiu mantê-la (04/11).
  */
 export const PROTOCOLO: Pose[] = [
   {
     id: 'frente-relaxado', n: 'Frente relaxado', bloco: 'referência', giro: 0,
-    bracos: 'soltos ao lado',
+    bracos: 'um palmo do corpo',
     como: [
-      'Braços caídos ao lado, palmas voltadas para o corpo.',
+      'Braços soltos, afastados um palmo do corpo, palmas para o corpo.',
       'Olhe para a frente. Não contraia nada — nem abdômen, nem ombro.',
-      'Expire normal e pare de mexer meio segundo antes do disparo.'
+      'Solte o ar normalmente e segure, sem forçar, até o disparo.'
     ],
+    voz: 'Braços soltos, um palmo do corpo. Solte o ar e segure.',
     revela: 'cintura, simetria de ombro, distribuição de gordura',
-    erro: 'puxar o ombro para trás sem perceber'
+    erro: 'colar os braços no corpo, que esconde o contorno da cintura'
   },
   {
     id: 'frente-duplo-biceps', n: 'Frente duplo bíceps', bloco: 'músculo', giro: 0,
@@ -84,6 +100,7 @@ export const PROTOCOLO: Pose[] = [
       'Abra as costas e mantenha a cintura contraída para dentro.',
       'Suba devagar: movimento brusco muda o enquadramento.'
     ],
+    voz: 'Cotovelos na altura do ombro. Contraia.',
     revela: 'braço, ombro, largura do dorsal, peito',
     erro: 'cotovelo alto demais, que some com o trapézio'
   },
@@ -92,20 +109,23 @@ export const PROTOCOLO: Pose[] = [
     bracos: 'mãos atrás da cabeça',
     como: [
       'Mãos atrás da cabeça, dedos entrelaçados, cotovelos abertos.',
-      'Uma perna meio passo à frente, joelho travado, coxa contraída.',
+      'Perna esquerda meio pé à frente — sempre a esquerda —, joelho travado, coxa contraída.',
+      'Olhe para o celular, queixo paralelo ao chão.',
       'Solte todo o ar e contraia o abdômen com o pulmão vazio.'
     ],
+    voz: 'Mãos atrás da cabeça. Perna esquerda meio pé à frente. Olhe para o celular. Solte todo o ar e contraia.',
     revela: 'definição abdominal e serrátil — o mais sensível a gordura',
-    erro: 'trocar a perna da frente entre as sessões'
+    erro: 'baixar a cabeça para olhar o abdômen, que encurta a dobra dele'
   },
   {
     id: 'perfil-direito', n: 'Perfil direito', bloco: 'referência', giro: 90,
     bracos: 'estendidos à frente',
     como: [
-      'Gire 90° sobre a marca, lado direito para a câmera. Os pés continuam no T.',
+      'Gire 90° para a sua esquerda sobre a marca: o lado direito fica para a câmera. Os pés continuam no T.',
       'Estenda os dois braços à frente, na altura do ombro — eles saem da frente da cintura.',
-      'Postura natural, sem empinar nem encolher a barriga.'
+      'Olhe para a frente. Postura natural, sem empinar nem encolher a barriga.'
     ],
+    voz: 'Braços esticados à frente, na altura do ombro. Olhe para a frente.',
     revela: 'espessura da cintura de perfil — onde a mudança aparece primeiro',
     erro: 'girar 60° em vez de 90° e achar que emagreceu'
   },
@@ -114,20 +134,22 @@ export const PROTOCOLO: Pose[] = [
     bracos: 'soltos ao lado',
     como: [
       'Mesma posição, mas com os braços caídos naturalmente ao lado.',
-      'Olhe para um ponto fixo à frente, na altura dos olhos.',
-      'Dê três passos no lugar e pare — assim você cai na sua postura real.'
+      'Marque passo três vezes sem sair do T, e pare — assim você cai na sua postura real.',
+      'Olhe para um ponto fixo à frente, na altura dos olhos.'
     ],
+    voz: 'Braços soltos. Marque passo três vezes, sem sair do lugar. Olhe para um ponto fixo.',
     revela: 'alinhamento de orelha, ombro, quadril e tornozelo',
     erro: 'corrigir a postura na hora e perder o dado'
   },
   {
     id: 'costas-relaxado', n: 'Costas relaxado', bloco: 'referência', giro: 180,
-    bracos: 'soltos ao lado',
+    bracos: 'um palmo do corpo',
     como: [
-      'Gire mais 90° no mesmo sentido. Braços soltos, palmas para o corpo.',
+      'Gire mais 90° para a esquerda. Braços soltos, afastados um palmo do corpo, palmas para o corpo.',
       'Cabeça neutra, olhando para a frente — não para baixo.',
       'Ombros onde eles caem sozinhos.'
     ],
+    voz: 'Braços soltos, um palmo do corpo. Cabeça reta.',
     revela: 'simetria das escápulas, lombar, contorno do glúteo',
     erro: 'olhar por cima do ombro e torcer o tronco'
   },
@@ -135,12 +157,13 @@ export const PROTOCOLO: Pose[] = [
     id: 'costas-duplo-biceps', n: 'Costas duplo bíceps', bloco: 'músculo', giro: 180,
     bracos: 'cotovelos abertos',
     como: [
-      'Mesma subida de braço da segunda pose, agora de costas.',
+      'Mesma subida de braço da segunda pose, agora de costas: cotovelos na altura do ombro.',
       'Afaste as escápulas como se puxasse os cotovelos para trás e para fora.',
-      'Recue meio pé e apoie na ponta para contrair a panturrilha.'
+      'Pés juntos no T, os dois apoiados no chão.'
     ],
+    voz: 'Cotovelos na altura do ombro. Abra as costas.',
     revela: 'espessura do dorsal, trapézio e erector',
-    erro: 'trocar o pé que fica atrás'
+    erro: 'cotovelos em alturas diferentes'
   },
   {
     id: 'costas-maos-na-cintura', n: 'Costas mãos na cintura', bloco: 'músculo', giro: 180,
@@ -150,6 +173,7 @@ export const PROTOCOLO: Pose[] = [
       'Empurre os cotovelos para a frente e para fora, abrindo a largura.',
       'Cintura contraída — o contraste é a informação aqui.'
     ],
+    voz: 'Polegares logo acima do osso do quadril, mãos abertas. Cotovelos para a frente e para fora.',
     revela: 'a relação ombro/cintura, que muda mesmo com o peso parado',
     erro: 'subir as mãos para as costelas e falsear a largura'
   },
@@ -157,10 +181,11 @@ export const PROTOCOLO: Pose[] = [
     id: 'perfil-esquerdo', n: 'Perfil esquerdo', bloco: 'referência', giro: 270,
     bracos: 'estendidos à frente',
     como: [
-      'Complete o giro. Lado esquerdo para a câmera, mesma execução do perfil direito.',
+      'Complete o giro, mais 90° para a esquerda. Lado esquerdo para a câmera, mesma execução do perfil direito.',
       'Os dois perfis existem porque o corpo é assimétrico.',
       'Confira que os pés voltaram para o T antes do disparo.'
     ],
+    voz: 'Braços esticados à frente, na altura do ombro. Olhe para a frente.',
     revela: 'a assimetria entre os lados, invisível na foto de frente',
     erro: 'pular esta foto por parecer repetida — ela é a que fecha o par'
   }

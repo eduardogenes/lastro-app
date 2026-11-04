@@ -210,7 +210,9 @@ function abrirApp(opcoes) {
 
       // a voz da sessão de fotos: o que seria dito fica no registro
       w.SpeechSynthesisUtterance = function (t) { this.text = t; this.lang = ''; };
-      w.speechSynthesis = { cancel: function () {}, speak: function (u) { registro.falas.push({ t: u.text, lang: u.lang }); } };
+      // A última fala fica à mão (`__ultimaFala`) para o teste dizer quando a voz
+      // ACABOU: a sequência de fotos espera por isso para começar a contagem.
+      w.speechSynthesis = { cancel: function () {}, speak: function (u) { registro.falas.push({ t: u.text, lang: u.lang }); w.__ultimaFala = u; } };
 
       Object.defineProperty(w.navigator, 'wakeLock', {
         configurable: true,

@@ -107,6 +107,29 @@ export function fecha(stream: MediaStream | null | undefined): void {
   });
 }
 
+/**
+ * Qual câmera o navegador entregou: o rótulo dela e o zoom, quando ele diz.
+ *
+ * O iPhone tem até três lentes traseiras, e o `facingMode` não escolhe entre
+ * elas — escolhe o navegador. A foto do app não tem EXIF (é um quadro do
+ * vídeo), então a lente fica sabida por aqui ou não fica. Gravada em cada foto,
+ * ela diz nos dados se a câmera do app e a do sistema estão usando a mesma
+ * lente, que é a condição para as duas se compararem.
+ */
+export function lenteDe(stream: MediaStream | null | undefined): { nome?: string; zoom?: number } | null {
+  try {
+    const t = stream && typeof stream.getVideoTracks === 'function' ? stream.getVideoTracks()[0] : null;
+    if (!t) return null;
+    const r: { nome?: string; zoom?: number } = {};
+    if (t.label) r.nome = String(t.label).slice(0, 80);
+    const s = typeof t.getSettings === 'function' ? (t.getSettings() as MediaTrackSettings & { zoom?: number }) : null;
+    if (s && typeof s.zoom === 'number' && Number.isFinite(s.zoom)) r.zoom = Math.round(s.zoom * 100) / 100;
+    return r.nome || r.zoom != null ? r : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 /** O vídeo já tem quadro para capturar? Antes disso a captura sai preta. */
 export function pronto(v: HTMLVideoElement | null | undefined): boolean {
   return !!v && v.readyState >= 2 && !!v.videoWidth && !!v.videoHeight;

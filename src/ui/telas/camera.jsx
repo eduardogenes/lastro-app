@@ -11,8 +11,9 @@
 // sem contagem esta tela seria bonita e inútil — a câmera do sistema, que tem
 // temporizador, continuaria sendo a única saída.
 //
-// E a sessão CONTINUA aqui dentro. Depois do disparo ela avança para a próxima
-// pose sem fechar a câmera: são nove fotos, e sair e voltar nove vezes seria
+// E a sessão CONTINUA aqui dentro, sozinha. Um toque e as poses saem uma atrás
+// da outra: depois de cada disparo a voz diz o giro e a pose seguinte, e a
+// contagem curta começa quando a voz acaba. Ir até o celular a cada pose seria
 // pior que o problema que a tela resolve.
 
 import { useEffect, useRef } from 'preact/hooks';
@@ -85,7 +86,7 @@ export function Camera({ ctx }) {
       olho={d.data} titulo={'Pose ' + d.indice + ' de ' + d.total + ' · ' + d.pose}
       aoVoltar={ctx.fechaCamera} corpo="hwrap"
     >
-      {/* Os nove blocos no topo (a D, estado 2): a pose em que está e as que
+      {/* Os blocos no topo (a D, estado 2): a pose em que está e as que
           fecharam, do tamanho de um dedo — o que se lê a três metros. */}
       <div class="cam-blocos" aria-hidden="true">
         {d.pontos.map(p => (
@@ -96,7 +97,7 @@ export function Camera({ ctx }) {
           O GIRO até a pose nova (estado 4): a maior coisa da tela, lida a três
           metros. */}
       {d.preta && <p class="cam-preta" role="status">A {d.preta.toLowerCase()} saiu preta. Ela volta no fim.</p>}
-      {d.giro && <p class="cam-giro" aria-live="polite">↻ gire {d.giro}°</p>}
+      {d.giroTxt && <p class="cam-giro" aria-live="polite">{d.giroTxt}</p>}
       <div class="cam-quadro">
         <video ref={video} class="cam-video" autoplay playsinline muted />
         <canvas ref={tela} class="cam-tela" aria-hidden="true" />
@@ -104,17 +105,36 @@ export function Camera({ ctx }) {
             disparo), e quem o apaga é a animação, não um relógio. */}
         {d.clarao && <div key={d.disparo} class="cam-clarao" aria-hidden="true" />}
 
+        {/* A sobreposta vai crua, sem o zoom do ajuste dela: o quadro vivo
+            também é cru, e é contra a sala como saiu que o celular se acerta. */}
         {d.fantasma && d.refUrl && (
           <FotoAjustada
-            url={d.refUrl} enq={d.refEnq} alt={'Sobreposta: ' + d.refTxt}
+            url={d.refUrl} enq={null} alt={'Sobreposta: ' + d.refTxt}
             classe="cam-ghost" estilo={'opacity:' + (d.opacidade / 100)}
           />
         )}
+
+        {/* As guias da cabeça e dos pés: o corpo inteiro entre as duas, perto
+            delas. A margem de 4% é a tolerância da auditoria das fotos — os pés
+            vinham ficando a 2–5% da borda, e a cabeça já encostou no topo. */}
+        <div class="cam-guias" aria-hidden="true">
+          <i class="cam-guia cam-guia-cabeca"><span>cabeça</span></i>
+          <i class="cam-guia cam-guia-pes"><span>pés</span></i>
+        </div>
 
         {d.grade && (
           <div class="aj-grade" aria-hidden="true">
             <i class="aj-v1" /><i class="aj-v2" /><i class="aj-h1" /><i class="aj-h2" />
             <i class="aj-eixo" />
+          </div>
+        )}
+
+        {/* O nível do celular, acertado antes de sair de perto dele. Só o
+            TAMANHO de cada inclinação: o lado para onde ela vai o sensor não
+            garante (ver infra/nivel.ts). */}
+        {d.nivel && (
+          <div class={'cam-nivel' + (d.nivel.ok ? ' ok' : '')} role="status">
+            {d.nivel.ok ? 'no nível' : 'de lado ' + d.nivel.lado + ' · frente ' + d.nivel.frente}
           </div>
         )}
 
@@ -126,6 +146,19 @@ export function Camera({ ctx }) {
           </div>
         )}
       </div>
+
+      {/* O disparo logo abaixo do quadro, e preso ao fundo da tela quando a
+          tela rola: antes ele ficava 200 px abaixo da dobra, e para tocá-lo o
+          quadro saía de vista. Durante a sequência ele vira o "parar" — da
+          contagem e de tudo que viria depois dela. */}
+      {(d.contagem != null || d.seguido)
+        ? <button class="ins-btn-secondary cam-disparo" onClick={ctx.cancelaDisparo}>Parar</button>
+        : (
+          <button class="ins-btn-primary cam-disparo" disabled={!d.pronta}
+                  onClick={ctx.disparaCamera}>
+            {d.pronta ? d.rotulo : 'abrindo a câmera…'}
+          </button>
+        )}
 
       {/* A POSE QUE NÃO COUBE (a D, `sessao-fotos.html`, estado 9): a sessão
           parou, e a tela diz qual e por quê, com a saída ao lado. */}
@@ -168,7 +201,7 @@ export function Camera({ ctx }) {
         </>
       )}
 
-      <Secao rotulo="O temporizador" nota="a três metros ninguém alcança o botão">
+      <Secao rotulo="A primeira contagem" nota="depois dela, as poses seguem sozinhas">
         <div class="cam-tempos">
           {TEMPOS.map(t => (
             <button key={t} class={'ins-chip' + (d.timer === t ? ' on' : '')}
@@ -179,15 +212,10 @@ export function Camera({ ctx }) {
         </div>
       </Secao>
 
-      {d.contagem != null
-        ? <button class="ins-btn-secondary cam-disparo" onClick={ctx.cancelaDisparo}>Cancelar</button>
-        : (
-          <button class="ins-btn-primary cam-disparo" disabled={!d.pronta}
-                  onClick={ctx.disparaCamera}>
-            {d.pronta ? (d.feita ? 'refazer esta pose' : 'tirar a foto') : 'abrindo a câmera…'}
-          </button>
-        )}
-
+      <Procedencia>
+        um toque tira a sessão inteira: a voz diz o giro e a pose seguinte, e a
+        contagem curta começa quando ela termina
+      </Procedencia>
       <Procedencia>
         posicione o celular até a sala coincidir com a sobreposta — é o
         enquadramento que se está acertando aqui, não a pose

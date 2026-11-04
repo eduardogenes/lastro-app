@@ -130,9 +130,19 @@ describe('espelho — arquivos', () => {
       presentes: new Set(['corpo/fotos/2026-10-20/frente-relaxado.webp']),
       faltando: new Set(['corpo/fotos/2026-10-20/perfil-direito.jpeg'])
     })['corpo/fotos.md'];
-    expect(f).toContain('| Frente relaxado | 21:14 | do app | [frente-relaxado.webp](fotos/2026-10-20/frente-relaxado.webp) |');
-    expect(f).toContain('| Perfil direito | 21:16 |  | ainda não subiu para a nuvem | giro 2°, zoom 1,1× |');
+    expect(f).toContain('| Frente relaxado | 21:14 | do app |  | [frente-relaxado.webp](fotos/2026-10-20/frente-relaxado.webp) |');
+    expect(f).toContain('| Perfil direito | 21:16 |  |  | ainda não subiu para a nuvem | giro 2°, zoom 1,1× |');
     expect(f).toMatch(/## \w{3}, 20\/10\/2026 — 2 de \d+ poses/);
+  });
+
+  it('a lente e o nível da captura entram na tabela das fotos', () => {
+    const { S } = estado();
+    const fotos = (S as any).protocolo.sessoes[0].fotos;
+    fotos['frente-relaxado'].cap = { via: 'app', l: 1080, a: 1440, lente: 'Câmera Traseira', zoom: 1, nivel: { lado: 0, frente: 1.25 } };
+    fotos['perfil-direito'].cap = { via: 'sistema', l: 3024, a: 4032, lente: 'iPhone 11 Pro Max back triple camera 6mm f/2', mm: 52 };
+    const f = montaArquivos(S, { agora: T })['corpo/fotos.md'];
+    expect(f).toContain('| Frente relaxado | 21:14 | do app · Câmera Traseira · zoom 1× | de lado 0° · frente 1,3° |');
+    expect(f).toContain('| Perfil direito | 21:16 | do sistema · iPhone 11 Pro Max back triple camera 6mm f/2 · 52 mm |  |');
   });
 
   it('só o LEIA-ME muda com a hora da geração', () => {

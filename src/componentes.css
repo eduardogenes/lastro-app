@@ -2376,7 +2376,9 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 
 /* ---- A câmera a três metros (a D, sessao-fotos estados 2 e 3) ------------
    Os blocos das poses do tamanho de um dedo; o clarão do disparo, curto. */
-.cam-blocos { display: grid; grid-template-columns: repeat(9, 1fr); gap: var(--ins-1); margin-bottom: var(--ins-3); }
+/* Um bloco por pose da ordem, quantas forem: a ordem é a versão dele, e não
+   o nove do protocolo original. */
+.cam-blocos { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--ins-1); margin-bottom: var(--ins-3); }
 .cam-bloco { height: 22px; border-radius: var(--ins-raio-1); border: 1.5px solid var(--ins-fio-controle); }
 .cam-bloco.feita { background: var(--ins-tinta); border-color: var(--ins-tinta); }
 .cam-bloco.atual { border-color: var(--ins-acento); box-shadow: inset 0 0 0 2px var(--ins-acento); }

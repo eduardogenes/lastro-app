@@ -351,7 +351,29 @@ export interface FotoRef {
    * os dados mostram se o defeito voltou, sem ninguém precisar testar à mão.
    * Ausente nas fotos anteriores e nas de aparelho.
    */
-  cap?: { via: 'app' | 'sistema'; l: number; a: number };
+  cap?: Captura;
+}
+
+/**
+ * O registro da captura de uma foto de corpo. Só `via`, `l` e `a` existem desde
+ * 03/11; o resto entrou em 04/11 e falta nas fotos de antes.
+ *
+ * A lente e o nível vieram da auditoria das fotos pelo agente de avaliação
+ * física: a comparação mede a câmera quando a lente ou a inclinação mudam entre
+ * sessões, e nenhuma das duas dá para recuperar olhando a foto depois.
+ */
+export interface Captura {
+  via: 'app' | 'sistema';
+  l: number;
+  a: number;
+  /** o nome da lente: o rótulo da câmera (app) ou o LensModel do EXIF (sistema) */
+  lente?: string;
+  /** a distância focal equivalente em 35 mm, do EXIF: 26 é a 1×, 52 a 2× */
+  mm?: number;
+  /** o zoom que a câmera do app informou, quando informou */
+  zoom?: number;
+  /** a inclinação do celular no disparo, em graus: de lado, e para a frente ou para trás */
+  nivel?: { lado: number; frente: number };
 }
 
 /** id de uma pose do protocolo, derivado do nome uma vez só. */
@@ -370,6 +392,12 @@ export interface Pose {
   bracos: string;
   /** execução, uma instrução por linha */
   como: string[];
+  /**
+   * O que a voz diz depois do nome da pose: ele está a três metros e não lê a
+   * tela. Curto (no máximo uns 8 s falado) e no imperativo. Sem ele, a voz lê a
+   * primeira linha de `como`.
+   */
+  voz?: string;
   revela: string;
   erro: string;
 }

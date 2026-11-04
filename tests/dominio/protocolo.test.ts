@@ -7,7 +7,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import {
-  CADENCIA_DIAS, PROTOCOLO, comAPose, completude, dataLocal, diasDesde,
+  CADENCIA_DIAS, MONTAGEM, PROTOCOLO, comAPose, completude, dataLocal, diasDesde,
   instanteDaData, mediaDaSemana, ordemPadrao, parPadrao, poseDe, poses,
   proximaPose, referencia, sessaoDe, ultima, vizinhaComAPose
 } from '../../src/dominio/protocolo';
@@ -23,7 +23,7 @@ function sessao(d: string, poseIds: string[], t = 0): SessaoFoto {
 
 // ---------- o catálogo ----------
 
-test('as nove poses têm id único e giro conhecido', () => {
+test('as poses do catálogo têm id único e giro conhecido', () => {
   assert.strictEqual(PROTOCOLO.length, 9);
   const ids = new Set(PROTOCOLO.map(p => p.id));
   assert.strictEqual(ids.size, 9);
@@ -32,6 +32,24 @@ test('as nove poses têm id único e giro conhecido', () => {
     assert.ok(p.como.length >= 2, p.id + ' sem execução');
     assert.ok(p.revela && p.erro, p.id + ' sem revela/erro');
   });
+});
+
+test('toda pose pedida tem a frase da voz, curta', () => {
+  // a três metros nada se lê: o que a voz diz é a instrução. Uns 8 s falados.
+  poses(null).forEach(p => {
+    assert.ok(p.voz, p.id + ' sem voz');
+    assert.ok(p.voz!.length <= 110, p.id + ' com voz longa demais: ' + p.voz!.length);
+  });
+});
+
+test('a montagem não troca lente por distância', () => {
+  // "3 m com a 2× ou 2,5 m com a 1×" mostrava uma faixa 1,67× maior da cena
+  const texto = MONTAGEM.map(i => i.valor + ' ' + i.nota).join(' ');
+  assert.ok(!/2,5 m/.test(texto), texto);
+  assert.ok(/Não troque entre 1× e 2×/.test(texto));
+  // metade da altura é a linha do quadril, e não o umbigo
+  const alt = MONTAGEM.filter(i => i.k === 'alt')[0];
+  assert.ok(/quadril/.test(alt.nota) && !/^Umbigo/.test(alt.nota), alt.nota);
 });
 
 test('a ordem é uma rotação contínua, nunca volta para trás', () => {
@@ -95,7 +113,7 @@ test('sessão inexistente começa da primeira pose', () => {
   assert.strictEqual(c.total, 9);
 });
 
-test('a completude conta contra a ordem dele, não contra as nove', () => {
+test('a completude conta contra a ordem dele, não contra a do código', () => {
   const ordem = ['frente-relaxado', 'costas-relaxado'];
   const s = sessao('2026-09-01', ['frente-relaxado']);
   const c = completude(s, ordem);

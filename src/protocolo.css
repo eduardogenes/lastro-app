@@ -224,6 +224,12 @@
 .cam-quadro {
   position: relative; overflow: hidden;
   aspect-ratio: 3 / 4;
+  /* O quadro inteiro e o disparo cabem juntos na tela: a altura que sobra
+     depois do topo, do título, dos blocos e do botão (uns 340 px) decide a
+     largura. No iPhone grande o quadro fica com a largura toda; no pequeno ele
+     encolhe, em vez de empurrar o disparo para fora da tela. */
+  width: min(100%, calc((100svh - 340px) * 3 / 4));
+  margin-inline: auto;
   background: var(--ins-foto-vazio);
   border: 1px solid var(--ins-fio-controle);
 }
@@ -255,5 +261,38 @@
 .cam-tempos { display: flex; gap: var(--ins-2); }
 .cam-tempos button { flex: 1 1 0; }
 
-.cam-disparo { display: block; width: 100%; margin-top: var(--ins-9); }
+/* Logo abaixo do quadro, e grudado no fundo da tela se ela rolar: o toque que
+   começa a sessão nunca fica fora de vista. */
+.cam-disparo {
+  display: block; width: 100%; margin-top: var(--ins-4);
+  position: sticky; bottom: calc(var(--ins-3) + var(--sa-bottom)); z-index: 2;
+}
+
+/* As guias da cabeça e dos pés, a 4% das bordas: o corpo inteiro cabe entre
+   elas, perto delas. Finas e claras — são referência, não moldura. */
+.cam-guias { position: absolute; inset: 0; pointer-events: none; }
+.cam-guia {
+  position: absolute; left: 0; right: 0;
+  height: var(--ins-indicator); background: var(--ins-acento); opacity: .7;
+}
+.cam-guia-cabeca { top: 4%; }
+.cam-guia-pes { bottom: 4%; }
+.cam-guia span {
+  position: absolute; left: var(--ins-2); padding: 0 var(--ins-1);
+  font: 600 var(--ins-t-meta)/1.4 var(--ins-fonte);
+  color: var(--ins-foto-tinta); background: var(--ins-foto-veu);
+}
+.cam-guia-cabeca span { top: var(--ins-1); }
+.cam-guia-pes span { bottom: var(--ins-1); }
+
+/* O nível, grande o bastante para ser lido com o braço esticado ao apoiar o
+   celular. Âmbar até as duas inclinações caberem em 1°. */
+.cam-nivel {
+  position: absolute; top: calc(4% + var(--ins-6)); left: 50%; translate: -50% 0;
+  padding: var(--ins-2) var(--ins-4); border-radius: var(--ins-raio-pil);
+  font: 600 var(--ins-t-corpo-forte)/1.2 var(--ins-fonte); white-space: nowrap;
+  color: var(--ins-atencao-tinta); background: var(--ins-atencao-fundo);
+  border: 1px solid var(--ins-atencao-fio);
+}
+.cam-nivel.ok { color: var(--ins-sobre-acento); background: var(--ins-acento); border-color: var(--ins-acento); }
 .cam-sair { display: block; width: 100%; margin-top: var(--ins-7); }

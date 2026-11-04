@@ -168,10 +168,16 @@ export function cameraFalsa(a, opcoes) {
         globalThis.__gumPedidos.push(c);
         if (erro) { const e = new Error(erro); e.name = erro; throw e; }
         globalThis.__faixasVivas++;
+        // a faixa diz qual câmera é e o zoom, como o Safari diz: é o que vira
+        // a lente no registro da foto
+        const faixa = {
+          label: ${JSON.stringify(o.rotulo || 'Câmera Traseira')},
+          getSettings: function () { return ${o.zoom == null ? '{}' : '{ zoom: ' + Number(o.zoom) + ' }'}; },
+          stop: function () { globalThis.__faixasVivas--; }
+        };
         return {
-          getTracks: function () {
-            return [{ stop: function () { globalThis.__faixasVivas--; } }];
-          }
+          getTracks: function () { return [faixa]; },
+          getVideoTracks: function () { return [faixa]; }
         };
       }
     };

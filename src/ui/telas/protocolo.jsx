@@ -59,11 +59,11 @@ function Montagem({ m, aoComecar }) {
           repita as marcas depois.
         </Procedencia>
       </Secao>
-      {/* A ordem das nove (a D, estado 1): uma rotação contínua, sempre para o
+      {/* A ordem das poses (a D, estado 1): uma rotação contínua, sempre para o
           mesmo lado, sem sair da marca. */}
-      <Secao rotulo="A ordem das nove poses">
+      <Secao rotulo={'A ordem das ' + m.total + ' poses'}>
         <p class="ins-body-sm ins-t2 pr-ordem">{m.ordem}.</p>
-        <p class="ins-body-sm ins-t1 pr-ordem"><b>Gire sempre para o mesmo lado</b>, sem sair da marca.</p>
+        <p class="ins-body-sm ins-t1 pr-ordem"><b>Gire sempre para a sua esquerda</b>, um quarto de volta, sem sair da marca.</p>
       </Secao>
       <button class="ins-btn-primary pr-comecar" onClick={aoComecar}>Começar a sessão</button>
       <p class="ins-body-xs ins-t3 pr-som">Este toque também liga o som: no iPhone, ele só existe depois de um toque.</p>
