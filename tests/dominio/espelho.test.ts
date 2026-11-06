@@ -169,6 +169,37 @@ describe('espelho — arquivos', () => {
     expect(f).toContain('| Perfil direito | 21:16 | do app · sozinho · apoiado |  |');
   });
 
+  it('o protocolo lista as 11 poses, e cada sessão só as do protocolo da data dela', () => {
+    const { S } = estado();
+    const nova = new Date(2026, 10, 27, 20, 10).getTime();
+    (S as any).protocolo.sessoes.push({ d: '2026-11-27', t: nova, fotos: {
+      'frente-bracos-afastados': { v: nova, ext: 'webp' }, 'perfil-maos-na-nuca': { v: nova + 60000, ext: 'jpeg' }
+    } });
+    const f = montaArquivos(S, { agora: T })['corpo/fotos.md'];
+    const proto = f.split('## O protocolo')[1].split('\n## ')[0];
+    expect(proto.split('\n').filter(l => /^\| (?!Pose|---)/.test(l))).toHaveLength(11);
+    expect(proto).toContain('| Frente braços afastados | referência | 0° |');
+    expect(proto).toContain('| Perfil mãos na nuca | referência | 90° |');
+    expect(f).toMatch(/## \w{3}, 20\/10\/2026 — 2 de 9 poses/);
+    expect(f).toMatch(/## \w{3}, 27\/11\/2026 — 2 de 11 poses/);
+    const antiga = f.split('20/10/2026')[1].split('\n## ')[0];
+    expect(antiga).not.toContain('braços afastados');
+    expect(f).toContain('[frente-bracos-afastados.webp](fotos/2026-11-27/frente-bracos-afastados.webp)');
+    expect(f).toContain('[perfil-maos-na-nuca.jpeg](fotos/2026-11-27/perfil-maos-na-nuca.jpeg)');
+  });
+
+  it('medidas.csv leva as chaves de fita novas com cm, fita e onde_mediu, e hora vazia quando não foi informada', () => {
+    const { S } = estado();
+    const b = (S as any).body;
+    b.quadril = [{ t: T, v: 96.4, onde: 'parte mais larga do quadril' }];
+    b.braco = [{ t: T, v: 35.2, onde: 'meio do braço, relaxado' }];
+    b.bioPeso = [{ t: new Date(2026, 8, 15, 12).getTime(), v: 75, semHora: 1 }];
+    const csv = montaArquivos(S, { agora: T })['corpo/medidas.csv'];
+    expect(csv).toContain('2026-10-28,06:18,quadril,quadril,96.4,cm,fita,parte mais larga do quadril');
+    expect(csv).toContain('2026-10-28,06:18,braco,braço direito,35.2,cm,fita,"meio do braço, relaxado"');
+    expect(csv).toContain('2026-09-15,,bioPeso,peso na bioimpedância,75,kg,bioimpedância,');
+  });
+
   it('só o LEIA-ME muda com a hora da geração', () => {
     const { S } = estado();
     const a = montaArquivos(S, { agora: T }), b = montaArquivos(S, { agora: T + 3 * DIA });

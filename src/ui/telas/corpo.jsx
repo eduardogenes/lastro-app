@@ -22,6 +22,12 @@ import { fmtDec, fmtSig } from '../../dominio/formato';
 import { useState } from 'preact/hooks';
 import { Teclado } from '../instrumento/teclado.jsx';
 
+/** A hora atual, "06:40", para o campo de hora partir dela. */
+function horaAgora() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
 /** "O peso da manhã" vira "Peso da manhã": o nome da medida sem o artigo do rótulo de seção. */
 function semArtigo(r) { const x = r.replace(/^(O|A|Os|As) /, ''); return x.charAt(0).toUpperCase() + x.slice(1); }
 
@@ -49,7 +55,7 @@ function SemanaSemMedia({ s, alvo }) {
   );
 }
 
-function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar, chave, onde, ondeRascunho, onOnde, topo }) {
+function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar, chave, onde, ondeRascunho, onOnde, como, regra, topo }) {
   return (
     <Secao rotulo={rotulo} nota={nota} primeira={primeira}>
       {topo}
@@ -83,6 +89,14 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
           lembrete, com a porta para mudar. Texto do teclado do sistema (§6.1:
           "do sistema para o texto"), e só vai para o histórico junto com a
           medida — escrever aqui não grava nada sozinho. */}
+      {/* ONDE E COMO MEDIR (revisão do avaliador, 06/11/2026): o ponto e a
+          instrução de cada medida, e a regra que vale para todas. */}
+      {como && (
+        <div class="co-como">
+          <p class="ins-body-sm ins-t1">{como}</p>
+          {regra && <p class="ins-body-xs ins-t3">{regra}</p>}
+        </div>
+      )}
       {onOnde && <ComoMedi chave={chave} onde={onde} rascunho={ondeRascunho} onOnde={onOnde} />}
 
       {/* A data fica atrás de um link porque registrar no dia é o caso de todo
@@ -156,8 +170,8 @@ function ComoMedi({ chave, onde, rascunho, onOnde }) {
         onInput={e => onOnde(e.currentTarget.value)}
       />
       <span class="ins-body-sm ins-t3">
-        Guarde na primeira vez onde você passou a fita. Repetir o ponto vale mais
-        que o número em si.
+        O ponto padrão já vem preenchido. Se medir em outro lugar, troque. Repetir
+        o ponto vale mais que o número em si.
       </span>
     </label>
   );
@@ -231,6 +245,10 @@ export function Corpo({ ctx }) {
   // mesma regra da folha de pôr o dia em dia. Fechar a tela sem tocar não grava.
   const [rascunho, setRascunho] = useState({});
   const [dia, setDia] = useState(null);
+  // A hora da leitura: `null` é "não mexeu". Hoje ela parte da hora atual; num
+  // dia passado parte vazia, e vazia não vira 12:00 (a leitura de 15/09/2026
+  // ficou às 12:00 e foi às 6h).
+  const [hora, setHora] = useState(null);
   const c = ctx.corpo();
   const bio = ctx.bioimpedancia();
   const vazio = ctx.corpoVazio();
@@ -291,7 +309,7 @@ export function Corpo({ ctx }) {
       </Medida>
 
       <Medida
-        rotulo="A cintura" nota="1× por semana, em jejum"
+        rotulo="A cintura" nota="1× por semana, à noite, antes do jantar"
         valor={c.cintura.valor} passo={0.5} unidade="cm" serie={c.cintura.serie}
         onMuda={ctx.setCintura} onRegistrar={ctx.registraCintura} acao={c.cintura.acao}
         dia={c.cintura.dia} onAbrirDia={() => ctx.abreDiaCorpo('cintura')}
@@ -299,6 +317,7 @@ export function Corpo({ ctx }) {
         medidas={c.cintura.medidas} aoApagar={t => ctx.apagaMedida('cintura', t)}
         chave="cintura" onde={c.cintura.onde} ondeRascunho={c.cintura.ondeRascunho}
         onOnde={t => ctx.setOnde('cintura', t)}
+        como={c.cintura.como} regra={c.regraDaFita}
         teclado={ctx.tecladoDoCorpo('cintura')}
         aoAbrirTeclado={() => ctx.abreTecladoDeCorpo('cintura')}
         aoFecharTeclado={ctx.fechaTeclado}
@@ -310,8 +329,8 @@ export function Corpo({ ctx }) {
       >
         <Procedencia>{c.cintura.mes}</Procedencia>
         <Procedencia>
-          meça sempre no mesmo ponto, em jejum, sem prender a barriga. Fita
-          mal posicionada erra mais do que a balança varia de água.
+          meça sempre no mesmo ponto e na mesma hora, sem prender a barriga.
+          Fita mal posicionada erra mais do que a balança varia de água.
         </Procedencia>
       </Medida>
 
@@ -330,6 +349,7 @@ export function Corpo({ ctx }) {
           onDia={t => ctx.setDiaCorpo(f.k, t)}
           medidas={f.medidas} aoApagar={t => ctx.apagaMedida(f.k, t)}
           onde={f.onde} ondeRascunho={f.ondeRascunho} onOnde={t => ctx.setOnde(f.k, t)}
+          como={f.como} regra={c.regraDaFita}
           teclado={ctx.tecladoDoCorpo(f.k)}
           aoAbrirTeclado={() => ctx.abreTecladoDeCorpo(f.k)}
           aoFecharTeclado={ctx.fechaTeclado}
@@ -421,19 +441,31 @@ export function Corpo({ ctx }) {
         {/* A data fica atrás de um campo porque registrar no dia é o caso de
             todo dia; retroativo é exceção. `max` é hoje: leitura no futuro não
             é leitura, e o verbo também recusa — a tela só evita o toque. */}
-        <label class="co-bio-dia">
-          <span class="ins-label-sm">em</span>
-          <input class="ins-input" type="date" id="bio-dia"
-                 max={bio.maxISO} value={dia || bio.maxISO}
-                 aria-label="data da leitura"
-                 onInput={e => setDia(e.currentTarget.value)} />
-        </label>
+        <div class="co-bio-quando">
+          <label class="co-bio-dia">
+            <span class="ins-label-sm">em</span>
+            <input class="ins-input" type="date" id="bio-dia"
+                   max={bio.maxISO} value={dia || bio.maxISO}
+                   aria-label="data da leitura"
+                   onInput={e => { setDia(e.currentTarget.value); setHora(null); }} />
+          </label>
+          <label class="co-bio-dia">
+            <span class="ins-label-sm">às</span>
+            <input class="ins-input" type="time" id="bio-hora"
+                   value={hora != null ? hora : ((dia || bio.maxISO) === bio.maxISO ? horaAgora() : '')}
+                   aria-label="hora da leitura"
+                   onInput={e => setHora(e.currentTarget.value)} />
+          </label>
+        </div>
+        {(dia || bio.maxISO) !== bio.maxISO && !hora && (
+          <p class="ins-body-xs ins-t3">Sem hora, a leitura fica registrada só com a data.</p>
+        )}
 
-        {/* HOJE é `Date.now()`, e não meio-dia de hoje. Eu havia escrito meio-dia
-            para todos os dias, e o verbo recusou a leitura: antes do meio-dia,
-            o meio-dia de hoje está no FUTURO, e leitura no futuro não é leitura.
-            Para um dia PASSADO o meio-dia é a escolha certa — a hora não foi
-            medida, e meio-dia não encosta em nenhuma borda de fuso. */}
+        {/* HOJE é `Date.now()`, e não meio-dia de hoje: antes do meio-dia, o
+            meio-dia de hoje está no FUTURO, e o verbo recusa. A hora é
+            editável (06/11/2026). Um dia PASSADO sem hora informada vai ao
+            meio-dia só para ordenar — meio-dia não encosta em borda de fuso —
+            e marcado `semHora`: nem a tela nem o espelho mostram 12:00. */}
         {/* "Guardar os cinco", e não "Salvar": aqui o lote É o dado — os cinco
             saíram do mesmo visor, no mesmo minuto —, e o rótulo diz quantos e o
             quê (§10.3). A leitura enviada é a da tela: o que está no lugar mais
@@ -442,8 +474,13 @@ export function Corpo({ ctx }) {
           const d = dia || bio.maxISO;
           const leitura = {};
           bio.campos.forEach(c => { leitura[c.k] = c.k in rascunho ? rascunho[c.k] : c.antes; });
-          const r = await ctx.registraBio(leitura, d === bio.maxISO ? Date.now() : Date.parse(d + 'T12:00:00'));
-          if (r && r.ok) setRascunho({});
+          // Hoje sem mexer na hora é agora. Com hora, o instante daquela hora.
+          // Dia passado sem hora: meio-dia só para ordenar, marcado sem hora.
+          const hoje = d === bio.maxISO;
+          const h = hora || '';
+          const quando = h ? new Date(d + 'T' + h + ':00').getTime() : (hoje ? Date.now() : Date.parse(d + 'T12:00:00'));
+          const r = await ctx.registraBio(leitura, quando, !h && !hoje);
+          if (r && r.ok) { setRascunho({}); setHora(null); }
         }}>Guardar os cinco</button>
         <p class="ins-body-xs ins-t3 co-bio-nada">
           Nada está registrado até você tocar em Guardar os cinco.

@@ -1407,13 +1407,14 @@ test('ligar abre a medida, e o ponto que tem medida fica ligado pelo dado', asyn
   await a.m.ctx.registraMedida('coxa');
   await a.esperar();
   assert.deepStrictEqual(a.S().body.coxa.map(function (x) { return x.v; }), [57.5]);
+  assert.strictEqual(a.S().body.coxa[0].onde, 'um palmo acima do joelho', 'sem texto dele, vai o ponto padrão');
 
   // "Ligado" não é guardado no estado: um ponto com medida está ligado porque
   // tem medida. Esquecer o toque não pode esconder um histórico.
   a.E('view.fitaLigadas = null');
   a.v('render');
   await a.esperar();
-  assert.ok(a.doc.getElementById('onde-coxa'), 'com medida, a coxa continua na tela');
+  assert.ok(a.$('[data-a="onde-muda-coxa"]'), 'com medida, a coxa continua na tela');
   assert.ok(a.$('[data-a="liga-peito"]'), 'e o que nunca foi medido volta a esperar');
   a.fechar();
 });
@@ -1547,7 +1548,53 @@ test('a bioimpedância traz o mês passado no lugar, diz "era" ao lado de cada u
   assert.strictEqual(b.bioGordura.length, 2, 'a leitura nova entrou');
   assert.strictEqual(b.bioGordura[1].v, 21.8, 'com o que ele mudou');
   assert.strictEqual(b.bioMusculo[1].v, 41.8, 'e com o que ficou no lugar');
-  assert.ok(/^Guardei os cinco números de \d\d\/\d\d neste aparelho\.$/.test(a.toast()), a.toast());
+  assert.ok(/^Guardei os cinco números de \d\d\/\d\d às \d\d:\d\d neste aparelho\.$/.test(a.toast()), a.toast());
+  assert.ok(!b.bioGordura[1].semHora, 'hoje, com a hora de agora');
+  a.fechar();
+});
+
+test('a hora da bioimpedância é editável, e dia passado sem hora não vira 12:00', async () => {
+  // A leitura de 15/09/2026 ficou às 12:00 e foi às 6h (06/11/2026).
+  const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] } } });
+  await a.esperar();
+  assert.ok(/^\d\d:\d\d$/.test(a.doc.getElementById('bio-hora').value), 'hoje, a hora parte de agora');
+  ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct'].forEach(function (k, i) { a.digitar('bio-' + k, String([75, 38.1, 8.3, 11][i])); });
+  a.digitar('bio-dia', '2026-09-15');
+  await a.esperar();
+  assert.strictEqual(a.doc.getElementById('bio-hora').value, '', 'dia passado: a hora parte vazia');
+  a.digitar('bio-hora', '06:00');
+  await a.esperar();
+  a.clicar('[data-a="registra-bio"]');
+  await a.esperar(60);
+  const p = a.S().body.bioPeso[0];
+  assert.strictEqual(new Date(p.t).getHours(), 6, 'às 6h, como ele disse');
+  assert.ok(!p.semHora);
+
+  a.digitar('bio-dia', '2026-09-01');
+  await a.esperar();
+  ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct'].forEach(function (k, i) { a.digitar('bio-' + k, String([75, 38.1, 8.3, 11][i])); });
+  a.clicar('[data-a="registra-bio"]');
+  await a.esperar(60);
+  const s = a.S().body.bioPeso.filter(function (x) { return new Date(x.t).getDate() === 1; })[0];
+  assert.strictEqual(s.semHora, 1, 'sem hora informada, fica marcada sem hora');
+  assert.ok(/^Guardei os quatro números de 01\/09 neste aparelho\./.test(a.toast()), a.toast());
+  a.fechar();
+});
+
+test('cada medida com fita mostra como medir, e o ponto padrão já vem preenchido', async () => {
+  const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] } } });
+  await a.esperar();
+  assert.strictEqual(a.doc.getElementById('onde-cintura').value, 'umbigo');
+  assert.strictEqual(a.doc.getElementById('onde-braco').value, 'meio do braço, relaxado');
+  const txt = a.texto('#app');
+  assert.ok(/Fita na altura do umbigo, paralela ao chão/.test(txt));
+  assert.ok(/Fita no meio entre a ponta do ombro e o cotovelo/.test(txt));
+  assert.ok(/Meça duas vezes; se as duas diferirem mais de 0,5 cm/.test(txt));
+  assert.ok(/Braço direito/.test(txt), 'o lado no nome');
+  a.m.ctx.setCintura(86);
+  await a.m.ctx.registraCintura();
+  await a.esperar();
+  assert.strictEqual(a.S().body.cintura[0].onde, 'umbigo');
   a.fechar();
 });
 

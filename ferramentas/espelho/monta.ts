@@ -28,7 +28,7 @@ import {
 } from '../../src/dominio/programa';
 import { ARQUIVO } from '../../src/dominio/migracoes';
 import { MEDIDAS_DO_CORPO } from '../../src/dominio/corpo';
-import { CADENCIA_DIAS, PROTOCOLO, dataLocal, instanteDaData, poses } from '../../src/dominio/protocolo';
+import { CADENCIA_DIAS, DESDE_11_POSES, PROTOCOLO, dataLocal, instanteDaData, poses, posesDaData } from '../../src/dominio/protocolo';
 import { ALIMENTOS_BASE, PLANO_BASE } from '../../src/dominio/nutricao/alimentos';
 import {
   ajusteNoItem, quantidadePrescrita, totalDaRefeicao, totalDoDia, totalRegistrado
@@ -756,7 +756,7 @@ function medidasCsv(b: Base): string {
     const m = MEDIDAS_DO_CORPO.filter(function (x) { return x.k === k; })[0];
     lista<Marca>(body[k]).forEach(function (x) {
       if (!x || numero(x.t) == null || numero(x.v) == null) return;
-      linhas.push({ t: x.t, ordem: ordem, l: [dataLocal(x.t), fmtHora(x.t), k, m ? m.n : k, x.v, m ? m.u : '', m && m.bio ? 'bioimpedância' : (m && m.fita ? 'fita' : 'balança'), x.onde || ''] });
+      linhas.push({ t: x.t, ordem: ordem, l: [dataLocal(x.t), x.semHora ? '' : fmtHora(x.t), k, m ? m.n : k, x.v, m ? m.u : '', m && m.bio ? 'bioimpedância' : (m && m.fita ? 'fita' : 'balança'), x.onde || ''] });
     });
   });
   linhas.sort(function (a, c) { return a.t - c.t || a.ordem - c.ordem; });
@@ -819,6 +819,7 @@ function fotosDoCorpo(b: Base, ctx: Contexto): string {
     'Uma sessão de fotos a cada ' + CADENCIA_DIAS + ' dias, sempre as mesmas poses, no mesmo lugar marcado no chão.',
     'Os arquivos são as fotos originais. Quando a coluna "Ajuste no app" tem algo, o app mostra a foto girada ou recortada, mas o arquivo não muda.',
     'A hora de cada foto importa: luz e hora do dia mudam o que a foto mostra.',
+    'Desde ' + dataBR(instanteDaData(DESDE_11_POSES)) + ', o protocolo tem ' + PROTOCOLO.length + ' poses: entraram "Frente braços afastados" e "Perfil mãos na nuca", e "Costas mãos na cintura" passou a ser com as mãos só apoiadas, sem beliscar a pele (até 29/10/2026 ela virou uma pinça da dobra lombar). Cada sessão lista só as poses do protocolo da data dela: as de antes contam sobre 9.',
     'A coluna "Câmera" diz se a foto saiu da câmera do app (um quadro do vídeo, com menos processamento) ou da câmera do sistema; vazia nas fotos de antes de 03/11/2026. Desde 04/11/2026 ela traz também a lente: o nome que o aparelho dá a ela, a focal equivalente em 35 mm (26 mm é a 1×, 52 mm a 2×) e o zoom, quando o aparelho informa.',
     'Desde 04/11/2026, a câmera do app tira a foto de verdade do sensor ("foto do sensor" na coluna "Câmera"); quando ela falha, fica um quadro do vídeo ("quadro do vídeo"). A foto do sensor tem também o ORIGINAL, na resolução cheia e sem recompressão, ao lado da cópia de 1440 px: `<pose>.original.jpeg`. Ele pode trazer a orientação na etiqueta EXIF em vez de nos pixels. Só existe quando o celular tinha a conta da nuvem.',
     'A coluna "Câmera" diz também quem disparou ("alguém tirou" ou "sozinho"), se o celular estava apoiado ou na mão (pelo giroscópio, no segundo antes do toque) e quando a foto pode ter tremido (giro acima de ' + TREMOR + '°/s no toque). Só na câmera do app, desde 04/11/2026.',
@@ -832,10 +833,11 @@ function fotosDoCorpo(b: Base, ctx: Contexto): string {
   if (!sessoes.length) L.push('Nenhuma sessão de fotos ainda.', '');
   sessoes.forEach(function (s) {
     const fotos = obj<FotoRef>(s.fotos);
-    const ids = ordem.map(function (p) { return p.id; });
+    const daData = posesDaData(s.d, lista<string>(proto.poses));
+    const ids = daData.map(function (p) { return p.id; });
     Object.keys(fotos).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
     const feitas = ids.filter(function (id) { return fotos[id]; });
-    L.push('## ' + dataIsoBR(s.d) + ' — ' + feitas.length + ' de ' + ordem.length + ' poses', '');
+    L.push('## ' + dataIsoBR(s.d) + ' — ' + feitas.length + ' de ' + daData.length + ' poses', '');
     if (s.obs) L.push('Nota: ' + cel(s.obs), '');
     L.push('| Pose | Hora | Câmera | Nível | Arquivo | Ajuste no app |', '|---|---|---|---|---|---|');
     ids.forEach(function (id) {
@@ -907,7 +909,7 @@ const MAPA: Array<[string, string]> = [
   ['nutricao/ajustes.md', 'Cada ajuste calórico que aconteceu, com o veredito que o motivou.'],
   ['nutricao/alimentos.csv', 'A tabela de alimentos: macros por 100 g ou 100 ml.'],
   ['corpo/medidas.csv', 'Peso, cintura, bioimpedância e medidas com fita, uma medida por linha.'],
-  ['corpo/fotos.md', 'O protocolo de fotos, cada sessão com a hora de cada foto, e as respostas sobre gordura visual.'],
+  ['corpo/fotos.md', 'O protocolo de fotos (11 poses desde 06/11/2026; antes, 9), cada sessão com a hora de cada foto, e as respostas sobre gordura visual.'],
   ['corpo/fotos/AAAA-MM-DD/', 'As fotos de cada sessão, uma por pose.'],
   ['bruto/estado.json', 'O estado inteiro do app, sem tratamento. Para o que não coube nos arquivos acima.']
 ];
@@ -946,6 +948,8 @@ function leiaMe(b: Base, ctx: Contexto, existentes: Set<string>): string {
   L.push('- **Hora do treino** só aparece quando é confiável (sessão lançada depois sem hora informada fica sem).');
   L.push('- **Totais de comida** de dias fechados foram congelados no fechamento, contra o plano daquela data: mudar o plano depois não reescreve o passado. Refeição marcada "fora do plano" ou "não sabe" entra com os números do plano; "não comeu" não entra.');
   L.push('- **Água** em copos; vazio quando ele marcou que não contou (é diferente de zero).');
+  L.push('- **Medidas com fita** (`medidas.csv`): quando a medida é de um lado só, é sempre o direito. `onde_mediu` é o ponto onde a fita passou; o app preenche com o ponto padrão de cada medida, e a pessoa pode trocar.');
+  L.push('- **Hora vazia** em `medidas.csv` quer dizer que a hora não foi informada (leitura lançada depois, só com a data).');
   L.push('- **Peso** (`peso`) é a pesagem da manhã na balança comum; `bioPeso` é o da balança de bioimpedância. São aparelhos e horários diferentes, e nenhum corrige o outro.');
   L.push('');
 

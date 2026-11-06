@@ -169,7 +169,7 @@ test('a divisão do DADOS em três lugares não engoliu regra nenhuma', async ()
 
   const a = await app({ aba: 'corpo' });
   await a.esperar();
-  assert.ok(/mesmo ponto, em jejum/.test(proc(a)), 'regra de posicionamento da cintura');
+  assert.ok(/mesmo ponto e na mesma hora/.test(proc(a)), 'regra de posicionamento da cintura');
   assert.strictEqual(a.$('.ins-veredito'), null,
     'e o veredito NÃO está aqui: ele responde "dá para mexer na comida?", que é da semana');
 

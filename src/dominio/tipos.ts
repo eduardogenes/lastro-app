@@ -482,6 +482,12 @@ export interface Marca {
    * lista branca da restauração — que é exatamente o defeito F251.
    */
   onde?: string;
+  /**
+   * A hora não foi informada (leitura de um dia passado sem hora): o instante
+   * é o meio-dia daquele dia só para ordenar, e nenhuma tela nem o espelho
+   * mostra essa hora. Mesmo motivo de `Cardio.semHora` (F270).
+   */
+  semHora?: 1;
 }
 
 /**

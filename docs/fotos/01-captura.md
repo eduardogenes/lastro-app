@@ -10,7 +10,7 @@ Este arquivo registra o que foi conferido, o que entrou no app e o que falta. Os
 - **A sessão de 12/10 é do meio-dia.** O relatório diz que ela "foi à noite", pela cor da luz. O estado diz 12:33, com fotos a 8–40 s uma da outra, capturadas pelo app, e 12/10 foi feriado. A cor igual vem da mesma lâmpada de teto acesa.
 - **A conta das lentes.** "2,5 m com a 1× mostra 1,67× mais" vale para a dimensão linear, não para a área. A conclusão não muda: as duas montagens não equivalem.
 - **A lente da câmera do app.** Em 03/11, com o celular parado, a câmera do app e a do sistema enquadraram quase igual (3–4% de diferença). Portanto, naquele teste, as duas usaram a mesma lente. Qual lente as sessões antigas usaram ninguém sabe; o registro novo (abaixo) passa a dizer.
-- **A pose 8 (costas, mãos na cintura) fica.** O relatório recomenda tirá-la, porque na execução ela virou uma pinça que cobre a cintura (R15). O dono decidiu mantê-la (04/11). A execução dela continua como estava.
+- **A pose 8 (costas, mãos na cintura) fica.** O relatório recomenda tirá-la, porque na execução ela virou uma pinça que cobre a cintura (R15). O dono decidiu mantê-la (04/11). A execução dela continua como estava. Em 06/11 a pinça acabou de vez: mãos só apoiadas, sem beliscar a pele, e o culote passou a ser lido pela pose nova de perfil com as mãos na nuca e pela fita no quadril. Na mesma revisão entrou a frente com os braços afastados, e o protocolo passou de 9 para 11 poses.
 
 ## Primeira leva (04/11/2026): entrou no app
 

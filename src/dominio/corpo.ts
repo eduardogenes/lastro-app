@@ -59,11 +59,27 @@ export interface MedidaDoCorpo {
    * tem: a leitura dela entra digitada, sem stepper.
    */
   partida?: number;
+  /**
+   * Só nas medidas com fita: o ponto padrão, que preenche sozinho o "como eu
+   * medi" (`onde` da marca) quando ele não disse outro. Ele pode editar.
+   * Quando a medida é de um lado só, é sempre o direito (06/11/2026, revisão
+   * do avaliador físico).
+   */
+  onde?: string;
+  /** Só nas medidas com fita: como medir, a instrução que a tela mostra. */
+  como?: string;
 }
+
+/**
+ * O que vale para toda medida com fita, dito na tela junto da instrução do
+ * ponto. Medir duas vezes é dica, e não regra: o app grava um valor só.
+ */
+export const REGRA_DA_FITA = 'Fita justa na pele, sem apertar, sem afundar e sem folga. Meça duas vezes; se as duas diferirem mais de 0,5 cm, meça uma terceira e registre a média das leituras próximas.';
 
 export const MEDIDAS_DO_CORPO: MedidaDoCorpo[] = [
   { k: 'peso',          n: 'peso',                      u: 'kg', bio: false, obrigatorio: true,  fita: false,       partida: 75 },
-  { k: 'cintura',       n: 'cintura',                   u: 'cm', bio: false, obrigatorio: true,  fita: 'ligada',    partida: 85 },
+  { k: 'cintura',       n: 'cintura',                   u: 'cm', bio: false, obrigatorio: true,  fita: 'ligada',    partida: 85,
+    onde: 'umbigo', como: 'Fita na altura do umbigo, paralela ao chão. Barriga relaxada; medir no fim de uma expiração normal.' },
   { k: 'bioPeso',       n: 'peso na bioimpedância',     u: 'kg', bio: true,  obrigatorio: true,  fita: false },
   { k: 'bioMusculo',    n: 'massa muscular esquelética', u: 'kg', bio: true,  obrigatorio: true,  fita: false },
   { k: 'bioGordura',    n: 'massa de gordura',          u: 'kg', bio: true,  obrigatorio: true,  fita: false },
@@ -72,11 +88,16 @@ export const MEDIDAS_DO_CORPO: MedidaDoCorpo[] = [
   // As medidas com fita além da cintura. Entram SEM migração, pelo contrato de
   // `normalizaEstado()`: campo novo e vazio recebe padrão no boot e na
   // importação, e a fusão e a cópia de segurança já enumeram esta tabela.
-  { k: 'braco',         n: 'braço',                     u: 'cm', bio: false, obrigatorio: true,  fita: 'ligada',    partida: 35 },
-  { k: 'coxa',          n: 'coxa',                      u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 56 },
-  { k: 'panturrilha',   n: 'panturrilha',               u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 37 },
-  { k: 'peito',         n: 'peito',                     u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 100 },
-  { k: 'quadril',       n: 'quadril',                   u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 96 }
+  { k: 'braco',         n: 'braço direito',             u: 'cm', bio: false, obrigatorio: true,  fita: 'ligada',    partida: 35,
+    onde: 'meio do braço, relaxado', como: 'Braço solto ao lado do corpo. Fita no meio entre a ponta do ombro e o cotovelo. Sem contrair.' },
+  { k: 'coxa',          n: 'coxa direita',              u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 56,
+    onde: 'um palmo acima do joelho', como: 'Em pé, peso igual nas duas pernas, coxa relaxada. Fita um palmo acima da borda de cima da patela.' },
+  { k: 'panturrilha',   n: 'panturrilha direita',       u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 37,
+    onde: 'parte mais grossa', como: 'Em pé, peso igual nas duas pernas. Fita na parte mais grossa da panturrilha, sem contrair.' },
+  { k: 'peito',         n: 'peito',                     u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 100,
+    onde: 'linha dos mamilos', como: 'Fita na linha dos mamilos, passando sob as axilas e paralela ao chão. Braços soltos; medir no fim de uma expiração normal.' },
+  { k: 'quadril',       n: 'quadril',                   u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 96,
+    onde: 'parte mais larga do quadril', como: 'De lado no espelho, achar a parte mais larga (glúteo e culote). Fita paralela ao chão, pés juntos.' }
 ];
 
 /** As chaves de `S.body`, na ordem da tabela. */

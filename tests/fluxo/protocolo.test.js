@@ -220,8 +220,8 @@ test('vídeo deitado sai no recorte 3:4 do meio, como a tela mostra, e nunca est
 });
 
 test('a sessão avança sozinha para a pose que falta', async () => {
-  // São nove poses em sequência. Pedir um toque a mais entre duas é pedir um
-  // toque a mais nove vezes.
+  // São onze poses em sequência. Pedir um toque a mais entre duas é pedir um
+  // toque a mais onze vezes.
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
@@ -230,13 +230,13 @@ test('a sessão avança sozinha para a pose que falta', async () => {
 
   await tirar(a);
   await a.esperar(60);
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps',
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-bracos-afastados',
     'passou para a segunda sem esperar toque');
 
   await tirar(a);
   await a.esperar(60);
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-abdomen-coxa');
-  assert.strictEqual(a.vJ('ctx.sessaoDeFotos').faltando, 7);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps');
+  assert.strictEqual(a.vJ('ctx.sessaoDeFotos').faltando, 9);
   a.fechar();
 });
 
@@ -355,7 +355,7 @@ test('apagar uma de duas mantém a sessão viva', async () => {
 
   const sessoes = a.S().protocolo.sessoes;
   assert.strictEqual(sessoes.length, 1, 'a sessão continua');
-  assert.deepStrictEqual(Object.keys(sessoes[0].fotos), ['frente-duplo-biceps']);
+  assert.deepStrictEqual(Object.keys(sessoes[0].fotos), ['frente-bracos-afastados']);
   a.fechar();
 });
 
@@ -768,7 +768,7 @@ test('sessão de hoje pela metade convida a continuar de onde parou', async () =
   const a = await app({ aba: 'corpo' });
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('render');
-  assert.strictEqual(a.vJ('ctx.protocoloFotos').cta, 'Continuar · 1 de 9');
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').cta, 'Continuar · 1 de 11');
   a.fechar();
 });
 
@@ -1040,7 +1040,7 @@ test('backup antigo, sem protocolo nenhum, entra sem quebrar', async () => {
 test('ordem de poses vazia cai na do código, sem sumir com a tela', async () => {
   const a = await app({ estado: { logs: {}, done: [], protocolo: { poses: [], sessoes: [] } }, aba: 'corpo' });
   assert.strictEqual(a.S().protocolo.poses, null, 'normalizada para "a do código"');
-  assert.strictEqual(a.vJ('ctx.protocoloFotos').pontos.length, 9);
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').pontos.length, 11);
   a.fechar();
 });
 
@@ -1399,8 +1399,8 @@ test('disparo sem temporizador guarda a foto e avança a pose', async () => {
   assert.strictEqual(s.length, 1);
   assert.ok(s[0].fotos['frente-relaxado'], 'a foto foi gravada');
   assert.deepStrictEqual(guardadas(a), ['./corpo/' + hoje() + '/frente-relaxado.webp']);
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'avançou sem sair');
-  assert.ok(a.vista().camera, 'e a câmera continua aberta: são nove poses');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-bracos-afastados', 'avançou sem sair');
+  assert.ok(a.vista().camera, 'e a câmera continua aberta: são onze poses');
   a.fechar();
 });
 
@@ -1417,10 +1417,10 @@ test('o disparo é o obturador, um clarão e o bloco da pose fechando — não o
   await a.esperar(60);
 
   let c = a.vJ('ctx.cameraViva');
-  assert.strictEqual(c.pontos.length, 9);
-  assert.deepStrictEqual(c.pontos.map(p => p.feita), Array(9).fill(false));
+  assert.strictEqual(c.pontos.length, 11);
+  assert.deepStrictEqual(c.pontos.map(p => p.feita), Array(11).fill(false));
   assert.strictEqual(c.pontos.findIndex(p => p.atual), 0);
-  assert.strictEqual(a.$$('.cam-bloco').length, 9, 'os blocos estão na câmera');
+  assert.strictEqual(a.$$('.cam-bloco').length, 11, 'os blocos estão na câmera');
   assert.ok(a.$('.cam-bloco.atual') === a.$$('.cam-bloco')[0]);
 
   a.v('ctx.setTimerDaCamera', 0);
@@ -1503,23 +1503,23 @@ test('a foto preta não é guardada: a pose volta no fim da fila, e a voz diz', 
 
   assert.strictEqual(a.S().protocolo.sessoes.length, 0, 'nada foi guardado');
   assert.strictEqual(a.registro.obturador, 0, 'e nem soou como guardada');
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'a sessão seguiu para a próxima');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-bracos-afastados', 'a sessão seguiu para a próxima');
   const c = a.vJ('ctx.cameraViva');
   assert.strictEqual(c.preta, 'Frente relaxado');
   assert.strictEqual(c.pontos[0].adiada, true);
   assert.ok(a.$('.cam-bloco.adiada'), 'o bloco dela marcado, sem contar como feita');
-  assert.ok(/^A foto saiu preta\. Esta pose volta no fim\. Siga: Frente duplo bíceps\.$/.test(a.registro.falas.slice(-1)[0].t),
+  assert.ok(/^A foto saiu preta\. Esta pose volta no fim\. Siga: Frente braços afastados\.$/.test(a.registro.falas.slice(-1)[0].t),
     a.registro.falas.slice(-1)[0].t);
 
   // a próxima foto boa não traz a preta de volta antes da hora
   a.E('globalThis.__brilho = 128');
   a.v('ctx.disparaCamera');
   await a.esperar(150);
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-abdomen-coxa', 'segue a ordem, e a adiada fica para o fim');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'segue a ordem, e a adiada fica para o fim');
 
   // com todas as outras feitas, ela volta
   a.E(`const s = S.protocolo.sessoes[0];
-       ['frente-abdomen-coxa','perfil-direito','perfil-direito-postura','costas-relaxado','costas-duplo-biceps','costas-maos-na-cintura']
+       ['frente-duplo-biceps','frente-abdomen-coxa','perfil-direito','perfil-direito-postura','perfil-maos-na-nuca','costas-relaxado','costas-duplo-biceps','costas-maos-na-cintura']
          .forEach(function (id, i) { s.fotos[id] = { v: Date.now() + i, ext: 'webp' }; });
        view.protocolo.pose = 'perfil-esquerdo';`);
   a.v('ctx.disparaCamera');
@@ -1548,7 +1548,7 @@ test('entre duas poses com giro, a tela mostra o giro grande e a voz diz', async
   await a.esperar(150);
   assert.strictEqual(a.vista().protocolo.pose, 'frente-relaxado', 'pré-condição: as anteriores faltam, a próxima é a 1');
   a.E(`const s = S.protocolo.sessoes[0];
-       s.fotos['frente-relaxado'] = { v: 1, ext: 'webp' }; s.fotos['frente-duplo-biceps'] = { v: 2, ext: 'webp' };
+       s.fotos['frente-relaxado'] = { v: 1, ext: 'webp' }; s.fotos['frente-duplo-biceps'] = { v: 2, ext: 'webp' }; s.fotos['frente-bracos-afastados'] = { v: 3, ext: 'webp' };
        view.protocolo.pose = 'frente-abdomen-coxa'; delete s.fotos['frente-abdomen-coxa'];`);
   a.v('ctx.disparaCamera');
   await a.esperar(150);
@@ -1557,7 +1557,7 @@ test('entre duas poses com giro, a tela mostra o giro grande e a voz diz', async
   // sempre um quarto de volta para a ESQUERDA: de frente, é assim que o lado
   // direito fica para a câmera
   assert.strictEqual(a.texto('.cam-giro'), '↺ gire à esquerda');
-  assert.ok(/^Gire para a sua esquerda, um quarto de volta\. Pés na marca\. Pose 4 de 9\. Perfil direito\. Braços esticados à frente/
+  assert.ok(/^Gire para a sua esquerda, um quarto de volta\. Pés na marca\. Pose 5 de 11\. Perfil direito\. Braços esticados à frente/
     .test(a.registro.falas.slice(-1)[0].t), a.registro.falas.slice(-1)[0].t);
   a.fechar();
 });
@@ -1584,9 +1584,9 @@ test('o preparo mostra a ordem das poses e liga o som no toque de começar', asy
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   await a.esperar();
-  assert.ok(/^1 frente relaxado · 2 frente duplo bíceps · 3 abdômen e coxa · 4 perfil direito/.test(a.vJ('ctx.sessaoDeFotos').montagem.ordem));
+  assert.ok(/^1 frente relaxado · 2 frente braços afastados · 3 frente duplo bíceps · 4 abdômen e coxa · 5 perfil direito/.test(a.vJ('ctx.sessaoDeFotos').montagem.ordem));
   assert.ok(/Gire sempre para a sua esquerda/.test(a.texto('#app') + a.doc.body.textContent));
-  assert.ok(/A ordem das 9 poses/.test(a.texto('#app')), 'o número vem da ordem');
+  assert.ok(/A ordem das 11 poses/.test(a.texto('#app')), 'o número vem da ordem');
   assert.strictEqual(a.dado('audioCtx'), null, 'antes do toque, sem som');
   a.v('ctx.comecaSessaoDeFotos');
   assert.ok(a.dado('audioCtx'), 'o toque em começar liga o som');
@@ -1608,8 +1608,8 @@ test('o fim da sessão diz o que ficou guardado, o tempo real e a próxima data'
   a.v('render');
   await a.esperar();
   const f = a.vJ('ctx.sessaoDeFotos').fim;
-  assert.strictEqual(f.poses, '9 de 9 poses');
-  assert.strictEqual(f.tempo, '1 min 28 s do primeiro ao último disparo');
+  assert.strictEqual(f.poses, '11 de 11 poses');
+  assert.strictEqual(f.tempo, '1 min 50 s do primeiro ao último disparo');
   assert.strictEqual(f.subida, 'As fotos ficam neste aparelho: sem a conta, elas não sobem.');
   assert.ok(/^Comparar com \d\d\/\d\d · mesma pose, 55 dias, o par longo$/.test(f.comparar), f.comparar);
   assert.ok(/^A próxima sessão cai em \S+ \d\d\/\d\d\. Nada aqui vence\.$/.test(f.proxima), f.proxima);
@@ -1631,13 +1631,13 @@ test('a pose é dita em voz, ao abrir a câmera e a cada pose nova', async () =>
   assert.strictEqual(a.registro.falas.length, 1);
   assert.strictEqual(a.registro.falas[0].lang, 'pt-BR');
   // a frase própria da voz, e não a primeira linha da execução
-  assert.strictEqual(a.registro.falas[0].t, 'Pose 1 de 9. Frente relaxado. Braços soltos, um palmo do corpo. Solte o ar e segure.');
+  assert.strictEqual(a.registro.falas[0].t, 'Pose 1 de 11. Frente relaxado. Braços soltos, um palmo do corpo. Solte o ar e segure.');
 
   a.v('ctx.setTimerDaCamera', 0);
   a.v('ctx.disparaCamera');
   await a.esperar(120);
   assert.strictEqual(a.registro.falas.length, 2);
-  assert.strictEqual(a.registro.falas[1].t, 'Pose 2 de 9. Frente duplo bíceps. Cotovelos na altura do ombro. Contraia.');
+  assert.strictEqual(a.registro.falas[1].t, 'Pose 2 de 11. Frente braços afastados. Braços esticados e afastados do corpo, como um A. Mãos abertas. Barriga solta.');
   a.fechar();
 });
 
@@ -1744,7 +1744,7 @@ test('depois do disparo a sobreposta acompanha a nova pose', async () => {
   const velha = diasAtras(14);
   a.E(`S.protocolo.sessoes = [{ d: ${JSON.stringify(velha)}, t: 1, m: 1, fotos: {
     'frente-relaxado': { v: 1, ext: 'webp' },
-    'frente-duplo-biceps': { v: 2, ext: 'webp' }
+    'frente-bracos-afastados': { v: 2, ext: 'webp' }
   } }]`);
 
   a.v('ctx.abreProtocolo');
@@ -1759,7 +1759,7 @@ test('depois do disparo a sobreposta acompanha a nova pose', async () => {
   await a.esperar(150);
 
   const c = a.vJ('ctx.cameraViva');
-  assert.strictEqual(c.pose, 'Frente duplo bíceps', 'a tela seguiu a pose');
+  assert.strictEqual(c.pose, 'Frente braços afastados', 'a tela seguiu a pose');
   assert.strictEqual(c.fantasmaD, velha, 'e a sobreposta é a mesma sessão, na pose nova');
   a.fechar();
 });
@@ -2485,12 +2485,12 @@ const vozAcabou = a => a.E('__ultimaFala && __ultimaFala.onend && __ultimaFala.o
 test('um toque tira a sessão inteira: a voz acaba, a contagem curta começa e dispara sozinha', async () => {
   const a = await app({ aba: 'corpo' });
   await cameraAberta(a);
-  assert.strictEqual(a.texto('.cam-disparo'), 'tirar as 9 fotos', 'o botão promete a sessão, não uma foto');
+  assert.strictEqual(a.texto('.cam-disparo'), 'tirar as 11 fotos', 'o botão promete a sessão, não uma foto');
 
   a.v('ctx.setTimerDaCamera', 0);
   a.v('ctx.disparaCamera');
   await a.esperar(120);
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-bracos-afastados');
   assert.strictEqual(a.vJ('ctx.cameraViva').seguido, true);
   assert.strictEqual(a.texto('.cam-disparo'), 'Parar', 'durante a sequência, o botão para');
   assert.strictEqual(a.vJ('ctx.cameraViva').contagem, null, 'enquanto a voz fala, nada conta');
@@ -2498,9 +2498,9 @@ test('um toque tira a sessão inteira: a voz acaba, a contagem curta começa e d
   vozAcabou(a);
   assert.strictEqual(a.vJ('ctx.cameraViva').contagem, 3, 'a voz acabou: três segundos, sem giro');
   await a.esperar(3300);
-  assert.ok(a.S().protocolo.sessoes[0].fotos['frente-duplo-biceps'], 'a segunda foto saiu sem toque');
+  assert.ok(a.S().protocolo.sessoes[0].fotos['frente-bracos-afastados'], 'a segunda foto saiu sem toque');
   assert.strictEqual(a.registro.obturador, 2);
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-abdomen-coxa', 'e a sequência segue');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'e a sequência segue');
   a.fechar();
 });
 
@@ -2516,7 +2516,7 @@ test('parar para a sequência: a voz acaba e nada mais dispara', async () => {
   assert.strictEqual(a.vJ('ctx.cameraViva').contagem, null, 'a continuação da voz morreu com o parar');
   await a.esperar(150);
   assert.strictEqual(Object.keys(a.S().protocolo.sessoes[0].fotos).length, 1);
-  assert.strictEqual(a.texto('.cam-disparo'), 'tirar as 8 fotos');
+  assert.strictEqual(a.texto('.cam-disparo'), 'tirar as 10 fotos');
   a.fechar();
 });
 
@@ -2524,7 +2524,7 @@ test('depois de um giro a contagem é mais longa, e a última pose fecha a sequ�
   const a = await app({ aba: 'corpo' });
   await cameraAberta(a);
   a.E(`S.protocolo.sessoes = [{ d: hojeISO(), t: 1, m: 1, fotos: {
-         'frente-relaxado': { v: 1, ext: 'webp' }, 'frente-duplo-biceps': { v: 2, ext: 'webp' } } }];
+         'frente-relaxado': { v: 1, ext: 'webp' }, 'frente-duplo-biceps': { v: 2, ext: 'webp' }, 'frente-bracos-afastados': { v: 3, ext: 'webp' } } }];
        view.protocolo.pose = 'frente-abdomen-coxa';`);
   a.v('ctx.setTimerDaCamera', 0);
   a.v('ctx.disparaCamera');
@@ -2536,14 +2536,14 @@ test('depois de um giro a contagem é mais longa, e a última pose fecha a sequ�
 
   // só falta a última: depois dela, a sequência acaba sozinha
   a.E(`const s = S.protocolo.sessoes[0];
-       ['perfil-direito','perfil-direito-postura','costas-relaxado','costas-duplo-biceps','costas-maos-na-cintura']
+       ['perfil-direito','perfil-direito-postura','perfil-maos-na-nuca','costas-relaxado','costas-duplo-biceps','costas-maos-na-cintura']
          .forEach(function (id, i) { s.fotos[id] = { v: 10 + i, ext: 'webp' }; });
        view.protocolo.pose = 'perfil-esquerdo';`);
   a.v('ctx.disparaCamera');
   await a.esperar(150);
   const c = a.vJ('ctx.cameraViva');
   assert.strictEqual(c.seguido, false, 'sessão completa, sequência fechada');
-  assert.ok(/Sessão completa\. As 9 poses estão registradas\./.test(a.toast()), a.toast());
+  assert.ok(/Sessão completa\. As 11 poses estão registradas\./.test(a.toast()), a.toast());
   a.fechar();
 });
 
@@ -2711,7 +2711,7 @@ test('com alguém tirando, a sessão começa pelo ajuste, e a voz pede para espe
   c = a.vJ('ctx.cameraViva');
   assert.strictEqual(c.ajuste, null);
   assert.strictEqual(a.texto('.cam-disparo'), 'tirar a foto', 'um toque, uma foto');
-  assert.ok(/^Pose 1 de 9\. Frente relaxado\./.test(ultimaFala(a)), ultimaFala(a));
+  assert.ok(/^Pose 1 de 11\. Frente relaxado\./.test(ultimaFala(a)), ultimaFala(a));
   assert.deepStrictEqual(a.$$('.cam-confira-l').map(e => e.textContent),
     ['nível verde · cabeça e pés nas linhas', 'pés no T · braços um palmo do corpo']);
   assert.ok(/^erro comum · colar os braços/.test(a.texto('.cam-erro')));
@@ -2727,7 +2727,7 @@ test('câmera reaberta no meio da sessão não repete o ajuste', async () => {
   await a.v('ctx.abreCamera');
   await a.esperar(60);
   assert.strictEqual(a.vJ('ctx.cameraViva').ajuste, null);
-  assert.ok(/^Pose 2 de 9/.test(ultimaFala(a)), ultimaFala(a));
+  assert.ok(/^Pose 2 de 11/.test(ultimaFala(a)), ultimaFala(a));
   a.fechar();
 });
 
@@ -2739,7 +2739,7 @@ test('com alguém tirando, um toque é uma foto: a miniatura fica no canto, e a 
   await a.esperar(120);
   assert.ok(a.S().protocolo.sessoes[0].fotos['frente-relaxado'], 'a foto foi guardada');
   assert.strictEqual(a.registro.obturador, 1);
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-bracos-afastados');
   let c = a.vJ('ctx.cameraViva');
   assert.strictEqual(c.seguido, false, 'nada de sequência');
   assert.strictEqual(c.contagem, null);
@@ -2750,7 +2750,7 @@ test('com alguém tirando, um toque é uma foto: a miniatura fica no canto, e a 
   assert.ok(!falas(a).some(t => /^Pose 2/.test(t)), 'a pessoa ainda não ouviu a pose seguinte');
 
   await a.esperar(1550);
-  assert.ok(/^Pose 2 de 9\. Frente duplo bíceps\./.test(ultimaFala(a)), ultimaFala(a));
+  assert.ok(/^Pose 2 de 11\. Frente braços afastados\./.test(ultimaFala(a)), ultimaFala(a));
   await a.esperar(1600);
   assert.strictEqual(a.vJ('ctx.cameraViva').miniatura, null, 'a miniatura saiu depois de 3 s');
   assert.strictEqual(Object.keys(a.S().protocolo.sessoes[0].fotos).length, 1, 'e nenhuma outra foto saiu sozinha');
@@ -2790,13 +2790,13 @@ test('refazer depois de a pessoa já ter girado manda girar de volta', async () 
   const a = await app({ aba: 'corpo' });
   await cameraComAlguem(a);
   a.E(`S.protocolo.sessoes = [{ d: hojeISO(), t: 1, m: 1, fotos: {
-         'frente-relaxado': { v: 1, ext: 'webp' }, 'frente-duplo-biceps': { v: 2, ext: 'webp' } } }];
+         'frente-relaxado': { v: 1, ext: 'webp' }, 'frente-duplo-biceps': { v: 2, ext: 'webp' }, 'frente-bracos-afastados': { v: 3, ext: 'webp' } } }];
        view.protocolo.pose = 'frente-abdomen-coxa'; view.camera.ajuste = false;`);
   a.v('ctx.disparaCamera');
   await a.esperar(1700);
   assert.ok(/^Gire para a sua esquerda/.test(ultimaFala(a)), 'a pessoa ouviu o giro do perfil: ' + ultimaFala(a));
   a.v('ctx.refazUltima');
-  assert.ok(/^Gire para a sua direita, um quarto de volta\. Pés na marca\. Vamos repetir a pose 3\./.test(ultimaFala(a)), ultimaFala(a));
+  assert.ok(/^Gire para a sua direita, um quarto de volta\. Pés na marca\. Vamos repetir a pose 4\./.test(ultimaFala(a)), ultimaFala(a));
   a.fechar();
 });
 
@@ -2855,7 +2855,7 @@ test('registrar assim guarda a foto torta com a inclinação verdadeira, e o cli
   const cap = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].cap;
   assert.deepStrictEqual(cap.nivel, { lado: 3, frente: 0 });
   assert.strictEqual(a.registro.obturador, 1);
-  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'e a sessão segue');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-bracos-afastados', 'e a sessão segue');
   a.fechar();
 });
 
@@ -2913,7 +2913,7 @@ test('trocar para sozinho no meio larga a foto torta e volta à sessão num toqu
   const c = a.vJ('ctx.cameraViva');
   assert.strictEqual(c.torta, null);
   assert.strictEqual(c.quem, 'sozinho');
-  assert.strictEqual(a.texto('.cam-disparo'), 'tirar as 9 fotos');
+  assert.strictEqual(a.texto('.cam-disparo'), 'tirar as 11 fotos');
   assert.ok(/A primeira contagem/.test(a.doc.body.textContent));
   a.fechar();
 });
@@ -3076,5 +3076,27 @@ test('com alguém tirando e nenhuma foto com as linhas, não há sobreposta', as
   assert.strictEqual(c.refUrl, null);
   assert.ok(!a.$('.cam-ghost'));
   assert.ok(!a.$$('.aj-modos button').some(b => b.textContent === 'sobrepor'), 'sem o que sobrepor, nem o botão');
+  a.fechar();
+});
+
+
+test('sessão de antes de 06/11 continua "de 9" no Corpo; a de hoje conta sobre 11', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  a.E(`const f = {};
+       ['frente-relaxado','frente-duplo-biceps','frente-abdomen-coxa','perfil-direito','perfil-direito-postura']
+         .forEach(function (id, i) { f[id] = { v: 1 + i, ext: 'webp' }; });
+       S.protocolo.sessoes = [{ d: '2026-10-12', t: 1, m: 1, fotos: f }];`);
+  a.v('render');
+  await a.esperar();
+  const p = a.vJ('ctx.protocoloFotos');
+  assert.ok(/ · 5 de 9$/.test(p.nota), p.nota);
+  assert.strictEqual(p.pontos.length, 9, 'os pontinhos da sessão antiga são as nove de então');
+
+  a.v('ctx.abreProtocolo');
+  a.E('view.protocolo.montagem = false');
+  a.v('render');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.sessaoDeFotos').total, 11, 'a sessão nova é sobre 11');
   a.fechar();
 });

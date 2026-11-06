@@ -7,7 +7,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import {
-  CADENCIA_DIAS, CONFERE_SEMPRE, PASSOS_DO_AJUSTE, PROTOCOLO, montagem, comAPose, completude, dataLocal, diasDesde,
+  CADENCIA_DIAS, CONFERE_SEMPRE, DESDE_11_POSES, PASSOS_DO_AJUSTE, POSES_ATE_05_11, PROTOCOLO, montagem, posesDaData, comAPose, completude, dataLocal, diasDesde,
   instanteDaData, mediaDaSemana, ordemPadrao, parPadrao, poseDe, poses,
   proximaPose, referencia, sessaoDe, ultima, vizinhaComAPose
 } from '../../src/dominio/protocolo';
@@ -24,9 +24,9 @@ function sessao(d: string, poseIds: string[], t = 0): SessaoFoto {
 // ---------- o catálogo ----------
 
 test('as poses do catálogo têm id único e giro conhecido', () => {
-  assert.strictEqual(PROTOCOLO.length, 9);
+  assert.strictEqual(PROTOCOLO.length, 11);
   const ids = new Set(PROTOCOLO.map(p => p.id));
-  assert.strictEqual(ids.size, 9);
+  assert.strictEqual(ids.size, 11);
   PROTOCOLO.forEach(p => {
     assert.ok([0, 90, 180, 270].includes(p.giro), p.id + ' com giro ' + p.giro);
     assert.ok(p.como.length >= 2, p.id + ' sem execução');
@@ -101,7 +101,7 @@ test('no abdômen a pessoa olha para a frente, e não para o celular', () => {
   assert.ok(/Olhe para a frente, na altura dos olhos/.test(p.como.join(' ')));
   // F22: pés juntos no duplo bíceps de costas, mãos só apoiadas na cintura
   assert.ok(/Pés juntos/.test(poseDe('costas-duplo-biceps')!.voz!));
-  assert.ok(/sem apertar/.test(poseDe('costas-maos-na-cintura')!.voz!));
+  assert.ok(/sem beliscar/i.test(poseDe('costas-maos-na-cintura')!.voz!));
 });
 
 test('a ordem é uma rotação contínua, nunca volta para trás', () => {
@@ -162,7 +162,51 @@ test('sessão inexistente começa da primeira pose', () => {
   assert.strictEqual(proximaPose(null, null), ordemPadrao()[0]);
   const c = completude(null, null);
   assert.strictEqual(c.feitas, 0);
-  assert.strictEqual(c.total, 9);
+  assert.strictEqual(c.total, 11);
+});
+
+// ---------- 9 → 11 poses (06/11/2026) ----------
+
+test('as duas poses novas ficam junto das que usam a mesma posição de câmera', () => {
+  assert.deepStrictEqual(ordemPadrao(), [
+    'frente-relaxado', 'frente-bracos-afastados', 'frente-duplo-biceps', 'frente-abdomen-coxa',
+    'perfil-direito', 'perfil-direito-postura', 'perfil-maos-na-nuca',
+    'costas-relaxado', 'costas-duplo-biceps', 'costas-maos-na-cintura', 'perfil-esquerdo'
+  ]);
+  assert.strictEqual(poseDe('frente-bracos-afastados')!.giro, 0);
+  assert.strictEqual(poseDe('perfil-maos-na-nuca')!.giro, 90);
+});
+
+test('as nove poses de antes não mudaram de id nem de nome', () => {
+  assert.deepStrictEqual(POSES_ATE_05_11.map(id => poseDe(id)!.n), [
+    'Frente relaxado', 'Frente duplo bíceps', 'Abdômen e coxa', 'Perfil direito', 'Perfil direito natural',
+    'Costas relaxado', 'Costas duplo bíceps', 'Costas mãos na cintura', 'Perfil esquerdo'
+  ]);
+});
+
+test('sessão antiga continua contada sobre nove; a partir de 06/11, sobre onze', () => {
+  assert.strictEqual(DESDE_11_POSES, '2026-11-06');
+  assert.strictEqual(posesDaData('2026-10-29', null).length, 9);
+  assert.strictEqual(posesDaData('2026-11-05', null).length, 9);
+  assert.strictEqual(posesDaData('2026-11-06', null).length, 11);
+  const antiga = sessao('2026-10-29', POSES_ATE_05_11);
+  assert.deepStrictEqual([completude(antiga, null).feitas, completude(antiga, null).total], [9, 9]);
+  assert.strictEqual(completude(antiga, null).cheia, true);
+  const meia = sessao('2026-10-12', POSES_ATE_05_11.slice(0, 5));
+  assert.strictEqual(completude(meia, null).total, 9, '"5 de 9" continua "5 de 9"');
+  const nova = sessao('2026-11-27', POSES_ATE_05_11);
+  const c = completude(nova, null);
+  assert.deepStrictEqual([c.feitas, c.total], [9, 11]);
+  assert.deepStrictEqual(c.faltando, ['frente-bracos-afastados', 'perfil-maos-na-nuca']);
+  assert.strictEqual(proximaPose(nova, null), 'frente-bracos-afastados');
+});
+
+test('na das mãos na cintura não há mais pinça: mãos só apoiadas, sem beliscar', () => {
+  const p = poseDe('costas-maos-na-cintura')!;
+  const txt = p.como.join(' ') + ' ' + p.voz;
+  assert.ok(/só apoiadas/.test(txt) && /polegares logo acima do osso do quadril/.test(txt));
+  assert.ok(/Sem beliscar a pele/.test(txt));
+  assert.ok(!/contraída|pinç|segur/i.test(txt), txt);
 });
 
 test('a completude conta contra a ordem dele, não contra a do código', () => {

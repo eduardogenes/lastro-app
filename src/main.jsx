@@ -67,7 +67,7 @@ import {
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
-import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, medidaDoCorpo, ondeMediu,
+import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGRA_DA_FITA, medidaDoCorpo, ondeMediu,
          mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
@@ -92,7 +92,7 @@ import {
   CADENCIA_DIAS, CONFERE_SEMPRE, FALA_DO_AJUSTE, FALA_DO_FIM, PASSOS_DO_AJUSTE,
   comAPose, completude, montagem as montagemDe,
   diasDesde as diasDesdeAFoto, instanteDaData, mediaDaSemana, parPadrao,
-  poseDe, poses as posesDo, proximaPose, quaseTodoPreto, referencia, sessaoDe,
+  poseDe, poses as posesDo, posesDaData, proximaPose, quaseTodoPreto, referencia, sessaoDe,
   ultima as ultimaSessaoFoto, vizinhaComAPose
 } from './dominio/protocolo';
 import {
@@ -4775,7 +4775,7 @@ function valorDoCorpo(k) {
  *
  * @returns {number} quantas medidas daquele dia foram substituídas
  */
-function gravaMarca(k, v, quando, onde) {
+function gravaMarca(k, v, quando, onde, semHora) {
   if (!Array.isArray(S.body[k])) S.body[k] = [];
   const arr = S.body[k];
   const noDia = arr.filter(x => sameDay(x.t, quando));
@@ -4790,6 +4790,7 @@ function gravaMarca(k, v, quando, onde) {
   // chave da que saiu: o carimbo tem de vir depois da lápide.
   const nova = { t: quando, v, m: depoisDe(morte) };
   if (onde) nova.onde = onde;
+  if (semHora) nova.semHora = 1;
   arr.push(nova);
   arr.sort((a,b) => a.t - b.t);
   if (arr.length > TETO.body) S.body[k] = arr.slice(-TETO.body);
@@ -4804,7 +4805,11 @@ async function addBody(k) {
   const rotulo = rotuloDoDia(quando);
   // O texto de "como eu medi" só existe nas medidas com fita, e vazio é "não
   // disse" — nunca uma frase em branco gravada por cima do lembrete.
-  const onde = (view.bodyOnde && typeof view.bodyOnde[k] === 'string') ? view.bodyOnde[k].trim() : '';
+  // Sem texto dele, vai o ponto de antes ou o padrão da tabela: toda medida
+  // com fita sai com o "onde mediu" preenchido.
+  const med0 = medidaDoCorpo(k);
+  const onde = ((view.bodyOnde && typeof view.bodyOnde[k] === 'string') ? view.bodyOnde[k].trim() : '') ||
+    (med0 && med0.fita ? (ondeMediu(S.body[k]) || med0.onde || '') : '');
   declaraGravacao(k === 'peso' ? 'o peso de ' + (rotulo === 'hoje' ? 'hoje' : rotulo) : 'a medida de ' + (medidaDoCorpo(k) || { n: k }).n,
                   comUnidade(v, unidadeDoCorpo(k)));
   const substituiu = gravaMarca(k, v, quando, onde || null);
@@ -4875,7 +4880,7 @@ async function addBody(k) {
  * @returns {Promise<object>} `{ ok: true, em, gravadas }` ou
  *   `{ ok: false, falta, invalidas }` — sempre por valor, nunca um elemento.
  */
-async function registraBio(leitura, quando) {
+async function registraBio(leitura, quando, semHora) {
   const L = (leitura && typeof leitura === 'object') ? leitura : {};
   const t = quando == null ? Date.now() : Number(quando);
   if (!t || isNaN(t) || t > Date.now()) {
@@ -4912,13 +4917,13 @@ async function registraBio(leitura, quando) {
   // Um instante só para as cinco: é o que as torna UMA leitura, e é o que a
   // fusão usa para casar o mesmo dia vindo de dois aparelhos.
   let substituiu = 0;
-  vai.forEach(function (x) { substituiu += gravaMarca(x.k, x.v, t); });
+  vai.forEach(function (x) { substituiu += gravaMarca(x.k, x.v, t, null, !!semHora); });
 
   await save();
   render();
   // "Guardei os cinco números de 01/10 neste aparelho." (§10.3): quantos, e o
   // que entrou — é o que impede o "Guardar" de ser o "Salvar" que V2 recusa.
-  toast('Guardei os ' + POR_EXTENSO[vai.length] + ' números de ' + fmtDate(t) + ' neste aparelho.' +
+  toast('Guardei os ' + POR_EXTENSO[vai.length] + ' números de ' + fmtDate(t) + (semHora ? '' : ' às ' + fmtHora(t)) + ' neste aparelho.' +
         (substituiu ? ' Substituí a leitura que havia nesse dia.' : ''));
   return { ok: true, em: t, gravadas: vai.map(function (x) { return x.k; }) };
 }
@@ -9045,6 +9050,16 @@ CTX.corpoVazio = function () {
   };
 };
 
+/**
+ * O que o campo "como eu medi" mostra: o que ele está digitando, ou, quando a
+ * medida nunca teve ponto dito, o ponto padrão da tabela — já preenchido.
+ */
+function rascunhoDoOnde(k) {
+  if (view.bodyOnde && typeof view.bodyOnde[k] === 'string') return view.bodyOnde[k];
+  const m = medidaDoCorpo(k);
+  return ondeMediu(S.body[k]) ? '' : ((m && m.onde) || '');
+}
+
 CTX.corpo = function () {
   const r = pesoRitmo();
   const c = cinturaMes();
@@ -9092,7 +9107,8 @@ CTX.corpo = function () {
       dia: diaDaMedidaVM('cintura'),
       medidas: medidasRecentes('cintura', 'cm'),
       onde: ondeMediu(S.body.cintura),
-      ondeRascunho: (view.bodyOnde && view.bodyOnde.cintura) || ''
+      ondeRascunho: rascunhoDoOnde('cintura'),
+      como: medidaDoCorpo('cintura').como
     },
     // AS MEDIDAS COM FITA além da cintura, que tem seção própria logo acima.
     // Leitura, e nenhuma decide nada (Direção D, pergunta 8): não há média,
@@ -9119,7 +9135,8 @@ CTX.corpo = function () {
         dia: diaDaMedidaVM(k),
         medidas: medidasRecentes(k, m.u),
         onde: ondeMediu(serie),
-        ondeRascunho: (view.bodyOnde && view.bodyOnde[k]) || ''
+        ondeRascunho: rascunhoDoOnde(k),
+        como: m.como
       };
     }),
     cardio: {
@@ -9134,7 +9151,8 @@ CTX.corpo = function () {
       }),
       regra: 'segunda, depois do A: 20 a 25 min · quinta, depois do D: 25 a 30 min. Leve a moderado: respirando mais forte, mas ainda dando para conversar. Evite antes de B ou do HYROX, e nunca antes do treino.'
     },
-    musculos: CTX.musculos()
+    musculos: CTX.musculos(),
+    regraDaFita: REGRA_DA_FITA
   };
 };
 
@@ -9363,7 +9381,7 @@ CTX.bioimpedancia = function () {
   };
 };
 
-CTX.registraBio = function (leitura, quando) { return registraBio(leitura, quando); };
+CTX.registraBio = function (leitura, quando, semHora) { return registraBio(leitura, quando, semHora); };
 CTX.apagaMedida = function (k, t) { delBody(k, t); };
 CTX.apagaCardio = function (t) { delCardio(t); };
 CTX.corrigeCardio = function (t, campo, valor) { return corrigeCardio(t, campo, valor); };
@@ -12455,7 +12473,8 @@ CTX.protocoloFotos = function () {
     dias: dias == null ? '–' : String(dias),
     diasCor: dias != null && dias > CADENCIA_DIAS ? 'ins-amber' : '',
     cadencia: 'a cada ' + CADENCIA_DIAS + ' dias',
-    pontos: lista.map(function (p) {
+    // as poses do protocolo da data dela: sessão de antes de 06/11 tem nove
+    pontos: (u ? posesDaData(u.d, S.protocolo.poses) : lista).map(function (p) {
       return { id: p.id, n: p.n, feita: !!(u && u.fotos[p.id]) };
     }),
     cta: hoje && !cHoje.cheia

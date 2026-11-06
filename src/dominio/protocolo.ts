@@ -101,7 +101,7 @@ const ROUPA: ItemDeMontagem = { k: 'roupa', rotulo: 'roupa', valor: 'sempre a me
 
 /**
  * O ajuste de quem fotografa, uma vez, na primeira pose (F2 e F3): depois dele
- * ninguém sai do lugar, e as outras oito poses só se conferem. A ordem importa:
+ * ninguém sai do lugar, e as outras poses só se conferem. A ordem importa:
  * a altura primeiro, pela regra do centro — com o celular no nível, o meio da
  * tela é a altura da lente —, e a distância depois, que não tira o quadril do
  * meio porque o corpo cresce e encolhe em volta dele.
@@ -146,6 +146,16 @@ export const FALA_DO_FIM = 'Pronto. Sessão completa.';
  * celular baixava a cabeça uns 28°, o erro que a frase queria evitar; e na das
  * mãos na cintura a voz pede "mãos só apoiadas, sem apertar", porque ela vinha
  * virando uma pinça da dobra.
+ *
+ * Em 06/11/2026 o avaliador físico reviu o protocolo e ele passou de 9 para 11
+ * poses: frente com os braços afastados (o contorno da cintura sem o braço
+ * encostado) e perfil com as mãos na nuca (flanco e culote sem o braço na
+ * frente). Cada uma entra junto da pose que usa a mesma posição de câmera, e a
+ * rotação continua a mesma. Na das mãos na cintura a pinça acabou de vez: o
+ * culote passa a ser lido pelo perfil das mãos na nuca e pela fita no quadril.
+ * Os ids, nomes e arquivos das nove de antes não mudam: as fotos antigas
+ * continuam comparáveis. Sessão de antes de `DESDE_11_POSES` conta sobre as
+ * nove (`posesDaData`).
  */
 export const PROTOCOLO: Pose[] = [
   {
@@ -160,6 +170,19 @@ export const PROTOCOLO: Pose[] = [
     confira: 'pés no T · braços um palmo do corpo',
     revela: 'cintura, simetria de ombro, distribuição de gordura',
     erro: 'colar os braços no corpo, que esconde o contorno da cintura'
+  },
+  {
+    id: 'frente-bracos-afastados', n: 'Frente braços afastados', bloco: 'referência', giro: 0,
+    bracos: 'afastados, em A',
+    como: [
+      'Mesmo lugar e mesmo enquadramento da frente relaxada.',
+      'Braços estendidos e afastados do corpo cerca de um palmo, como um "A", mãos abertas.',
+      'Corpo relaxado, barriga solta, respiração normal. O braço não encosta no tronco.'
+    ],
+    voz: 'Braços esticados e afastados do corpo, como um A. Mãos abertas. Barriga solta.',
+    confira: 'braço sem encostar no tronco · mãos abertas',
+    revela: 'contorno da cintura e do quadril de frente, sem o braço encostado',
+    erro: 'deixar o braço encostar no tronco, que apaga o contorno da cintura'
   },
   {
     id: 'frente-duplo-biceps', n: 'Frente duplo bíceps', bloco: 'músculo', giro: 0,
@@ -215,6 +238,20 @@ export const PROTOCOLO: Pose[] = [
     erro: 'corrigir a postura na hora e perder o dado'
   },
   {
+    id: 'perfil-maos-na-nuca', n: 'Perfil mãos na nuca', bloco: 'referência', giro: 90,
+    bracos: 'mãos na nuca',
+    como: [
+      'Mesmo lugar e mesma marca de pés do perfil direito, de lado para a câmera.',
+      'Dedos entrelaçados atrás da cabeça, só apoiados, sem empurrar a cabeça.',
+      'Cotovelos abertos para os lados, na linha das orelhas, sem apontar para a frente.',
+      'Barriga relaxada, respiração normal. O tronco não se inclina para trás.'
+    ],
+    voz: 'Dedos atrás da cabeça, sem empurrar. Cotovelos abertos para os lados. Barriga solta.',
+    confira: 'cotovelos na linha das orelhas · tronco sem inclinar para trás',
+    revela: 'flanco, lombar baixa, barriga e culote de perfil, sem o braço na frente',
+    erro: 'cotovelos apontando para a frente, que voltam a esconder a barriga'
+  },
+  {
     id: 'costas-relaxado', n: 'Costas relaxado', bloco: 'referência', giro: 180,
     bracos: 'um palmo do corpo',
     como: [
@@ -231,7 +268,7 @@ export const PROTOCOLO: Pose[] = [
     id: 'costas-duplo-biceps', n: 'Costas duplo bíceps', bloco: 'músculo', giro: 180,
     bracos: 'cotovelos abertos',
     como: [
-      'Mesma subida de braço da segunda pose, agora de costas: cotovelos na altura do ombro.',
+      'Mesma subida de braço do duplo bíceps de frente, agora de costas: cotovelos na altura do ombro.',
       'Afaste as escápulas como se puxasse os cotovelos para trás e para fora.',
       'Pés juntos no T, os dois apoiados no chão.'
     ],
@@ -244,11 +281,11 @@ export const PROTOCOLO: Pose[] = [
     id: 'costas-maos-na-cintura', n: 'Costas mãos na cintura', bloco: 'músculo', giro: 180,
     bracos: 'polegares na cintura',
     como: [
-      'Polegares logo acima da crista ilíaca, mãos abertas e só apoiadas, sem apertar a pele.',
-      'Empurre os cotovelos para a frente e para fora, abrindo a largura.',
-      'Cintura contraída — o contraste é a informação aqui.'
+      'Mãos só apoiadas na cintura, com os polegares logo acima do osso do quadril.',
+      'Sem beliscar a pele: o contorno da cintura fica à mostra.',
+      'Empurre os cotovelos para a frente e para fora, abrindo a largura.'
     ],
-    voz: 'Polegares logo acima do osso do quadril. Mãos só apoiadas, sem apertar.',
+    voz: 'Mãos só apoiadas na cintura, polegares logo acima do osso do quadril. Sem beliscar a pele.',
     confira: 'mãos só apoiadas, sem beliscar · cintura à mostra',
     revela: 'a relação ombro/cintura, que muda mesmo com o peso parado',
     erro: 'subir as mãos para as costelas e falsear a largura'
@@ -266,6 +303,23 @@ export const PROTOCOLO: Pose[] = [
     revela: 'a assimetria entre os lados, invisível na foto de frente',
     erro: 'pular esta foto por parecer repetida — ela é a que fecha o par'
   }
+];
+
+/**
+ * O primeiro dia do protocolo de 11 poses. Sessão de antes conta sobre as nove
+ * que existiam na data dela: "5 de 9" continua "5 de 9".
+ *
+ * Uma data no código, e não a versão gravada em cada sessão: um aparelho ainda
+ * com o app antigo em cache criaria a sessão sem a versão, e ela contaria como
+ * da versão velha. Com a data, nenhum dado guardado muda.
+ */
+export const DESDE_11_POSES = '2026-11-06';
+
+/** As nove poses de antes de `DESDE_11_POSES`. */
+export const POSES_ATE_05_11: PoseId[] = [
+  'frente-relaxado', 'frente-duplo-biceps', 'frente-abdomen-coxa', 'perfil-direito',
+  'perfil-direito-postura', 'costas-relaxado', 'costas-duplo-biceps', 'costas-maos-na-cintura',
+  'perfil-esquerdo'
 ];
 
 /** O catálogo por id, montado uma vez. */
@@ -290,6 +344,13 @@ export function poses(ordem: PoseId[] | null | undefined): Pose[] {
   const r: Pose[] = [];
   ordem.forEach(function (id) { const p = POR_ID[id]; if (p) r.push(p); });
   return r.length ? r : PROTOCOLO.slice();
+}
+
+/** As poses do protocolo que valia naquela data ('AAAA-MM-DD'). */
+export function posesDaData(d: string | null | undefined, ordem: PoseId[] | null | undefined): Pose[] {
+  const lista = poses(ordem);
+  if (!d || String(d) >= DESDE_11_POSES) return lista;
+  return lista.filter(function (p) { return POSES_ATE_05_11.indexOf(p.id) >= 0; });
 }
 
 /**
@@ -352,11 +413,11 @@ export interface Completude {
   cheia: boolean;
 }
 
-/** Quantas poses da ordem já têm foto naquela sessão. */
+/** Quantas poses do protocolo da data da sessão já têm foto nela. */
 export function completude(
   sessao: SessaoFoto | null | undefined, ordem: PoseId[] | null | undefined
 ): Completude {
-  const lista = poses(ordem);
+  const lista = sessao ? posesDaData(sessao.d, ordem) : poses(ordem);
   const fotos = (sessao && sessao.fotos) || {};
   const faltando = lista.filter(function (p) { return !fotos[p.id]; }).map(function (p) { return p.id; });
   return {

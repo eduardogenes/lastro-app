@@ -1,6 +1,6 @@
 // A sessão de fotos de acompanhamento.
 //
-// Tela cheia e não folha: são nove poses em sequência, e a tab bar convidaria a
+// Tela cheia e não folha: são onze poses em sequência, e a tab bar convidaria a
 // sair no meio — o mesmo motivo do histórico e da retrospectiva.
 //
 // O que esta tela faz de diferente de um botão de câmera é mostrar a FOTO
@@ -16,7 +16,7 @@ import { FotoAjustada } from '../instrumento/fotoajustada.jsx';
 import { Procedencia, Secao } from '../instrumento/primitivos.jsx';
 import { TelaCheia } from '../instrumento/telacheia.jsx';
 
-/** A régua de nove pontos. Diz onde ele está e o que falta, sem ocupar linha. */
+/** A régua de pontos, um por pose. Diz onde ele está e o que falta, sem ocupar linha. */
 function Pontos({ pontos, aoIr }) {
   return (
     <div class="pr-pontos" role="list">
