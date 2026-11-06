@@ -2486,3 +2486,86 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 .cam-bloco.adiada { border: 2px dashed var(--ins-tinta-3); }
 .cam-giro { margin: 0 0 var(--ins-3); font: 600 40px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta); text-align: center; }
 .cam-preta { margin: 0 0 var(--ins-3); color: var(--ins-atencao-tinta); }
+
+/* ---------- CORPO como painel (docs/corpo/02, 06/11/2026) ----------
+   A página mostra o estado; registrar abre folha ou formulário. Linhas de
+   fio, sem cartão: a linha inteira é o botão que abre o detalhe. */
+.co-linha {
+  display: flex; align-items: center; gap: var(--ins-4);
+  width: 100%; text-align: left; background: none; border: 0; border-radius: 0;
+  padding: var(--ins-3) 0; color: inherit; font: inherit; cursor: pointer;
+}
+.co-chev { color: var(--ins-tinta-3); font-size: 20px; margin-left: auto; }
+.co-peso { padding-top: 0; }
+.co-peso-n { display: flex; align-items: baseline; }
+.co-peso-g { font: 600 44px/1 var(--ins-fonte); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.co-peso-u { font-size: 18px; color: var(--ins-tinta-2); margin-left: var(--ins-1); }
+.co-peso-l { margin: 0; }
+.co-registra { width: 100%; margin-top: var(--ins-4); }
+.co-lista { display: flex; flex-direction: column; }
+.co-med { border-bottom: 1px solid var(--ins-fio); min-height: var(--ins-tap); }
+.co-med:last-child { border-bottom: 0; }
+.co-med-n { flex: 1 1 auto; min-width: 0; }
+.co-med-v { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
+.co-med-s { width: 48px; flex: 0 0 48px; }
+.co-med-s svg { width: 100%; height: 22px; }
+.co-bio-r { align-items: flex-start; }
+.co-bio-r > :first-child { flex: 1 1 auto; }
+
+/* data e hora lado a lado, nas folhas e no formulário */
+.co-quando { display: flex; flex-wrap: wrap; gap: var(--ins-4) var(--ins-5); margin: 0 0 var(--ins-3); }
+.co-quando-c { display: flex; flex-direction: column; gap: var(--ins-1); flex: 1 1 140px; }
+.co-quando-c .ins-input { width: 100%; }
+.co-peso-v { margin: var(--ins-5) 0 var(--ins-2); }
+.co-peso-ult { margin: 0 0 var(--ins-3); }
+
+/* ---------- REGISTRAR MEDIDAS ---------- */
+.me-campo { display: flex; flex-direction: column; gap: var(--ins-2); padding: var(--ins-4) 0; border-bottom: 1px solid var(--ins-fio); }
+.me-campo:last-of-type { border-bottom: 0; }
+.me-campo.foco .me-nome { color: var(--ins-acento-tinta); }
+.me-cab { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3); }
+.me-nome { font-weight: 600; }
+.me-como, .me-mais {
+  background: none; border: 0; padding: var(--ins-2) 0; min-height: var(--ins-tap-dense);
+  color: var(--ins-acento-tinta); font: inherit; font-size: 14px; cursor: pointer;
+}
+.me-ponto { margin: 0; }
+.me-instr { display: flex; flex-direction: column; gap: var(--ins-3); padding: var(--ins-3); background: var(--ins-superficie-2); border-radius: var(--ins-raio-2); }
+.me-onde { display: flex; flex-direction: column; gap: var(--ins-1); }
+.me-onde .ins-input { width: 100%; }
+.me-leituras { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ins-3); }
+.me-leitura { display: flex; align-items: center; gap: var(--ins-2); }
+.me-leitura .ins-input { width: 88px; font-variant-numeric: tabular-nums; }
+.me-u { color: var(--ins-tinta-3); font-size: 14px; }
+.me-aviso { color: var(--ins-atencao-tinta); margin: 0; }
+.me-salvo { display: flex; flex-direction: column; gap: var(--ins-3); padding: var(--ins-4); margin-bottom: var(--ins-5); background: var(--ins-superficie-2); border-radius: var(--ins-raio-2); }
+.me-conferir { display: flex; flex-direction: column; gap: var(--ins-2); padding: var(--ins-3); background: var(--ins-atencao-fundo); border: 1px solid var(--ins-atencao-fio); border-radius: var(--ins-raio-2); color: var(--ins-atencao-tinta); }
+.me-barra {
+  position: sticky; bottom: 0; padding: var(--ins-4) 0 calc(var(--ins-4) + env(safe-area-inset-bottom));
+  background: var(--ins-fundo); border-top: 1px solid var(--ins-fio); margin-top: var(--ins-5);
+}
+.me-barra .ins-btn-primary { width: 100%; }
+
+/* ---------- DETALHE DE UMA MEDIDA ---------- */
+.md-curva { margin: var(--ins-5) 0 var(--ins-2); }
+.md-curva svg { width: 100%; height: auto; display: block; }
+.md-eixo { stroke: var(--ins-fio-controle); stroke-width: 1; }
+.md-foto { fill: var(--ins-tinta-3); }
+.md-linha { fill: none; stroke: var(--ins-acento); stroke-width: 2; }
+.md-ponto { fill: var(--ins-acento); }
+.md-ponto.mudou { fill: var(--ins-fundo); stroke: var(--ins-atencao-tinta); stroke-width: 2; }
+.md-leg { display: flex; justify-content: space-between; gap: var(--ins-3); font-size: 12px; color: var(--ins-tinta-3); }
+.md-leg-f { display: inline-flex; align-items: center; gap: var(--ins-1); }
+.md-foto-i { display: inline-block; width: 3px; height: 10px; background: var(--ins-tinta-3); }
+.md-hist {
+  display: grid; grid-template-columns: 1fr auto auto; gap: var(--ins-1) var(--ins-3); align-items: center;
+  padding: var(--ins-3) 0; border-bottom: 1px solid var(--ins-fio);
+}
+.md-hist:last-child { border-bottom: 0; }
+.md-hist-d { font-size: 13px; color: var(--ins-tinta-2); }
+.md-hist-v { font-variant-numeric: tabular-nums; font-weight: 600; }
+.md-hist-o { grid-column: 1 / -1; font-size: 13px; color: var(--ins-tinta-3); }
+.md-hist.mudou { background: var(--ins-atencao-fundo); }
+.md-mudou { color: var(--ins-atencao-tinta); font-weight: 600; }
+.co-mini { fill: none; stroke: var(--ins-acento); stroke-width: 1.5; }
+.co-mini-p { fill: var(--ins-acento); }

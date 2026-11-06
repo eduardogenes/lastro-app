@@ -26,7 +26,7 @@ export interface MedidaDoCorpo {
   k: QualMarca;
   /** o nome dela, para a tela não ter uma tabela própria */
   n: string;
-  u: 'kg' | 'cm' | '%' | 'L';
+  u: 'kg' | 'cm' | '%' | 'L' | 'mm';
   /** sai da balança de bioimpedância, na mesma leitura das outras `bio` */
   bio: boolean;
   /**
@@ -68,6 +68,11 @@ export interface MedidaDoCorpo {
   onde?: string;
   /** Só nas medidas com fita: como medir, a instrução que a tela mostra. */
   como?: string;
+  /**
+   * Dobra cutânea, medida com adipômetro, em mm (06/11/2026). Fica de fora de
+   * `fita`: só milímetros, nunca convertidos para percentual de gordura.
+   */
+  dobra?: true;
 }
 
 /**
@@ -97,8 +102,108 @@ export const MEDIDAS_DO_CORPO: MedidaDoCorpo[] = [
   { k: 'peito',         n: 'peito',                     u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 100,
     onde: 'linha dos mamilos', como: 'Fita na linha dos mamilos, passando sob as axilas e paralela ao chão. Braços soltos; medir no fim de uma expiração normal.' },
   { k: 'quadril',       n: 'quadril',                   u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 96,
-    onde: 'parte mais larga do quadril', como: 'De lado no espelho, achar a parte mais larga (glúteo e culote). Fita paralela ao chão, pés juntos.' }
+    onde: 'parte mais larga do quadril', como: 'De lado no espelho, achar a parte mais larga (glúteo e culote). Fita paralela ao chão, pés juntos.' },
+  // As dobras com adipômetro (06/11/2026): sempre do lado direito, em mm, e
+  // nunca convertidas para percentual de gordura. Quem mede é sempre a mesma
+  // pessoa. Entram sem migração, como as fitas: a tabela é a fonte da fusão,
+  // da cópia de segurança e do padrão do boot.
+  { k: 'dobraAbdominal',   n: 'dobra abdominal',   u: 'mm', bio: false, obrigatorio: true, fita: false, dobra: true,
+    onde: 'dois dedos ao lado do umbigo, dobra vertical', como: 'Dois dedos à direita do umbigo. Dobra vertical.' },
+  { k: 'dobraSuprailiaca', n: 'dobra suprailíaca', u: 'mm', bio: false, obrigatorio: true, fita: false, dobra: true,
+    onde: 'logo acima do osso do quadril, dobra diagonal', como: 'Logo acima do osso do quadril, do lado direito. Dobra diagonal, acompanhando a linha do osso.' },
+  { k: 'dobraCoxa',        n: 'dobra da coxa',     u: 'mm', bio: false, obrigatorio: true, fita: false, dobra: true,
+    onde: 'meio da coxa na frente, dobra vertical', como: 'Coxa direita, na frente, no meio entre a virilha e o joelho. Dobra vertical.' }
 ];
+
+/** As dobras com adipômetro, na ordem da tabela. */
+export const MEDIDAS_DE_DOBRA: MedidaDoCorpo[] =
+  MEDIDAS_DO_CORPO.filter(function (m) { return !!m.dobra; });
+
+/**
+ * A ordem de medir: o corpo de cima para baixo, e depois as dobras (dono,
+ * 06/11/2026). É a ordem do formulário e da lista da tela Corpo.
+ */
+export const ORDEM_DE_MEDIR: QualMarca[] = [
+  'peito', 'braco', 'cintura', 'quadril', 'coxa', 'panturrilha',
+  'dobraAbdominal', 'dobraSuprailiaca', 'dobraCoxa'
+];
+
+/** O que vale para toda dobra, dito uma vez na tela de medir. */
+export const REGRA_DA_DOBRA = 'Pince a pele com o polegar e o indicador, a 1 cm do ponto. Espere 2 segundos com o adipômetro e leia. Meça 3 vezes: o app grava a do meio. Só milímetros, sem converter para percentual de gordura.';
+
+/**
+ * Quanto uma medida pode mudar desde a anterior antes de o app pedir para
+ * conferir: 2 cm na fita, 3 mm na dobra (dono, 06/11/2026).
+ */
+export const CONFERIR_ACIMA = { cm: 2, mm: 3 } as const;
+
+/** O valor que a dobra grava: a leitura do meio das três; com duas, a média; com uma, ela. */
+export function doMeio(leituras: Array<number | null | undefined>): number | null {
+  const v = (leituras || []).filter(function (x): x is number { return typeof x === 'number' && isFinite(x) && x > 0; })
+    .slice().sort(function (a, b) { return a - b; });
+  if (!v.length) return null;
+  if (v.length === 2) return arred1((v[0] + v[1]) / 2);
+  return v[Math.floor((v.length - 1) / 2)];
+}
+
+/**
+ * O valor que a fita grava: uma leitura, ela; duas, a média; três, a média das
+ * duas mais próximas (a regra: se as duas primeiras diferirem mais de 0,5 cm,
+ * mede-se uma terceira e grava-se a média das leituras próximas).
+ */
+export function mediaDaFita(leituras: Array<number | null | undefined>): number | null {
+  const v = (leituras || []).filter(function (x): x is number { return typeof x === 'number' && isFinite(x) && x > 0; });
+  if (!v.length) return null;
+  if (v.length === 1) return v[0];
+  if (v.length === 2) return arred1((v[0] + v[1]) / 2);
+  const s = v.slice(0, 3).sort(function (a, b) { return a - b; });
+  return s[1] - s[0] <= s[2] - s[1] ? arred1((s[0] + s[1]) / 2) : arred1((s[1] + s[2]) / 2);
+}
+
+/** As duas primeiras leituras da fita pedem a terceira? (diferem mais de 0,5 cm) */
+export function pedeTerceira(a: number | null | undefined, b: number | null | undefined): boolean {
+  return typeof a === 'number' && typeof b === 'number' && a > 0 && b > 0 && Math.abs(a - b) > 0.5 + 1e-9;
+}
+
+function arred1(x: number): number { return Math.round(x * 10) / 10; }
+
+export interface PesoDaSemana {
+  /** média de TODAS as pesagens da semana em curso (domingo a sábado), ou null sem nenhuma */
+  media: number | null;
+  /** quantas pesagens ela tem */
+  n: number;
+  /** a semana ainda não fechou (é a de hoje) */
+  parcial: boolean;
+  /** a média da última semana completa que teve pesagem, e o início dela */
+  anterior: { media: number; w: number } | null;
+  /** média desta semana − a da anterior, quando as duas existem */
+  diferenca: number | null;
+}
+
+/**
+ * O número grande do peso na tela Corpo (dono, 06/11/2026): a média da semana,
+ * de domingo a sábado. Toda pesagem conta, em qualquer horário e com qualquer
+ * número de pesagens. É LEITURA: a regra do nutricionista continua lendo
+ * `mediasSemanais`, com o mínimo de pesagens dela.
+ */
+export function pesoDaSemana(peso: Marca[] | null | undefined, agora: number): PesoDaSemana {
+  const semana = weekStart(agora);
+  const por: Record<number, number[]> = {};
+  (Array.isArray(peso) ? peso : []).forEach(function (x) {
+    if (!x || typeof x.v !== 'number') return;
+    const w = weekStart(x.t);
+    (por[w] = por[w] || []).push(x.v);
+  });
+  const media = function (vs: number[]) { return vs.reduce(function (a, v) { return a + v; }, 0) / vs.length; };
+  const agoraVs = por[semana] || [];
+  const antes = Object.keys(por).map(Number).filter(function (w) { return w < semana; }).sort(function (a, b) { return b - a; });
+  const anterior = antes.length ? { media: media(por[antes[0]]), w: antes[0] } : null;
+  const m = agoraVs.length ? media(agoraVs) : null;
+  return {
+    media: m, n: agoraVs.length, parcial: true, anterior: anterior,
+    diferenca: m != null && anterior ? m - anterior.media : null
+  };
+}
 
 /** As chaves de `S.body`, na ordem da tabela. */
 export const MARCAS_DO_CORPO: QualMarca[] = MEDIDAS_DO_CORPO.map(function (m) { return m.k; });

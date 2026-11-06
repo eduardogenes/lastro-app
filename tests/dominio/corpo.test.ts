@@ -7,7 +7,7 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, leituraDaEvolucao, ondeMediu, pesoRitmo, portoesDaRegra, semanasDaRegra, semanaEmCurso, taxasSemanais, veredito } from '../../src/dominio/corpo';
+import { CONFERIR_ACIMA, doMeio, mediaDaFita, MEDIDAS_DE_DOBRA, ORDEM_DE_MEDIR, pedeTerceira, pesoDaSemana, cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, leituraDaEvolucao, ondeMediu, pesoRitmo, portoesDaRegra, semanasDaRegra, semanaEmCurso, taxasSemanais, veredito } from '../../src/dominio/corpo';
 import { medidas, naSemana, pesagens } from './ajuda';
 
 const semCintura = { peso: [] as ReturnType<typeof pesagens>, cintura: [] };
@@ -456,4 +456,42 @@ test('com uma das duas semanas já depois do passo, falta uma', () => {
   const v = veredito({ peso, cintura: [] }, { ...OK, passoEm: t });
   assert.strictEqual(v.k, 'observar');
   assert.ok(/falta 1 semana\./.test(v.p), v.p);
+});
+
+
+// ---------- as dobras e a fita no formulário de medidas (06/11/2026) ----------
+
+test('três dobras com adipômetro, em mm, do lado direito, e a ordem de medir é a do corpo', () => {
+  assert.deepStrictEqual(MEDIDAS_DE_DOBRA.map(m => m.k), ['dobraAbdominal', 'dobraSuprailiaca', 'dobraCoxa']);
+  MEDIDAS_DE_DOBRA.forEach(m => { assert.strictEqual(m.u, 'mm'); assert.strictEqual(m.fita, false); assert.ok(m.onde && m.como); });
+  assert.deepStrictEqual(ORDEM_DE_MEDIR, ['peito', 'braco', 'cintura', 'quadril', 'coxa', 'panturrilha',
+    'dobraAbdominal', 'dobraSuprailiaca', 'dobraCoxa']);
+  assert.deepStrictEqual(CONFERIR_ACIMA, { cm: 2, mm: 3 });
+});
+
+test('a dobra grava a leitura do meio; com duas, a média; com uma, ela', () => {
+  assert.strictEqual(doMeio([14, 15, 19]), 15);
+  assert.strictEqual(doMeio([19, 14, 15]), 15, 'a ordem não importa');
+  assert.strictEqual(doMeio([14, 15]), 14.5);
+  assert.strictEqual(doMeio([14]), 14);
+  assert.strictEqual(doMeio([]), null);
+});
+
+test('a fita grava a média; com três leituras, a média das duas mais próximas', () => {
+  assert.strictEqual(mediaDaFita([85]), 85);
+  assert.strictEqual(mediaDaFita([85, 85.4]), 85.2);
+  assert.strictEqual(pedeTerceira(85, 85.4), false);
+  assert.strictEqual(pedeTerceira(85, 85.6), true, 'mais de 0,5 cm pede a terceira');
+  assert.strictEqual(mediaDaFita([85, 86, 85.2]), 85.1, 'as duas próximas são 85 e 85,2');
+});
+
+test('a média da semana do peso vai de domingo a sábado, e toda pesagem conta', () => {
+  const sex = new Date(2026, 9, 2, 21, 32).getTime();               // sexta
+  const p = (d: number, h: number, v: number) => ({ t: new Date(2026, 8, d, h).getTime(), v });
+  const r = pesoDaSemana([p(22, 7, 73), p(24, 22, 73.2), p(28, 6, 73.6), p(30, 23, 73.8)], sex);
+  assert.strictEqual(r.n, 2, 'segunda e quarta desta semana (a semana começa no domingo, 27/09)');
+  assert.strictEqual(Math.round(r.media! * 10) / 10, 73.7);
+  assert.strictEqual(Math.round(r.anterior!.media * 10) / 10, 73.1, 'a semana anterior, com a pesagem das 22h');
+  assert.strictEqual(Math.round(r.diferenca! * 10) / 10, 0.6);
+  assert.strictEqual(pesoDaSemana([], sex).media, null);
 });

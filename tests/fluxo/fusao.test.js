@@ -1082,7 +1082,8 @@ test('a unidade se escreve junto do número, e some quando não há número', as
 
   const b = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] } } });
   await b.esperar();
-  const mes = b.$$('.ins-grade-c').map(c => c.textContent.replace(/\s+/g, ' ').trim()).filter(t => /^no mês/.test(t))[0];
-  assert.ok(/^no mês ?–$/.test(mes), 'sem medida no mês, só o traço: ' + mes);
+  // sem pesagem na semana, o número grande do peso é só o traço, sem "kg"
+  const peso = b.$('.co-peso-n').textContent.replace(/\s+/g, ' ').trim();
+  assert.strictEqual(peso, '—', 'sem medida, só o traço: ' + peso);
   b.fechar();
 });

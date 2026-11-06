@@ -169,9 +169,14 @@ test('a divisão do DADOS em três lugares não engoliu regra nenhuma', async ()
 
   const a = await app({ aba: 'corpo' });
   await a.esperar();
-  assert.ok(/mesmo ponto e na mesma hora/.test(proc(a)), 'regra de posicionamento da cintura');
   assert.strictEqual(a.$('.ins-veredito'), null,
     'e o veredito NÃO está aqui: ele responde "dá para mexer na comida?", que é da semana');
+  // a regra de posicionamento da fita mora onde se mede, desde 06/11
+  a.v('ctx.abreMedidas');
+  await a.esperar();
+  assert.ok(/Fita justa na pele/.test(proc(a)), 'regra de posicionamento da fita');
+  a.v('ctx.fechaMedidas');
+  await a.esperar();
 
   a.aba('semana');
   await a.esperar();

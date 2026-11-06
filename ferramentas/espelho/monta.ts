@@ -756,7 +756,7 @@ function medidasCsv(b: Base): string {
     const m = MEDIDAS_DO_CORPO.filter(function (x) { return x.k === k; })[0];
     lista<Marca>(body[k]).forEach(function (x) {
       if (!x || numero(x.t) == null || numero(x.v) == null) return;
-      linhas.push({ t: x.t, ordem: ordem, l: [dataLocal(x.t), x.semHora ? '' : fmtHora(x.t), k, m ? m.n : k, x.v, m ? m.u : '', m && m.bio ? 'bioimpedância' : (m && m.fita ? 'fita' : 'balança'), x.onde || ''] });
+      linhas.push({ t: x.t, ordem: ordem, l: [dataLocal(x.t), x.semHora ? '' : fmtHora(x.t), k, m ? m.n : k, x.v, m ? m.u : '', m && m.bio ? 'bioimpedância' : (m && m.dobra ? 'adipômetro' : (m && m.fita ? 'fita' : 'balança')), x.onde || ''] });
     });
   });
   linhas.sort(function (a, c) { return a.t - c.t || a.ordem - c.ordem; });
@@ -908,7 +908,7 @@ const MAPA: Array<[string, string]> = [
   ['nutricao/dias.csv', 'Um dia por linha: refeições marcadas e a hora de cada uma, água, como foi o dia, totais.'],
   ['nutricao/ajustes.md', 'Cada ajuste calórico que aconteceu, com o veredito que o motivou.'],
   ['nutricao/alimentos.csv', 'A tabela de alimentos: macros por 100 g ou 100 ml.'],
-  ['corpo/medidas.csv', 'Peso, cintura, bioimpedância e medidas com fita, uma medida por linha.'],
+  ['corpo/medidas.csv', 'Peso, bioimpedância, medidas com fita e dobras com adipômetro, uma medida por linha.'],
   ['corpo/fotos.md', 'O protocolo de fotos (11 poses desde 06/11/2026; antes, 9), cada sessão com a hora de cada foto, e as respostas sobre gordura visual.'],
   ['corpo/fotos/AAAA-MM-DD/', 'As fotos de cada sessão, uma por pose.'],
   ['bruto/estado.json', 'O estado inteiro do app, sem tratamento. Para o que não coube nos arquivos acima.']
@@ -949,6 +949,7 @@ function leiaMe(b: Base, ctx: Contexto, existentes: Set<string>): string {
   L.push('- **Totais de comida** de dias fechados foram congelados no fechamento, contra o plano daquela data: mudar o plano depois não reescreve o passado. Refeição marcada "fora do plano" ou "não sabe" entra com os números do plano; "não comeu" não entra.');
   L.push('- **Água** em copos; vazio quando ele marcou que não contou (é diferente de zero).');
   L.push('- **Medidas com fita** (`medidas.csv`): quando a medida é de um lado só, é sempre o direito. `onde_mediu` é o ponto onde a fita passou; o app preenche com o ponto padrão de cada medida, e a pessoa pode trocar.');
+  L.push('- **Dobras** (`dobraAbdominal`, `dobraSuprailiaca`, `dobraCoxa`): adipômetro, lado direito, em mm. O valor é a leitura do meio de três. Nunca convertidas para percentual de gordura.');
   L.push('- **Hora vazia** em `medidas.csv` quer dizer que a hora não foi informada (leitura lançada depois, só com a data).');
   L.push('- **Peso** (`peso`) é a pesagem da manhã na balança comum; `bioPeso` é o da balança de bioimpedância. São aparelhos e horários diferentes, e nenhum corrige o outro.');
   L.push('');

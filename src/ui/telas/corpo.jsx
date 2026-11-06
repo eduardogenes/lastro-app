@@ -1,181 +1,18 @@
-// CORPO — como está o corpo, e o que eu registro hoje.
+// CORPO — como está o corpo (docs/corpo/02-ux-corpo-livre.md, 06/11/2026).
 //
-// O segundo dos cinco lugares. Vinha dentro do chip "corpo" da tela de Dados,
-// e a mudança de endereço traz uma SUBTRAÇÃO que é regra escrita: o veredito da
-// regra do nutricionista e o botão do passo de ±150 kcal **saíram daqui** e
-// foram para Semana (§1.3 da frente 1, "Não possui").
+// A página mostra o ESTADO; registrar abre a superfície de cada coisa:
+// - o peso numa folha, com o número grande sendo a média da semana (domingo a
+//   sábado, toda pesagem conta) e o peso de hoje pequeno;
+// - fita e dobras num formulário só ("Registrar medidas");
+// - a bioimpedância numa folha;
+// - as fotos como sempre.
+// Tocar numa medida abre o detalhe dela (gráfico, histórico, como medir, onde
+// apagar). O detalhe do peso continua se chamando Evolução.
 //
-// A razão da subtração: Corpo responde "como está o corpo, e o que eu registro
-// hoje". O veredito responde outra pergunta — "dá para mexer na comida?" —, e
-// ela é da semana, não do dia. O que fica no topo de cada medida é a média da
-// semana e a taxa contra o alvo, porque é o que diz se o peso de HOJE significa
-// alguma coisa; a decisão que se tira disso é de outro lugar.
-//
-// O que Corpo não possui, e está declarado: a força, as séries por músculo e os
-// padrões de comida são de Semana; nenhuma prescrição mora aqui — o calendário
-// de pesagem e de fotos vem de fora.
+// Antes disto a página repetia um formulário inteiro por medida e passava de
+// sete telas com tudo ligado (docs/corpo/01-ux-corpo.md, §2).
 
-import {
-  Cabecalho, GradeMetricas, Procedencia, Secao, Sparkline, Stepper, Vazio
-} from '../instrumento/primitivos.jsx';
-import { fmtDec, fmtSig } from '../../dominio/formato';
-import { useState } from 'preact/hooks';
-import { Teclado } from '../instrumento/teclado.jsx';
-
-/** A hora atual, "06:40", para o campo de hora partir dela. */
-function horaAgora() {
-  const d = new Date();
-  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-}
-
-/** "O peso da manhã" vira "Peso da manhã": o nome da medida sem o artigo do rótulo de seção. */
-function semArtigo(r) { const x = r.replace(/^(O|A|Os|As) /, ''); return x.charAt(0).toUpperCase() + x.slice(1); }
-
-/** Uma medida corporal: stepper, botão e a curva das últimas 14 semanas. */
-/**
- * A semana em curso sem média (a D, `corpo.html`, estado 9): em vez de uma
- * média falsa, o que falta, os dias — com pesagem, sem, e os que ainda dão
- * tempo — e a decisão que fica parada.
- */
-function SemanaSemMedia({ s, alvo }) {
-  return (
-    <div class="co-semana" role="status">
-      <p class="ins-body ins-t1 co-semana-t"><b>Sem média</b> · {s.nota}</p>
-      <p class="ins-body-sm ins-t2">{s.falta}</p>
-      <ul class="co-semana-d">
-        {s.trechos.map(t => (
-          <li key={t.rotulo} class={'co-semana-l ' + t.k}>
-            <span class="ins-body-sm ins-t2">{t.rotulo}</span>
-            <span class="ins-body-sm">{t.hora && <span class="ins-t3">{t.hora} · </span>}{t.v}</span>
-          </li>
-        ))}
-      </ul>
-      <p class="ins-body-xs ins-t3">A prescrição pede {alvo}.{s.medido ? ' ' + s.medido : ''}</p>
-    </div>
-  );
-}
-
-function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar, chave, onde, ondeRascunho, onOnde, como, regra, topo }) {
-  return (
-    <Secao rotulo={rotulo} nota={nota} primeira={primeira}>
-      {topo}
-      <div class="dd-registro">
-        <Stepper
-          valor={valor} passo={passo} min={20} max={250}
-          fmt={v => fmtDec(v) + ' ' + unidade}
-          onMuda={onMuda}
-        />
-        <button class="ins-btn-secondary" onClick={onRegistrar}>{acao}</button>
-      </div>
-
-      {/* A PORTA PARA O TECLADO PRÓPRIO. §6.1 manda próprio aqui, "com a régua
-          de 100 g na frente" — o stepper é a régua, e esta é a outra metade da
-          frase: "a régua resolve o caso comum e o próprio resolve o resto".
-          O resto tem tamanho medido: a primeira pesagem parte de 75 kg, então
-          quem pesa 73,6 chegava lá com catorze toques no menos. */}
-      {teclado
-        ? <Teclado
-            texto={teclado.texto} decimal={teclado.decimal} unidade={teclado.unidade}
-            rotulo={'digitar ' + semArtigo(rotulo).toLowerCase() + ' em ' + teclado.unidade}
-            aoTeclar={aoTeclar} aoFechar={aoFecharTeclado}
-          />
-        : <button class="dd-tclbtn" data-a={'tcl-abre-' + (chave || semArtigo(rotulo).toLowerCase())} onClick={aoAbrirTeclado}>
-            Digitar o número
-          </button>}
-
-      {/* COMO EU MEDI — só nas medidas com fita (`onOnde` presente). A fita erra
-          de posicionamento mais do que a balança varia de água (F43), e repetir
-          o ponto vale mais que o número. Na primeira vez é um campo; depois é
-          lembrete, com a porta para mudar. Texto do teclado do sistema (§6.1:
-          "do sistema para o texto"), e só vai para o histórico junto com a
-          medida — escrever aqui não grava nada sozinho. */}
-      {/* ONDE E COMO MEDIR (revisão do avaliador, 06/11/2026): o ponto e a
-          instrução de cada medida, e a regra que vale para todas. */}
-      {como && (
-        <div class="co-como">
-          <p class="ins-body-sm ins-t1">{como}</p>
-          {regra && <p class="ins-body-xs ins-t3">{regra}</p>}
-        </div>
-      )}
-      {onOnde && <ComoMedi chave={chave} onde={onde} rascunho={ondeRascunho} onOnde={onOnde} />}
-
-      {/* A data fica atrás de um link porque registrar no dia é o caso de todo
-          dia; retroativo é exceção. O seletor é o nativo do aparelho: a medida
-          esquecida pode ser de semanas atrás, e ele alcança qualquer data sem
-          o app ter que desenhar um calendário. */}
-      {dia && (dia.aberto
-        ? <div class="dd-dia">
-            <input
-              class="ins-input dd-data" type="date" id={'ddia-' + (chave || semArtigo(rotulo).toLowerCase())}
-              value={dia.iso} max={dia.max}
-              onInput={e => onDia(e.currentTarget.value)}
-            />
-            <p class="ins-body-sm ins-t3 dd-dia-nota">{dia.jaTem}</p>
-            {/* A regra do seletor, dita antes do toque: o `max` do campo
-                recusa sem dizer nada, e a recusa calada é beco (§7.8). */}
-            <p class="ins-body-sm ins-t3 dd-dia-nota">Nunca uma data futura: o dia ainda não aconteceu.</p>
-          </div>
-        : <button class="dd-diabtn" onClick={onAbrirDia}>
-            {/* "Peso de outro dia", e não "outro dia": o botão diz do que é o
-                dia que ele troca (§7.8). */}
-            {dia.hoje ? semArtigo(rotulo) + ' de outro dia'
-                      : 'registrando em ' + dia.txt + ' · trocar'}
-          </button>)}
-
-      {serie.some(x => x != null)
-        ? <div class="dd-spark"><Sparkline valores={serie} /></div>
-        : <Vazio>Nenhuma medida registrada ainda.</Vazio>}
-
-      <GradeMetricas colunas={2} celulas={celulas} />
-      {children}
-
-      {/* As últimas medidas, com a porta de saída ao lado. É o único caminho
-          para desfazer um 743 digitado no lugar de 74,3 — e sem ele o erro
-          entra na média da semana e não sai mais. */}
-      {medidas && medidas.length > 0 && (
-        <div class="dd-medidas">
-          {medidas.map(x => (
-            <div class="crow" key={x.t}>
-              <span class="crow-d ins-label">{x.data}</span>
-              <span class="crow-m ins-data">{x.valor}</span>
-              <button class="crow-x" onClick={() => aoApagar(x.t)}>Remover</button>
-            </div>
-          ))}
-        </div>
-      )}
-    </Secao>
-  );
-}
-
-/** O lembrete de onde a fita passou, ou o campo para dizer isso. */
-function ComoMedi({ chave, onde, rascunho, onOnde }) {
-  const [mudando, setMudando] = useState(false);
-  if (onde && !mudando) {
-    return (
-      <div class="co-onde">
-        <p class="ins-body-sm co-onde-l">como você mediu: {onde}</p>
-        <button class="co-ondebtn" data-a={'onde-muda-' + chave} onClick={() => setMudando(true)}>
-          Mudar como eu medi
-        </button>
-      </div>
-    );
-  }
-  return (
-    <label class="co-onde">
-      <span class="ins-label-sm">Como eu medi</span>
-      <input
-        class="ins-input" type="text" id={'onde-' + chave}
-        placeholder={onde || 'onde você passou a fita'}
-        value={rascunho}
-        onInput={e => onOnde(e.currentTarget.value)}
-      />
-      <span class="ins-body-sm ins-t3">
-        O ponto padrão já vem preenchido. Se medir em outro lugar, troque. Repetir
-        o ponto vale mais que o número em si.
-      </span>
-    </label>
-  );
-}
+import { Cabecalho, GradeMetricas, Procedencia, Secao, Sparkline, Vazio } from '../instrumento/primitivos.jsx';
 
 /**
  * As fotos de acompanhamento.
@@ -240,29 +77,30 @@ function Fotos({ f, ctx }) {
   );
 }
 
+/** A minicurva de uma medida: as últimas leituras, ligadas, com a última em destaque. */
+function Mini({ valores }) {
+  if (!valores || valores.length < 2) return null;
+  const lo = Math.min.apply(null, valores), hi = Math.max.apply(null, valores);
+  const r = hi - lo || 1;
+  const x = i => 2 + i * (44 / (valores.length - 1));
+  const y = v => 20 - (v - lo) / r * 16;
+  const ult = valores.length - 1;
+  return (
+    <svg viewBox="0 0 48 24" aria-hidden="true">
+      <polyline class="co-mini" points={valores.map((v, i) => x(i) + ',' + y(v)).join(' ')} />
+      <circle class="co-mini-p" cx={x(ult)} cy={y(valores[ult])} r="2.5" />
+    </svg>
+  );
+}
+
 export function Corpo({ ctx }) {
-  // Rascunho local: nada é registro até o toque em "registrar a leitura", e é a
-  // mesma regra da folha de pôr o dia em dia. Fechar a tela sem tocar não grava.
-  const [rascunho, setRascunho] = useState({});
-  const [dia, setDia] = useState(null);
-  // A hora da leitura: `null` é "não mexeu". Hoje ela parte da hora atual; num
-  // dia passado parte vazia, e vazia não vira 12:00 (a leitura de 15/09/2026
-  // ficou às 12:00 e foi às 6h).
-  const [hora, setHora] = useState(null);
-  const c = ctx.corpo();
-  const bio = ctx.bioimpedancia(dia);
+  const p = ctx.painelDoCorpo();
   const vazio = ctx.corpoVazio();
 
   return (
     <>
-      {/* "Evolução", no lugar do "Histórico" do desenho (§1.7 da frente 3): a
-          palavra dele, para o destino de leitura que mora dentro de Corpo. */}
-      <Cabecalho olho="como está" titulo="Corpo"
-                 acao={<button class="ins-btn-secondary co-evolucao" data-a="abre-evolucao"
-                               onClick={ctx.abreEvolucao}>Evolução</button>} />
+      <Cabecalho olho="como está" titulo="Corpo" />
 
-      {/* O VAZIO DE VERDADE (a D, estado 10): o caminho, com os números da
-          regra — nenhuma barra de progresso, nenhum "comece agora!". */}
       {vazio && (
         <section class="ins-secao primeira co-vazio">
           <h2 class="ins-rotulo">{vazio.titulo}</h2>
@@ -274,226 +112,52 @@ export function Corpo({ ctx }) {
                   <span class="ins-linha-t">{l.t}</span>
                   <span class="ins-linha-s">{l.d}</span>
                 </span>
-                <span class="ins-body-xs ins-t3">primeira</span>
               </li>
             ))}
           </ul>
-          {vazio.conta && <p class="ins-body-xs ins-t3">{vazio.conta}</p>}
+          {vazio.conta &&<p class="ins-body-xs ins-t3">{vazio.conta}</p>}
         </section>
       )}
 
-      <Medida
-        rotulo="O peso da manhã" chave="peso" nota={c.peso.nota} primeira={!vazio}
-        topo={c.peso.semana && <SemanaSemMedia s={c.peso.semana} alvo="3 a 4 pesagens por semana" />}
-        valor={c.peso.valor} passo={0.1} unidade="kg" serie={c.peso.serie}
-        onMuda={ctx.setPeso} onRegistrar={ctx.registraPeso} acao={c.peso.acao}
-        dia={c.peso.dia} onAbrirDia={() => ctx.abreDiaCorpo('peso')}
-        onDia={t => ctx.setDiaCorpo('peso', t)}
-        medidas={c.peso.medidas} aoApagar={t => ctx.apagaMedida('peso', t)}
-        teclado={ctx.tecladoDoCorpo('peso')}
-        aoAbrirTeclado={() => ctx.abreTecladoDeCorpo('peso')}
-        aoFecharTeclado={ctx.fechaTeclado}
-        aoTeclar={t => ctx.tecla(t)}
-        celulas={[
-          { k: 'm', rotulo: 'média da semana', valor: c.peso.media },
-          { k: 'r', rotulo: 'ritmo por semana', valor: c.peso.ritmo, cor: c.peso.ritmoCor }
-        ]}
-      >
-        {/* "Peso da manhã", e não "peso": com a bioimpedância há dois pesos no
-            mesmo dia, e "de hoje" deixou de separar (§10.2). A procedência é a
-            descrição dele do próprio ato (P6). */}
-        <Procedencia>
-          da balança de casa, em semi-jejum, antes do treino · a média da semana
-          é o número que conta · {c.peso.alvo}
-        </Procedencia>
-      </Medida>
+      {/* O PESO: a média da semana grande, o peso de hoje pequeno. */}
+      <Secao rotulo="Peso" nota="média da semana" primeira={!vazio}>
+        <button class="co-linha co-peso" data-a="abre-evolucao" onClick={ctx.abreEvolucao}
+                aria-label={'Peso: média da semana ' + p.peso.media + ' kg. Abrir a Evolução.'}>
+          <span class="co-peso-n"><b class="co-peso-g">{p.peso.media}</b>{p.peso.media !== '—' && <span class="co-peso-u"> kg</span>}</span>
+          <span class="co-chev" aria-hidden="true">›</span>
+        </button>
+        <p class="ins-body-sm ins-t2 co-peso-l">{p.peso.parcial}{p.peso.hoje ? ' · ' + p.peso.hoje : ''}</p>
+        {p.peso.diferenca && <p class="ins-body-sm ins-t2 co-peso-l" data-a="peso-diferenca">{p.peso.diferenca}</p>}
+        {p.peso.anterior && <p class="ins-body-sm ins-t3 co-peso-l">{p.peso.anterior}</p>}
+        {p.peso.serie.some(x => x != null) && <div class="dd-spark"><Sparkline valores={p.peso.serie} /></div>}
+        <button class="ins-btn-primary co-registra" data-a="registra-peso" onClick={ctx.abreRegistroDePeso}>Registrar peso</button>
+      </Secao>
 
-      <Medida
-        rotulo="A cintura" nota="1× por semana, à noite, antes do jantar"
-        valor={c.cintura.valor} passo={0.5} unidade="cm" serie={c.cintura.serie}
-        onMuda={ctx.setCintura} onRegistrar={ctx.registraCintura} acao={c.cintura.acao}
-        dia={c.cintura.dia} onAbrirDia={() => ctx.abreDiaCorpo('cintura')}
-        onDia={t => ctx.setDiaCorpo('cintura', t)}
-        medidas={c.cintura.medidas} aoApagar={t => ctx.apagaMedida('cintura', t)}
-        chave="cintura" onde={c.cintura.onde} ondeRascunho={c.cintura.ondeRascunho}
-        onOnde={t => ctx.setOnde('cintura', t)}
-        como={c.cintura.como} regra={c.regraDaFita}
-        teclado={ctx.tecladoDoCorpo('cintura')}
-        aoAbrirTeclado={() => ctx.abreTecladoDeCorpo('cintura')}
-        aoFecharTeclado={ctx.fechaTeclado}
-        aoTeclar={t => ctx.tecla(t)}
-        celulas={[
-          { k: 'a', rotulo: 'última medida', valor: c.cintura.atual },
-          { k: 'm', rotulo: 'no mês', valor: c.cintura.mesValor, unidade: 'cm' }
-        ]}
-      >
-        <Procedencia>{c.cintura.mes}</Procedencia>
-        <Procedencia>
-          meça sempre no mesmo ponto e na mesma hora, sem prender a barriga.
-          Fita mal posicionada erra mais do que a balança varia de água.
-        </Procedencia>
-      </Medida>
-
-      {/* AS MEDIDAS COM FITA além da cintura — a decisão 2a do dono (01/10):
-          as medidas novas entram como dado do produto. Os pontos e quais vêm
-          ligados são da Direção D, tirados da resposta dele na P6. São LEITURA:
-          nenhuma entra em regra. */}
-      {c.fita.filter(f => f.ligada).map(f => (
-        <Medida
-          key={f.k} chave={f.k}
-          rotulo={f.n} nota={f.atual === '–' ? 'nenhuma medida ainda' : null}
-          valor={f.valor} passo={0.5} unidade={f.u} serie={f.serie}
-          onMuda={v => ctx.setMedida(f.k, v)} onRegistrar={() => ctx.registraMedida(f.k)}
-          acao={f.acao}
-          dia={f.dia} onAbrirDia={() => ctx.abreDiaCorpo(f.k)}
-          onDia={t => ctx.setDiaCorpo(f.k, t)}
-          medidas={f.medidas} aoApagar={t => ctx.apagaMedida(f.k, t)}
-          onde={f.onde} ondeRascunho={f.ondeRascunho} onOnde={t => ctx.setOnde(f.k, t)}
-          como={f.como} regra={c.regraDaFita}
-          teclado={ctx.tecladoDoCorpo(f.k)}
-          aoAbrirTeclado={() => ctx.abreTecladoDeCorpo(f.k)}
-          aoFecharTeclado={ctx.fechaTeclado}
-          aoTeclar={t => ctx.tecla(t)}
-          celulas={[
-            { k: 'a', rotulo: 'última medida', valor: f.atual },
-            { k: 'd', rotulo: 'desde a primeira', valor: f.desde, unidade: f.u }
-          ]}
-        />
-      ))}
-      {c.fita.some(f => !f.ligada) && (
-        <Secao rotulo="As outras medidas com fita" nota="ligue as que você tira sozinho">
-          {c.fita.filter(f => !f.ligada).map(f => (
-            <div class="crow" key={f.k}>
-              <span class="crow-m">{f.n}</span>
-              <span class="crow-n">sem medida</span>
-              <button class="co-liga" data-a={'liga-' + f.k} onClick={() => ctx.ligaMedida(f.k)}>Ligar</button>
-            </div>
-          ))}
-          <Procedencia>
-            ligar uma medida não cria cobrança: elas não têm frequência prescrita
-            e não entram em regra nenhuma
-          </Procedencia>
-        </Secao>
-      )}
-
-      {/* A BIOIMPEDÂNCIA — cinco campos, decisão do dono (5.a' P3).
-          Existia no modelo desde a migração da frente 0, com verbo próprio e
-          casos de teste, e NÃO TINHA TELA: era capacidade sem porta. Esta é a
-          porta.
-
-          O peso dela é registro SEPARADO da pesagem da manhã, e é a razão de
-          ele aparecer aqui como um campo entre os cinco em vez de somar à
-          balança de cima: são duas balanças, medidas em momentos diferentes, e
-          misturá-las faria a média semanal do peso — o número que a regra
-          calórica lê — pular conforme qual balança ele usou.
-
-          As CINCO de uma vez, e não uma por uma: `registraBio` grava com um
-          instante só, e é isso que as torna UMA leitura — é por ele que a fusão
-          casa o mesmo dia vindo de dois aparelhos. Por isso a tela recusa a
-          leitura incompleta em vez de gravar o que deu: metade de uma leitura
-          não é meia leitura, é uma leitura errada. */}
-      <Secao rotulo="A bioimpedância" nota={bio.nota}>
-        <p class="ins-body-sm ins-t2 co-bio-i">{bio.instrucao}</p>
-        <div class="co-bio">
-          {bio.campos.map(c => (
-            <label key={c.k} class="co-bio-c">
-              <span class="ins-label-sm">{c.rotulo}</span>
-              <input
-                class="ins-input"
-                id={'bio-' + c.k}
-                type="text"
-                inputMode="decimal"
-                aria-label={c.rotulo}
-                /* O valor do mês passado fica NO LUGAR até ele mexer: é a
-                   premissa da instrução ("toque só no que mudou"), e um
-                   placeholder não grava nada — ela mentiria. */
-                value={c.k in rascunho ? rascunho[c.k] : c.antes}
-                /* Atualizador FUNCIONAL, e não `Object.assign` sobre o
-                   `rascunho` do render. Os cinco campos são controlados pelo
-                   mesmo objeto, e a versão por closure lia o estado do ÚLTIMO
-                   render: dois campos preenchidos antes de o Preact repintar
-                   e o segundo apagava o primeiro. Com `prev` cada campo soma ao
-                   que já estava, qualquer que seja a ordem dos eventos. */
-                onInput={e => {
-                  const v = e.currentTarget.value;
-                  setRascunho(prev => Object.assign({}, prev, { [c.k]: v }));
-                }}
-              />
-              {/* "era 17,4 · −0,6", e só "era 3,1" quando não mudou: escrever
-                  "sem mudança" seria afirmar uma medida de zero (§10.1). */}
-              {c.valor != null && (
-                <span class="ins-body-xs ins-t3 co-bio-era">
-                  era {c.antes}{(function () {
-                    const v = parseFloat(String(c.k in rascunho ? rascunho[c.k] : c.antes).replace(',', '.'));
-                    const d = isNaN(v) ? 0 : Math.round((v - c.valor) * 10) / 10;
-                    return d ? ' · ' + fmtSig(d) : '';
-                  })()}
-                </span>
-              )}
-            </label>
+      {/* AS MEDIDAS: fita e dobras, uma linha por medida, na ordem do corpo. */}
+      <Secao rotulo="Medidas" nota={p.ultimaMedida}>
+        {p.medidas.length === 0 && <Vazio>Nenhuma medida ainda. Fita e dobras se registram juntas, na mesma noite das fotos.</Vazio>}
+        <div class="co-lista">
+          {p.medidas.map(m => (
+            <button key={m.k} class="co-linha co-med" data-a={'medida-' + m.k} onClick={() => ctx.abreMedida(m.k)}>
+              <span class="co-med-n">{m.n}</span>
+              <span class="co-med-v"><b>{m.valor}</b><span class="ins-body-xs ins-t3">{m.variacao ? m.variacao + ' ' : ''}{m.desde}</span></span>
+              <span class="co-med-s"><Mini valores={m.serie} /></span>
+              <span class="co-chev" aria-hidden="true">›</span>
+            </button>
           ))}
         </div>
-        <p class="ins-body-xs ins-t3 co-bio-ob">
-          Quatro números são obrigatórios. A água corporal total pode ficar vazia — e
-          vazia não é zero.
-        </p>
+        <button class="ins-btn-primary co-registra" data-a="registra-medidas" onClick={() => ctx.abreMedidas()}>Registrar medidas</button>
+      </Secao>
 
-        {/* A data fica atrás de um campo porque registrar no dia é o caso de
-            todo dia; retroativo é exceção. `max` é hoje: leitura no futuro não
-            é leitura, e o verbo também recusa — a tela só evita o toque. */}
-        <div class="co-bio-quando">
-          <label class="co-bio-dia">
-            <span class="ins-label-sm">em</span>
-            <input class="ins-input" type="date" id="bio-dia"
-                   max={bio.maxISO} value={dia || bio.maxISO}
-                   aria-label="data da leitura"
-                   onInput={e => { setDia(e.currentTarget.value); setHora(null); }} />
-          </label>
-          <label class="co-bio-dia">
-            <span class="ins-label-sm">às</span>
-            <input class="ins-input" type="time" id="bio-hora"
-                   value={hora != null ? hora : ((dia || bio.maxISO) === bio.maxISO ? horaAgora() : '')}
-                   aria-label="hora da leitura"
-                   onInput={e => setHora(e.currentTarget.value)} />
-          </label>
-        </div>
-        {(dia || bio.maxISO) !== bio.maxISO && !hora && (
-          <p class="ins-body-xs ins-t3">Sem hora, a leitura fica registrada só com a data.</p>
-        )}
-
-        {/* HOJE é `Date.now()`, e não meio-dia de hoje: antes do meio-dia, o
-            meio-dia de hoje está no FUTURO, e o verbo recusa. A hora é
-            editável (06/11/2026). Um dia PASSADO sem hora informada vai ao
-            meio-dia só para ordenar — meio-dia não encosta em borda de fuso —
-            e marcado `semHora`: nem a tela nem o espelho mostram 12:00. */}
-        {/* "Guardar os cinco", e não "Salvar": aqui o lote É o dado — os cinco
-            saíram do mesmo visor, no mesmo minuto —, e o rótulo diz quantos e o
-            quê (§10.3). A leitura enviada é a da tela: o que está no lugar mais
-            o que ele mudou. */}
-        <button class="ins-btn-primary" data-a="registra-bio" onClick={async () => {
-          const d = dia || bio.maxISO;
-          const leitura = {};
-          bio.campos.forEach(c => { leitura[c.k] = c.k in rascunho ? rascunho[c.k] : c.antes; });
-          // Hoje sem mexer na hora é agora. Com hora, o instante daquela hora.
-          // Dia passado sem hora: meio-dia só para ordenar, marcado sem hora.
-          const hoje = d === bio.maxISO;
-          const h = hora || '';
-          const quando = h ? new Date(d + 'T' + h + ':00').getTime() : (hoje ? Date.now() : Date.parse(d + 'T12:00:00'));
-          const r = await ctx.registraBio(leitura, quando, !h && !hoje);
-          if (r && r.ok) { setRascunho({}); setHora(null); }
-        }}>Guardar os cinco</button>
-        <p class="ins-body-xs ins-t3 co-bio-nada">
-          Nada está registrado até você tocar em Guardar os cinco.
-        </p>
-
-        {/* Dois pesos do mesmo dia, com números diferentes, se leem como erro —
-            e o reflexo é apagar um. A frase diz o que cada um FAZ (§10.2), e a
-            diferença deixa de ser problema. */}
-        <Procedencia>
-          O peso da manhã é o que a regra do nutricionista lê. O peso da balança
-          de bioimpedância fica com os outros quatro números dela, e não entra na
-          média da semana.
-        </Procedencia>
+      {/* A BIOIMPEDÂNCIA: os quatro números da última leitura. */}
+      <Secao rotulo="Bioimpedância" nota={p.bio ? p.bio.quando : 'uma vez por mês'}>
+        {p.bio
+          ? <button class="co-linha co-bio-r" data-a="abre-bio" onClick={() => ctx.abreMedida('bio')}>
+              <GradeMetricas colunas={2} celulas={p.bio.celulas} />
+              <span class="co-chev" aria-hidden="true">›</span>
+            </button>
+          : <Vazio>Nenhuma leitura ainda.</Vazio>}
+        <button class="ins-btn-secondary co-registra" data-a="nova-bio" onClick={ctx.abreBio}>Nova leitura</button>
       </Secao>
 
       <Fotos f={ctx.protocoloFotos()} ctx={ctx} />

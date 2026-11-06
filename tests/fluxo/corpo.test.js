@@ -164,6 +164,8 @@ test('pesagem errada pode ser apagada', async () => {
   await a.E('S.body.peso.push({ t: Date.now(), v: 743 }); save()');
   await a.esperar();
   a.aba('corpo');
+  a.v('ctx.abreEvolucao');
+  await a.esperar();
 
   const linha = a.$$('.crow').find(function (x) { return /743/.test(x.textContent); });
   assert.ok(linha, 'a medida aparece na lista de correção');
@@ -262,7 +264,7 @@ test('célula de métrica sem medida mostra traço, não a primeira palavra da f
   assert.ok(!celulas.includes('faltam'), 'palavra vazando para célula de número: ' + celulas.join(' | '));
 
   const txt = a.doc.getElementById('app').textContent;
-  assert.ok(/faltam 3 semanas de medida/.test(txt), 'a frase continua, na procedência');
+  assert.ok(/nenhuma pesagem nesta semana/.test(txt), 'a frase continua, por extenso');
   a.fechar();
 });
 
@@ -302,19 +304,23 @@ test('mexer no stepper antes de registrar não quebra a tela', async () => {
 });
 
 test('o botão de registrar na tela chega até o histórico', async () => {
-  // pelo caminho real: o clique no botão, não a função por dentro
+  // pelo caminho real: os toques, não a função por dentro
   const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
   a.aba('corpo');
-  const botoes = a.$$('.dd-registro .ins-btn-secondary');
-  assert.ok(botoes.length >= 2, 'peso e cintura têm botão de registrar');
-
-  a.clicar(botoes[0]);
+  a.clicar('[data-a="registra-peso"]');
   await a.esperar();
-  assert.strictEqual(a.S().body.peso.length, 1, 'clicar em "registrar hoje" registra');
+  a.clicar('[data-a="peso-salva"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().body.peso.length, 1, '"Registrar peso" e "Salvar" registram');
+  assert.strictEqual((a.vista().pilha || []).length, 0, 'e a folha fecha');
 
-  a.clicar(botoes[1]);
+  a.clicar('[data-a="registra-medidas"]');
   await a.esperar();
-  assert.strictEqual(a.S().body.cintura.length, 1, 'e a cintura também');
+  a.digitar('med-cintura-0', '85');
+  await a.esperar();
+  a.clicar('[data-a="medidas-salva"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().body.cintura.length, 1, 'e a cintura pelo formulário de medidas');
   assert.strictEqual(a.S().body.cintura[0].v, 85);
   a.fechar();
 });
@@ -472,18 +478,14 @@ test('a data é por medida: peso e cintura não se misturam', async () => {
 test('o seletor de data abre pelo link e aceita o campo nativo', async () => {
   const a = await app({ estado: vazio });
   a.aba('corpo');
-  assert.strictEqual(a.$$('.dd-dia').length, 0, 'fechado por padrão: não custa espaço');
-  assert.ok(a.$('.dd-diabtn'), 'mas existe o caminho');
-  assert.strictEqual(a.texto('.dd-diabtn'), 'Peso da manhã de outro dia', 'e diz do que é o dia que ele troca (§7.8, §10.2)');
-
-  a.clicar(a.$('.dd-diabtn'));
-  const campo = a.$('.dd-dia input[type=date]');
-  assert.ok(campo, 'abre o seletor de data do aparelho');
+  a.v('ctx.abreRegistroDePeso');
+  await a.esperar();
+  const campo = a.doc.getElementById('peso-dia');
+  assert.ok(campo, 'a folha do peso tem o seletor de data do aparelho');
   assert.strictEqual(campo.getAttribute('max'), iso(Date.now()), 'sem data futura');
-  assert.ok(a.$$('.dd-dia-nota').some(function (p) { return p.textContent === 'Nunca uma data futura: o dia ainda não aconteceu.'; }),
-    'e a regra dita antes do toque');
+  assert.ok(a.doc.getElementById('peso-hora'), 'e a hora, editável');
 
-  a.digitar('ddia-peso', iso(Date.now() - 9 * DIA));
+  a.digitar('peso-dia', iso(Date.now() - 9 * DIA));
   await a.esperar();
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, false, 'mexer no campo muda o dia');
   a.fechar();
@@ -741,8 +743,10 @@ test('as cinco da bioimpedância seguem sem valor de partida, e a porta delas é
   // caso original, e ela não mudou; o que mudou é que a bioimpedância ganhou
   // TELA, e tela precisa de leitura.
   const chaves = Object.keys(a.m.ctx).filter(function (k) { return /bio/i.test(k); }).sort();
-  assert.deepStrictEqual(chaves, ['bioimpedancia', 'registraBio'],
-    'uma porta de escrita e uma de leitura, e nada mais');
+  // Desde 06/11 a bioimpedância é uma folha, com detalhe próprio: abrir a
+  // folha, gravar por ela (que fecha ao gravar) e apagar uma leitura inteira.
+  assert.deepStrictEqual(chaves, ['abreBio', 'apagaLeituraBio', 'bioimpedancia', 'registraBio', 'registraBioDaFolha'],
+    'as portas da bioimpedância, e nada mais');
   assert.strictEqual(typeof a.m.ctx.registraBio, 'function', 'a de escrita');
   assert.strictEqual(typeof a.m.ctx.bioimpedancia, 'function', 'e a de leitura');
 
@@ -1063,7 +1067,8 @@ test('ctx.apagaMedida nomeia a grandeza certa, na unidade certa, em todas', asyn
   // trocado passar por casar com a linha do vizinho.
   const valores = { peso: 81.2, cintura: 88.4, bioPeso: 79.2, bioMusculo: 37.4,
                     bioGordura: 14.1, bioGorduraPct: 17.8, bioAgua: 45.3,
-                    braco: 36.5, coxa: 57.5, panturrilha: 38.5, peito: 101.5, quadril: 97.5 };
+                    braco: 36.5, coxa: 57.5, panturrilha: 38.5, peito: 101.5, quadril: 97.5,
+                    dobraAbdominal: 14.5, dobraSuprailiaca: 11.5, dobraCoxa: 12.5 };
   const corpo = {};
   Object.keys(valores).forEach(function (k) { corpo[k] = [{ t: t, v: valores[k] }]; });
 
@@ -1103,7 +1108,9 @@ test('ctx.apagaMedida nomeia a grandeza certa, na unidade certa, em todas', asyn
   assert.strictEqual((perguntas.match(/%\)/g) || []).length, quantas('%'), 'uma só em %');
   assert.strictEqual((perguntas.match(/ L\)/g) || []).length, quantas('L'), 'uma só em L');
   assert.strictEqual((perguntas.match(/ kg\)/g) || []).length, quantas('kg'), 'e as de kg');
+  assert.strictEqual((perguntas.match(/ mm\)/g) || []).length, quantas('mm'), 'as dobras, em mm');
   assert.strictEqual(quantas('cm'), 6, 'seis com fita: cintura, braço, coxa, panturrilha, peito, quadril');
+  assert.strictEqual(quantas('mm'), 3, 'três dobras com adipômetro');
 
   // Aceitar apaga a nomeada, e só ela: o endereço é grandeza + instante.
   a.aceitar();
@@ -1129,6 +1136,8 @@ test('ctx.apagaMedida nomeia a grandeza certa, na unidade certa, em todas', asyn
 test('a tela da bioimpedância tem os cinco campos, e diz qual é opcional', async () => {
   const a = await app({ aba: 'corpo' });
   await a.esperar();
+  a.v('ctx.abreBio');
+  await a.esperar();
 
   ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua'].forEach(function (k) {
     assert.ok(a.doc.getElementById('bio-' + k), 'o campo de ' + k + ' está na tela');
@@ -1148,6 +1157,8 @@ test('registrar a leitura grava as cinco com o MESMO instante', async () => {
   // mesmo dia vindo de dois aparelhos. Cinco instantes diferentes seriam cinco
   // medidas soltas que por acaso caíram no mesmo dia.
   const a = await app({ aba: 'corpo' });
+  await a.esperar();
+  a.v('ctx.abreBio');
   await a.esperar();
 
   a.digitar('bio-bioPeso', '96,2');
@@ -1176,6 +1187,8 @@ test('leitura incompleta é RECUSADA inteira, e não pela metade', async () => {
   // muscular não, e a comparação entre leituras passaria a mentir.
   const a = await app({ aba: 'corpo' });
   await a.esperar();
+  a.v('ctx.abreBio');
+  await a.esperar();
 
   a.digitar('bio-bioPeso', '96,2');
   a.digitar('bio-bioMusculo', '41,8');
@@ -1193,6 +1206,8 @@ test('a água em branco não impede a leitura', async () => {
   // A outra metade da regra do opcional: recusar por falta dela perderia as
   // quatro que ele mediu.
   const a = await app({ aba: 'corpo' });
+  await a.esperar();
+  a.v('ctx.abreBio');
   await a.esperar();
 
   a.digitar('bio-bioPeso', '96,2');
@@ -1214,6 +1229,8 @@ test('a tela oferece a data e nunca o futuro', async () => {
   // verbo também recusa o futuro, e a tela evita o toque.
   const a = await app({ aba: 'corpo' });
   await a.esperar();
+  a.v('ctx.abreBio');
+  await a.esperar();
   const campo = a.doc.getElementById('bio-dia');
   assert.ok(campo, 'a data está na tela');
   assert.strictEqual(campo.getAttribute('max'), a.v('hojeISO'),
@@ -1223,6 +1240,8 @@ test('a tela oferece a data e nunca o futuro', async () => {
 
 test('a tela diz quando foi a última leitura, e se não houve', async () => {
   const vazia = await app({ aba: 'corpo' });
+  await vazia.esperar();
+  vazia.v('ctx.abreBio');
   await vazia.esperar();
   assert.ok(/uma vez por mês · nenhuma leitura ainda/.test(vazia.doc.getElementById('app').textContent),
     'sem leitura, a tela diz que não há — e não mostra um zero que seria mentira');
@@ -1237,6 +1256,8 @@ test('a tela diz quando foi a última leitura, e se não houve', async () => {
     bioPeso: [{ t: t, v: 96.2 }], bioMusculo: [{ t: t, v: 41.8 }],
     bioGordura: [{ t: t, v: 22.4 }], bioGorduraPct: [{ t: t, v: 23.3 }], bioAgua: []
   } } });
+  await a.esperar();
+  a.v('ctx.abreBio');
   await a.esperar();
   assert.ok(/uma vez por mês · anterior: \d\d\/\d\d/.test(a.doc.getElementById('app').textContent),
     'com leitura, diz quando foi');
@@ -1258,6 +1279,8 @@ test('registrar DE MANHÃ funciona — o instante de hoje é agora, não meio-di
   // passar metade do dia.
   const a = await app({ aba: 'corpo', agora: agoraEstavel(7, 0),
                         estado: { logs: {}, done: [] } });
+  await a.esperar();
+  a.v('ctx.abreBio');
   await a.esperar();
 
   a.digitar('bio-bioPeso', '96,2');
@@ -1286,11 +1309,12 @@ test('registrar DE MANHÃ funciona — o instante de hoje é agora, não meio-di
 // (`CORPO_PADRAO`), então quem pesa 73,6 chegava lá com CATORZE toques no menos.
 // A cintura parte de 85.
 
-test('peso e cintura têm porta para o teclado próprio', async () => {
+test('o peso tem porta para o teclado próprio, na folha', async () => {
   const a = await app({ estado: { body: { peso: [], cintura: [] } } });
   a.aba('corpo');
-  assert.ok(a.$('[data-a="tcl-abre-peso"]'), 'o peso tem porta');
-  assert.ok(a.$('[data-a="tcl-abre-cintura"]'), 'e a cintura também');
+  a.v('ctx.abreRegistroDePeso');
+  await a.esperar();
+  assert.ok(a.$('[data-a="peso-tcl"]'), 'o peso tem porta');
   assert.strictEqual(a.$('.tcl-grade'), null, 'fechada por padrão: não custa espaço');
   a.fechar();
 });
@@ -1300,7 +1324,9 @@ test('a primeira pesagem deixa de custar catorze toques', async () => {
   // menos; pelo teclado são quatro.
   const a = await app({ estado: { body: { peso: [], cintura: [] } } });
   a.aba('corpo');
-  a.clicar(a.$('[data-a="tcl-abre-peso"]'));
+  a.v('ctx.abreRegistroDePeso');
+  await a.esperar();
+  a.clicar(a.$('[data-a="peso-tcl"]'));
   await a.esperar();
   assert.ok(a.$('.tcl-grade'), 'o teclado abriu');
   // Nasce VAZIO: pré-encher com o 75 do padrão faria ele apagar dois dígitos
@@ -1313,7 +1339,7 @@ test('a primeira pesagem deixa de custar catorze toques', async () => {
   await a.esperar();
   assert.ok(a.texto('.tcl-visor').includes('73,6'), 'o visor mostra o que foi digitado');
 
-  a.clicar(a.$('.dd-registro .ins-btn-secondary'));
+  a.clicar(a.$('[data-a="peso-salva"]'));
   await a.esperar();
   const arr = a.S().body.peso;
   assert.strictEqual(arr.length, 1, 'registrou uma medida');
@@ -1326,20 +1352,24 @@ test('o teclado do corpo escreve no rascunho, e quem grava é o registrar', asyn
   // escolhida continua valendo e o botão de registrar continua sendo o commit.
   const a = await app({ estado: { body: { peso: [], cintura: [] } } });
   a.aba('corpo');
-  a.clicar(a.$('[data-a="tcl-abre-peso"]'));
+  a.v('ctx.abreRegistroDePeso');
+  await a.esperar();
+  a.clicar(a.$('[data-a="peso-tcl"]'));
   await a.esperar();
   a.clicar(a.$('[data-a="tcl-8"]'));
   await a.esperar();
 
   assert.deepStrictEqual(a.S().body.peso, [], 'nada gravado antes de registrar');
-  assert.ok(a.texto('.dd-registro').includes('8'), 'mas o stepper já mostra o 8');
+  assert.ok(a.texto('.ins-stepper').includes('8'), 'mas o stepper já mostra o 8');
   a.fechar();
 });
 
 test('o teclado do corpo aceita vírgula, e a régua de 100 g continua ali', async () => {
   const a = await app({ estado: { body: { peso: [], cintura: [] } } });
   a.aba('corpo');
-  a.clicar(a.$('[data-a="tcl-abre-peso"]'));
+  a.v('ctx.abreRegistroDePeso');
+  await a.esperar();
+  a.clicar(a.$('[data-a="peso-tcl"]'));
   await a.esperar();
   assert.ok(a.$('[data-a="tcl-virgula"]'), 'peso é decimal: a vírgula é tecla de verdade');
   assert.ok(a.$('.ins-stepper'), 'e o stepper não saiu: ele é a régua de 100 g');
@@ -1357,19 +1387,24 @@ test('apagar tudo no teclado volta ao ponto de partida, e não a um pedaço', as
   // 74,3.
   const a = await app({ estado: { body: { peso: [{ t: Date.now() - DIA, v: 74 }], cintura: [] } } });
   a.aba('corpo');
-  a.clicar(a.$('[data-a="tcl-abre-peso"]'));
+  a.v('ctx.abreRegistroDePeso');
+  await a.esperar();
+  a.clicar(a.$('[data-a="peso-tcl"]'));
   await a.esperar();
   ['7', '3'].forEach(function (t) { a.clicar(a.$('[data-a="tcl-' + t + '"]')); });
   await a.esperar();
-  assert.ok(a.texto('.dd-registro').includes('73'), 'pré-condição: o rascunho é 73');
+  assert.ok(a.texto('.ins-stepper').includes('73'), 'pré-condição: o rascunho é 73');
 
   a.clicar(a.$('[data-a="tcl-apaga"]'));
   a.clicar(a.$('[data-a="tcl-apaga"]'));
   await a.esperar();
-  assert.ok(a.texto('.dd-registro').includes('74'),
-    'voltou à última medida, e não ao "7" que sobrou no caminho: ' + a.texto('.dd-registro'));
+  assert.ok(a.texto('.ins-stepper').includes('74'),
+    'voltou à última medida, e não ao "7" que sobrou no caminho: ' + a.texto('.ins-stepper'));
   assert.strictEqual(a.S().body.peso.length, 1, 'e nenhuma medida foi apagada');
-  assert.ok(a.$('.crow-x'), 'quem apaga medida é a porta da lista, que continua existindo');
+  a.v('ctx.fechaFolha');
+  a.v('ctx.abreEvolucao');
+  await a.esperar();
+  assert.ok(a.$('.crow-x'), 'quem apaga medida é a lista das pesagens, na Evolução');
   a.fechar();
 });
 
@@ -1382,58 +1417,74 @@ test('apagar tudo no teclado volta ao ponto de partida, e não a um pedaço', as
 // COMO ELE MEDIU — a fita erra de posicionamento mais do que a balança varia de
 // água (F43), e repetir o ponto vale mais que o número.
 
-test('braço vem ligado; coxa, panturrilha, peito e quadril esperam um toque', async () => {
+test('o formulário de medidas segue a ordem do corpo, e as dobras esperam um toque', async () => {
   const a = await app({ estado: { body: { peso: [], cintura: [] } } });
   a.aba('corpo');
-  assert.ok(a.doc.getElementById('onde-braco'), 'o braço tem a medida inteira, com o como-eu-medi');
-  assert.ok(a.doc.getElementById('onde-cintura'), 'e a cintura, que também é fita, ganhou o mesmo campo');
-  ['coxa', 'panturrilha', 'peito', 'quadril'].forEach(function (k) {
-    assert.ok(a.$('[data-a="liga-' + k + '"]'), k + ' espera ligar');
-    assert.strictEqual(a.doc.getElementById('onde-' + k), null, k + ' não ocupa a tela antes disso');
+  a.clicar('[data-a="registra-medidas"]');
+  await a.esperar();
+  assert.deepStrictEqual(a.$$('.me-campo').map(function (c) { return c.getAttribute('data-k'); }),
+    ['peito', 'braco', 'cintura', 'quadril', 'coxa', 'panturrilha'], 'de cima para baixo (dono, 06/11)');
+  assert.strictEqual(a.doc.getElementById('med-dobraAbdominal-0'), null, 'as dobras esperam: nem todo mundo tem adipômetro');
+  a.clicar('[data-a="dobras-abre"]');
+  await a.esperar();
+  ['dobraAbdominal', 'dobraSuprailiaca', 'dobraCoxa'].forEach(function (k) {
+    assert.ok(a.doc.getElementById('med-' + k + '-2'), k + ': três leituras');
   });
-  assert.strictEqual(a.$('[data-a="liga-braco"]'), null, 'o braço não precisa ser ligado');
+  assert.ok(!/%/.test(a.$$('.me-campo').filter(c => /dobra/.test(c.getAttribute('data-k'))).map(c => c.textContent).join(' ')),
+    'dobra só em milímetros, sem percentual');
   a.fechar();
 });
 
-test('ligar abre a medida, e o ponto que tem medida fica ligado pelo dado', async () => {
-  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+test('campo vazio não grava, a medida anterior não aparece ao digitar, e o que mudou demais pede conferência', async () => {
+  const antes = Date.now() - 14 * DIA;
+  const a = await app({ estado: { body: { peso: [], cintura: [{ t: antes, v: 85.3 }], dobraAbdominal: [{ t: antes, v: 14 }] } } });
   a.aba('corpo');
-  a.clicar(a.$('[data-a="liga-coxa"]'));
+  a.v('ctx.abreMedidas');
   await a.esperar();
-  assert.ok(a.doc.getElementById('onde-coxa'), 'a coxa ganhou a medida');
-  assert.strictEqual(a.$('[data-a="liga-coxa"]'), null, 'e saiu da lista de ligar');
-
-  a.m.ctx.setMedida('coxa', 57.5);
-  await a.m.ctx.registraMedida('coxa');
+  assert.ok(a.texto('#app').indexOf('85,3') < 0, 'a medida anterior não aparece enquanto se digita');
+  a.digitar('med-cintura-0', '88');
+  a.digitar('med-dobraAbdominal-0', '14');
+  a.digitar('med-dobraAbdominal-1', '15');
+  a.digitar('med-dobraAbdominal-2', '19');
   await a.esperar();
-  assert.deepStrictEqual(a.S().body.coxa.map(function (x) { return x.v; }), [57.5]);
-  assert.strictEqual(a.S().body.coxa[0].onde, 'um palmo acima do joelho', 'sem texto dele, vai o ponto padrão');
-
-  // "Ligado" não é guardado no estado: um ponto com medida está ligado porque
-  // tem medida. Esquecer o toque não pode esconder um histórico.
-  a.E('view.fitaLigadas = null');
-  a.v('render');
+  assert.strictEqual(a.texto('[data-a="medidas-salva"]'), 'Salvar 2 medidas');
+  a.clicar('[data-a="medidas-salva"]');
+  await a.esperar(60);
+  const b = a.S().body;
+  assert.strictEqual(b.cintura.length, 2, 'a cintura entrou');
+  assert.strictEqual(b.dobraAbdominal[1].v, 15, 'a dobra grava a leitura do meio');
+  assert.strictEqual(b.braco.length, 0, 'e o braço, vazio, não');
+  assert.strictEqual(b.cintura[1].t, b.dobraAbdominal[1].t, 'um instante só para o lote');
+  const salvo = a.texto('[data-a="medidas-salvas"]');
+  assert.ok(/Confira esta medida: Cintura, 85,3 → 88,0 cm/.test(salvo), 'mais de 2 cm pede conferência: ' + salvo);
+  assert.ok(!/Dobra abdominal/.test(salvo), 'a dobra mudou 1 mm, e não pede');
+  a.v('ctx.fechaMedidas');
   await a.esperar();
-  assert.ok(a.$('[data-a="onde-muda-coxa"]'), 'com medida, a coxa continua na tela');
-  assert.ok(a.$('[data-a="liga-peito"]'), 'e o que nunca foi medido volta a esperar');
+  assert.ok(a.$('[data-a="medida-cintura"]'), 'a cintura está na lista da tela Corpo');
+  assert.strictEqual(a.$('[data-a="medida-braco"]'), null, 'o braço, nunca medido, não');
   a.fechar();
 });
 
-test('a primeira medida guarda como ele mediu, e o texto volta como lembrete', async () => {
+test('o ponto onde mediu vai junto, e o detalhe mostra o ponto de cada medida', async () => {
   const a = await app({ estado: { body: { peso: [], cintura: [] } } });
   a.aba('corpo');
+  a.v('ctx.abreMedidas');
+  await a.esperar();
+  a.clicar('[data-a="como-braco"]');
+  await a.esperar();
+  assert.ok(/Fita no meio entre a ponta do ombro e o cotovelo/.test(a.texto('#app')), 'a instrução abre ali mesmo');
   a.digitar('onde-braco', 'no meio do bíceps, braço relaxado');
-  a.m.ctx.setMedida('braco', 36.5);
-  await a.m.ctx.registraMedida('braco');
+  a.digitar('med-braco-0', '36,5');
   await a.esperar();
-
+  a.clicar('[data-a="medidas-salva"]');
+  await a.esperar(60);
   assert.strictEqual(a.S().body.braco[0].onde, 'no meio do bíceps, braço relaxado',
     'o texto foi para o histórico junto com a medida');
-  assert.strictEqual(a.doc.getElementById('onde-braco'), null,
-    'depois da primeira vez o campo vira lembrete');
-  assert.ok(a.$$('.co-onde-l').some(function (el) { return el.textContent.includes('no meio do bíceps'); }),
-    'e o lembrete diz onde a fita passou');
-  assert.ok(a.$('[data-a="onde-muda-braco"]'), 'com a porta para mudar');
+  a.v('ctx.fechaMedidas');
+  a.v('ctx.abreMedida', 'braco');
+  await a.esperar();
+  assert.ok(a.$$('.md-hist').some(function (el) { return el.textContent.includes('no meio do bíceps'); }),
+    'e o histórico diz onde a fita passou');
   a.fechar();
 });
 
@@ -1443,7 +1494,7 @@ test('corrigir o número do mesmo dia não apaga o como-eu-medi', async () => {
   // número apagando justamente o que existe para o ponto não mudar.
   const a = await app({ estado: { body: { peso: [], cintura: [] } } });
   a.aba('corpo');
-  a.digitar('onde-braco', 'no meio do bíceps');
+  a.m.ctx.setOnde('braco', 'no meio do bíceps');
   a.m.ctx.setMedida('braco', 36.5);
   await a.m.ctx.registraMedida('braco');
   await a.esperar();
@@ -1481,6 +1532,8 @@ test('apagar uma medida pede pelo painel de pare, e o Esc é "Deixar como está"
   const t = Date.now() - 2 * DIA;
   const a = await app({ painelManual: true, estado: { body: { peso: [{ t: t, v: 73.8 }], cintura: [] } } });
   a.aba('corpo');
+  a.v('ctx.abreEvolucao');
+  await a.esperar();
   a.clicar(a.$('.crow-x'));
   await a.esperar();
 
@@ -1526,6 +1579,8 @@ test('a bioimpedância traz o mês passado no lugar, diz "era" ao lado de cada u
     bioGordura: [{ t: t, v: 22.4 }], bioGorduraPct: [{ t: t, v: 23.3 }], bioAgua: [{ t: t, v: 52.1 }]
   } } });
   await a.esperar();
+  a.v('ctx.abreBio');
+  await a.esperar();
   assert.strictEqual(a.doc.getElementById('bio-bioMusculo').value, '41,8', 'o número de antes, no lugar');
   assert.strictEqual(a.doc.getElementById('bio-bioPeso').closest('label').querySelector('.ins-label-sm').textContent,
     'Peso · kg · o que esta balança mostrou');
@@ -1557,6 +1612,8 @@ test('a hora da bioimpedância é editável, e dia passado sem hora não vira 12
   // A leitura de 15/09/2026 ficou às 12:00 e foi às 6h (06/11/2026).
   const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] } } });
   await a.esperar();
+  a.v('ctx.abreBio');
+  await a.esperar();
   assert.ok(/^\d\d:\d\d$/.test(a.doc.getElementById('bio-hora').value), 'hoje, a hora parte de agora');
   ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct'].forEach(function (k, i) { a.digitar('bio-' + k, String([75, 38.1, 8.3, 11][i])); });
   a.digitar('bio-dia', '2026-09-15');
@@ -1570,6 +1627,8 @@ test('a hora da bioimpedância é editável, e dia passado sem hora não vira 12
   assert.strictEqual(new Date(p.t).getHours(), 6, 'às 6h, como ele disse');
   assert.ok(!p.semHora);
 
+  a.v('ctx.abreBio');
+  await a.esperar();
   a.digitar('bio-dia', '2026-09-01');
   await a.esperar();
   ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct'].forEach(function (k, i) { a.digitar('bio-' + k, String([75, 38.1, 8.3, 11][i])); });
@@ -1581,32 +1640,38 @@ test('a hora da bioimpedância é editável, e dia passado sem hora não vira 12
   a.fechar();
 });
 
-test('cada medida com fita mostra como medir, e o ponto padrão já vem preenchido', async () => {
+test('cada medida mostra o ponto, abre como medir no lugar, e o ponto padrão já vem preenchido', async () => {
   const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] } } });
+  a.v('ctx.abreMedidas');
+  await a.esperar();
+  const txt = a.texto('#app');
+  assert.ok(/umbigo/.test(txt) && /meio do braço, relaxado/.test(txt), 'o ponto, numa linha curta');
+  assert.ok(/Meça duas vezes; se as duas diferirem mais de 0,5 cm/.test(txt), 'a regra da fita, uma vez');
+  assert.ok(/Braço direito/.test(txt), 'o lado no nome');
+  a.clicar('[data-a="como-cintura"]');
   await a.esperar();
   assert.strictEqual(a.doc.getElementById('onde-cintura').value, 'umbigo');
-  assert.strictEqual(a.doc.getElementById('onde-braco').value, 'meio do braço, relaxado');
-  const txt = a.texto('#app');
-  assert.ok(/Fita na altura do umbigo, paralela ao chão/.test(txt));
-  assert.ok(/Fita no meio entre a ponta do ombro e o cotovelo/.test(txt));
-  assert.ok(/Meça duas vezes; se as duas diferirem mais de 0,5 cm/.test(txt));
-  assert.ok(/Braço direito/.test(txt), 'o lado no nome');
-  a.m.ctx.setCintura(86);
-  await a.m.ctx.registraCintura();
+  assert.ok(/Fita na altura do umbigo, paralela ao chão/.test(a.texto('#app')));
+  a.digitar('med-cintura-0', '86');
   await a.esperar();
+  a.clicar('[data-a="medidas-salva"]');
+  await a.esperar(60);
   assert.strictEqual(a.S().body.cintura[0].onde, 'umbigo');
   a.fechar();
 });
 
-test('os dois pesos têm nome e procedência, e a frase diz o que cada um faz', async () => {
+test('os dois pesos têm nome, e a frase diz o que cada um faz', async () => {
   // §10.2: dois pesos do mesmo dia se leem como erro, e o reflexo é apagar um.
   const a = await app({ aba: 'corpo' });
+  a.v('ctx.abreRegistroDePeso');
+  await a.esperar();
+  assert.ok(/o peso da manhã/.test(a.texto('.ins-folha')), 'a pesagem tem o qualificador no nome');
+  a.v('ctx.fechaFolha');
+  a.v('ctx.abreMedida', 'bio');
   await a.esperar();
   const txt = a.doc.getElementById('app').textContent.replace(/\s+/g, ' ');
-  assert.ok(/peso da manhã/.test(txt), 'a pesagem tem o qualificador no nome');
-  assert.ok(txt.indexOf('da balança de casa, em semi-jejum, antes do treino') >= 0, 'e a procedência dele, de P6');
-  assert.ok(txt.indexOf('O peso da manhã é o que a regra do nutricionista lê. O peso da balança de bioimpedância ' +
-    'fica com os outros quatro números dela, e não entra na média da semana.') >= 0, 'e a frase dos dois pesos');
+  assert.ok(txt.indexOf('O peso desta balança fica com os outros quatro números dela. O peso da manhã, que entra na média da semana, é o de cima, em Corpo.') >= 0,
+    'e a frase dos dois pesos, no detalhe da bioimpedância');
   a.fechar();
 });
 
@@ -1674,31 +1739,28 @@ test('o vazio de verdade do Corpo diz quanto custa sair dele, com os números da
   a.fechar();
 });
 
-test('a semana com uma pesagem só diz o que falta, e não mostra média falsa', async () => {
-  // A D (`corpo.html`, estado 9). Sexta às 21h32, uma pesagem na segunda: faltam
-  // sexta e sábado, e uma pesagem, para a média da semana valer.
+test('o número grande do peso é a média da semana, parcial, com a diferença para a última semana completa', async () => {
+  // Dono, 06/11: domingo a sábado; toda pesagem conta, em qualquer horário e
+  // com qualquer número de pesagens. Sexta às 21h32, uma pesagem na segunda.
   const agora = new Date(2026, 9, 2, 21, 32).getTime();
   const seg = new Date(2026, 8, 28, 6, 40).getTime();
-  // e duas semanas anteriores com média, para a média e o ritmo desta terem
-  // com o que aparecer
   const ant = [15, 17, 22, 24].map(d => new Date(2026, 8, d, 7, 0).getTime());
   const a = await app({ aba: 'corpo', agora: agora, estado: { body: { cintura: [],
     peso: ant.map((t, i) => ({ t: t, v: 72.8 + i * 0.1, m: t })).concat([{ t: seg, v: 73.6, m: seg }]) } } });
   await a.esperar();
-  assert.strictEqual(a.texto('.co-semana-t'), 'Sem média · esta semana · 1 pesagem');
-  assert.ok(a.texto('.co-semana').indexOf('Faltam 2 dias na semana e 1 pesagem para a média valer.') >= 0, a.texto('.co-semana'));
-  assert.deepStrictEqual(a.$$('.co-semana-l').map(l => l.className.split(' ')[1]), ['sem', 'pesagem', 'sem', 'tempo']);
-  const c = a.vJ('ctx.corpo').peso;
-  assert.strictEqual(c.media, '—', 'uma pesagem só não é média da semana');
-  assert.strictEqual(c.ritmo, '—', 'nem dá ritmo');
+  const p = a.vJ('ctx.painelDoCorpo').peso;
+  assert.strictEqual(p.media, '73,6', 'uma pesagem já é a média desta semana');
+  assert.strictEqual(p.parcial, 'parcial · 1 pesagem');
+  assert.ok(/em relação à semana de 20\/09/.test(p.diferenca), p.diferenca);
+  assert.strictEqual(a.texto('.co-peso-g'), '73,6', 'e é o número grande');
+  // a regra do nutricionista continua com o mínimo dela
+  assert.strictEqual(a.vJ('ctx.corpo').peso.media, '—', 'a regra não lê média de uma pesagem');
 
-  // a segunda pesagem fecha a semana, e a cobrança sai
   a.m.ctx.setPeso(73.2);
   a.m.ctx.registraPeso();
   await a.esperar(60);
-  assert.strictEqual(a.$('.co-semana'), null, 'com duas pesagens a média vale');
-  assert.strictEqual(a.vJ('ctx.corpo').peso.media, '73,4 kg', 'e a média da semana aparece');
-  assert.notStrictEqual(a.vJ('ctx.corpo').peso.ritmo, '—', 'e o ritmo também');
+  assert.strictEqual(a.vJ('ctx.painelDoCorpo').peso.media, '73,4', 'a segunda pesagem entra na média');
+  assert.strictEqual(a.vJ('ctx.painelDoCorpo').peso.parcial, 'parcial · 2 pesagens');
   a.fechar();
 });
 
@@ -1718,6 +1780,8 @@ test('trocar a data da bioimpedância traz os números daquele dia, e guardar co
     bioGordura: L(t15, 8.3).concat(L(t0, 8.6)), bioGorduraPct: L(t15, 11).concat(L(t0, 11.3)),
     bioAgua: L(t15, 49.2).concat(L(t0, 49.6)) } } });
   await a.esperar();
+  a.v('ctx.abreBio');
+  await a.esperar();
   assert.strictEqual(a.doc.getElementById('bio-bioPeso').value, '76,0', 'hoje, a última');
   a.digitar('bio-dia', '2026-09-15');
   await a.esperar();
@@ -1732,5 +1796,67 @@ test('trocar a data da bioimpedância traz os números daquele dia, e guardar co
   assert.strictEqual(p.length, 2, 'substituiu a de 15/09, não criou outra');
   assert.deepStrictEqual(p.map(function (x) { return [new Date(x.t).getDate(), new Date(x.t).getHours(), x.v]; })[0], [15, 6, 75]);
   assert.strictEqual(p[1].v, 76, 'a de hoje ficou como estava');
+  a.fechar();
+});
+
+
+test('o detalhe da medida destaca quando o ponto mudou, e marca os dias de fotos', async () => {
+  const d = function (k) { return Date.now() - k * DIA; };
+  const iso = function (t) { const x = new Date(t); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+  const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [
+    { t: d(40), v: 85, onde: 'umbigo' }, { t: d(26), v: 85.4, onde: 'umbigo' }, { t: d(12), v: 86, onde: 'dois dedos acima do umbigo' }
+  ] }, protocolo: { poses: null, sessoes: [{ d: iso(d(30)), t: 1, m: 1, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } }] } } });
+  a.clicar('[data-a="medida-cintura"]');
+  await a.esperar();
+  assert.ok(a.vista().medida === 'cintura', 'a linha abre o detalhe');
+  const linhas = a.$$('.md-hist');
+  assert.strictEqual(linhas.length, 3);
+  assert.ok(linhas[0].classList.contains('mudou') && /o ponto mudou/.test(linhas[0].textContent), 'a de 12 dias atrás mudou de ponto');
+  assert.ok(!linhas[1].classList.contains('mudou'));
+  assert.strictEqual(a.$$('.md-foto').length, 1, 'a sessão de fotos no eixo do tempo');
+  a.clicar('[data-a="medida-nova"]');
+  await a.esperar();
+  assert.ok(a.vista().medidas && a.vista().medidas.foco === 'cintura', '"Nova medida" abre o formulário nela');
+  a.window.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape' }));
+  await a.esperar();
+  assert.ok(!a.vista().medidas && a.vista().medida === 'cintura', 'Voltar fecha uma camada só');
+  a.fechar();
+});
+
+test('o detalhe da bioimpedância tem o histórico das leituras, e apagar leva as cinco', async () => {
+  const t = Date.now() - 5 * DIA;
+  const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [],
+    bioPeso: [{ t: t, v: 76 }], bioMusculo: [{ t: t, v: 38.5 }], bioGordura: [{ t: t, v: 8.6 }],
+    bioGorduraPct: [{ t: t, v: 11.3 }], bioAgua: [{ t: t, v: 49.6 }] } } });
+  a.clicar('[data-a="abre-bio"]');
+  await a.esperar();
+  assert.strictEqual(a.$$('.md-hist').length, 1);
+  await a.v('ctx.apagaLeituraBio', t);
+  await a.esperar(60);
+  ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua'].forEach(function (k) {
+    assert.strictEqual(a.S().body[k].length, 0, k + ' saiu');
+    assert.ok(a.S().apagados[k + ':' + t] > 0, k + ' com lápide');
+  });
+  a.fechar();
+});
+
+test('o peso guarda a hora escolhida, e hora no futuro é recusada', async () => {
+  const a = await app({ aba: 'corpo', agora: agoraEstavel(20, 0), estado: { body: { peso: [], cintura: [] } } });
+  a.v('ctx.abreRegistroDePeso');
+  await a.esperar();
+  a.digitar('peso-hora', '06:15');
+  await a.esperar();
+  a.clicar('[data-a="peso-salva"]');
+  await a.esperar(60);
+  const p = a.S().body.peso[0];
+  assert.deepStrictEqual([new Date(p.t).getHours(), new Date(p.t).getMinutes()], [6, 15]);
+  a.v('ctx.abreRegistroDePeso');
+  await a.esperar();
+  a.digitar('peso-hora', '23:30');
+  await a.esperar();
+  a.clicar('[data-a="peso-salva"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().body.peso[0].v, p.v, 'nada mudou');
+  assert.ok(/ainda não chegou/.test(a.toast()), a.toast());
   a.fechar();
 });

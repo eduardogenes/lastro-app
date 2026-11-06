@@ -490,7 +490,7 @@ test('as doze medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
   const chaves = a.dado('MARCAS_DO_CORPO');
   assert.deepStrictEqual(chaves.slice().sort(), [
     'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso',
-    'braco', 'cintura', 'coxa', 'panturrilha', 'peito', 'peso', 'quadril'
+    'braco', 'cintura', 'coxa', 'dobraAbdominal', 'dobraCoxa', 'dobraSuprailiaca', 'panturrilha', 'peito', 'peso', 'quadril'
   ], 'peso da manhã, cintura, as cinco da bioimpedância e as cinco com fita além da cintura');
 
   // uma medida reconhecível em cada, com valor diferente por grandeza
@@ -556,7 +556,7 @@ test('o estado congelado do plano 9 entra pelo boot e sai migrado', async () => 
   // migração, que é o contrato escrito na 9→10.
   assert.deepStrictEqual(Object.keys(a.S().body).sort(), [
     'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso',
-    'braco', 'cintura', 'coxa', 'panturrilha', 'peito', 'peso', 'quadril'
+    'braco', 'cintura', 'coxa', 'dobraAbdominal', 'dobraCoxa', 'dobraSuprailiaca', 'panturrilha', 'peito', 'peso', 'quadril'
   ], 'as cinco chaves da bioimpedância e as cinco com fita existem');
   assert.deepStrictEqual(a.S().body.braco, [], 'e as com fita começam vazias');
   assert.deepStrictEqual(a.S().body.peso, era.body.peso,

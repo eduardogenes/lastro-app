@@ -198,6 +198,9 @@ describe('espelho — arquivos', () => {
     expect(csv).toContain('2026-10-28,06:18,quadril,quadril,96.4,cm,fita,parte mais larga do quadril');
     expect(csv).toContain('2026-10-28,06:18,braco,braço direito,35.2,cm,fita,"meio do braço, relaxado"');
     expect(csv).toContain('2026-09-15,,bioPeso,peso na bioimpedância,75,kg,bioimpedância,');
+    b.dobraAbdominal = [{ t: T, v: 14, onde: 'dois dedos ao lado do umbigo, dobra vertical' }];
+    const csv2 = montaArquivos(S, { agora: T })['corpo/medidas.csv'];
+    expect(csv2).toContain('2026-10-28,06:18,dobraAbdominal,dobra abdominal,14,mm,adipômetro,"dois dedos ao lado do umbigo, dobra vertical"');
   });
 
   it('só o LEIA-ME muda com a hora da geração', () => {

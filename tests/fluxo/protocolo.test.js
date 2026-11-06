@@ -3100,3 +3100,21 @@ test('sessão de antes de 06/11 continua "de 9" no Corpo; a de hoje conta sobre 
   assert.strictEqual(a.vJ('ctx.sessaoDeFotos').total, 11, 'a sessão nova é sobre 11');
   a.fechar();
 });
+
+
+test('ao terminar as poses, o fim da sessão oferece medir a fita agora', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  a.E(`const f = {};
+       CTX.protocoloFotos().pontos.forEach(function (p, i) { f[p.id] = { v: Date.now() - 60000 + i * 1000, ext: 'webp' }; });
+       S.protocolo.sessoes = [{ d: hojeISO(), t: 2, m: 2, fotos: f }];`);
+  a.v('ctx.abreProtocolo');
+  a.E('view.protocolo.montagem = false');
+  a.v('render');
+  await a.esperar();
+  assert.strictEqual(a.texto('[data-a="fim-medir"]'), 'Medir fita agora');
+  a.clicar('[data-a="fim-medir"]');
+  await a.esperar();
+  assert.ok(!a.vista().protocolo && a.vista().medidas, 'a sessão de fotos sai e o formulário de medidas entra');
+  a.fechar();
+});

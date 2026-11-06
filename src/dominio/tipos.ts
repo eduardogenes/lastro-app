@@ -509,7 +509,8 @@ export interface Marca {
 export type QualMarca =
   | 'peso' | 'cintura'
   | 'bioPeso' | 'bioMusculo' | 'bioGordura' | 'bioGorduraPct' | 'bioAgua'
-  | 'braco' | 'coxa' | 'panturrilha' | 'peito' | 'quadril';
+  | 'braco' | 'coxa' | 'panturrilha' | 'peito' | 'quadril'
+  | 'dobraAbdominal' | 'dobraSuprailiaca' | 'dobraCoxa';
 
 /** As séries de medida do corpo. A forma de `S.body`. */
 export type Corpo = Record<QualMarca, Marca[]>;

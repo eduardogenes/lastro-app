@@ -170,7 +170,9 @@ test('tocar num alimento da lista abre o editor dele', async () => {
 test('o "pronto" do teclado do Corpo fecha o teclado', async () => {
   const a = await app({ aba: 'corpo' });
   await a.esperar();
-  a.clicar('[data-a="tcl-abre-peso"]');
+  a.clicar('[data-a="registra-peso"]');
+  await a.esperar();
+  a.clicar('[data-a="peso-tcl"]');
   await a.esperar();
   assert.ok(a.vista().teclado, 'pré-condição: o teclado abriu');
   a.clicar('[data-a="tcl-pronto"]');

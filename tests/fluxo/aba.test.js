@@ -51,6 +51,10 @@ const semeia = (nav, { sessao = false } = {}) => nav.E(`(function () {
     }
   });
   S.body.peso = []; for (let k = 1; k < 30; k++) S.body.peso.push({ t: t(k), v: 74 - k*0.03 });
+  // as medidas e a bioimpedância: desde 06/11 o Corpo é um painel, e sem elas ele cabe numa tela e meia
+  ['peito','braco','cintura','quadril','coxa','panturrilha','dobraAbdominal','dobraSuprailiaca','dobraCoxa'].forEach(function (k, j) {
+    S.body[k] = [0,1,2].map(function (i) { return { t: t(40 - i*14), v: 20 + j*5 + i*0.3 }; }); });
+  ['bioPeso','bioMusculo','bioGordura','bioGorduraPct','bioAgua'].forEach(function (k, j) { S.body[k] = [{ t: t(12), v: [75,38,8,11,49][j] }]; });
   ${sessao ? `const ag = Date.now() - 1800000, DD = nextDay();
   S.sessao = { day: DD, inicio: ag, ultima: Date.now() - 60000, sid: ag, manual: 1, pausas: [], pulados: [] };
   S.done.push({ day: DD, t: ag, sid: ag, ini: 'manual' });` : ''}

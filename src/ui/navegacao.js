@@ -76,6 +76,9 @@ export function camadasAbertas(view) {
   if (view.hist) c.push('hist');
   // A Evolução ABAIXO da comparação: comparar abre de dentro dela.
   if (view.evolucao) c.push('evolucao');
+  // O detalhe de uma medida, e o formulário de medidas, que abre de dentro dele.
+  if (view.medida) c.push('medida');
+  if (view.medidas) c.push('medidas');
   if (view.comparar) c.push('comparar');
   // A revisão do treinador abre da Prescrição, acima de qualquer lugar.
   if (view.revisao) c.push('revisao');

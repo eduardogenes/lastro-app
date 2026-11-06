@@ -34,6 +34,10 @@ import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folha
 import { FolhaFoto } from './ui/folhas/foto.jsx';
 import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
 import { FolhaPesoRapido } from './ui/folhas/pesorapido.jsx';
+import { FolhaPeso } from './ui/folhas/peso.jsx';
+import { FolhaBio } from './ui/folhas/bio.jsx';
+import { Medidas } from './ui/telas/medidas.jsx';
+import { DetalheDaMedida } from './ui/telas/medida.jsx';
 import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { FolhaDecidir } from './ui/folhas/decidir.jsx';
 import { ChegadaDaFolha, LugarNaPilha } from './ui/instrumento/folha.jsx';
@@ -67,7 +71,7 @@ import {
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
-import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGRA_DA_FITA, medidaDoCorpo, ondeMediu,
+import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGRA_DA_FITA, REGRA_DA_DOBRA, MEDIDAS_DE_DOBRA, ORDEM_DE_MEDIR, CONFERIR_ACIMA, doMeio, mediaDaFita, pedeTerceira, pesoDaSemana, medidaDoCorpo, ondeMediu,
          mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
@@ -2768,7 +2772,7 @@ const CTX = {
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
-              view.protocolo || view.comparar || view.evolucao || view.diaAberto || view.ajuste || view.camera ||
+              view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.diaAberto || view.ajuste || view.camera ||
               view.ajustes || view.modoSessao || view.revisao);
   },
 
@@ -3083,6 +3087,10 @@ function telaCheia() {
   if (view.protocolo) return <Protocolo ctx={CTX} />;
   if (view.revisao) return <Revisao ctx={CTX} />;
   if (view.comparar) return <Comparar ctx={CTX} />;
+  // Registrar medidas abre de dentro do detalhe de uma medida ("Nova medida"),
+  // e fica por cima dele.
+  if (view.medidas) return <Medidas ctx={CTX} />;
+  if (view.medida) return <DetalheDaMedida ctx={CTX} />;
   // Depois de comparar: a comparação abre DE DENTRO da Evolução, e fica por cima.
   if (view.evolucao) return <Evolucao ctx={CTX} />;
 
@@ -4696,8 +4704,20 @@ function diaDaMedida(k) {
  */
 function instanteDaMedida(k) {
   const d = diaDaMedida(k);
+  const h = view.bodyHora && view.bodyHora[k];
+  if (h && /^\d\d:\d\d$/.test(h)) {
+    const x = new Date(d); x.setHours(Number(h.slice(0, 2)), Number(h.slice(3, 5)), 0, 0);
+    return x.getTime();
+  }
   return sameDay(d, Date.now()) ? Date.now() : d;
 }
+/** A hora que o campo mostra: a escolhida, a de agora (hoje) ou 07:00 (dia passado). */
+function horaDaMedida(k) {
+  const h = view.bodyHora && view.bodyHora[k];
+  if (h) return h;
+  return sameDay(diaDaMedida(k), Date.now()) ? horaHHMM(Date.now()) : '07:00';
+}
+function horaHHMM(t) { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
 function rotuloDoDia(t) {
   if (sameDay(t, Date.now())) return 'hoje';
   if (sameDay(t, Date.now() - 86400000)) return 'ontem';
@@ -4802,6 +4822,7 @@ async function addBody(k) {
   if (isNaN(v) || v <= 0) { toast('Digite um número válido.'); return; }
 
   const quando = instanteDaMedida(k);
+  if (quando > Date.now() + 60000) { toast('Essa hora ainda não chegou. Confira a hora.'); return; }
   const rotulo = rotuloDoDia(quando);
   // O texto de "como eu medi" só existe nas medidas com fita, e vazio é "não
   // disse" — nunca uma frase em branco gravada por cima do lembrete.
@@ -4825,6 +4846,8 @@ async function addBody(k) {
   if (view.bodyDiaAberto === k) view.bodyDiaAberto = null;
   view.bodyOnde = Object.assign({}, view.bodyOnde);
   delete view.bodyOnde[k];
+  view.bodyHora = Object.assign({}, view.bodyHora);
+  delete view.bodyHora[k];
   await save();
   render();
   // Nome e unidade pela tabela, como no aviso de remover: com as medidas com
@@ -7979,6 +8002,8 @@ function folhaDe(f, i) {
   if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
   if (f.k === 'menuSessao') return <FolhaMenuDaSessao key={i} ctx={CTX} />;
   if (f.k === 'pesoRapido') return <FolhaPesoRapido key={i} ctx={CTX} />;
+  if (f.k === 'peso') return <FolhaPeso key={i} ctx={CTX} />;
+  if (f.k === 'bio') return <FolhaBio key={i} ctx={CTX} />;
   if (f.k === 'poeODia') return <FolhaPoeODia key={i} ctx={CTX} data={f.data} />;
   return null;
 }
@@ -8250,6 +8275,8 @@ const FECHA_CAMADA = {
   comparar:  function () { CTX.fechaComparar(); },
   revisao:   function () { CTX.fechaRevisao(); },
   evolucao:  function () { CTX.fechaEvolucao(); },
+  medida:    function () { CTX.fechaMedida(); },
+  medidas:   function () { CTX.fechaMedidas(); },
   dia:       function () { CTX.fechaDia(); },
   prog:      function () { fecharPrograma(); },
   retro:     function () { fecharRetro(); },
@@ -9041,7 +9068,7 @@ CTX.corpoVazio = function () {
       MIN_PESAGENS_CORPO + ' pesagens. São ' + pesagens + ' pesagens, em ' + semanas + ' semanas, para o primeiro veredito existir.',
     linhas: [
       { k: 'peso', t: 'Peso', d: 'de manhã, antes de treinar, mesma roupa' },
-      { k: 'fita', t: 'Cintura e outras medidas', d: 'sem frequência prescrita · quando você quiser' },
+      { k: 'fita', t: 'Medidas com fita e dobras', d: 'na mesma noite das fotos, todas num formulário' },
       { k: 'bio', t: 'Bioimpedância', d: 'uma vez por mês' },
       { k: 'fotos', t: 'Fotos', d: 'a cada ' + CADENCIA_DIAS + ' dias, ' + posesDo(S.protocolo && S.protocolo.poses).length + ' poses, menos de 5 min' }
     ],
@@ -9277,6 +9304,8 @@ CTX.setDiaCorpo = function (k, iso) {
   const dias = Object.assign({}, view.bodyDia);
   if (hoje) delete dias[k]; else dias[k] = d.getTime();
   view.bodyDia = dias;
+  view.bodyHora = Object.assign({}, view.bodyHora);
+  delete view.bodyHora[k];
   // trocar de dia troca a referência do stepper: o valor a corrigir é o
   // daquele dia, não o da última pesagem
   view.bodyForm = Object.assign({}, view.bodyForm);
@@ -9288,7 +9317,7 @@ CTX.registraCintura = function () { addBody('cintura'); };
 // As medidas com fita, pela grandeza: a mesma porta da cintura, sem uma função
 // por ponto. Só aceitam o que a tabela diz que é fita — o peso e a balança da
 // bioimpedância têm as portas deles.
-function ehFita(k) { const m = medidaDoCorpo(k); return !!(m && m.fita); }
+function ehFita(k) { const m = medidaDoCorpo(k); return !!(m && (m.fita || m.dobra)); }
 CTX.setMedida = function (k, v) {
   if (!ehFita(k)) return;
   view.bodyForm = Object.assign({}, view.bodyForm, { [k]: v }); render();
@@ -9396,6 +9425,276 @@ CTX.bioimpedancia = function (dia) {
 };
 
 CTX.registraBio = function (leitura, quando, semHora) { return registraBio(leitura, quando, semHora); };
+CTX.setHoraCorpo = function (k, h) {
+  view.bodyHora = Object.assign({}, view.bodyHora, { [k]: String(h || '') });
+  render();
+};
+
+// ---------- o registro do PESO, em folha (docs/corpo/02, §2.3) ----------
+CTX.abreRegistroDePeso = function () {
+  view.bodyForm = Object.assign({}, view.bodyForm); delete view.bodyForm.peso;
+  view.bodyDia = Object.assign({}, view.bodyDia); delete view.bodyDia.peso;
+  view.bodyHora = Object.assign({}, view.bodyHora); delete view.bodyHora.peso;
+  CTX.abreFolha({ k: 'peso' });
+};
+CTX.registroDePeso = function () {
+  const v = valorDoCorpo('peso');
+  const u = (S.body.peso || [])[(S.body.peso || []).length - 1];
+  return {
+    valor: isNaN(v) ? baseDoCorpo('peso') : v,
+    teclado: CTX.tecladoDoCorpo('peso'),
+    dia: diaDaMedidaVM('peso'),
+    hora: horaDaMedida('peso'),
+    ultima: u ? 'última: ' + fmtDec(u.v) + ' kg · ' + rotuloDoDia(u.t) : null
+  };
+};
+CTX.salvaPeso = async function () {
+  const m = Date.now();
+  await addBody('peso');
+  const gravou = (S.body.peso || []).some(function (x) { return x.m >= m; });
+  const p = view.pilha || [];
+  if (gravou && p.length && p[p.length - 1].k === 'peso') { pilha().pop(); render(); }
+};
+
+// ---------- a BIOIMPEDÂNCIA, em folha ----------
+CTX.abreBio = function () { CTX.abreFolha({ k: 'bio' }); };
+CTX.registraBioDaFolha = async function (leitura, quando, semHora) {
+  const r = await registraBio(leitura, quando, semHora);
+  const p = view.pilha || [];
+  if (r && r.ok && p.length && p[p.length - 1].k === 'bio') { pilha().pop(); render(); }
+  return r;
+};
+
+// ---------- REGISTRAR MEDIDAS: fita e dobras num formulário (docs/corpo/02, §2.4) ----------
+// Na ordem do corpo, de cima para baixo, e depois as dobras. Campo vazio não
+// grava. A medida anterior NÃO aparece enquanto se digita: ela puxa o número de
+// quem mede (dono, 06/11/2026). Depois de salvar, o que mudou demais desde a
+// última pede "confira esta medida".
+function medidasDeMedir() { return ORDEM_DE_MEDIR.map(medidaDoCorpo).filter(Boolean); }
+
+CTX.abreMedidas = function (foco) {
+  const agora = Date.now();
+  view.medidas = {
+    foco: foco || null, leituras: {}, como: {}, salvo: null,
+    dobras: MEDIDAS_DE_DOBRA.some(function (m) { return (S.body[m.k] || []).length; }) ||
+      !!(foco && medidaDoCorpo(foco) && medidaDoCorpo(foco).dobra),
+    data: hojeISO(agora), hora: horaHHMM(agora)
+  };
+  view.bodyOnde = {};
+  entraNoDestino('medidas'); render(); rola(0);
+};
+CTX.fechaMedidas = function () { view.medidas = null; view.bodyOnde = {}; render(); saiDoDestino('medidas'); };
+CTX.setLeitura = function (k, i, txt) {
+  const v = view.medidas; if (!v) return;
+  const l = (v.leituras[k] || ['', '', '']).slice(); l[i] = String(txt);
+  v.leituras = Object.assign({}, v.leituras, { [k]: l });
+  v.salvo = null;
+  render();
+};
+CTX.alternaComo = function (k) {
+  const v = view.medidas; if (!v) return;
+  v.como = Object.assign({}, v.como, { [k]: !v.como[k] }); render();
+};
+CTX.segundaLeitura = function (k) {
+  const v = view.medidas; if (!v) return;
+  const l = (v.leituras[k] || ['', '', '']).slice(); if (l[1] == null) l[1] = '';
+  v.leituras = Object.assign({}, v.leituras, { [k]: l });
+  v.segunda = Object.assign({}, v.segunda, { [k]: true }); render();
+};
+CTX.mostraDobras = function () { if (view.medidas) { view.medidas.dobras = !view.medidas.dobras; render(); } };
+CTX.setQuandoDasMedidas = function (campo, valor) {
+  const v = view.medidas; if (!v) return;
+  if (campo === 'data') v.data = String(valor); else v.hora = String(valor);
+  render();
+};
+function numeroDaLeitura(t) {
+  if (t == null || String(t).trim() === '') return null;
+  const n = parseFloat(String(t).replace(',', '.'));
+  return isNaN(n) || n <= 0 ? NaN : n;
+}
+/** O valor que cada medida do formulário vai gravar, ou null (vazia), ou NaN (inválida). */
+function valorDoFormulario(m, l) {
+  const ns = (l || []).map(numeroDaLeitura);
+  if (ns.some(function (n) { return typeof n === 'number' && isNaN(n); })) return NaN;
+  const vs = ns.filter(function (n) { return n != null; });
+  if (!vs.length) return null;
+  return m.dobra ? doMeio(vs) : mediaDaFita(vs);
+}
+function instanteDasMedidas(v) {
+  const p = String(v.data).split('-').map(Number), h = String(v.hora || '').split(':').map(Number);
+  if (p.length !== 3 || !p[0]) return NaN;
+  return new Date(p[0], p[1] - 1, p[2], h[0] || 0, h[1] || 0, 0, 0).getTime();
+}
+CTX.medidasForm = function () {
+  const v = view.medidas;
+  if (!v) return null;
+  const linha = function (m) {
+    const l = v.leituras[m.k] || ['', '', ''];
+    const valor = valorDoFormulario(m, l);
+    const a = numeroDaLeitura(l[0]), b = numeroDaLeitura(l[1]);
+    return {
+      k: m.k, n: m.n.charAt(0).toUpperCase() + m.n.slice(1), u: m.u, dobra: !!m.dobra,
+      ponto: (view.bodyOnde && typeof view.bodyOnde[m.k] === 'string' ? view.bodyOnde[m.k] : null) || ondeMediu(S.body[m.k]) || m.onde || '',
+      ondeRascunho: rascunhoDoOnde(m.k),
+      como: m.como || '', comoAberto: !!v.como[m.k],
+      leituras: m.dobra ? [l[0] || '', l[1] || '', l[2] || ''] :
+        (v.segunda && v.segunda[m.k]) || (l[1] || '') ? (pedeTerceira(a, b) || (l[2] || '') ? [l[0] || '', l[1] || '', l[2] || ''] : [l[0] || '', l[1] || '']) : [l[0] || ''],
+      pedeTerceira: !m.dobra && pedeTerceira(a, b),
+      grava: typeof valor === 'number' && !isNaN(valor) ? fmtDec(valor) + ' ' + m.u : null,
+      invalida: typeof valor === 'number' && isNaN(valor),
+      foco: v.foco === m.k
+    };
+  };
+  const todas = medidasDeMedir();
+  const fita = todas.filter(function (m) { return !m.dobra; }).map(linha);
+  const dobras = todas.filter(function (m) { return m.dobra; }).map(linha);
+  const n = fita.concat(v.dobras ? dobras : []).filter(function (x) { return x.grava; }).length;
+  return {
+    data: v.data, hora: v.hora, max: hojeISO(),
+    fita: fita, dobras: dobras, dobrasAbertas: !!v.dobras,
+    regraDaFita: REGRA_DA_FITA, regraDaDobra: REGRA_DA_DOBRA,
+    n: n, salvar: n ? 'Salvar ' + (n === 1 ? '1 medida' : n + ' medidas') : 'Nada para salvar',
+    salvo: v.salvo
+  };
+};
+CTX.salvaMedidas = async function () {
+  const v = view.medidas; if (!v) return { ok: false };
+  const t = instanteDasMedidas(v);
+  if (isNaN(t)) { toast('Confira a data e a hora.'); return { ok: false }; }
+  if (t > Date.now() + 60000) { toast('Essa hora ainda não chegou. Confira a data e a hora.'); return { ok: false }; }
+  const todas = medidasDeMedir().filter(function (m) { return !m.dobra || v.dobras; });
+  const vai = [], ruins = [];
+  todas.forEach(function (m) {
+    const x = valorDoFormulario(m, v.leituras[m.k]);
+    if (x == null) return;
+    if (isNaN(x)) { ruins.push(m.n); return; }
+    vai.push({ m: m, v: x });
+  });
+  if (ruins.length) { toast('Número inválido em ' + listaComE(ruins) + '.'); return { ok: false }; }
+  if (!vai.length) { toast('Nenhuma medida preenchida.'); return { ok: false }; }
+  const conferir = [];
+  vai.forEach(function (x) {
+    const k = x.m.k;
+    const antes = (S.body[k] || []).filter(function (y) { return y.t < t && !sameDay(y.t, t); }).slice(-1)[0];
+    const lim = CONFERIR_ACIMA[x.m.u];
+    if (antes && lim != null && Math.abs(x.v - antes.v) > lim + 1e-9) {
+      const d = x.v - antes.v;
+      conferir.push({ k: k, n: x.m.n.charAt(0).toUpperCase() + x.m.n.slice(1),
+        txt: fmtDec(antes.v) + ' → ' + fmtDec(x.v) + ' ' + x.m.u + ' (' + (d > 0 ? '+' : '−') + fmtDec(Math.abs(d)) + ' desde ' + fmtDate(antes.t) + ')' });
+    }
+    const typed = view.bodyOnde && typeof view.bodyOnde[k] === 'string' ? view.bodyOnde[k].trim() : '';
+    gravaMarca(k, x.v, t, typed || ondeMediu(S.body[k]) || x.m.onde || null);
+  });
+  declaraGravacao(vai.length === 1 ? 'a medida' : 'as ' + vai.length + ' medidas', fmtDate(t));
+  await save();
+  v.leituras = {}; v.segunda = {}; view.bodyOnde = {};
+  v.salvo = { n: vai.length, conferir: conferir,
+    txt: 'Salvei ' + (vai.length === 1 ? '1 medida' : vai.length + ' medidas') + ' de ' + fmtDate(t) + ' às ' + horaHHMM(t) + '.' };
+  render(); rola(0);
+  return { ok: true, n: vai.length, conferir: conferir.map(function (c) { return c.k; }) };
+};
+
+// ---------- O DETALHE de uma medida (fita, dobra) ou da bioimpedância ----------
+CTX.abreMedida = function (k) { view.medida = k; entraNoDestino('medida'); render(); rola(0); };
+CTX.fechaMedida = function () { view.medida = null; render(); saiDoDestino('medida'); };
+function datasDasFotos() { return ((S.protocolo && S.protocolo.sessoes) || []).filter(function (s) { return s && s.fotos && Object.keys(s.fotos).length; }).map(function (s) { return instanteDaData(s.d); }); }
+CTX.detalheDaMedida = function () {
+  const k = view.medida;
+  if (!k) return null;
+  const fotos = datasDasFotos();
+  if (k === 'bio') {
+    const series = MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).map(function (m) {
+      const s = (S.body[m.k] || []).slice().sort(function (a, b) { return a.t - b.t; });
+      return { k: m.k, n: (CAMPO_DA_BIO[m.k] || { rotulo: m.n }).rotulo, u: m.u,
+        pontos: s.map(function (x) { return { t: x.t, v: x.v }; }),
+        ultima: s.length ? comUnidade(s[s.length - 1].v, m.u) : '—' };
+    });
+    const instantes = {};
+    MARCAS_DA_BIO.forEach(function (k2) { (S.body[k2] || []).forEach(function (x) { instantes[x.t] = x; }); });
+    const hist = Object.keys(instantes).map(Number).sort(function (a, b) { return b - a; }).map(function (t) {
+      const x = instantes[t];
+      return { t: t, data: fmtDate(t), hora: x.semHora ? 'sem hora' : horaHHMM(t),
+        valores: series.map(function (s) { const p = s.pontos.filter(function (y) { return y.t === t; })[0]; return p ? fmtDec(p.v) + (s.u === '%' ? '%' : ' ' + s.u) : '—'; }).join(' · ') };
+    });
+    return { k: 'bio', n: 'Bioimpedância', olho: 'uma leitura por mês', series: series, historico: hist, fotos: fotos };
+  }
+  const m = medidaDoCorpo(k);
+  if (!m) return null;
+  const s = (S.body[k] || []).slice().sort(function (a, b) { return a.t - b.t; });
+  let ondeAnt = null;
+  const pontos = s.map(function (x, i) {
+    const onde = x.onde || null;
+    const mudou = i > 0 && !!onde && !!ondeAnt && onde !== ondeAnt;
+    if (onde) ondeAnt = onde;
+    return { t: x.t, v: x.v, onde: onde, mudou: mudou };
+  });
+  const u = s[s.length - 1], p = s[0];
+  return {
+    k: k, n: m.n.charAt(0).toUpperCase() + m.n.slice(1), u: m.u, dobra: !!m.dobra,
+    olho: m.dobra ? 'dobra com adipômetro · mm' : 'medida com fita',
+    atual: u ? comUnidade(u.v, m.u) : '—',
+    variacao: s.length > 1 ? fmtSig(Math.round((u.v - p.v) * 10) / 10) + ' ' + m.u + ' desde ' + fmtDate(p.t) : null,
+    como: m.como || '', ponto: ondeMediu(s) || m.onde || '',
+    regra: m.dobra ? REGRA_DA_DOBRA : REGRA_DA_FITA,
+    pontos: pontos, fotos: fotos,
+    historico: pontos.slice().reverse().map(function (x) {
+      return { t: x.t, data: fmtDate(x.t), hora: horaHHMM(x.t), valor: comUnidade(x.v, m.u), onde: x.onde || '', mudou: x.mudou };
+    })
+  };
+};
+CTX.apagaLeituraBio = async function (t) {
+  const sim = await pare({ texto: 'Apagar a leitura de bioimpedância de ' + fmtDate(t) + ' tira os cinco números dela do histórico.',
+    sim: 'Apagar a leitura de ' + fmtDate(t) });
+  if (!sim) return;
+  MARCAS_DA_BIO.forEach(function (k) {
+    if ((S.body[k] || []).some(function (x) { return x.t === t; })) {
+      lapide(chaveDeMarca(k, { t: t }));
+      S.body[k] = S.body[k].filter(function (x) { return x.t !== t; });
+    }
+  });
+  await save(); render();
+  toast('Leitura removida.');
+};
+
+// ---------- o PAINEL da tela Corpo (docs/corpo/02, §2.2) ----------
+CTX.painelDoCorpo = function () {
+  const agora = Date.now();
+  const pw = pesoDaSemana(S.body.peso, agora);
+  const ult = (S.body.peso || [])[(S.body.peso || []).length - 1];
+  const medidas = medidasDeMedir().filter(function (m) { return (S.body[m.k] || []).length; }).map(function (m) {
+    const s = S.body[m.k];
+    const u = s[s.length - 1], a = s[s.length - 2];
+    return { k: m.k, n: m.n.charAt(0).toUpperCase() + m.n.slice(1), valor: comUnidade(u.v, m.u),
+      variacao: a ? fmtSig(Math.round((u.v - a.v) * 10) / 10) : '', desde: a ? 'desde ' + fmtDate(a.t) : 'primeira medida',
+      serie: s.slice(-8).map(function (x) { return x.v; }) };
+  });
+  const ultMed = medidasDeMedir().map(function (m) { const s = S.body[m.k] || []; return s.length ? s[s.length - 1].t : 0; })
+    .reduce(function (a, b) { return Math.max(a, b); }, 0);
+  const bioT = MARCAS_DA_BIO.map(function (k) { const s = S.body[k] || []; return s.length ? s[s.length - 1].t : 0; })
+    .reduce(function (a, b) { return Math.max(a, b); }, 0);
+  const daBio = function (k) { const x = (S.body[k] || []).filter(function (y) { return y.t === bioT; })[0]; return x ? x.v : null; };
+  return {
+    peso: {
+      media: pw.media == null ? '—' : fmtDec(pw.media),
+      parcial: pw.n ? 'parcial · ' + pw.n + (pw.n === 1 ? ' pesagem' : ' pesagens') : 'nenhuma pesagem nesta semana',
+      diferenca: pw.diferenca == null ? null : fmtSig2(pw.diferenca) + ' kg em relação à semana de ' + fmtDate(pw.anterior.w),
+      anterior: pw.media == null && pw.anterior ? 'semana de ' + fmtDate(pw.anterior.w) + ': ' + fmtDec(pw.anterior.media) + ' kg' : null,
+      hoje: ult ? (sameDay(ult.t, agora) ? 'hoje: ' : 'última: ') + fmtDec(ult.v) + ' kg' + (sameDay(ult.t, agora) ? '' : ' · ' + rotuloDoDia(ult.t)) : null,
+      serie: serieSemanal(S.body.peso, 14)
+    },
+    medidas: medidas,
+    ultimaMedida: ultMed ? 'última: ' + fmtDate(ultMed) : 'nenhuma ainda',
+    bio: bioT ? {
+      quando: fmtDate(bioT) + ' · uma vez por mês',
+      celulas: [
+        { k: 'g', rotulo: 'gordura', valor: daBio('bioGorduraPct') == null ? '—' : fmtDec(daBio('bioGorduraPct')) + ' %' },
+        { k: 'm', rotulo: 'músculo', valor: daBio('bioMusculo') == null ? '—' : fmtDec(daBio('bioMusculo')) + ' kg' },
+        { k: 'mg', rotulo: 'massa de gordura', valor: daBio('bioGordura') == null ? '—' : fmtDec(daBio('bioGordura')) + ' kg' },
+        { k: 'a', rotulo: 'água', valor: daBio('bioAgua') == null ? '—' : fmtDec(daBio('bioAgua')) + ' L' }
+      ]
+    } : null
+  };
+};
 CTX.apagaMedida = function (k, t) { delBody(k, t); };
 CTX.apagaCardio = function (t) { delCardio(t); };
 CTX.corrigeCardio = function (t, campo, valor) { return corrigeCardio(t, campo, valor); };
@@ -11235,6 +11534,11 @@ CTX.abreProtocolo = function () {
 };
 
 CTX.fechaProtocolo = function () { view.protocolo = null; render(); saiDoDestino('protocolo'); };
+/** Do fim da sessão de fotos direto para as medidas: a sessão sai, as medidas entram. */
+CTX.medirDepoisDasFotos = function () {
+  view.protocolo = null; saiDoDestinoNoDesenho('protocolo');
+  CTX.abreMedidas();
+};
 // O toque em começar é também o que libera o som (a D, estado 1): no Safari do
 // iOS, áudio só existe dentro de um toque (F58).
 CTX.comecaSessaoDeFotos = function () { preparaAudio(); view.protocolo.montagem = false; render(); rola(0); };
@@ -11504,7 +11808,9 @@ function fimDaSessaoDeFotos(ses) {
       Math.round((instanteDaData(longo.ate.d) - instanteDaData(longo.de.d)) / 86400000) + ' dias, o par longo' : null,
     pergunta: aval ? 'Responder a pergunta do nutricionista · par de ' +
       Math.round((aval.ate - aval.de) / 86400000) + ' dias' : null,
-    proxima: 'A próxima sessão cai em ' + DIAS_CURTOS[dp.getDay()] + ' ' + fmtDate(prox) + '. Nada aqui vence.'
+    proxima: 'A próxima sessão cai em ' + DIAS_CURTOS[dp.getDay()] + ' ' + fmtDate(prox) + '. Nada aqui vence.',
+    // as medidas são feitas na mesma noite das fotos (dono, 06/11/2026)
+    medir: 'Medir fita agora'
   };
 }
 
@@ -11628,7 +11934,11 @@ CTX.evolucao = function () {
     frase: duasAbaixo.length === 2 && duasAbaixo.every(function (x) { return x.kg < 0.10; })
       ? 'Duas taxas seguidas abaixo de 0,10 é exatamente o que a regra do nutricionista lê. O que ela decide está em Semana.'
       : 'O que a regra do nutricionista decide com estas taxas está em Semana.',
-    podeComparar: posesDo(S.protocolo.poses).some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; })
+    podeComparar: posesDo(S.protocolo.poses).some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; }),
+    // as pesagens, com a porta de apagar: a tela Corpo mostra só o estado
+    pesagens: (S.body.peso || []).slice().sort(function (a, b) { return b.t - a.t; }).slice(0, 60).map(function (x) {
+      return { t: x.t, data: fmtDate(x.t), hora: horaHHMM(x.t), valor: fmtDec(x.v) + ' kg' };
+    })
   };
 };
 

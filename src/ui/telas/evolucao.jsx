@@ -115,6 +115,20 @@ export function Evolucao({ ctx }) {
                 onClick={() => { ctx.fechaEvolucao(); ctx.vaiPara('semana'); }}>Ir para Semana</button>
       </Secao>
 
+      <Secao rotulo="As pesagens">
+        <button class="ins-btn-secondary" data-a="evolucao-registra" onClick={ctx.abreRegistroDePeso}>Registrar peso</button>
+        {ev.pesagens.length === 0 && <Vazio>Nenhuma pesagem ainda.</Vazio>}
+        <div class="dd-medidas">
+          {ev.pesagens.map(x => (
+            <div class="crow" key={x.t}>
+              <span class="crow-d ins-label">{x.data} · {x.hora}</span>
+              <span class="crow-m ins-data">{x.valor}</span>
+              <button class="crow-x" onClick={() => ctx.apagaMedida('peso', x.t)}>Remover</button>
+            </div>
+          ))}
+        </div>
+      </Secao>
+
       {ev.podeComparar && (
         <Secao rotulo="as fotos">
           <button class="ins-btn-secondary" data-a="evolucao-comparar" onClick={ctx.abreComparar}>Comparar fotos</button>

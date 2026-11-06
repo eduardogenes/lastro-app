@@ -41,7 +41,7 @@ Lastro/
 │   ├── ajustes.md
 │   └── alimentos.csv
 ├── corpo/
-│   ├── medidas.csv
+│   ├── medidas.csv             peso, bioimpedância, fita (cm) e dobras com adipômetro (mm)
 │   ├── fotos.md                hora de cada foto e leituras de gordura visual
 │   └── fotos/AAAA-MM-DD/       uma foto por pose
 └── bruto/estado.json           o estado inteiro, sem tratamento

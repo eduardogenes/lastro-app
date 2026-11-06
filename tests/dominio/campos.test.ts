@@ -153,8 +153,8 @@ const TEXTO: Record<string, string> = {
     'nome do treino avulso — §6.1 "do sistema; é texto"',
   'src/ui/telas/protocolo.jsx · pr-obs':
     'nota da sessão de fotos — §6.1 "nota da sessão: do sistema; é texto"',
-  'src/ui/telas/corpo.jsx · onde-':
-    'como ele mediu, nas medidas com fita — §6.1 "próprio para o número, do sistema para o texto"',
+  'src/ui/telas/medidas.jsx · onde-':
+    'o ponto onde mediu, nas medidas com fita e dobras — §6.1 "próprio para o número, do sistema para o texto"',
   'src/ui/telas/prescricao.jsx · pr-motivo':
     'motivo da mudança do programa — §6.1 "do sistema", e a frente 1 escreveu por quê: "porque é texto e ele está sentado"'
 };
@@ -176,7 +176,10 @@ const NUMERO: Record<string, 'decimal' | 'numeric'> = {
   'src/ui/telas/historico.jsx · ed*_0': 'decimal',    // correção da carga
   'src/ui/telas/historico.jsx · ed*_1': 'numeric',    // correção das reps
   'src/ui/telas/retroativo.jsx · ahora': 'numeric',   // §6.1 diz o modo com letra: "do sistema, inputmode=numeric"
-  'src/ui/telas/corpo.jsx · bio-': 'decimal'          // os cinco da bioimpedância, um nó
+  'src/ui/folhas/bio.jsx · bio-': 'decimal',         // os cinco da bioimpedância, um nó
+  // as leituras de fita e dobra: um formulário de até 9 campos, com o painel
+  // numérico do sistema e o "seguinte" entre eles (docs/corpo/02, §2.4)
+  'src/ui/telas/medidas.jsx · med-': 'decimal'
 };
 
 const nome = (c: Campo) => c.arq + ' · ' + c.chave;

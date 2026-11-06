@@ -120,6 +120,9 @@ export function Protocolo({ ctx }) {
               {d.fim.pergunta && <button class="ins-btn-secondary" data-a="fim-pergunta" onClick={() => { ctx.fechaProtocolo(); ctx.abreAvaliacao(); }}>{d.fim.pergunta}</button>}
             </div>
           )}
+          {d.fim.medir && (
+            <button class="ins-btn-primary" data-a="fim-medir" onClick={ctx.medirDepoisDasFotos}>{d.fim.medir}</button>
+          )}
           <p class="ins-body-sm ins-t3">{d.fim.proxima}</p>
         </section>
       )}
