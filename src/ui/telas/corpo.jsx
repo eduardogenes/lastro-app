@@ -250,7 +250,7 @@ export function Corpo({ ctx }) {
   // ficou às 12:00 e foi às 6h).
   const [hora, setHora] = useState(null);
   const c = ctx.corpo();
-  const bio = ctx.bioimpedancia();
+  const bio = ctx.bioimpedancia(dia);
   const vazio = ctx.corpoVazio();
 
   return (

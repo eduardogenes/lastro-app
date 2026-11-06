@@ -9344,10 +9344,21 @@ const CAMPO_DA_BIO = {
   bioAgua:       { rotulo: 'Água corporal total', un: 'litros', dica: 'pode ficar vazio' }
 };
 
-CTX.bioimpedancia = function () {
+/**
+ * @param {string} [dia] 'AAAA-MM-DD' escolhido na tela. Se aquele dia já tem
+ *   leitura, os campos trazem a DELE — é corrigir aquele dia (a hora de 15/09,
+ *   por exemplo), e partir da última leitura faria gravar os números de outro
+ *   dia por cima. Sem leitura no dia, a última, como antes.
+ */
+CTX.bioimpedancia = function (dia) {
+  const doDia = function (serie) {
+    if (!dia) return null;
+    return serie.filter(function (x) { return hojeISO(x.t) === dia; }).slice(-1)[0] || null;
+  };
+  const temNoDia = !!dia && MARCAS_DA_BIO.some(function (k) { return !!doDia(S.body[k] || []); });
   const campos = MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).map(function (m) {
     const serie = S.body[m.k] || [];
-    const ultima = serie[serie.length - 1] || null;
+    const ultima = temNoDia ? doDia(serie) : (serie[serie.length - 1] || null);
     const c = CAMPO_DA_BIO[m.k] || { rotulo: m.n, un: m.u };
     return {
       k: m.k, n: m.n, u: m.u, obrigatorio: !!m.obrigatorio,
@@ -9374,7 +9385,10 @@ CTX.bioimpedancia = function () {
     // Na primeira vez, de onde saem os números; nas seguintes, que os do mês
     // passado já estão no lugar — composição corporal muda devagar, e redigitar
     // tudo todo mês é o fluxo que ele recusa.
-    instrucao: noLugar
+    noDia: temNoDia ? fmtDate(Date.parse(dia + 'T12:00:00')) : null,
+    instrucao: temNoDia
+      ? 'Os números da leitura de ' + fmtDate(Date.parse(dia + 'T12:00:00')) + ' estão no lugar. Guardar substitui essa leitura.'
+      : noLugar
       ? 'Os ' + POR_EXTENSO[noLugar] + ' números do mês passado estão no lugar. Toque só no que mudou.'
       : 'Os cinco números saem da balança de bioimpedância, não da balança de casa.',
     maxISO: hojeISO()

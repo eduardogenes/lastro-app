@@ -1709,3 +1709,28 @@ test('sem pesagem nenhuma, quem fala é o vazio, e não a cobrança da semana', 
   assert.strictEqual(a.$('.co-semana'), null);
   a.fechar();
 });
+
+test('trocar a data da bioimpedância traz os números daquele dia, e guardar corrige só ele', async () => {
+  const t15 = new Date(2026, 8, 15, 12).getTime(), t0 = Date.now() - 3600000;
+  const L = function (t, v) { return [{ t: t, v: v }]; };
+  const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [],
+    bioPeso: L(t15, 75).concat(L(t0, 76)), bioMusculo: L(t15, 38.1).concat(L(t0, 38.5)),
+    bioGordura: L(t15, 8.3).concat(L(t0, 8.6)), bioGorduraPct: L(t15, 11).concat(L(t0, 11.3)),
+    bioAgua: L(t15, 49.2).concat(L(t0, 49.6)) } } });
+  await a.esperar();
+  assert.strictEqual(a.doc.getElementById('bio-bioPeso').value, '76,0', 'hoje, a última');
+  a.digitar('bio-dia', '2026-09-15');
+  await a.esperar();
+  assert.strictEqual(a.doc.getElementById('bio-bioPeso').value, '75,0', 'os de 15/09, não os de hoje');
+  assert.strictEqual(a.doc.getElementById('bio-bioMusculo').value, '38,1');
+  assert.ok(/leitura de 15\/09 estão no lugar/.test(a.texto('.co-bio-i')), a.texto('.co-bio-i'));
+  a.digitar('bio-hora', '06:00');
+  await a.esperar();
+  a.clicar('[data-a="registra-bio"]');
+  await a.esperar(60);
+  const p = a.S().body.bioPeso;
+  assert.strictEqual(p.length, 2, 'substituiu a de 15/09, não criou outra');
+  assert.deepStrictEqual(p.map(function (x) { return [new Date(x.t).getDate(), new Date(x.t).getHours(), x.v]; })[0], [15, 6, 75]);
+  assert.strictEqual(p[1].v, 76, 'a de hoje ficou como estava');
+  a.fechar();
+});
