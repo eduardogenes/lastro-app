@@ -2569,3 +2569,42 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 .md-mudou { color: var(--ins-atencao-tinta); font-weight: 600; }
 .co-mini { fill: none; stroke: var(--ins-acento); stroke-width: 1.5; }
 .co-mini-p { fill: var(--ins-acento); }
+
+/* ---------- O AVISO COM AÇÃO ("Desfazer"), 13/11/2026 ---------- */
+#toast > .aviso.com-acao {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--ins-4);
+  text-align: left; padding-top: var(--ins-3); padding-bottom: var(--ins-3);
+}
+.aviso-acao {
+  flex: 0 0 auto; min-height: var(--ins-tap-dense); padding: 0 var(--ins-3);
+  background: none; border: 0; color: var(--ins-acento-tinta);
+  font: 600 13px/1 var(--ins-fonte); cursor: pointer;
+}
+
+/* ---------- A GALERIA e a LIXEIRA das fotos do corpo ---------- */
+.tc-acao {
+  min-height: var(--ins-tap); padding: 0 0 0 var(--ins-4);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
+  color: var(--ins-acento-tinta); background: none; border: 0; cursor: pointer;
+}
+.ga-grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--ins-3); }
+.ga-cel { display: flex; flex-direction: column; gap: var(--ins-1); background: none; border: 0; padding: 0; text-align: left; cursor: pointer; color: inherit; font: inherit; }
+.ga-img {
+  display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover;
+  background: var(--ins-superficie-2); border-radius: var(--ins-raio-2);
+}
+.ga-vazio { display: flex; align-items: center; justify-content: center; padding: var(--ins-2); text-align: center; font-size: 11px; color: var(--ins-tinta-3); }
+.ga-nome { font-size: 12px; line-height: 1.3; color: var(--ins-tinta-2); }
+.ga-cheia .ga-img { object-fit: contain; aspect-ratio: 3 / 4; }
+.ga-acoes { display: flex; gap: var(--ins-3); margin: var(--ins-5) 0 var(--ins-3); }
+.ga-acoes button { flex: 1 1 0; }
+.ga-apaga { color: var(--ins-pare-tinta); }
+.ga-lixo { display: flex; flex-direction: column; margin-top: var(--ins-4); }
+.ga-lixo-i { display: flex; gap: var(--ins-4); padding: var(--ins-4) 0; border-bottom: 1px solid var(--ins-fio); }
+.ga-lixo-i:last-child { border-bottom: 0; }
+.ga-lixo-m { flex: 0 0 84px; }
+.ga-lixo-t { display: flex; flex-direction: column; gap: var(--ins-1); min-width: 0; flex: 1 1 auto; }
+.ga-lixo-b { display: flex; align-items: center; gap: var(--ins-3); margin-top: var(--ins-2); flex-wrap: wrap; }
+.ga-esvazia { width: 100%; margin-top: var(--ins-5); color: var(--ins-pare-tinta); }
+.tc-corpo.ga { min-height: calc(100vh - 140px); min-height: calc(100svh - 140px); }
+.ga-lixo-b .ins-btn-secondary { width: auto; flex: 0 0 auto; padding-left: var(--ins-6); padding-right: var(--ins-6); }

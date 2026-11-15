@@ -340,6 +340,12 @@ export interface FotoRef {
   v: number;
   /** 'webp' ou 'jpeg' — o Safari antigo não codifica webp no canvas */
   ext: string;
+  /**
+   * Quando a foto voltou da lixeira (só nas fotos do corpo). A lápide da foto
+   * apagada é mais nova que `v`; a fusão compara com o maior dos dois
+   * (`vivaDesde`, dominio/lixeira.ts).
+   */
+  r?: number;
   /** o enquadramento ajustado, quando existe. Ausente = "a foto como saiu". */
   enq?: Enquadramento;
   /**
@@ -460,6 +466,25 @@ export interface SessaoFoto {
   obs?: string;
   /** quando foi alterada pela última vez; a fusão a usa para decidir */
   m?: number;
+}
+
+/** Uma foto do corpo na lixeira. */
+export interface ItemDaLixeira {
+  /** a sessão de onde ela saiu ('AAAA-MM-DD') */
+  d: string;
+  pose: PoseId;
+  /** a referência como estava na sessão: versão, formato, original, ajuste */
+  ref: FotoRef;
+  /** quando foi para a lixeira */
+  em: number;
+  /** apagada pelo dedo, ou substituída por outra foto da mesma pose */
+  porque: 'apagada' | 'refeita';
+  /**
+   * Os bytes não couberam no endereço da lixeira quando ela foi apagada (sem
+   * cópia no aparelho e sem rede): eles continuam no endereço da foto viva, e
+   * restaurar busca lá. Raro.
+   */
+  noLugar?: 1;
 }
 
 /** Uma marca corporal. */
@@ -833,6 +858,12 @@ export interface Estado {
     sessoes: SessaoFoto[];
   };
   descanso: Record<string, number>;
+  /**
+   * A lixeira das fotos do corpo: o que foi apagado ou substituído, por 30
+   * dias (dominio/lixeira.ts). Coleção com chave natural e lápide, como as
+   * sessões: restaurar ou apagar de vez num aparelho vale no outro.
+   */
+  lixeira: ItemDaLixeira[];
   /**
    * Lápides: chave do registro → quando foi apagado.
    *

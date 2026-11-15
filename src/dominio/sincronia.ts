@@ -29,10 +29,11 @@
 
 import type {
   Cardio, Corpo, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId,
-  PromoPendente, QualMarca, Sessao, SessaoFoto
+  ItemDaLixeira, PromoPendente, QualMarca, Sessao, SessaoFoto
 } from './tipos';
 import type { ComoFoiARefeicao, DiaComida, DiaComidaHist } from './nutricao/tipos';
 import { MARCAS_DO_CORPO } from './corpo';
+import { chaveDaLixeira, vivaDesde } from './lixeira';
 import type { LeituraDeGordura } from './corpo';
 
 /**
@@ -229,6 +230,9 @@ function chavesDoEstado(S: Partial<Estado> | null | undefined): Record<string, 1
     if (f && typeof f.v === 'number') k[chaveDeFoto(id)] = 1;
   });
 
+  lista<ItemDaLixeira>(S.lixeira).forEach(function (x) {
+    if (x && x.ref && typeof x.ref.v === 'number') k[chaveDaLixeira(x)] = 1;
+  });
   lista<SessaoFoto>(S.protocolo && S.protocolo.sessoes).forEach(function (s) {
     if (!s || !s.d) return;
     k[chaveDeSessaoFoto(s.d)] = 1;
@@ -372,6 +376,8 @@ function uneSessoesDeFoto(
         else ajusteRemoto[k] = carimboDoAjuste(ref);
         const atual = alvo.fotos[pose];
         if (!atual || ref.v > atual.v) { alvo.fotos[pose] = ref; return; }
+        // a mesma foto, restaurada da lixeira de um lado: a restauração vence
+        if (ref.v === atual.v && (ref.r || 0) > (atual.r || 0)) { alvo.fotos[pose] = ref; return; }
         // mesma foto dos dois lados: desempata o ajuste
         if (ref.v === atual.v && carimboDoAjuste(ref) > carimboDoAjuste(atual)) {
           alvo.fotos[pose] = ref;
@@ -395,7 +401,9 @@ function uneSessoesDeFoto(
     }
     Object.keys(s.fotos).forEach(function (pose) {
       const morta = mortos[chaveDeFotoDoCorpo(d, pose)];
-      if (morta != null && s.fotos[pose].v <= morta) { delete s.fotos[pose]; apagados++; return; }
+      // `vivaDesde`: a foto restaurada da lixeira tem a versão antiga, e o
+      // carimbo de restauração é o que a põe depois da lápide
+      if (morta != null && vivaDesde(s.fotos[pose]) <= morta) { delete s.fotos[pose]; apagados++; return; }
       const k = d + ':' + pose;
       if (!fotosDaqui[k]) { fotosVindas++; return; }
       // a foto já era nossa, mas o ajuste que venceu é mais novo que o do outro
@@ -875,6 +883,16 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   );
   const poses = valorDoDocumento(remotoVence.poses ? remoto : local, 'poses') as PoseId[] | null;
   base.protocolo = { poses: poses || null, sessoes: cf.itens.slice(-TETO.protocolo) };
+
+  // ---- a lixeira das fotos do corpo ----
+  // Coleção com chave natural (sessão, pose e versão) e lápide: restaurar ou
+  // apagar de vez num aparelho tira o item do outro.
+  const lx = uneLista<ItemDaLixeira>(
+    local.lixeira || [], remoto.lixeira || [], chaveDaLixeira,
+    function (x) { return typeof x.em === 'number' ? x.em : 0; }, mortos
+  );
+  base.lixeira = lx.itens.sort(function (a, b) { return a.em - b.em; }).slice(-600);
+  resumo.apagados += lx.apagados;
   resumo.fotosCorpo = cf.fotosVindas;
   resumo.ajustesCorpo = cf.ajustesDaqui;
   resumo.apagados += cf.apagados;

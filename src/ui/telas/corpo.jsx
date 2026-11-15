@@ -62,6 +62,9 @@ function Fotos({ f, ctx }) {
           {f.podeComparar && (
             <button class="ins-btn-secondary" onClick={ctx.abreComparar}>Comparar</button>
           )}
+          {f.tem && (
+            <button class="ins-btn-secondary" data-a="abre-galeria" onClick={ctx.abreGaleria}>Galeria</button>
+          )}
         </div>
       </div>
 

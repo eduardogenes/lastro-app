@@ -830,6 +830,8 @@ function fotosDoCorpo(b: Base, ctx: Contexto): string {
   ordem.forEach(function (p) { L.push('| ' + [cel(p.n), p.bloco, p.giro + '°', cel(p.revela)].join(' | ') + ' |'); });
   L.push('');
 
+  const lixo = lista<{ d: string }>((S as { lixeira?: unknown }).lixeira).filter(function (x) { return x && DATA_ISO.test(String(x.d)); });
+  if (lixo.length) L.push('Na lixeira do app: ' + lixo.length + (lixo.length === 1 ? ' foto apagada ou substituída' : ' fotos apagadas ou substituídas') + '. Elas não estão nesta pasta, e saem de vez 30 dias depois de apagadas.', '');
   if (!sessoes.length) L.push('Nenhuma sessão de fotos ainda.', '');
   sessoes.forEach(function (s) {
     const fotos = obj<FotoRef>(s.fotos);

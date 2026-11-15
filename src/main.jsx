@@ -37,6 +37,8 @@ import { FolhaPesoRapido } from './ui/folhas/pesorapido.jsx';
 import { FolhaPeso } from './ui/folhas/peso.jsx';
 import { FolhaBio } from './ui/folhas/bio.jsx';
 import { Medidas } from './ui/telas/medidas.jsx';
+import { Galeria } from './ui/telas/galeria.jsx';
+import { DIAS_NA_LIXEIRA, chaveDaLixeira, diasRestantes, nomeNaLixeira, ordemDaLixeira, pastaDaLixeira, vencidos as vencidosDaLixeira } from './dominio/lixeira';
 import { DetalheDaMedida } from './ui/telas/medida.jsx';
 import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { FolhaDecidir } from './ui/folhas/decidir.jsx';
@@ -452,6 +454,9 @@ function normalizaEstado() {
   if (!Array.isArray(S.protocolo.sessoes)) S.protocolo.sessoes = [];
   if (!Array.isArray(S.protocolo.poses) || !S.protocolo.poses.length) S.protocolo.poses = null;
   S.protocolo.sessoes.forEach(function (x) { if (!x.fotos || typeof x.fotos !== 'object') x.fotos = {}; });
+  // a lixeira das fotos do corpo (13/11/2026): campo novo e opcional, sem migração
+  if (!Array.isArray(S.lixeira)) S.lixeira = [];
+  S.lixeira = S.lixeira.filter(function (x) { return x && typeof x.d === 'string' && x.pose && x.ref && typeof x.ref.v === 'number' && typeof x.em === 'number'; });
   // Coleção desde o plano 10. O OBJETO antigo fica INTACTO aqui para
   // `migraPlano10` convertê-lo: `normalizaEstado` roda ANTES das migrações, nos
   // dois caminhos, e tratar a pergunta guardada como "forma inválida" a
@@ -525,6 +530,8 @@ async function load() {
 
   normalizaEstado();
   montaCatalogo();
+  // a lixeira das fotos esvazia o que passou de 30 dias, também sem rede
+  setTimeout(function () { if (!desligado) purgaLixeira().catch(function () {}); }, 4000);
 
   // as migrações rodam em cadeia: quem está no plano 1 passa pelas duas
   const arquivados = migraPlano(S);
@@ -1562,6 +1569,11 @@ async function reconciliaFotos() {
  */
 async function reconciliaCorpo() {
   if (!NUVEM.sessao() || !S.protocolo) return;
+  // A LIXEIRA PRIMEIRO: a foto apagada só sai do endereço dela no bucket depois
+  // que a cópia da lixeira subiu. Na ordem inversa, um aparelho que caísse no
+  // meio a perderia.
+  if (!(await sobeLixeira())) return;
+  await purgaLixeira();
   if (!(await apagaPendentesDaNuvem())) return;
   const sessoes = S.protocolo.sessoes || [];
 
@@ -2772,7 +2784,7 @@ const CTX = {
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
-              view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.diaAberto || view.ajuste || view.camera ||
+              view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.galeria || view.diaAberto || view.ajuste || view.camera ||
               view.ajustes || view.modoSessao || view.revisao);
   },
 
@@ -3089,6 +3101,7 @@ function telaCheia() {
   if (view.comparar) return <Comparar ctx={CTX} />;
   // Registrar medidas abre de dentro do detalhe de uma medida ("Nova medida"),
   // e fica por cima dele.
+  if (view.galeria) return <Galeria ctx={CTX} />;
   if (view.medidas) return <Medidas ctx={CTX} />;
   if (view.medida) return <DetalheDaMedida ctx={CTX} />;
   // Depois de comparar: a comparação abre DE DENTRO da Evolução, e fica por cima.
@@ -5208,6 +5221,7 @@ async function importText(txt) {
         aulas: Array.isArray(d.aulas) ? d.aulas : [],
         comidaHist: Array.isArray(d.comidaHist) ? d.comidaHist : [],
         protocolo: (d.protocolo && typeof d.protocolo === 'object') ? d.protocolo : null,
+        lixeira: Array.isArray(d.lixeira) ? d.lixeira : [],
         quadro: (d.quadro && typeof d.quadro === 'object') ? d.quadro : null,
         lousa: (d.lousa && typeof d.lousa === 'object') ? d.lousa : null,
         progTreinador: (d.progTreinador && typeof d.progTreinador === 'object') ? d.progTreinador : null };
@@ -7219,6 +7233,12 @@ async function wipe() {
       if (ref && ref.v && ref.orig) apagaOriginalDaNuvemDepois(ses.d, pose, ref.v, ref.orig.ext);
     });
   });
+  (antes.lixeira || []).forEach(function (x) {
+    if (!x || !x.ref) return;
+    CORPO.esquece(pastaDaLixeira(x.d), nomeNaLixeira(x.pose, x.ref.v), x.ref.ext).catch(function () {});
+    apagaDaNuvemDepois(pastaDaLixeira(x.d), nomeNaLixeira(x.pose, x.ref.v), x.ref.ext);
+    if (x.ref.orig) apagaOriginalDaNuvemDepois(x.d, x.pose, x.ref.v, x.ref.orig.ext);
+  });
   if (NUVEM.sessao()) apagaPendentesDaNuvem();
 
   view.day='A'; view.aba='agora'; view.open=null; view.hist=null; view.json=null; view.paste=false;
@@ -7777,7 +7797,7 @@ const SUPERFICIE = {
     modoEdicao, modoPrograma, modsDoDia, montaCatalogo, moverDia, moverEx,
     moverProg, mudaMes, mudaSeries, nextDay, nomeEx, openHist, ordemDePoses, pausarSessao,
     payload, pendencias, pintaTimer, planoDeComida, poeMedida, progDesc, progRemove,
-    progSeries, progSetTroca, programaDia, pularEx, reconciliaCorpo, reconciliaFotos,
+    progSeries, progSetTroca, programaDia, pularEx, reconciliaCorpo, reconciliaFotos, purgaLixeira,
     removerEx, render, repetirUltimaAula, restaurarDia, restaurarTudo, retomarSessao,
     retro, rot, salvarAulaComoModelo, salvarEdicao, save, seriesDe, seriesFeitasHoje,
     seriesPorMusculo, sessoesDeTrabalho, setAlt, setCarga, setDeload, setsFor, showJSON,
@@ -8277,6 +8297,9 @@ const FECHA_CAMADA = {
   evolucao:  function () { CTX.fechaEvolucao(); },
   medida:    function () { CTX.fechaMedida(); },
   medidas:   function () { CTX.fechaMedidas(); },
+  galeria:   function () { CTX.fechaGaleria(); },
+  galeriaFoto: function () { CTX.fechaFotoDaGaleria(); },
+  lixeira:   function () { CTX.fechaLixeira(); },
   dia:       function () { CTX.fechaDia(); },
   prog:      function () { fecharPrograma(); },
   retro:     function () { fecharRetro(); },
@@ -11600,6 +11623,11 @@ async function guardaFotoDaPose(d, pose, reduzida) {
   // milissegundo depois do instante da lápide da versão anterior (abaixo): no
   // mesmo milissegundo, o empate é da lápide, e a foto nova sumiria no outro
   // aparelho.
+  // A FOTO QUE ESTA SUBSTITUI VAI PARA A LIXEIRA (13/11/2026), e antes de os
+  // bytes novos ocuparem o lugar dela: o endereço da foto viva não tem versão.
+  const sesAntes = sessaoDe(S.protocolo.sessoes, d);
+  const anterior = sesAntes && sesAntes.fotos && sesAntes.fotos[pose];
+  if (anterior && anterior.v) await paraALixeira(d, pose, anterior, 'refeita');
   const morte = Date.now();
   const v = morte + 1;
   try { await CORPO.guarda(d, pose, blob, ext, v); }
@@ -11620,12 +11648,10 @@ async function guardaFotoDaPose(d, pose, reduzida) {
   if (antiga) {
     lapide(chaveDeFotoDoCorpo(d, pose), morte);
     // no outro formato, a anterior ocuparia outro lugar no bucket para sempre
+    // (a cópia dela está na lixeira, e sobe antes de a fila de apagar andar)
     if (antiga.ext && antiga.ext !== ext) apagaDaNuvemDepois(d, pose, antiga.ext);
-    // o original da anterior tem nome próprio: sai daqui e do bucket
-    if (antiga.orig && antiga.v) {
-      CORPO.esqueceOriginal(d, pose, antiga.orig.ext, antiga.v).catch(function () {});
-      apagaOriginalDaNuvemDepois(d, pose, antiga.v, antiga.orig.ext);
-    }
+    // o original da anterior tem nome próprio, com a versão: fica, junto com
+    // ela na lixeira, e sai quando ela sair de vez
   }
   ses.fotos = Object.assign({}, ses.fotos);
   ses.fotos[pose] = { v: v, ext: ext };
@@ -11720,41 +11746,299 @@ CTX.tiraFotoDoCorpo = function (el) { tiraFotoDoCorpo(el); };
 async function apagaFotoDoCorpo(d, pose) {
   const antes = sessaoDe(S.protocolo.sessoes, d);
   if (!antes || !antes.fotos[pose]) return false;
-  // Confirma como toda outra ação destrutiva do app. E o aviso é honesto: a
-  // lápide viaja na sincronização, então isto não apaga só daqui.
-  const p = poseDe(pose);
-  // PARE (§3.3): a lápide viaja, e a comparação perde o par.
-  const qual = p ? p.n.toLowerCase() : pose;
-  if (!(await pare({ texto: 'Apagar a foto de ' + qual + ' de ' + fmtDate(Date.parse(d + 'T12:00:00')) + ' tira ela deste aparelho e dos outros na próxima sincronização, e a comparação perde esse par. Isso não tem volta.',
-                     sim: 'Apagar a foto de ' + qual }))) return false;
-  // Relida DEPOIS da resposta: o painel espera o dedo, e uma sincronização
-  // nesse meio-tempo pode ter trocado o estado inteiro — apagar no objeto
-  // velho não apagaria nada.
+  const ref = antes.fotos[pose];
+  // Não pergunta antes (13/11/2026): apagar põe a foto na lixeira, por 30 dias,
+  // e o aviso traz "Desfazer". O que pede confirmação é apagar DE VEZ.
+  const item = await paraALixeira(d, pose, ref, 'apagada');
+  // relida depois do await: a cópia leva tempo, e uma sincronização no meio
+  // pode ter trocado o estado inteiro
   const ses = sessaoDe(S.protocolo.sessoes, d);
-  if (!ses || !ses.fotos[pose]) return false;
-  const ext = ses.fotos[pose].ext;
-  const orig = ses.fotos[pose].orig, versao = ses.fotos[pose].v;
+  if (!ses || !ses.fotos[pose] || ses.fotos[pose].v !== ref.v) return false;
   lapide(chaveDeFotoDoCorpo(d, pose));
   ses.fotos = Object.assign({}, ses.fotos);
   delete ses.fotos[pose];
   ses.m = Date.now();
   CORPO.solta(d, pose);
-  await CORPO.esquece(d, pose, ext);
-  // e sai do bucket também, na próxima reconciliação com rede
-  apagaDaNuvemDepois(d, pose, ext);
-  if (orig && versao) {
-    await CORPO.esqueceOriginal(d, pose, orig.ext, versao);
-    apagaOriginalDaNuvemDepois(d, pose, versao, orig.ext);
-  }
+  await CORPO.esquece(d, pose, ref.ext);
+  // o endereço da foto viva sai do bucket — depois de a cópia da lixeira subir
+  // (`reconciliaCorpo`). Se a cópia não coube (raro: sem os bytes aqui e sem
+  // rede), os bytes ficam no endereço dela, e é de lá que a restauração busca.
+  if (!item.noLugar) apagaDaNuvemDepois(d, pose, ref.ext);
   // sessão sem foto nenhuma não sobrevive à última: ela nasce na primeira
   if (!Object.keys(ses.fotos).length) {
     lapide(chaveDeSessaoFoto(d));
     S.protocolo.sessoes = S.protocolo.sessoes.filter(function (x) { return x.d !== d; });
   }
   await save(); render();
-  toast('Foto apagada.');
+  const k = chaveDaLixeira(item);
+  avisoComAcao('Foto na lixeira por ' + DIAS_NA_LIXEIRA + ' dias.', 'Desfazer', function () { restauraDaLixeira(k); });
   return true;
 }
+
+// ---------- a LIXEIRA das fotos do corpo (dominio/lixeira.ts) ----------
+function lixeiraDeFotos() { if (!Array.isArray(S.lixeira)) S.lixeira = []; return S.lixeira; }
+
+/** Copia os bytes da foto para o endereço da lixeira. `true` se ficaram aqui. */
+async function copiaParaLixeira(d, pose, ref) {
+  try {
+    let b = null;
+    const aqui = await CORPO.versaoAqui(d, pose, ref.ext);
+    if (aqui === ref.v || aqui === 'legado') b = await CORPO.le(d, pose, ref.ext);
+    if (!b && NUVEM.sessao()) {
+      const r = await NUVEM.baixaCorpo(d, pose, ref.ext);
+      if (r.ok && r.v) b = r.v;
+    }
+    if (!b) return false;
+    await CORPO.guarda(pastaDaLixeira(d), nomeNaLixeira(pose, ref.v), b, ref.ext, ref.v);
+    return true;
+  } catch (e) { return false; }
+}
+
+/** Põe a foto na lixeira (sem tirá-la da sessão: isso é de quem chama). */
+async function paraALixeira(d, pose, ref, porque) {
+  const copiou = await copiaParaLixeira(d, pose, ref);
+  const r = Object.assign({}, ref); delete r.r;
+  const item = { d: d, pose: pose, ref: r, em: Date.now(), porque: porque };
+  if (!copiou) item.noLugar = 1;
+  const k = chaveDaLixeira(item);
+  S.lixeira = lixeiraDeFotos().filter(function (x) { return chaveDaLixeira(x) !== k; }).concat([item]);
+  return item;
+}
+
+/** Os bytes de um item da lixeira, daqui ou do bucket. `null` sem eles. */
+async function bytesDaLixeira(x) {
+  const pd = pastaDaLixeira(x.d), pn = nomeNaLixeira(x.pose, x.ref.v);
+  let b = await CORPO.le(pd, pn, x.ref.ext);
+  if (!b && NUVEM.sessao()) { const r = await NUVEM.baixaCorpo(pd, pn, x.ref.ext); if (r.ok && r.v) b = r.v; }
+  if (!b && x.noLugar) {
+    const aqui = await CORPO.versaoAqui(x.d, x.pose, x.ref.ext);
+    if (aqui === x.ref.v || aqui === 'legado') b = await CORPO.le(x.d, x.pose, x.ref.ext);
+    if (!b && NUVEM.sessao()) { const r = await NUVEM.baixaCorpo(x.d, x.pose, x.ref.ext); if (r.ok && r.v) b = r.v; }
+  }
+  return b;
+}
+
+/**
+ * Devolve a foto à sessão dela. Se a pose já tem outra foto, a outra vai para
+ * a lixeira no lugar desta. A foto volta com a versão de sempre e o carimbo de
+ * restauração (`r`), que a põe depois da lápide de quando foi apagada.
+ */
+async function restauraDaLixeira(k) {
+  const x = lixeiraDeFotos().filter(function (y) { return chaveDaLixeira(y) === k; })[0];
+  if (!x) return false;
+  const b = await bytesDaLixeira(x);
+  if (!b) { toast('A foto está na nuvem, e este aparelho está sem conexão. Tente de novo com internet.'); return false; }
+  const agora = Date.now();
+  const ses0 = sessaoDe(S.protocolo.sessoes, x.d);
+  const atual = ses0 && ses0.fotos[x.pose];
+  if (atual && atual.v !== x.ref.v) await paraALixeira(x.d, x.pose, atual, 'refeita');
+  await CORPO.guarda(x.d, x.pose, b, x.ref.ext, x.ref.v);
+  const ses = sessaoFotoOuCria(x.d);
+  ses.fotos = Object.assign({}, ses.fotos);
+  ses.fotos[x.pose] = Object.assign({}, x.ref, { r: agora });
+  ses.m = agora;
+  // a foto volta a ser desta versão aqui, e o bucket precisa recebê-la de novo
+  delete sync.fotos['corpo:' + x.d + ':' + x.pose]; gravaSync();
+  lapide(k, agora);
+  S.lixeira = lixeiraDeFotos().filter(function (y) { return chaveDaLixeira(y) !== k; });
+  const pd = pastaDaLixeira(x.d), pn = nomeNaLixeira(x.pose, x.ref.v);
+  CORPO.solta(pd, pn);
+  CORPO.esquece(pd, pn, x.ref.ext).catch(function () {});
+  apagaDaNuvemDepois(pd, pn, x.ref.ext);
+  CORPO.solta(x.d, x.pose);
+  await CORPO.carrega(x.d, x.pose, ses.fotos[x.pose]);
+  await save(); render();
+  toast('Foto restaurada em ' + fmtDate(instanteDaData(x.d)) + '.');
+  return true;
+}
+
+/** Tira o item da lixeira e os bytes dele daqui e do bucket. Sem perguntar. */
+async function apagaDaLixeiraDeVez(x) {
+  const k = chaveDaLixeira(x);
+  lapide(k);
+  S.lixeira = lixeiraDeFotos().filter(function (y) { return chaveDaLixeira(y) !== k; });
+  const pd = pastaDaLixeira(x.d), pn = nomeNaLixeira(x.pose, x.ref.v);
+  CORPO.solta(pd, pn);
+  try { await CORPO.esquece(pd, pn, x.ref.ext); } catch (e) {}
+  apagaDaNuvemDepois(pd, pn, x.ref.ext);
+  // os bytes que ficaram no endereço da foto viva: a fila não apaga se uma
+  // foto nova ocupou o lugar no mesmo formato
+  if (x.noLugar) apagaDaNuvemDepois(x.d, x.pose, x.ref.ext);
+  if (x.ref.orig && x.ref.v) {
+    try { await CORPO.esqueceOriginal(x.d, x.pose, x.ref.orig.ext, x.ref.v); } catch (e) {}
+    apagaOriginalDaNuvemDepois(x.d, x.pose, x.ref.v, x.ref.orig.ext);
+  }
+}
+
+/** Depois de 30 dias, sozinha. Roda ao abrir o app e a cada reconciliação. */
+async function purgaLixeira() {
+  const v = vencidosDaLixeira(lixeiraDeFotos(), Date.now());
+  if (!v.length) return 0;
+  for (const x of v) await apagaDaLixeiraDeVez(x);
+  await save();
+  return v.length;
+}
+
+/** Os bytes da lixeira sobem para o endereço dela no bucket. `false` sem rede. */
+async function sobeLixeira() {
+  for (const x of lixeiraDeFotos().slice()) {
+    if (!x || x.noLugar || !x.ref) continue;
+    const k = 'lixo:' + x.d + ':' + x.pose + ':' + x.ref.v;
+    if (sync.fotos[k]) continue;
+    const pd = pastaDaLixeira(x.d), pn = nomeNaLixeira(x.pose, x.ref.v);
+    const b = await CORPO.le(pd, pn, x.ref.ext);
+    if (desligado) return false;
+    if (!b) continue;                  // foi para a lixeira no outro aparelho: sobe de lá
+    const r = await NUVEM.subirCorpo(pd, pn, b, x.ref.ext);
+    if (desligado) return false;
+    if (!r.ok) return false;
+    sync.fotos[k] = 1; gravaSync();
+  }
+  return true;
+}
+
+/** Os bytes da lixeira na memória, para a tela: daqui, ou do bucket. */
+async function garanteBytesDaLixeira() {
+  let mudou = false;
+  for (const x of lixeiraDeFotos().slice()) {
+    if (!x || !x.ref) continue;
+    const pd = pastaDaLixeira(x.d), pn = nomeNaLixeira(x.pose, x.ref.v);
+    const ref = { v: x.ref.v, ext: x.ref.ext };
+    if (CORPO.urlDaFoto(pd, pn, ref)) continue;
+    let tem = await CORPO.tem(pd, pn, ref.ext);
+    if (desligado) return;
+    if (!tem) {
+      const b = await bytesDaLixeira(x);
+      if (desligado) return;
+      if (b) { await CORPO.guarda(pd, pn, b, ref.ext, ref.v); tem = true; }
+    }
+    if (tem && await CORPO.carrega(pd, pn, ref)) mudou = true;
+    if (desligado) return;
+  }
+  if (mudou) render();
+}
+
+/**
+ * O aviso com uma AÇÃO ao lado ("Desfazer"). Fica mais tempo que o aviso
+ * comum: é para dar tempo de o dedo chegar.
+ */
+function avisoComAcao(msg, rotulo, fn) {
+  const regiao = document.getElementById('toast');
+  if (!regiao) return;
+  clearTimeout(avisoLeitura);
+  if (avisoSaindo) { clearTimeout(avisoSaindo); avisoSaindo = null; }
+  const no = document.createElement('div');
+  no.className = 'aviso com-acao';
+  const t = document.createElement('span');
+  t.textContent = msg;
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'aviso-acao'; b.textContent = rotulo;
+  b.setAttribute('data-a', 'aviso-acao');
+  b.addEventListener('click', function () {
+    clearTimeout(avisoLeitura); avisoLeitura = null;
+    regiao.textContent = '';
+    fn();
+  });
+  no.appendChild(t); no.appendChild(b);
+  regiao.textContent = '';
+  regiao.appendChild(no);
+  avisoLeitura = setTimeout(apagaAviso, Math.max(7000, tempoDeLeitura(msg)));
+}
+
+// ---------- a GALERIA das fotos do corpo ----------
+CTX.abreGaleria = function () {
+  view.galeria = { foto: null, lixeira: false };
+  entraNoDestino('galeria'); render(); rola(0);
+  garanteBytesDoCorpo(((S.protocolo && S.protocolo.sessoes) || []).map(function (x) { return x.d; }));
+};
+CTX.fechaGaleria = function () { view.galeria = null; render(); saiDoDestino('galeria'); };
+CTX.abreFotoDaGaleria = function (d, pose) {
+  if (!view.galeria) return;
+  view.galeria.foto = { d: d, pose: pose }; render(); rola(0);
+  garanteBytesDoCorpo([d]);
+};
+CTX.fechaFotoDaGaleria = function () { if (view.galeria) { view.galeria.foto = null; render(); } };
+CTX.abreLixeira = function () {
+  if (!view.galeria) { view.galeria = { foto: null, lixeira: false }; entraNoDestino('galeria'); }
+  view.galeria.lixeira = true; render(); rola(0);
+  garanteBytesDaLixeira();
+};
+CTX.fechaLixeira = function () { if (view.galeria) { view.galeria.lixeira = false; render(); } };
+CTX.apagaDaGaleria = async function (d, pose) {
+  const ok = await apagaFotoDoCorpo(d, pose);
+  if (ok && view.galeria) { view.galeria.foto = null; render(); }
+  return ok;
+};
+CTX.restauraDaLixeira = function (k) { return restauraDaLixeira(k); };
+CTX.apagaDaLixeira = async function (k) {
+  const x = lixeiraDeFotos().filter(function (y) { return chaveDaLixeira(y) === k; })[0];
+  if (!x) return false;
+  const p = poseDe(x.pose);
+  const sim = await pare({ texto: 'Apagar de vez a foto de ' + (p ? p.n.toLowerCase() : x.pose) + ' de ' + fmtDate(instanteDaData(x.d)) +
+    ' tira ela da lixeira, deste aparelho e da nuvem. Isso não tem volta.', sim: 'Apagar de vez' });
+  if (!sim) return false;
+  await apagaDaLixeiraDeVez(x);
+  await save(); render();
+  toast('Foto apagada de vez.');
+  return true;
+};
+CTX.esvaziaLixeira = async function () {
+  const todos = lixeiraDeFotos().slice();
+  if (!todos.length) return false;
+  const sim = await pare({ texto: 'Esvaziar a lixeira apaga de vez ' + (todos.length === 1 ? 'a foto que está nela' : 'as ' + todos.length + ' fotos que estão nela') +
+    ', deste aparelho e da nuvem. Isso não tem volta.', sim: 'Esvaziar a lixeira' });
+  if (!sim) return false;
+  for (const x of todos) await apagaDaLixeiraDeVez(x);
+  await save(); render();
+  toast('Lixeira vazia.');
+  return true;
+};
+
+function fotoDaGaleria(d, pose, ref) {
+  const p = poseDe(pose);
+  return {
+    d: d, pose: pose, n: p ? p.n : pose,
+    hora: ref && ref.v > 1577836800000 ? horaHHMM(ref.v) : '',
+    url: CORPO.urlDaFoto(d, pose, ref),
+    aviso: avisoDaFoto(d, pose, !!ref, '')
+  };
+}
+CTX.galeria = function () {
+  const g = view.galeria;
+  if (!g) return null;
+  const agora = Date.now();
+  const lx = ordemDaLixeira(lixeiraDeFotos());
+  const sessoes = ((S.protocolo && S.protocolo.sessoes) || []).slice().sort(function (a, b) { return a.d < b.d ? 1 : -1; })
+    .map(function (ses) {
+      const lista = posesDaData(ses.d, S.protocolo.poses);
+      const ids = lista.map(function (p) { return p.id; });
+      Object.keys(ses.fotos || {}).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+      const fotos = ids.filter(function (id) { return ses.fotos[id]; }).map(function (id) { return fotoDaGaleria(ses.d, id, ses.fotos[id]); });
+      return { d: ses.d, data: DIAS_CURTOS[new Date(instanteDaData(ses.d)).getDay()] + ' ' + fmtDate(instanteDaData(ses.d)),
+               conta: fotos.length + ' de ' + lista.length, fotos: fotos };
+    });
+  let foto = null;
+  if (g.foto) {
+    const ses = sessaoDe(S.protocolo.sessoes, g.foto.d);
+    const ref = ses && ses.fotos[g.foto.pose];
+    if (ref) foto = Object.assign(fotoDaGaleria(g.foto.d, g.foto.pose, ref), { data: fmtDate(instanteDaData(g.foto.d)) });
+  }
+  return {
+    sessoes: sessoes, foto: foto, naLixeira: lx.length, lixeiraAberta: !!g.lixeira,
+    lixeira: lx.map(function (x) {
+      const p = poseDe(x.pose), dias = diasRestantes(x, agora);
+      const pd = pastaDaLixeira(x.d), pn = nomeNaLixeira(x.pose, x.ref.v);
+      return {
+        k: chaveDaLixeira(x), n: p ? p.n : x.pose,
+        sessao: fmtDate(instanteDaData(x.d)),
+        quando: (x.porque === 'refeita' ? 'substituída' : 'apagada') + ' em ' + fmtDate(x.em) + ' às ' + horaHHMM(x.em),
+        restam: dias <= 1 ? 'sai de vez amanhã' : 'sai de vez em ' + dias + ' dias',
+        url: CORPO.urlDaFoto(pd, pn, { v: x.ref.v, ext: x.ref.ext })
+      };
+    })
+  };
+};
+
 CTX.apagaFotoDoCorpo = function (pose) { return apagaFotoDoCorpo(view.protocolo.d, pose); };
 
 let notaT = null;
@@ -11878,11 +12162,12 @@ CTX.sessaoDeFotos = function () {
 
 // ---------- comparar ----------
 
-CTX.abreComparar = function () {
+CTX.abreComparar = function (naPose) {
   const ordem = ordemDePoses();
   // abre na primeira pose que tem pelo menos duas sessões: abrir numa pose sem
-  // par mostraria um vazio como primeira tela
+  // par mostraria um vazio como primeira tela. A galeria pede a pose da foto.
   let pose = ordem.filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0] || ordem[0];
+  if (typeof naPose === 'string' && poseDe(naPose)) pose = naPose;
   view.comparar = { pose: pose, de: null, ate: null, sobrepor: false, opacidade: 50 };
   aplicaParPadrao();
   entraNoDestino('comparar'); render();

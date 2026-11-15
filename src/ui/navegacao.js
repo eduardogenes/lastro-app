@@ -79,6 +79,13 @@ export function camadasAbertas(view) {
   // O detalhe de uma medida, e o formulário de medidas, que abre de dentro dele.
   if (view.medida) c.push('medida');
   if (view.medidas) c.push('medidas');
+  // A galeria das fotos do corpo, e as duas camadas dentro dela: a lixeira e a
+  // foto aberta em tela cheia.
+  if (view.galeria) {
+    c.push('galeria');
+    if (view.galeria.lixeira) c.push('lixeira');
+    if (view.galeria.foto) c.push('galeriaFoto');
+  }
   if (view.comparar) c.push('comparar');
   // A revisão do treinador abre da Prescrição, acima de qualquer lugar.
   if (view.revisao) c.push('revisao');

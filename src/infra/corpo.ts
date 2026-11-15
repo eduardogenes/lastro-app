@@ -217,6 +217,9 @@ export async function poda(manter: string[]): Promise<number> {
     const resto = u.slice(i + 7);              // '2026-09-01/frente-relaxado.webp'
     const data = resto.split('/')[0];
     if (fica['./corpo/' + data + '/']) continue;
+    // a lixeira (`lixo-AAAA-MM-DD`) não é cache: os bytes dela ficam até
+    // saírem de vez, em 30 dias, por `apagaDaLixeira`
+    if (data.indexOf('lixo-') === 0) continue;
     await c.delete(req);
     solta(data);
     saíram++;

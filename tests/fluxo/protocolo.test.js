@@ -80,6 +80,18 @@ function comSessoes(a, datas, pose) {
   })`);
 }
 
+/** Os bytes de cada foto de `comSessoes`, no cache falso: a lixeira copia deles. */
+async function comBytes(a, datas, pose) {
+  await a.E(`(async function () {
+    const c = await caches.open('lastro-corpo');
+    const ds = ${JSON.stringify(datas)};
+    for (let i = 0; i < ds.length; i++) {
+      await c.put('./corpo/' + ds[i] + '/' + ${JSON.stringify(pose)} + '.webp',
+        new Response(new Blob(['foto ' + i]), { headers: { 'Content-Type': 'image/webp', 'X-Lastro-Versao': String(i + 1) } }));
+    }
+  })()`);
+}
+
 // ---------- a sessão ----------
 
 test('a montagem vem antes da primeira foto e sai do caminho depois', async () => {
@@ -335,7 +347,9 @@ test('apagar a única foto apaga a sessão junto', async () => {
   await a.esperar(60);
 
   assert.deepStrictEqual(a.S().protocolo.sessoes, []);
-  assert.deepStrictEqual(guardadas(a), [], 'os bytes saíram do cache também');
+  // os bytes saem do lugar da foto viva e ficam na lixeira, por 30 dias
+  assert.ok(guardadas(a).every(function (k) { return k.indexOf('/lixo-' + hoje() + '/') >= 0; }), guardadas(a).join(' '));
+  assert.strictEqual(a.S().lixeira.length, 1, 'a foto está na lixeira');
   assert.ok(a.S().apagados['corpo:' + hoje()], 'com lápide de sessão');
   a.fechar();
 });
@@ -776,11 +790,12 @@ test('comparar só aparece quando há duas sessões na mesma pose', async () => 
   const a = await app({ aba: 'corpo' });
   comSessoes(a, [diasAtras(14)], 'frente-relaxado');
   a.v('render');
-  assert.strictEqual(a.$('.dd-fotos-b .ins-btn-secondary'), null, 'uma sessão não compara');
+  const comparar = function () { return a.$$('.dd-fotos-b .ins-btn-secondary').filter(function (b) { return b.textContent === 'Comparar'; })[0] || null; };
+  assert.strictEqual(comparar(), null, 'uma sessão não compara');
 
   comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
   a.v('render');
-  assert.strictEqual(a.texto('.dd-fotos-b .ins-btn-secondary'), 'Comparar');
+  assert.ok(comparar(), 'duas comparam');
   a.fechar();
 });
 
@@ -848,8 +863,9 @@ test('apagar uma foto antiga pela Comparar: sai da sessão dela, com lápide, e 
   a.clicar(botoes[0]);                              // o lado "de": a mais antiga
   await a.esperar(120);
 
-  assert.ok(a.perguntas().some(p => /^Apagar a foto de frente relaxado de /.test(p)),
-    'com a mesma confirmação da captura: ' + JSON.stringify(a.perguntas()));
+  // sem perguntar: a foto vai para a lixeira, e o aviso traz "Desfazer"
+  assert.deepStrictEqual(a.perguntas(), [], 'nada perguntado');
+  assert.ok(/Desfazer/.test(a.toast()), a.toast());
   assert.deepStrictEqual(a.S().protocolo.sessoes.map(s => s.d), [datas[1], datas[2]],
     'a sessão saiu junto, porque era a única foto dela');
   assert.ok(a.S().apagados['corpo:' + datas[0] + ':frente-relaxado'], 'com lápide da foto');
@@ -878,19 +894,21 @@ test('apagar na Comparar uma foto de sessão que tem outras poses mantém a sess
   a.fechar();
 });
 
-test('recusar a confirmação na Comparar não apaga nada', async () => {
-  const a = await app({ aba: 'corpo', confirmar: false });
+test('apagar pela Comparar vai para a lixeira, e "Desfazer" devolve a foto e o par', async () => {
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
   const datas = [28, 14].map(diasAtras);
   comSessoes(a, datas, 'frente-relaxado');
+  await comBytes(a, datas, 'frente-relaxado');
   a.v('ctx.abreComparar');
   await a.v('ctx.apagaFotoComparada', datas[1]);
   await a.esperar(60);
-
-  assert.strictEqual(a.S().protocolo.sessoes.length, 2);
-  assert.strictEqual(a.S().apagados['corpo:' + datas[1] + ':frente-relaxado'], undefined);
-  assert.strictEqual(a.vista().comparar.ate, datas[1], 'e o par fica onde estava');
+  assert.strictEqual(a.S().protocolo.sessoes.length, 1);
+  a.clicar('[data-a="aviso-acao"]');
+  await a.esperar(120);
+  assert.strictEqual(a.S().protocolo.sessoes.length, 2, 'voltou');
+  assert.strictEqual(a.S().lixeira.length, 0, 'e saiu da lixeira');
   a.fechar();
 });
 
@@ -1805,27 +1823,20 @@ test('refazer pela câmera deixa lápide, como pelo sistema', async () => {
   a.fechar();
 });
 
-test('apagar a foto pergunta antes, e recusar cancela', async () => {
-  // é a única ação destrutiva que passava direto; e a lápide viaja na
-  // sincronização, então não apaga só deste aparelho
+test('apagar a foto não pergunta: vai para a lixeira, com "Desfazer" no aviso', async () => {
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('ctx.abreProtocolo');
   a.E(`view.protocolo.montagem = false; view.protocolo.pose = 'frente-relaxado'`);
-
-  a.recusar();
   await a.v('ctx.apagaFotoDoCorpo', 'frente-relaxado');
   await a.esperar(60);
-  assert.strictEqual(a.S().protocolo.sessoes.length, 1, 'recusou: a foto ficou');
-  const perguntas = a.perguntas().join(' ');
-  assert.ok(/Apagar a foto/.test(perguntas), perguntas);
-  assert.ok(/outros na próxima sincronização/.test(perguntas), 'o aviso é honesto');
-
-  a.aceitar();
-  await a.v('ctx.apagaFotoDoCorpo', 'frente-relaxado');
-  await a.esperar(60);
-  assert.deepStrictEqual(a.S().protocolo.sessoes, [], 'aceitou: apagou');
+  assert.deepStrictEqual(a.perguntas(), [], 'sem perguntar');
+  assert.deepStrictEqual(a.S().protocolo.sessoes, [], 'saiu da sessão');
+  assert.strictEqual(a.S().lixeira.length, 1);
+  assert.strictEqual(a.S().lixeira[0].porque, 'apagada');
+  assert.strictEqual(a.$('[data-a="aviso-acao"]').textContent, 'Desfazer');
+  assert.ok(/^Foto na lixeira por 30 dias\./.test(a.toast()), a.toast());
   a.fechar();
 });
 
@@ -2990,7 +3001,7 @@ test('foto de verdade que falha, chega deitada ou fora de 3:4: fica o quadro do 
   }
 });
 
-test('refazer leva o original da foto anterior, daqui e do bucket', async () => {
+test('refazer põe a anterior na lixeira, com o original dela, e o da nova sobe', async () => {
   const a = await app({ aba: 'corpo' });
   await cameraComAlguem(a);
   nuvemComBucket(a);
@@ -3008,15 +3019,20 @@ test('refazer leva o original da foto anterior, daqui e do bucket', async () => 
   await a.esperar(150);
   const v2 = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].v;
   assert.ok(v2 > v1);
+  const lx = a.S().lixeira;
+  assert.strictEqual(lx.length, 1, 'a anterior está na lixeira');
+  assert.deepStrictEqual([lx[0].pose, lx[0].ref.v, lx[0].porque], ['frente-relaxado', v1, 'refeita']);
   await a.v('reconciliaCorpo');
   await a.esperar(60);
   const b = a.J('globalThis.__bucketCorpo');
-  assert.ok(!b[hoje() + '/frente-relaxado.orig.' + v1 + '.jpeg'], 'o da anterior saiu do bucket');
+  assert.ok(b[hoje() + '/frente-relaxado.orig.' + v1 + '.jpeg'], 'o original da anterior fica, junto com ela na lixeira');
+  assert.ok(b['lixo-' + hoje() + '/frente-relaxado.' + v1 + '.jpeg'] || b['lixo-' + hoje() + '/frente-relaxado.' + v1 + '.webp'],
+    'a cópia da lixeira subiu: ' + Object.keys(b).join(' '));
   assert.ok(b[hoje() + '/frente-relaxado.orig.' + v2 + '.jpeg'], 'o da nova subiu');
   a.fechar();
 });
 
-test('apagar a foto apaga o original junto', async () => {
+test('apagar de vez, da lixeira, leva a foto e o original, daqui e do bucket', async () => {
   const a = await app({ aba: 'corpo' });
   await cameraComAlguem(a);
   nuvemComBucket(a);
@@ -3030,8 +3046,17 @@ test('apagar a foto apaga o original junto', async () => {
   await a.v('ctx.apagaFotoDoCorpo', 'frente-relaxado');
   await a.v('reconciliaCorpo');
   await a.esperar(60);
-  assert.deepStrictEqual(Object.keys(a.J('globalThis.__bucketCorpo')).filter(k => k.startsWith(hoje())), []);
-  assert.ok(!cacheDoCorpo(a).some(k => k.includes('.orig.' + v)));
+  let b = a.J('globalThis.__bucketCorpo');
+  assert.ok(!b[hoje() + '/frente-relaxado.' + a.S().lixeira[0].ref.ext], 'o lugar da foto viva saiu do bucket');
+  assert.ok(Object.keys(b).some(k => k.indexOf('lixo-' + hoje() + '/') === 0), 'e a cópia da lixeira está lá');
+  const k = 'lixo:' + hoje() + ':frente-relaxado:' + v;
+  await a.v('ctx.apagaDaLixeira', k);
+  await a.v('reconciliaCorpo');
+  await a.esperar(60);
+  b = a.J('globalThis.__bucketCorpo');
+  assert.deepStrictEqual(Object.keys(b).filter(x => x.indexOf(hoje()) >= 0), [], 'nada sobrou no bucket: ' + Object.keys(b).join(' '));
+  assert.ok(!cacheDoCorpo(a).some(x => x.includes('.orig.' + v) || x.includes('lixo-')), 'nem aqui');
+  assert.strictEqual(a.S().lixeira.length, 0);
   a.fechar();
 });
 
@@ -3116,5 +3141,69 @@ test('ao terminar as poses, o fim da sessão oferece medir a fita agora', async 
   a.clicar('[data-a="fim-medir"]');
   await a.esperar();
   assert.ok(!a.vista().protocolo && a.vista().medidas, 'a sessão de fotos sai e o formulário de medidas entra');
+  a.fechar();
+});
+
+
+test('a lixeira restaura a foto na sessão dela', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
+  await comBytes(a, [hoje()], 'frente-relaxado');
+  a.v('ctx.abreProtocolo');
+  await a.v('ctx.apagaFotoDoCorpo', 'frente-relaxado');
+  await a.esperar(60);
+  a.v('ctx.fechaProtocolo');
+  const k = 'lixo:' + hoje() + ':frente-relaxado:' + a.S().lixeira[0].ref.v;
+  a.v('ctx.abreGaleria');
+  await a.esperar();
+  a.clicar('[data-a="abre-lixeira"]');
+  await a.esperar(60);
+  assert.strictEqual(a.$$('.ga-lixo-i').length, 1, 'a foto está na lixeira');
+  assert.ok(/sai de vez em 30 dias/.test(a.texto('.ga-lixo-i')), a.texto('.ga-lixo-i'));
+  a.clicar('[data-a="lixo-restaura"]');
+  await a.esperar(120);
+  const f = a.S().protocolo.sessoes[0].fotos['frente-relaxado'];
+  assert.ok(f && f.r > 0, 'voltou, com o carimbo de restauração');
+  assert.ok(a.S().apagados[k] > 0, 'e o item da lixeira ganhou lápide');
+  assert.strictEqual(a.S().lixeira.length, 0);
+  a.fechar();
+});
+
+test('depois de 30 dias a foto sai da lixeira sozinha', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  const DIA = 86400000;
+  a.E(`S.lixeira = [
+    { d: '2026-10-01', pose: 'frente-relaxado', ref: { v: 1, ext: 'webp' }, em: Date.now() - 31 * ${DIA}, porque: 'apagada' },
+    { d: '2026-10-29', pose: 'perfil-direito', ref: { v: 2, ext: 'webp' }, em: Date.now() - 29 * ${DIA}, porque: 'refeita' }
+  ]`);
+  const n = await a.v('purgaLixeira');
+  await a.esperar(60);
+  assert.strictEqual(n, 1, 'só a de 31 dias');
+  assert.deepStrictEqual(a.S().lixeira.map(x => x.pose), ['perfil-direito']);
+  assert.ok(a.S().apagados['lixo:2026-10-01:frente-relaxado:1'] > 0, 'com lápide, para não voltar do outro aparelho');
+  a.fechar();
+});
+
+test('a galeria mostra as sessões da mais nova para a mais antiga, e a foto abre em tela cheia', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
+  a.v('render');
+  a.clicar('[data-a="abre-galeria"]');
+  await a.esperar();
+  assert.ok(a.vista().galeria, 'a galeria abriu');
+  const rotulos = a.$$('.ins-rotulo').map(r => r.textContent);
+  assert.ok(rotulos.length >= 2);
+  a.clicar('[data-a="galeria-' + diasAtras(14) + '-frente-relaxado"]');
+  await a.esperar();
+  assert.deepStrictEqual(a.vista().galeria.foto, { d: diasAtras(14), pose: 'frente-relaxado' });
+  a.window.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape' }));
+  await a.esperar();
+  assert.ok(a.vista().galeria && !a.vista().galeria.foto, 'Voltar fecha só a foto');
+  a.window.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape' }));
+  await a.esperar();
+  assert.ok(!a.vista().galeria, 'e depois a galeria');
   a.fechar();
 });

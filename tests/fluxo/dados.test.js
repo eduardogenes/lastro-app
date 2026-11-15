@@ -88,6 +88,8 @@ test('exportar carrega todos os campos do estado', async () => {
      'carimbos', 'carimbosEm',
      // os dias que ele marcou como descanso
      'descanso', 'fotos', 'promoPendente',
+     // a lixeira das fotos do corpo: o que foi apagado volta por 30 dias
+     'lixeira',
      // os modelos de aula de box: coleção com chave natural, some se ficar de fora
      'aulas',
      // os dias de comida já fechados — o histórico que a virada da data
