@@ -74,3 +74,17 @@ export function shouldUp(
 export function setsFor(ex: { s: number }, deload: boolean): number {
   return deload ? Math.ceil(ex.s / 2) : ex.s;
 }
+
+/**
+ * PARA QUANTO SUBIR, quando `shouldUp` diz que é hora (direção 3, a pergunta
+ * "subir para X?" na série). O menor passo que a academia oferece em cada
+ * tipo de carga: 1,25 kg por lado (2,5 no total) na anilha e na barra, o
+ * halter seguinte (2 kg), e 2,5 kg na placa e no resto. Peso do corpo não
+ * sobe por carga. Regra de partida, a revisar com o dono.
+ */
+export function proximaCarga(carga: number | null | undefined, tipo: string): number | null {
+  if (typeof carga !== 'number' || !isFinite(carga) || carga <= 0) return null;
+  if (tipo === 'corpo') return null;
+  const passo = tipo === 'lado' || tipo === 'barra' ? 1.25 : tipo === 'halter' ? 2 : 2.5;
+  return Math.round((carga + passo) * 100) / 100;
+}

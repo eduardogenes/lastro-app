@@ -4,6 +4,9 @@
    ainda são as antigas, e a reserva do rodapé é a da doca. */
 html[data-visual="3"] body { background: var(--papel); }
 html[data-visual="3"] { --ins-barra-de-abas: calc(var(--doca-h) + 22px); }
+/* o descanso é a tela cheia do treino em foco: a barra antiga, fixa fora da
+   árvore do app (#timer, em index.html), não aparece no visual novo */
+html[data-visual="3"] #timer { display: none; }
 
 .v3 {
   color: var(--tinta);

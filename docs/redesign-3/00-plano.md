@@ -86,6 +86,15 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Uma medida (linha com as sessões de fotos marcadas, como medir, histórico para corrigir) e bioimpedância (quadros, leituras, a leitura nova um número por passo) | **feito** (`ctx.medidaV3`, `ctx.camposDaBioV3`, folha `bio` nova) |
 | Tudo na mesma data | **feito** (`naMesmaData` em `src/dominio/corpo.ts`, com teste; camada `naMesmaData`). **Fase 2 fechada**; `tests/fluxo/v3-corpo-consulta.test.js` |
 
+| Fase 3 | Estado |
+|---|---|
+| Treino em foco, uma série por tela (carga e repetição pela régua, "da última vez", dor seguida) | **feito** (`src/ui/v3/telas/treino.jsx`, `ctx.focoV3`, `ctx.fazSerieV3`; `tests/fluxo/v3-treino.test.js`). A série grava por `anotaSerie`, a mesma porta do modo antigo, e a sessão nasce na projeção da primeira série |
+| Descanso em tela cheia que enche de cor, ±15 s, "sobraram quantas?" gravando o RIR da série que acabou (`poeRir`) | **feito** |
+| Sugestão "subir para X?" | **feito**: `proximaCarga` em `src/dominio/progressao.ts` (1,25 kg por lado, halter +2, placa +2,5), **regra de partida a revisar com o dono** |
+| Lista do treino (com deload), mudar este exercício (trocar, mais uma série, fazer o próximo antes, pular, dor), opções da sessão | **feito** (folhas `listaTreino`, `mudarEx`, `menuSessao`) |
+| Pôr em dia e aviso de intervalo longo | a fazer |
+| Fim com "vira regra?", progressão, um exercício, programa, editor, revisão, aula do box | a fazer |
+
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
 máquina e passam sozinhos. Antes de tratar como regressão, rodar o arquivo

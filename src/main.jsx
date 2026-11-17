@@ -81,7 +81,7 @@ import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGR
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
-         setsFor as _setsFor } from './dominio/progressao';
+         setsFor as _setsFor, proximaCarga } from './dominio/progressao';
 import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
@@ -14218,6 +14218,134 @@ CTX.registraPesoRapido = async function () {
   const p = view.pilha || [];
   if (gravou && p.length && p[p.length - 1].k === 'pesoRapido') { pilha().pop(); render(); }
 };
+
+// ---------- O TREINO EM FOCO no visual novo (Fase 3): uma série por tela ----------
+// Só a forma muda. A série entra pela MESMA porta do modo antigo
+// (`anotaSerie`: carga e repetição; `poeRir`: o RIR), que é a que projeta no
+// histórico, guarda e dispara o descanso. Não há caminho de gravação novo:
+// é onde o app já perdeu série no passado (docs/redesign-3/03-lotes.md).
+
+/** A série em foco: a escolhida (`view.focoV3`) ou a primeira que falta, na ordem do treino. */
+function serieEmFoco(d) {
+  const P = treino(d);
+  if (!P) return null;
+  const f = view.focoV3;
+  if (f && P.ex[f.i] && f.k < setsFor(P.ex[f.i])) return f;
+  const estados = estadosDoDia(d);
+  for (let i = 0; i < P.ex.length; i++) {
+    if (ehPulado(i) || estados[i] === 'feito') continue;
+    const dr = draftPeek(i);
+    const ns = setsFor(P.ex[i]);
+    for (let k = 0; k < ns; k++) if (!serieCheia(dr, k)) return { i: i, k: k };
+  }
+  return null;
+}
+CTX.focoV3 = function () {
+  const h = diaResolvido();
+  const d = view.day || h.treino || proximoTreino(S, ROT_BASE);
+  hidrataDraft(d);
+  const P = treino(d);
+  if (!P) return null;
+  const f = serieEmFoco(d);
+  const feitas = seriesFeitasHoje(d);
+  const prescritas = P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0);
+  const base = { dia: d, nome: P.name, feitas: feitas, prescritas: prescritas, sessaoAberta: !!S.sessao, pausada: !!(S.sessao && S.sessao.pausadoEm) };
+  if (!f) return Object.assign(base, { fim: true });
+  const ex = P.ex[f.i];
+  const vm = vmExercicio(d, f.i, ex);
+  const key = logKey(d, f.i);
+  const tipo = cargaTipo(key, ex);
+  const dr = draftPeek(f.i);
+  const agora = dr && dr.s[f.k] ? dr.s[f.k] : [null, null];
+  const ant = lastSet(key, f.k);
+  // de onde a régua parte: o que já está anotado, a mesma série da última vez,
+  // a série anterior de hoje, ou o começo da faixa do treinador
+  const anteriorHoje = f.k > 0 && dr && dr.s[f.k - 1] ? dr.s[f.k - 1] : null;
+  const fx = faixaDoTexto(ex.r);
+  const carga = agora[0] != null ? agora[0] : ant && ant[0] != null ? ant[0] : anteriorHoje && anteriorHoje[0] != null ? anteriorHoje[0] : 0;
+  const reps = agora[1] != null ? agora[1] : ant && ant[1] != null ? ant[1] : anteriorHoje && anteriorHoje[1] != null ? anteriorHoje[1] : (fx ? fx[0] : 10);
+  const sobe = vm.up && f.k === 0 && agora[0] == null ? proximaCarga(ant ? ant[0] : null, tipo) : null;
+  return Object.assign(base, {
+    fim: false, i: f.i, k: f.k,
+    ex: { n: ex.n, cue: ex.cue || '', faixa: ex.r || '', rir: ex.rir || '', series: setsFor(ex), unidade: vm.unidade, medida: vm.medida,
+          semCarga: tipo === 'corpo', seg: vm.seg, descanso: vm.descansoTxt, proximo: vm.proximo },
+    estados: vm.linhas.map(function (l, k) { return { k: k, feita: l.valor[1] != null, antes: l.antes }; }),
+    carga: carga, reps: reps,
+    passoCarga: tipo === 'lado' || tipo === 'barra' ? 1.25 : tipo === 'halter' ? 1 : 2.5,
+    antes: vm.linhas[f.k] ? vm.linhas[f.k].antes : null,
+    jaFeita: agora[1] != null,
+    sobe: sobe,
+    dor: vm.dorBloqueia ? { o: vm.dorRep, datas: vm.dorDatas } : null
+  });
+};
+/** Pula para uma série (a lista do treino, ou a seta para corrigir uma feita). */
+CTX.setFocoV3 = function (i, k) { view.focoV3 = { i: Number(i), k: Number(k) || 0 }; render(); };
+/**
+ * "FEITA": a série em foco, com a carga e a repetição da régua, pela porta de
+ * sempre. Depois o foco volta a ser "a próxima que falta".
+ */
+CTX.fazSerieV3 = function (carga, reps) {
+  const f = CTX.focoV3();
+  if (!f || f.fim) return;
+  // o rascunho é o do dia em tela; a sessão nasce sozinha na projeção da
+  // primeira série completa, como no modo antigo (`abreSessao`)
+  if (view.day !== f.dia) view.day = f.dia;
+  const corpo = f.ex.semCarga;
+  anotaSerie(f.i, f.k, 0, corpo && !(carga > 0) ? 0 : carga);
+  anotaSerie(f.i, f.k, 1, reps);
+  view.ultimaV3 = { i: f.i, k: f.k, dia: f.dia };
+  view.focoV3 = null;
+  render();
+};
+/** "Sobraram quantas?": o RIR da série que acabou, no descanso. */
+CTX.rirDaUltimaV3 = function (v) {
+  const u = view.ultimaV3;
+  if (!u || u.dia !== view.day) return;
+  poeRir(u.i, u.k, v);
+};
+CTX.ultimaV3 = function () {
+  const u = view.ultimaV3;
+  if (!u || u.dia !== view.day) return null;
+  const dr = draftPeek(u.i);
+  const s = dr && dr.s[u.k];
+  const ex = treino(view.day).ex[u.i];
+  return s ? { n: ex.n, serie: u.k + 1, rir: s[2] != null ? s[2] : null, txt: (s[0] ? fmtNum(s[0]).replace('.', ',') + ' × ' : '') + s[1] } : null;
+};
+/** "Mudar este exercício": o que o cartão antigo oferecia, para a folha nova. */
+CTX.mudarExV3 = function (i) {
+  const d = view.day;
+  const P = treino(d);
+  if (!P || !P.ex[i]) return null;
+  const vm = vmExercicio(d, i, P.ex[i]);
+  return { i: i, nome: vm.nome, nomeOriginal: vm.nomeOriginal, pulado: vm.pulado, podeMaisSerie: vm.podeMaisSerie,
+           proximo: vm.proximo, troca: vm.troca, temTroca: vm.temTroca, dores: vm.dores, dorBloqueia: vm.dorBloqueia };
+};
+/** A lista do treino: cada exercício com o que foi feito, e a primeira série que falta dele. */
+CTX.listaV3 = function () {
+  const d = view.day || diaResolvido().treino || proximoTreino(S, ROT_BASE);
+  const P = treino(d);
+  if (!P) return null;
+  const estados = estadosDoDia(d);
+  const f = serieEmFoco(d);
+  return {
+    nome: P.name, deload: itemDoDeload(d), sessaoAberta: !!S.sessao,
+    exercicios: P.ex.map(function (ex, i) {
+      const dr = draftPeek(i);
+      const ns = setsFor(ex);
+      let feitas = 0, prox = null;
+      for (let k = 0; k < ns; k++) { if (serieCheia(dr, k)) feitas++; else if (prox == null) prox = k; }
+      return { i: i, n: ex.n, feitas: feitas, series: ns, pulado: ehPulado(i), feito: estados[i] === 'feito',
+               atual: !!(f && f.i === i), proxima: prox == null ? 0 : prox };
+    })
+  };
+};
+/** O descanso em curso, para a tela cheia que enche de cor. */
+CTX.descansoV3 = function () {
+  if (!timerFim) return null;
+  return { fim: timerFim, total: timerTotal * 1000, rotulo: timerCtx };
+};
+CTX.ajustaDescanso = function (delta) { ajustaTimer(delta); render(); };
+CTX.paraDescanso = function () { stopTimer(); render(); };
 
 // DESENHA, DEPOIS ROLA (peça 5 do motion; docs/motion/02 §0 e T6). Este fecho
 // e o de `fechaAjustes` rolavam ANTES do `render()`: o `scrollTo` corria com o

@@ -115,3 +115,14 @@ test('na mesma data: o último número até o fim do dia de cada medida, e a ses
   assert.deepStrictEqual(r.medidas.map(m => [m.k, m.v]), [['peso', 76]], 'a do próprio dia conta; a de depois, não; cintura ainda não existia');
   assert.strictEqual(r.sessao, '2026-11-12', 'a mais perto, mesmo depois; a sessão sem foto não conta');
 });
+
+test('para quanto subir: o menor passo de cada tipo de carga, e peso do corpo não sobe por carga', async () => {
+  const { proximaCarga } = await import('../../src/dominio/progressao');
+  assert.strictEqual(proximaCarga(20, 'barra'), 21.25, '1,25 por lado na barra');
+  assert.strictEqual(proximaCarga(10, 'lado'), 11.25);
+  assert.strictEqual(proximaCarga(14, 'halter'), 16, 'o halter seguinte');
+  assert.strictEqual(proximaCarga(45, 'pino'), 47.5);
+  assert.strictEqual(proximaCarga(0, 'corpo'), null);
+  assert.strictEqual(proximaCarga(10, 'corpo'), null);
+  assert.strictEqual(proximaCarga(null, 'pino'), null);
+});

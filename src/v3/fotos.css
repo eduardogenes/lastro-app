@@ -313,3 +313,29 @@
 .v3-leg i.p { width: 8px; height: 8px; border-radius: 50%; background: var(--tinta-28); }
 .v3-leg i.a { background: var(--lilas); height: 10px; }
 .v3-leg i.m { width: 3px; height: 10px; }
+
+/* ---- Treino em foco (Fase 3) ------------------------------------------ */
+.v3-serie-q { font: 700 14px var(--f-texto); margin-top: 12px; }
+.v3-serie-n { font: 800 38px/.98 var(--f-titulo); letter-spacing: -.035em; margin-top: 4px; text-wrap: balance; }
+.v3-serie-c { font-size: 14px; line-height: 1.4; margin-top: 6px; color: var(--tinta-2); }
+.v3-serie-g { margin-top: 10px; }
+.v3-serie-ant { font-size: 14px; font-weight: 600; margin-top: 8px; }
+.v3-serie-dor { margin-top: 12px; padding: 12px 14px; border-radius: 20px; background: var(--tanja); box-shadow: inset 0 0 0 2px var(--tinta); font-size: 14px; }
+.v3-acao .v3-perg { margin-top: 12px; }
+.v3-lista-t { margin-top: 8px; }
+.v3-menu-l { margin-top: 8px; }
+
+/* o descanso: a tela enche de cor de baixo para cima, até a próxima série */
+.v3-desc {
+  position: relative; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; overflow: hidden;
+  padding: calc(6px + var(--sa-top, 0px)) var(--margem) calc(18px + var(--sa-bottom, 0px)); background: var(--papel);
+}
+.v3-desc-fundo { position: absolute; left: 0; right: 0; bottom: 0; height: var(--v3-cheio, 0%); background: var(--lima); transition: height 1s linear; z-index: 0; }
+.v3-desc > *:not(.v3-desc-fundo) { position: relative; z-index: 1; }
+.v3-desc-meio { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; }
+.v3-desc-t { font: 800 112px/.85 var(--f-titulo); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+.v3-desc-r { font-size: 14px; font-weight: 600; margin-top: 10px; color: var(--tinta-2); }
+.v3-desc-aj { display: flex; gap: 8px; margin-top: 14px; }
+.v3 .v3-desc-aj button { min-height: 46px; padding: 0 18px; border-radius: var(--r-pilula); box-shadow: inset 0 0 0 2px var(--tinta); font: 700 15px var(--f-titulo); }
+.v3-desc-rir { margin-top: 18px; }
+.v3-desc-prox { font: 700 15px var(--f-titulo); margin-top: 14px; }
