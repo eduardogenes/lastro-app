@@ -1,7 +1,7 @@
 # MARCA.md — Lastro
 
-As decisões de nome, voz e identidade. O que a história é está no
-[README](README.md); o que ela obriga está aqui.
+As decisões de nome, voz e identidade. Revisto em 16/11/2026 com a direção 3:
+a voz e o ícone continuam; o que falava do visual antigo (Instrumento) saiu.
 
 Regra que vale para o documento inteiro: **toda promessa tem um arquivo e uma
 linha.** Onde não tem, está escrito que não tem.
@@ -67,97 +67,53 @@ A coluna da direita é o que um app da categoria escreveria no mesmo lugar.
 | Estado vazio diz o que falta, e a ação quando existe uma. Sem ilustração, sem mascote, sem consolo. | *Ainda não há carga registrada suficiente para estimar.* | ~~Nada por aqui ainda. Bora começar?~~ |
 | Commit descreve o efeito visível, em português, minúscula, sem o diff. | *a decisão de fim de treino não se perde quando a sessão fecha sozinha* | ~~fix: corrige bug no handler de encerramento~~ |
 
-**"Nunca comemore" não é regra de palavra: é regra de sinal.** A tabela acima
-governa string, e era só isso que estava escrito — então a comemoração
-reapareceu por fora dela, em cor: ácido pintando recorde, delta positivo,
-exercício que subiu. Vale para qualquer coisa que o app possa dizer sem falar —
-cor, movimento, som — e os dois lugares onde isso virou regra conferível são o
-inegociável 4 e a seção Movimento do [DESIGN.md](DESIGN.md). O app devolve o
+**"Nunca comemore" não é regra de palavra: é regra de sinal.** Vale para
+qualquer coisa que o app possa dizer sem falar: cor, movimento, som. Na direção
+3 a cor do bloco diz **de que assunto é o momento** (treino, refeição, corpo),
+nunca se o resultado foi bom; ver [DESIGN.md](DESIGN.md). O app devolve o
 número; quem decide se foi bom é quem treinou.
 
 Quando surgir dúvida de tom, a resposta está no `git log` antes de estar aqui.
 
 ## Identidade
 
-**Wordmark.** Space Grotesk 700, tracking `−.045em`, caixa de frase — só o L
-maiúsculo. `#F2F4EF` sobre `#0C0E0C`. Área de respiro em todos os lados igual à
-altura do L, que na escala do sistema cai em 24 para o wordmark de 34px. Nada de
-`LASTRO` em caixa alta: rótulo mono em caixa alta com tracking `.18em` é
-estrutura no Instrumento, e a palavra escrita assim seria lida como cabeçalho de
-seção.
-
-**A caixa alta da prancha não é exceção: é outro lugar.** A arte aprovada
-(`Lastro_Identity_Approved_v2/00_APPROVED_REFERENCE_BOARD.png`) escreve
-`L A S T R O` em caixa alta com tracking largo, e isso não contradiz o
-parágrafo acima — a regra dele vale onde o Instrumento governa, e lá dentro
-caixa alta com tracking já significa rótulo de estrutura. Fora do app não
-existe Instrumento para confundir, e a prancha manda. Como o nome não aparece
-em tela nenhuma, hoje a regra de dentro não tem onde se aplicar.
-
-**O wordmark não é ácido.** `#CBF35E` significa agora / feito / seu / aperte
-aqui, e um wordmark não é nenhum dos quatro.
+**Dentro do app o nome não aparece.** O produto se chama "o app" nas telas.
+Onde o nome precisar ser escrito (documento, página externa), é "Lastro" em
+caixa de frase, na fonte de títulos do sistema ([DESIGN.md](DESIGN.md)).
 
 **Símbolo ou palavra.** Símbolo só onde a moldura é um quadrado que o sistema
-não controla: ícone, favicon, aba do navegador, avatar do repositório. Palavra
-em tudo que é texto. Nunca os dois juntos — lockup é assinatura, e este produto
-não assina nada.
+não controla: ícone, favicon, aba do navegador. Palavra em tudo que é texto.
+Nunca os dois juntos.
 
 **O símbolo.** Uma parte visível acima de uma linha de superfície e uma
-estrutura de raízes maior abaixo dela: 30% aparece, 70% sustenta. É a tese do
-produto desenhada — resultado ← histórico, decisão ← dados — e não é árvore
-ecológica, âncora, halter, seta de performance nem símbolo financeiro.
+estrutura de raízes maior abaixo dela: 30% aparece, 70% sustenta. Não é árvore
+ecológica, âncora, halter nem seta.
 
-**A geometria não se redesenha.** Ela vem da arte aprovada e está em
-[public/icone.svg](public/icone.svg), byte a byte igual a
+**A geometria não se redesenha.** Vem da arte aprovada e está em
+[public/icone.svg](public/icone.svg), igual a
 `Lastro_Identity_Approved_v2/assets/svg/lastro-app-icon-approved.svg`, que é a
-origem. Qualquer arquivo, descrição ou implementação que divirja dela está
-errado — inclusive este parágrafo.
+origem. A pasta `Lastro_Identity_Approved_v2/` guarda só isso: o ícone e as
+cores dele.
 
-**O ícone não usa a paleta do Instrumento**, e isso é deliberado: lima
-`#D9FF16` sobre preto `#0E1112`, que são as cores da marca, enquanto dentro do
-app valem `--ins-acid` `#CBF35E` sobre `--ins-canvas` `#0C0E0C`. O Instrumento
-governa o que se vê **dentro**; o ícone mora na tela de início, que é do
-sistema operacional. Nenhum teste tranca essa separação hoje:
-[tests/dominio/estilo.test.ts](tests/dominio/estilo.test.ts) prende a paleta do
-Instrumento em `tokens.css` e não lê o ícone.
+**O ícone tem as cores da marca, não as do app:** lima `#D9FF16` sobre preto
+`#0E1112`. Dentro do app valem os tokens do [DESIGN.md](DESIGN.md), em tema
+claro. A separação é deliberada: o ícone mora na tela de início, que é do
+sistema operacional.
 
 **Máscara é arquivo próprio.** `icone-512-mascara.png` e `icone-192-mascara.png`
-trazem o símbolo recuado 18% para caber no círculo seguro do Android, com o
-fundo sangrando até a borda; `icone-512.png` e `icone-192.png` são full bleed e
-entram como `purpose: any`. O mesmo arquivo servindo aos dois papéis é o erro
-clássico: a arte cheia chega a 94% do raio da zona segura e encosta na borda
-sob qualquer recorte real, enquanto o mascarável para em 77%. **O squircle não
-é queimado no arquivo**: quem arredonda é o sistema.
+trazem o símbolo recuado 18% para caber no círculo seguro do Android;
+`icone-512.png` e `icone-192.png` são de borda a borda. O arredondamento não é
+queimado no arquivo: quem arredonda é o sistema.
 
-**O L saiu.** O monograma foi o ícone até esta versão: duas hastes em ângulo
-reto, raio zero, o mesmo canto da régua de 1px do Instrumento. O argumento a
-favor dele continua de pé — o ângulo reto já está em toda tela como estrutura —
-e é por isso que o símbolo, como o L antes dele, **não** volta como elemento
-gráfico dentro do app.
+**O símbolo não entra como elemento gráfico dentro do app.**
 
-## Lastro × Instrumento
+## Nomes no código
 
-Convivem em camadas, e a fronteira já estava no código antes de alguém decidir:
+> **`lastro-` nomeia o que se guarda:** chave, cache, cópia de segurança.
 
-> **`ins-` nomeia o que se vê. `lastro-` nomeia o que se guarda.**
-
-Instrumento é o sistema visual e fala com quem escreve código: [DESIGN.md](DESIGN.md),
-`src/ui/instrumento/`, e o prefixo de todo token e de toda classe que nasce
-nova. Duas exceções, as duas decididas: as famílias de classe herdadas do
-sistema antigo (`.ex`, `.setrow`, `.cal-*` e outras) ficam sem ele porque são o
-contrato dos testes de fluxo com o DOM (`src/componentes.css`, bloco "O que veio
-do sistema antigo"; `src/treino.css`, cabeçalho); e os `--sa-*` são a área
-segura do sistema operacional, não do Instrumento.
-Lastro é o artefato e fala com quem abre: chave, cache, backup, ícone. Não
-existe superfície onde os dois apareçam juntos. Nem endosso, nem absorção —
-duas nomeações com públicos diferentes.
-
-**Voto vencido.** Absorver: renomear Instrumento para Lastro, porque dois nomes
-para um usuário é um a mais. Perdeu por custo e por perda de significado — o
-prefixo `ins-` está em toda classe e todo token, a varredura tem risco real
-contra `tests/dominio/estilo.test.ts`, o usuário nunca lê a palavra
-"Instrumento", e ela carrega uma postura que "Lastro" não carrega: painel de
-instrumento, não app de bem-estar.
+O visual anterior se chamava Instrumento e usava o prefixo `ins-` em classes e
+tokens. Esse prefixo pertence ao código antigo e sai com ele. O visual novo
+vive em `src/v3/` e `src/ui/v3/` e não usa `ins-`.
 
 ## O que decidimos não fazer
 
@@ -166,14 +122,10 @@ A versão de marca das anti-referências do [PRODUCT.md](PRODUCT.md).
 | Não | Por quê |
 |---|---|
 | Manifesto de marca | O software passa o dia se recusando a fazer discurso. Um texto que faz discurso desmente o software que descreve. |
-| Tagline | Não há onde pendurar: sem página de venda, sem loja, sem onboarding, sem plateia. |
 | Tela "sobre" | Tela nova para contar história. |
 | O nome em alguma tela | Assinatura dentro do prédio em que você já entrou. |
 | Splash com o símbolo | Um frame a mais entre o toque e a próxima série. |
-| Wordmark em ácido | Ácido significa "aperte aqui". Um nome não é alvo de toque. |
 | Lockup símbolo + palavra | Lockup é assinatura. |
-| O símbolo como elemento gráfico dentro do app | Ele é a moldura do lado de fora. Dentro, a estrutura já é a régua de 1px. |
-| Renomear Instrumento | Custo alto, ganho zero para o usuário, e perde a postura que só aquela palavra nomeia. |
 | Renomear os escopos de commit | Treino é o **domínio**. Todo escopo dizendo a mesma palavra é o mesmo que não ter escopo. |
 | As duas acepções na mesma frase | Duas leituras é força; duas leituras ao mesmo tempo é diluição. |
 | Versão do app na interface | O service worker se versiona pelo hash desde `7c18963`. O número existir de novo convidaria a incrementá-lo à mão outra vez. |

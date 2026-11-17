@@ -1,5 +1,10 @@
 # Fichas de exercício para geração de imagem
 
+> **Atenção (16/11/2026):** as cores pedidas aqui (`#0C0E0C` e `#A8AFA1`) são do
+> visual escuro anterior. Na direção 3 o app é claro; as fichas precisam de
+> nova paleta antes de serem geradas de novo. Ver [DESIGN.md](../DESIGN.md).
+
+
 Um bloco por exercício do programa, pronto para colar.
 
 Cole o prompt-padrão UMA vez no início da conversa. Depois, a cada imagem

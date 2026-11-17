@@ -1,0 +1,182 @@
+# Redesenho, direção 3 — plano de implementação
+
+Escrito em 16/11/2026. Os protótipos aprovados estão em
+[`prototipos/`](prototipos/), com o roteiro em
+[`prototipos/LEIA.md`](prototipos/LEIA.md). Este plano diz **o que** muda no
+app, **em que ordem** e **qual modelo faz cada parte**.
+
+## Os dois modelos, e por que a divisão é esta
+
+| | Fable 5.2 | Opus 5.5 |
+|---|---|---|
+| Quanto tem | cota curta: já acabou uma vez no meio do trabalho | folga para o volume |
+| Para que serve aqui | decisão que todo o resto herda, mexida em dado real, lógica onde um erro apaga registro, revisão final | construir tela seguindo um componente e uma especificação que já existem |
+
+A regra que decide cada tarefa: **se errar ali custa dado do dono ou obriga a
+refazer várias telas, é do Fable. Se o erro fica dentro de uma tela e aparece
+olhando, é do Opus.**
+
+Consequência prática: o Fable trabalha **antes** (fundação e especificação de
+cada lote) e **depois** (revisão do lote pronto). No meio, o Opus constrói.
+Assim a cota do Fable vai para o que só ele deve fazer, e não para escrever
+CSS de tela.
+
+Para o Fable gastar pouco na revisão, cada lote do Opus termina com um resumo
+curto: o que mudou, onde, o que ficou de fora e qual teste cobre o quê. O
+Fable revisa o diff do lote, não o app inteiro.
+
+## O que o código tem hoje e pesa no plano
+
+- `src/main.jsx` tem 14,5 mil linhas: estado, regras de tela e montagem dos
+  dados de cada tela. As telas (`src/ui/telas`, 24) e folhas (`src/ui/folhas`,
+  9) são componentes Preact que recebem esses dados prontos. O CSS são cinco
+  folhas, cerca de 5 mil linhas.
+- **Testes:** 31 de domínio (regras, rápidos) e 61 de fluxo (sobem o app
+  montado e apertam botão). 40 dos de fluxo procuram classe CSS ou texto da
+  tela. `tests/dominio/estilo.test.ts` tem 2.857 linhas que exigem as regras
+  do desenho antigo (raio, fio de 1px, uma família de fonte). Boa parte disso
+  quebra de propósito com o redesenho.
+- **Dado:** o estado tem migração versionada (plano 12), sincroniza entre
+  aparelhos pela conta (com fusão) e é lido pelos agentes através de
+  `ferramentas/espelho/monta.ts`. Mudar a forma do dado mexe nos três.
+- **Câmera:** o app mede de verdade só o **nível** do celular. Altura e
+  distância são conferidas a olho, pelas linhas. O protótipo simulou as três
+  como detectadas. O dono garante que **sempre vai ter rede** na hora das
+  fotos, então a câmera pode depender de rede se isso ajudar.
+- **Publicação:** push no `main` vai direto para produção.
+
+## O que é tela nova e o que é dado novo
+
+Só tela (o dado já existe ou não muda): o bloco do momento, a régua, o treino
+uma série por tela, comparar e "no tempo", tudo na mesma data, progressão
+(a regra `shouldUp` já existe), editor de programa, revisão do treinador,
+comida e compras, ajustes, estados vazios.
+
+Dado novo ou mudado (exige migração, fusão e espelho):
+
+1. **Resposta da comida por dia** ("foi como o plano?" sim, quase, não lembro)
+   como registro principal. Hoje já existem a marca por refeição e um "como
+   foi o dia" (`segui o plano`, `saí, mas sei o que comi`); é preciso decidir
+   como os dois convivem e como a regra dos 11 de 14 dias passa a contar.
+2. **Série "registrada depois"** (o "pôr em dia" do treino). Fica marcada no
+   histórico, mas **conta normalmente** para a sugestão de subir carga
+   (decisão do dono).
+3. **Sessão de fotos com ressalva:** o que mudou (luz, roupa, lugar) e "fora do
+   padrão" (tirada sem acertar).
+4. **Medida "uma leitura só".**
+5. **Módulos ligados e desligados** (água, peso, cardio, medidas extras,
+   lembretes).
+6. **"Vira regra?" no fim do treino.** Já existe algo parecido nas mudanças
+   que esperam decisão; é preciso ligar a pergunta nova a isso, e não criar
+   um segundo caminho.
+
+## Fases
+
+Cada fase termina com uma verificação só (tipos, build, a suíte) e um commit
+por peça inteira, direto no `main`. Push só quando o dono pedir.
+
+### Fase 0 — Fundação · **Fable**
+
+Nada de tela começa antes disto: tudo depende daqui.
+
+1. **Convivência do visual novo com o antigo.** Um interruptor por aparelho
+   (em Ajustes) liga o visual novo, para o `main` poder ir para produção sem
+   que uma tela pela metade apareça no uso real. No fim do projeto ele some.
+   *(decidido pelo dono)*
+2. **Tokens e fontes.** As cores, a escala de tipo e os raios da direção 3
+   viram o novo `tokens`. As duas fontes (Bricolage Grotesque e Instrument
+   Sans) ficam **dentro do app**, guardadas para funcionar sem rede, e não
+   carregadas do Google.
+3. **Componentes base**, com a interface que o Opus vai usar: o bloco do
+   momento, a régua, a folha de baixo, os botões (principal, contorno, link),
+   a lista com seta, o liga e desliga, a barra de progresso em segmentos, a
+   doca de navegação e o cabeçalho fino. Cada um com estados de toque, foco e
+   desabilitado, e com "reduzir movimento".
+4. **O dado novo.** Forma dos seis itens acima, a migração para o plano 13, a
+   fusão na sincronia e o espelho dos agentes. Testes de domínio para cada um,
+   incluindo a migração a partir das fixtures guardadas.
+5. **Estratégia de testes.** Classificar os 61 testes de fluxo e o
+   `estilo.test`: o que continua valendo (regra de dado, de gravação, de
+   navegação), o que se reescreve junto com a tela nova e o que sai porque
+   cobrava o desenho antigo. Resultado: uma lista que o Opus segue tela a tela.
+6. **Especificação curta de cada lote**, a partir dos protótipos: quais
+   componentes, quais dados do `main.jsx` cada tela usa e quais testes
+   reescrever. É o que permite ao Opus trabalhar sem reabrir decisões.
+7. **O que a captura de fotos automatiza** (ver Fase 1).
+
+### Fase 1 — Fotos (a prioridade do dono)
+
+- **Fable, com liberdade total:** o núcleo da câmera e **todas as decisões de
+  facilidade e automação da captura**. O dono quer que seja impecável e deixou
+  a escolha com o Fable: o que o app detecta sozinho (altura, distância, pose,
+  quando disparar), o que fica para quem fotografa conferir e o quanto o app
+  guia cada um dos três cenários (a pessoa de sempre, alguém novo, sozinho).
+  Pode usar rede. Os limites que continuam: a padronização vem primeiro,
+  "tirar mesmo assim" existe e marca a sessão como fora do padrão, nenhuma
+  das 11 poses sai do protocolo sem perguntar ao dono, e o resultado precisa
+  funcionar no iPhone 11 Pro Max. O Fable registra no fim do lote o que
+  decidiu e por quê.
+- **Opus:** o resto do lote sobre o núcleo pronto. Centro das fotos, "quem vai
+  fotografar" e "tudo como da última vez", a tela para quem nunca fez, o fim da
+  sessão, comparar (lado a lado, cortina, sobrepor), "no tempo", galeria, foto
+  aberta, ajustar enquadramento, lixeira, mandar para os agentes. Reescreve os
+  testes de fotos e protocolo conforme a lista da Fase 0.
+- **Fable:** revisão do lote.
+
+### Fase 2 — Corpo e evolução · **Opus**, revisão do Fable
+
+Corpo com a régua do peso, peso e taxa por semana, uma medida, medir agora
+(uma por tela, segunda leitura sempre pedida), bioimpedância, tudo na mesma
+data, ligar e desligar medidas. Todo o dado já está pronto da Fase 0.
+
+### Fase 3 — Treino
+
+- **Fable:** o registro da série no modo novo. Uma série por tela, o descanso
+  em tela cheia, "pôr em dia" (no meio e depois) e o aviso de intervalo
+  longo. É onde o app já perdeu série no passado: a fronteira entre rascunho,
+  tela e histórico. Também é do Fable a regra de quando sugerir subir carga;
+  a série registrada depois conta como as outras.
+- **Opus:** as telas em volta do registro. A sugestão "subir para X?" na série,
+  "mudar este exercício" (trocar, pular, mais uma série, deixar para o fim,
+  dor), a lista do treino com deload, o fim com "vira regra?", a tela de
+  progressão, a tela de um exercício, o programa, o editor do treino e a
+  revisão do treinador.
+- **Fable:** revisão do lote.
+
+### Fase 4 — Hoje e o restante · **Opus**, revisão do Fable
+
+Hoje (o bloco do momento, a linha do dia, "se quiser", o ritmo, o botão "+"),
+Dias e "responder os dias", Semana, Comida, alimentos, compras, Ajustes,
+primeira vez e os estados (vazio, sem rede, falha ao guardar). A regra de "o
+que fazer agora" já existe em `dominio/agora.ts` e muda pouco; o Opus ajusta
+com os testes que ela já tem.
+
+### Fase 5 — Virar a chave
+
+- **Opus:** apagar o interruptor, as telas e o CSS antigos que nada mais usa.
+  Atualizar `DESIGN.md`, `PRODUCT.md` e `docs/LASTRO_UX_CONTRACT.md` para a
+  direção 3.
+- **Fable:** revisão final do app inteiro com os dados reais, a 414 × 896, e
+  a lista do que fica para depois.
+
+## O que não muda de mãos
+
+Estas regras valem para os dois modelos, em qualquer fase:
+
+- **Não sair do que foi decidido.** Quem constrói segue o protótipo e a
+  especificação. Se algo não fecha, para e pergunta ao dono; não inventa
+  outra solução no meio.
+- **Nunca tirar pose, medida ou passo do protocolo sem perguntar.**
+- **Dado real é intocável fora da migração.** Nenhuma tela grava dado em
+  forma nova antes de a Fase 0 ter a migração pronta e testada.
+- **Commits** em português, com prefixo e escopo, sem linha de coautoria.
+  Um por peça inteira, no `main`, sem criar branch. Push só a pedido.
+- **Testar no fim** de cada fase, uma vez, e não a cada ajuste.
+
+## O que o dono decidiu (16/11)
+
+1. **Convivência:** interruptor em Ajustes, por aparelho.
+2. **Câmera:** sempre vai ter rede. O que automatizar e como facilitar a
+   captura fica com o Fable, com liberdade total (Fase 1).
+3. **Nomes das abas:** Hoje e Plano.
+4. **Série registrada depois:** conta igual para a sugestão de subir carga.

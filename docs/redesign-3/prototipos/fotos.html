@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lastro — lote 1, Fotos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --papel:#F6F3EC; --tinta:#0F0F0D; --t2:#56554E; --t3:#77766D; --fio:#DFDACE; --branco:#FFFDF8;
+  --lima:#D2F23A; --tanja:#FF9A4D; --lilas:#D3C6FF; --ceu:#BBDDFB; --menta:#BEEBD2; --areia:#EBE6DA; --parede:#E4DFD3; --chao:#CFC8B8;
+  --d:"Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+  --u:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mola:cubic-bezier(.2,.9,.25,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#E7E3D8;color:var(--tinta);font-family:var(--u);overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;text-align:inherit}
+button:focus-visible,[tabindex]:focus-visible{outline:2.5px solid var(--tinta);outline-offset:3px}
+::selection{background:var(--lima)}
+h1,h2,h3,p{margin:0}
+.n{font-family:var(--d);font-variant-numeric:tabular-nums}
+.palco{min-height:100vh;min-height:100svh;display:flex;gap:56px;align-items:center;justify-content:center;padding:32px}
+.lado{max-width:380px}
+.lado h1{font:800 40px/1 var(--d);letter-spacing:-.03em;text-wrap:balance}
+.lado p{color:var(--t2);margin-top:14px;line-height:1.55;text-wrap:pretty}
+.lado ul{color:var(--t2);padding-left:18px;line-height:1.5;display:grid;gap:10px;margin:18px 0 0}
+.lado b{color:var(--tinta)}
+.fone{width:392px;height:830px;flex:0 0 auto;border-radius:48px;background:var(--papel);overflow:hidden;position:relative;box-shadow:0 0 0 11px var(--tinta), 0 40px 70px -30px rgba(15,15,13,.5);display:flex;flex-direction:column}
+@media (max-width:880px){html,body{background:var(--papel)}.palco{padding:0;display:block}.lado{display:none}.fone{width:100%;height:100vh;height:100svh;border-radius:0;box-shadow:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+
+.tela{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:28px;scrollbar-width:none}
+.tela::-webkit-scrollbar{display:none}
+.mundo{background:var(--lilas);border-radius:0 0 34px 34px;padding:8px 20px 20px}
+.linha0{display:flex;align-items:center;justify-content:space-between;min-height:44px;font-size:13px;font-weight:600}
+.linha0 button{min-height:44px;min-width:44px;display:flex;align-items:center;gap:4px;font-weight:700}
+.linha0 svg{width:22px;height:22px}
+.quando{font:700 14px/1.2 var(--u);margin-top:12px}
+.titulo{font:800 50px/.92 var(--d);letter-spacing:-.04em;margin-top:6px;text-wrap:balance}
+.titulo.m{font-size:36px;line-height:.98}
+.apoio{font-size:15px;line-height:1.38;margin-top:8px;text-wrap:pretty}
+.acoes{display:flex;gap:8px;margin-top:16px;align-items:stretch}
+.vai{flex:1;min-height:58px;border-radius:99px;background:var(--tinta);color:var(--papel);font:700 18px/1 var(--d);display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .12s}
+.vai:active,.alt:active,.esc:active{transform:scale(.97)}
+.vai svg{width:22px;height:22px}
+.vai[disabled]{background:rgba(15,15,13,.18);color:var(--t2)}
+.alt{min-height:58px;padding:0 20px;border-radius:99px;box-shadow:inset 0 0 0 2px var(--tinta);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s}
+.livre{display:block;margin-top:8px;font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:4px;min-height:36px}
+.bloco{padding:18px 20px 0}
+.h{font:700 17px/1.1 var(--d);letter-spacing:-.02em;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.h small{font:500 13px var(--u);color:var(--t3);letter-spacing:0;text-align:right}
+.cab{padding:8px 12px 0 8px;display:flex;align-items:center;gap:4px;min-height:52px}
+.cab button{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+.cab svg{width:24px;height:24px}
+.cab h1{font:800 28px/1 var(--d);letter-spacing:-.03em;flex:1}
+.cab span{font-size:13px;font-weight:600;color:var(--t2)}
+.lin{display:flex;align-items:center;gap:14px;width:100%;min-height:62px;border-top:1.5px solid var(--fio)}
+.lin:first-of-type{border-top:0}
+.lin div{flex:1;min-width:0}
+.lin b{display:block;font:700 17px/1.15 var(--d);letter-spacing:-.01em}
+.lin span{font-size:13px;color:var(--t3);font-weight:500}
+.lin > svg{width:20px;height:20px;flex:0 0 auto;color:var(--t3)}
+
+/* a "foto": parede, chão e manequim. É ilustração, não foto de verdade. */
+.foto{position:relative;aspect-ratio:3/4;border-radius:18px;overflow:hidden;background:linear-gradient(to bottom,var(--parede) 0 88%,var(--chao) 88%);display:block;width:100%}
+.foto svg{position:absolute;inset:6% 0 4%;width:100%;height:90%}
+.fita{display:flex;gap:5px;margin-top:10px}
+.fita .foto{border-radius:9px;flex:1}
+.selo{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 11px;border-radius:99px;background:var(--menta);font:700 13px var(--d)}
+.selo.a{background:var(--tanja)}
+.selo svg{width:14px;height:14px}
+
+/* escolhas grandes */
+.esc{display:flex;align-items:center;gap:14px;width:100%;border-radius:26px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:16px 18px;margin-top:8px;transition:transform .12s}
+.esc[aria-pressed="true"]{background:var(--lima);box-shadow:inset 0 0 0 2.5px var(--tinta)}
+.esc b{display:block;font:700 19px/1.15 var(--d);letter-spacing:-.01em;color:var(--tinta)}
+.esc span{font-size:14px;color:var(--t2);line-height:1.35;display:block;margin-top:2px}
+.esc .o{flex:0 0 46px;height:46px;border-radius:50%;background:var(--areia);display:flex;align-items:center;justify-content:center}
+.esc[aria-pressed="true"] .o{background:var(--tinta);color:var(--lima)}
+.esc .o svg{width:22px;height:22px}
+.cond{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.cond button{min-height:46px;padding:0 14px;border-radius:99px;background:var(--menta);font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px}
+.cond button svg{width:16px;height:16px}
+.cond button[aria-pressed="false"]{background:var(--tanja)}
+.passos{display:grid;gap:10px;margin-top:14px}
+.passos div{display:flex;gap:14px;align-items:flex-start}
+.passos i{flex:0 0 38px;height:38px;border-radius:50%;background:var(--tinta);color:var(--papel);display:flex;align-items:center;justify-content:center;font:800 16px var(--d);font-style:normal}
+.passos b{display:block;font:700 18px/1.2 var(--d)}
+.passos span{font-size:14px;color:var(--t2);line-height:1.4}
+
+/* ---------- a câmera ---------- */
+.cam{flex:1;display:flex;flex-direction:column;min-height:0;padding:6px 14px calc(14px + env(safe-area-inset-bottom))}
+.cam-topo{display:flex;align-items:center;gap:8px;min-height:48px}
+.cam-topo button{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+.cam-topo svg{width:24px;height:24px}
+.cam-topo div{flex:1;min-width:0}
+.cam-topo b{display:block;font:800 22px/1.05 var(--d);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cam-topo span{font-size:13px;font-weight:600;color:var(--t2)}
+.segs{display:flex;gap:3px;margin:2px 0 8px}
+.segs i{flex:1;height:5px;border-radius:9px;background:rgba(15,15,13,.14)}
+.segs i.f{background:var(--tinta)}
+.segs i.a{background:var(--tanja)}
+.segs i.q{margin-left:6px}
+.visor{position:relative;flex:1;min-height:0;border-radius:28px;overflow:hidden;background:linear-gradient(to bottom,var(--parede) 0 86%,var(--chao) 86%);box-shadow:inset 0 0 0 2px var(--tinta)}
+.visor .gente{position:absolute;left:0;right:0;top:9%;bottom:7%;transition:transform .7s var(--mola)}
+.visor .gente svg{width:100%;height:100%}
+.visor .sombra{position:absolute;left:0;right:0;top:9%;bottom:7%;opacity:.55;pointer-events:none}
+.visor .sombra svg{width:100%;height:100%}
+.guia{position:absolute;left:0;right:0;height:0;border-top:2px dashed rgba(15,15,13,.55);pointer-events:none}
+.guia span{position:absolute;right:10px;top:-22px;font:700 12px var(--d);background:var(--papel);padding:2px 8px;border-radius:99px}
+.guia.ok{border-top:2.5px solid var(--tinta)}
+.guia.meio{border-top:1.5px dotted rgba(15,15,13,.35)}
+.aviso{margin-bottom:8px;min-height:56px;border-radius:22px;background:var(--tanja);box-shadow:inset 0 0 0 2px var(--tinta);padding:12px 14px;display:flex;align-items:center;gap:12px;font:700 17px/1.2 var(--d);animation:entra .4s var(--mola) both}
+.aviso.ok{background:var(--lima)}
+.aviso svg{width:28px;height:28px;flex:0 0 auto}
+@keyframes entra{from{opacity:0;transform:translateY(-10px)}}
+.clarao{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.clarao.on{animation:clarao .35s ease-out}
+@keyframes clarao{from{opacity:.9}to{opacity:0}}
+.portas{display:flex;gap:6px;margin-top:10px}
+.portas button{flex:1;min-height:52px;border-radius:18px;background:var(--tanja);box-shadow:inset 0 0 0 2px var(--tinta);padding:6px 10px;font:700 14px/1.15 var(--d);display:flex;align-items:center;gap:8px;transition:background .3s}
+.portas button svg{width:18px;height:18px;flex:0 0 auto}
+.portas button.ok{background:var(--lima)}
+.portas.mini button{min-height:36px;border-radius:99px;justify-content:center;box-shadow:inset 0 0 0 1.5px var(--tinta)}
+.portas.mini small{display:none}
+.portas button small{display:block;font:500 11px var(--u);color:var(--t2)}
+.fala{margin-top:10px;display:flex;align-items:center;gap:10px;min-height:52px}
+.fala p{flex:1;font:600 15px/1.3 var(--u)}
+.fala p small{display:block;font-size:12px;font-weight:600;color:var(--t2)}
+.fala button{flex:0 0 46px;height:46px;border-radius:50%;background:var(--areia);display:flex;align-items:center;justify-content:center}
+.fala svg{width:22px;height:22px}
+.disparo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.disparo .lat{flex:0 0 84px;min-height:46px;font-size:13px;font-weight:700;text-align:center;border-radius:99px;display:flex;align-items:center;justify-content:center}
+.disparo .lat[aria-pressed="true"]{background:var(--tinta);color:var(--papel)}
+.disparo .lat[aria-pressed="false"]{box-shadow:inset 0 0 0 1.5px var(--fio)}
+.botao{width:84px;height:84px;border-radius:50%;background:var(--tinta);box-shadow:0 0 0 5px var(--papel), 0 0 0 7.5px var(--tinta);display:flex;align-items:center;justify-content:center;color:var(--papel);font:800 30px var(--d);transition:transform .1s,background .3s}
+.botao:active{transform:scale(.92)}
+.botao[disabled]{background:rgba(15,15,13,.2);box-shadow:0 0 0 5px var(--papel), 0 0 0 7.5px rgba(15,15,13,.2)}
+.botao svg{width:30px;height:30px}
+.proto{font-size:12px;color:var(--t3);text-align:center;margin-top:8px;font-weight:500;min-height:32px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.mesmo{font-size:14px;font-weight:700;color:var(--tinta);text-decoration:underline;text-underline-offset:4px;min-height:40px;padding:0 6px}
+
+/* ---------- comparar ---------- */
+.modo{display:flex;background:var(--areia);border-radius:99px;padding:4px;gap:2px;margin:10px 20px 0}
+.modo button{flex:1;min-height:40px;border-radius:99px;font:700 14px var(--d);text-align:center}
+.modo button[aria-pressed="true"]{background:var(--tinta);color:var(--papel)}
+.poses{display:flex;gap:6px;overflow-x:auto;padding:10px 20px 2px;scrollbar-width:none}
+.poses::-webkit-scrollbar{display:none}
+.poses button{flex:0 0 auto;min-height:40px;padding:0 14px;border-radius:99px;box-shadow:inset 0 0 0 1.5px var(--fio);font-weight:600;font-size:14px;white-space:nowrap}
+.poses button[aria-pressed="true"]{background:var(--lilas);box-shadow:inset 0 0 0 2px var(--tinta)}
+.par{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 20px 0}
+.cortina{position:relative;margin:10px 20px 0;border-radius:18px;overflow:hidden;touch-action:pan-y;--x:50%}
+.cortina .foto{border-radius:0}
+.cortina .cima{position:absolute;inset:0;clip-path:inset(0 calc(100% - var(--x)) 0 0)}
+.cortina .pega{position:absolute;top:0;bottom:0;left:var(--x);width:3px;margin-left:-1.5px;background:var(--tinta)}
+.cortina .pega::after{content:"";position:absolute;top:50%;left:50%;width:44px;height:44px;margin:-22px;border-radius:50%;background:var(--lima);box-shadow:inset 0 0 0 2.5px var(--tinta)}
+.cortina .et{position:absolute;bottom:10px;font:700 12px var(--d);background:var(--papel);padding:3px 9px;border-radius:99px}
+.sobre{position:relative;margin:10px 20px 0}
+.sobre .cima{position:absolute;inset:0}
+.datas{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 20px 0}
+.datas div{border-radius:18px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:9px 12px;font-size:12px;color:var(--t2);font-weight:600}
+.datas b{display:block;font:800 18px/1.1 var(--d);color:var(--tinta);letter-spacing:-.02em}
+.trilha{position:relative;margin:14px 20px 0;height:56px}
+.trilha::before{content:"";position:absolute;left:14px;right:14px;top:21px;height:2px;background:var(--fio)}
+.trilha .pts{display:flex;justify-content:space-between;position:relative}
+.trilha button{width:28px;height:44px;display:flex;flex-direction:column;align-items:center;gap:6px;font:600 10px var(--d);color:var(--t3)}
+.trilha i{width:14px;height:14px;border-radius:50%;background:var(--papel);box-shadow:inset 0 0 0 2px var(--t3);margin-top:14px;transition:transform .2s var(--mola)}
+.trilha .de i,.trilha .ate i{transform:scale(1.9);background:var(--tinta);box-shadow:none}
+.trilha .ate i{background:var(--lilas);box-shadow:inset 0 0 0 2.5px var(--tinta)}
+.trilha .de,.trilha .ate{color:var(--tinta)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:none;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:9px;background:var(--fio)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:34px;height:34px;border-radius:50%;background:var(--lima);box-shadow:inset 0 0 0 2.5px var(--tinta);margin-top:-14px}
+input[type=range]::-moz-range-track{height:6px;border-radius:9px;background:var(--fio)}
+input[type=range]::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:var(--lima);border:2.5px solid var(--tinta)}
+.grade{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.grade .foto{border-radius:12px}
+.grade button{position:relative;display:block}
+.grade .marca{position:absolute;right:5px;top:5px;width:20px;height:20px;border-radius:50%;background:var(--tanja);box-shadow:inset 0 0 0 1.5px var(--tinta)}
+.sessao{padding:14px 20px 0}
+.sessao + .sessao{border-top:1.5px solid var(--fio);margin-top:14px}
+.veu{position:absolute;inset:0;background:rgba(15,15,13,.38);z-index:8;opacity:0;visibility:hidden;transition:opacity .22s}
+.veu.on{opacity:1;visibility:visible}
+.folha{position:absolute;left:0;right:0;bottom:0;z-index:9;background:var(--papel);border-radius:36px 36px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .34s var(--mola);max-height:90%;overflow-y:auto;visibility:hidden;scrollbar-width:none}
+.folha.on{transform:none;visibility:visible}
+.puxa{width:44px;height:5px;border-radius:99px;background:var(--fio);margin:0 auto 16px}
+.folha h2{font:800 30px/1 var(--d);letter-spacing:-.03em}
+.folha .sub{font-size:15px;color:var(--t2);margin-top:6px;line-height:1.4}
+.ver{padding:6px 44px 0}
+.ver-n{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 0}
+.ver-n button{min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center}
+.ver-n svg{width:24px;height:24px}
+.ver-n b{font:700 18px var(--d);text-align:center}
+.ver-n span{display:block;font:500 13px var(--u);color:var(--t2);text-align:center}
+.quadro{position:relative;margin:8px 44px 0;border-radius:18px;overflow:hidden;box-shadow:inset 0 0 0 2px var(--tinta)}
+.quadro .foto{border-radius:0;transition:transform .12s linear}
+.quadro::before,.quadro::after{content:"";position:absolute;pointer-events:none;z-index:1}
+.quadro::before{left:33.3%;right:33.3%;top:0;bottom:0;border-left:1px solid rgba(15,15,13,.3);border-right:1px solid rgba(15,15,13,.3)}
+.quadro::after{top:9%;bottom:7%;left:0;right:0;border-top:2px dashed rgba(15,15,13,.6);border-bottom:2px dashed rgba(15,15,13,.6)}
+.ctl{padding:8px 20px 0}
+.ctl label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--t2)}
+.ctl label b{font:800 16px var(--d);color:var(--tinta)}
+.torta{position:absolute;left:12px;right:12px;bottom:12px;border-radius:24px;background:var(--papel);box-shadow:inset 0 0 0 2px var(--tinta);padding:14px;animation:entra .35s var(--mola) both}
+.torta b{font:700 18px/1.2 var(--d);display:block}
+.torta span{font-size:14px;color:var(--t2);display:block;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="palco">
+  <aside class="lado">
+    <h1>Lote 1 · Fotos</h1>
+    <p>Protótipo navegável. As “fotos” são um manequim desenhado, para o protótipo não carregar foto de ninguém.</p>
+    <ul>
+      <li><b>O padrão é obrigatório, e quem carrega é o app.</b> O botão de tirar foto só destrava com nível, altura e distância certos.</li>
+      <li><b>Três cenários:</b> a pessoa de sempre (direto), alguém novo (três passos escritos para ela) e você sozinho (apoio e contagem).</li>
+      <li><b>“Tudo como da última vez?”</b> Um toque confirma luz, roupa, lente e lugar. O que mudou fica anotado na sessão.</li>
+      <li><b>Onze poses, quatro posições.</b> O ajuste é uma vez só; depois é um toque por foto, e a voz fala com quem está sendo fotografado.</li>
+      <li><b>Comparar</b> em lado a lado, cortina e sobrepor, com as sessões numa linha do tempo. <b>No tempo</b> passa as sessões como um filme.</li>
+    </ul>
+  </aside>
+  <div class="fone" id="fone">
+    <main class="tela" id="tela"></main>
+    <div class="veu" id="veu"></div>
+    <section class="folha" id="folha" role="dialog" aria-modal="true"></section>
+  </div>
+</div>
+<script>
+const I = (d, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ic = {
+  volta: I('<path d="M15 5.5L8.5 12l6.5 6.5"/>', 2.4), dir: I('<path d="M9 5.5l6.5 6.5L9 18.5"/>', 2.2), seta: I('<path d="M5 12h14M13 6l6 6-6 6"/>', 2.4),
+  ok: I('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 2.8), x: I('<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>', 2.4),
+  cam: I('<path d="M4 8.5h3l1.5-2.5h7L17 8.5h3v10H4z"/><circle cx="12" cy="13.2" r="3.2"/>'),
+  um: I('<circle cx="12" cy="7" r="3.2"/><path d="M5.5 20c.6-3.8 3.2-6 6.5-6s5.900 2.200 6.500 6"/>'),
+  dois: I('<circle cx="8.5" cy="8" r="2.8"/><circle cx="16.500" cy="9" r="2.300"/><path d="M3 19.500c.5-3.200 2.700-5 5.500-5s5 1.800 5.500 5M14.500 14.800c2.900-.6 5.400 1 6 4.200"/>'),
+  tripe: I('<rect x="8.5" y="3.500" width="7" height="10" rx="1.800"/><path d="M12 13.500v3M12 16.500l-4.500 4M12 16.500l4.500 4"/>'),
+  som: I('<path d="M4 10v4h3.500L12 18V6L7.500 10zM15.500 9a4 4 0 010 6M18 6.500a7.500 7.500 0 010 11"/>'),
+  nivel: I('<rect x="3.500" y="9" width="17" height="6" rx="3"/><circle cx="12" cy="12" r="1.600"/>'),
+  alt: I('<path d="M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4"/>'),
+  dist: I('<path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4"/>'),
+  gira: I('<path d="M19.500 12a7.500 7.500 0 11-2.600-5.700"/><path d="M19.500 4v4.500H15"/>', 2.2),
+  lixo: I('<path d="M5 7h14M9.500 7V4.500h5V7M7 7l.8 12.500h8.400L17 7"/>'),
+  play: I('<path d="M8 5.500l10 6.500-10 6.500z"/>', 2.2), envia: I('<path d="M12 15V4.500M8 8l4-3.500L16 8M5 14.500V19h14v-4.500"/>', 2.2)
+};
+const POSES = [
+  { id:'fr', n:'Frente relaxado', v:'frente', b:'solto', giro:0, fala:'Braços soltos, um palmo do corpo. Solte o ar e segure.', conf:'pés no T · braços um palmo do corpo' },
+  { id:'fa', n:'Frente braços afastados', v:'frente', b:'A', giro:0, fala:'Abra os braços em A, palmas para a frente.', conf:'braços longe da cintura' },
+  { id:'fb', n:'Frente duplo bíceps', v:'frente', b:'biceps', giro:0, fala:'Duplo bíceps, cotovelos na altura do ombro.', conf:'punhos podem passar da linha de cima' },
+  { id:'ab', n:'Abdômen e coxa', v:'frente', b:'nuca', giro:0, fala:'Mãos na nuca, olhe para a frente, uma perna à frente.', conf:'cabeça reta' },
+  { id:'pd', n:'Perfil direito', v:'perfil', b:'solto', giro:90, fala:'Braços soltos ao lado do corpo.', conf:'ombro e quadril alinhados' },
+  { id:'pn', n:'Perfil direito natural', v:'perfil', b:'solto', giro:90, fala:'Marque passo três vezes e pare como parou.', conf:'postura do dia a dia, sem arrumar' },
+  { id:'pm', n:'Perfil mãos na nuca', v:'perfil', b:'nuca', giro:90, fala:'Mãos na nuca, cotovelos para a frente.', conf:'cotovelo não cobre o tronco' },
+  { id:'cr', n:'Costas relaxado', v:'costas', b:'solto', giro:180, fala:'Braços soltos, um palmo do corpo.', conf:'pés no T' },
+  { id:'cb', n:'Costas duplo bíceps', v:'costas', b:'biceps', giro:180, fala:'Duplo bíceps, abra as costas.', conf:'cotovelos na altura do ombro' },
+  { id:'cc', n:'Costas mãos na cintura', v:'costas', b:'cintura', giro:180, fala:'Mãos só apoiadas na cintura, sem apertar.', conf:'mãos sem pinçar' },
+  { id:'pe', n:'Perfil esquerdo', v:'perfil', b:'solto', giro:270, fala:'Braços soltos ao lado do corpo.', conf:'ombro e quadril alinhados' }
+];
+const SES = [['06/07',72.4,null],['21/07',73.0,null],['06/08',73.6,null],['16/08',74.0,null],['24/08',74.3,null],['04/09',74.9,null],['20/09',75.6,null],['01/10',76.3,84.5],['15/10',77.1,null],['29/10',77.6,86.0],['12/11',77.9,null]];
+const $ = s => document.querySelector(s);
+const vir = v => String(v).replace('.', ',');
+
+/* o manequim: `s` é a sessão (0..10), que alarga ombro e tronco aos poucos */
+function gente(p, s, fantasma) {
+  const k = s / 10, o = 25 + 4*k, c = 15 + 1.5*k, cor = fantasma ? 'none' : '#3A3934', tr = fantasma ? 'stroke="#0F0F0D" stroke-width="1.6" stroke-dasharray="4 4"' : '';
+  const L = (d, w) => fantasma ? `<path d="${d}" fill="none" stroke="#0F0F0D" stroke-width="1.6" stroke-dasharray="4 4"/>` : `<path d="${d}" fill="none" stroke="#3A3934" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  let arms = '', sx = p.v === 'perfil' ? .58 : 1;
+  const ox = 60 - o, dx = 60 + o;
+  if (p.b === 'solto') arms = L(`M${ox} 64L${ox - 7} 150`, 11) + L(`M${dx} 64L${dx + 7} 150`, 11);
+  if (p.b === 'A') arms = L(`M${ox} 64L${ox - 26} 140`, 11) + L(`M${dx} 64L${dx + 26} 140`, 11);
+  if (p.b === 'biceps') arms = L(`M${ox} 64L${ox - 24} 62L${ox - 26} 30`, 11) + L(`M${dx} 64L${dx + 24} 62L${dx + 26} 30`, 11);
+  if (p.b === 'nuca') arms = L(`M${ox} 64L${ox - 18} 44L60 26`, 10) + L(`M${dx} 64L${dx + 18} 44L60 26`, 10);
+  if (p.b === 'cintura') arms = L(`M${ox} 64L${ox - 22} 104L${60 - c} 136`, 10) + L(`M${dx} 64L${dx + 22} 104L${60 + c} 136`, 10);
+  if (p.v === 'perfil' && p.b === 'solto') arms = L(`M62 66L66 150`, 11);
+  if (p.v === 'perfil' && p.b === 'nuca') arms = L(`M60 64L86 44L62 28`, 10);
+  const tronco = `M${ox} 58Q60 50 ${dx} 58L${60 + c} 138L${60 + c + 4} 168L${60 - c - 4} 168L${60 - c} 138Z`;
+  const corpo = `<circle cx="60" cy="27" r="15" fill="${cor}" ${tr}/><path d="M54 40h12v14H54z" fill="${cor}" ${tr}/><path d="${tronco}" fill="${cor}" ${tr} stroke-linejoin="round"/>` +
+    L(`M${60 - c + 3} 168L${60 - 13} 288`, 17) + L(`M${60 + c - 3} 168L${60 + 13} 288`, 17) + arms;
+  return `<svg viewBox="0 0 120 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(60 0) scale(${sx} 1) translate(-60 0)">${corpo}</g></svg>`;
+}
+const foto = (p, s, extra) => `<span class="foto" ${extra || ''}>${gente(p, s)}</span>`;
+
+const E = { t:'centro', quem:'sempre', cond:{ luz:true, roupa:true, lugar:true, lente:true }, pose:0, portas:{ nivel:false, alt:false, dist:false }, ajustado:false, feitas:[], fantasma:true, torta:false, jaTorta:false,
+  cmp:{ pose:0, de:0, ate:10, modo:'lado', mix:50 }, tp:{ pose:0, i:10 }, gal:{ s:10, p:0 }, aj:{ r:0, z:1 }, conta:null };
+const vai = t => { E.t = t; desenha(true); };
+
+/* ---------- o centro das fotos ---------- */
+function centro() {
+  return `<section class="mundo"><div class="linha0"><button data-a="nada">${ic.volta} Corpo</button><span>fotos do corpo</span></div>
+      <p class="quando">a cada 14 dias · a última foi há 4</p><h1 class="titulo">Próxima em 10 dias</h1>
+      <p class="apoio">Quinta, 26 de novembro. Dá para fazer antes, se quiser: a comparação usa a data de cada sessão.</p>
+      <div class="acoes"><button class="vai" data-a="vai" data-t="quem">${ic.cam} Nova sessão</button></div></section>
+    <div class="bloco"><h2 class="h">Última sessão <small class="n">12/11 · 11 de 11 no padrão</small></h2>
+      <div class="fita">${POSES.slice(0, 6).map(p => foto(p, 10)).join('')}</div></div>
+    <div class="bloco"><div>
+      <button class="lin" data-a="vai" data-t="comparar"><div><b>Comparar</b><span>duas datas da mesma pose, de três jeitos</span></div>${ic.dir}</button>
+      <button class="lin" data-a="vai" data-t="tempo"><div><b>No tempo</b><span>as 11 sessões de uma pose, em sequência</span></div>${ic.dir}</button>
+      <button class="lin" data-a="vai" data-t="galeria"><div><b>Galeria</b><span>121 fotos em 11 sessões · lixeira vazia</span></div>${ic.dir}</button>
+    </div></div>`;
+}
+
+/* ---------- antes da sessão ---------- */
+function quem() {
+  const op = [['sempre', ic.dois, 'A pessoa de sempre', 'Ela já conhece. Vai direto para a câmera.'], ['novo', ic.um, 'Alguém que nunca fez', 'O app explica em três passos, na tela, para ela.'], ['sozinho', ic.tripe, 'Eu, sozinho', 'Celular apoiado, contagem e voz. Sem tocar na tela.']];
+  const todas = Object.values(E.cond).every(Boolean);
+  const cd = [['lugar', 'mesmo lugar'], ['luz', 'mesma luz'], ['roupa', 'mesma roupa'], ['lente', 'lente 1×']];
+  return `<header class="cab"><button data-a="vai" data-t="centro" aria-label="Voltar">${ic.volta}</button><h1>Nova sessão</h1><span class="n">~4 min</span></header>
+    <div class="bloco"><h2 class="h">Quem vai segurar o celular?</h2>
+      ${op.map(o => `<button class="esc" data-a="quem" data-q="${o[0]}" aria-pressed="${E.quem === o[0]}"><span class="o">${o[1]}</span><span><b>${o[2]}</b><span>${o[3]}</span></span></button>`).join('')}</div>
+    <div class="bloco"><h2 class="h">Tudo como da última vez? <small>toque no que mudou</small></h2>
+      <div class="cond">${cd.map(c => `<button data-a="cond" data-c="${c[0]}" aria-pressed="${E.cond[c[0]]}">${E.cond[c[0]] ? ic.ok : ic.x}${E.cond[c[0]] ? c[1] : c[1].replace('mesma', 'outra').replace('mesmo', 'outro').replace('lente 1×', 'outra lente')}</button>`).join('')}</div>
+      <p class="apoio" style="color:var(--t2);font-size:14px">${todas ? 'Nada mudou: a sessão entra na comparação sem ressalva.' : E.cond.lente ? 'A sessão continua valendo. O que mudou fica escrito nela e aparece ao comparar.' : 'A lente não pode mudar: ela deforma o corpo. O app trava a câmera na 1×.'}</p></div>
+    <div class="bloco"><div class="acoes" style="margin-top:4px"><button class="vai" data-a="comeca">${E.quem === 'novo' ? 'Passar o celular' : 'Abrir a câmera'} ${ic.seta}</button></div></div>`;
+}
+function passar() {
+  return `<header class="cab"><button data-a="vai" data-t="quem" aria-label="Voltar">${ic.volta}</button><h1>Para quem vai fotografar</h1></header>
+    <section class="mundo" style="border-radius:34px;margin:8px 12px 0;background:var(--lima)"><h1 class="titulo m" style="margin-top:14px">São 11 fotos e uns 4 minutos.</h1>
+      <p class="apoio">Você não precisa saber de nada. A tela diz o que acertar, e a voz fala com quem está sendo fotografado.</p></section>
+    <div class="bloco"><div class="passos">
+      <div><i>1</i><div><b>Sente na cadeira marcada</b><span>Cotovelos apoiados nos joelhos. É isso que deixa o celular parado.</span></div></div>
+      <div><i>2</i><div><b>Acerte três coisas, uma vez</b><span>Inclinação, altura e distância. Cada uma fica verde quando está certa.</span></div></div>
+      <div><i>3</i><div><b>Depois, não saia do lugar</b><span>É um toque por foto. Se uma sair torta, o app avisa e você repete.</span></div></div></div>
+      <div class="acoes"><button class="vai" data-a="vai" data-t="camera">Entendi ${ic.seta}</button></div></div>`;
+}
+
+/* ---------- a câmera ---------- */
+const ERRO = { nivel:'rotate(5deg)', alt:'translateY(9%)', dist:'scale(.8)' };
+function camera() {
+  const p = POSES[E.pose], so = E.quem === 'sozinho';
+  const certo = E.portas.nivel && E.portas.alt && E.portas.dist, livre = certo || E.forcado;
+  const falta = !E.portas.nivel ? 'nivel' : !E.portas.alt ? 'alt' : !E.portas.dist ? 'dist' : null;
+  const tf = ['nivel', 'alt', 'dist'].filter(k => !E.portas[k]).map(k => ERRO[k]).join(' ');
+  const msg = { nivel:[ic.nivel, 'Endireite o celular: ele está inclinado.'], alt:[ic.alt, 'Suba as mãos até sobrar o mesmo espaço em cima e embaixo.'], dist:[ic.dist, 'Chegue a cadeira para a frente: cabeça e pés nas linhas.'] };
+  const girou = E.ajustado && E.pose > 0 && POSES[E.pose - 1].giro !== p.giro && !E.torta;
+  const aviso = E.torta ? '' : E.forcado && falta ? `<div class="aviso">${ic.x}<span>Fora do padrão: ${({ nivel:'nível', alt:'altura', dist:'distância' })[falta]} sem acertar. Fica anotado.</span></div>` : falta ? `<div class="aviso">${msg[falta][0]}<span>${msg[falta][1]}</span></div>`
+    : !E.ajustado ? `<div class="aviso ok">${ic.ok}<span>Tudo certo. Agora não saia do lugar até o fim.</span></div>`
+    : girou ? `<div class="aviso ok">${ic.gira}<span>Um quarto de volta para a esquerda.</span></div>` : '';
+  const posic = [0, 4, 7, 10];
+  return `<div class="cam"><div class="cam-topo"><button data-a="vai" data-t="quem" aria-label="Sair da câmera">${ic.x}</button>
+      <div><b>${E.ajustado ? p.n : 'Ajuste, uma vez só'}</b><span class="n">${E.ajustado ? 'foto ' + (E.pose + 1) + ' de 11 · posição ' + (posic.filter(x => x <= E.pose).length) + ' de 4' : so ? 'apoie o celular e confira pela tela' : 'depois é um toque por foto'}</span></div></div>
+    <div class="segs">${POSES.map((_, i) => `<i class="${i < E.pose ? 'f' : i === E.pose ? 'a' : ''} ${posic.includes(i) && i ? 'q' : ''}"></i>`).join('')}</div>
+    ${E.conta != null ? aviso.replace('class="aviso', 'style="animation:none" class="aviso') : aviso}<div class="visor"><div class="guia ${E.portas.dist ? 'ok' : ''}" style="top:9%"><span>cabeça</span></div><div class="guia meio" style="top:50%"></div><div class="guia ${E.portas.dist ? 'ok' : ''}" style="bottom:7%"><span>pés</span></div>
+      ${E.fantasma && E.ajustado ? `<div class="sombra">${gente(p, 9, true)}</div>` : ''}
+      <div class="gente" style="transform:${tf || 'none'}">${gente(p, 10)}</div>
+      ${E.torta ? `<div class="torta"><b>Esta saiu inclinada: 3,1°</b><span>O limite é 2°. Repetir leva dois segundos.</span><div class="acoes" style="margin-top:12px"><button class="vai" data-a="repete" style="min-height:50px">Repetir</button><button class="alt" data-a="assim" style="min-height:50px">Guardar assim</button></div></div>` : ''}
+      <div class="clarao" id="clarao"></div></div>
+    <div class="portas ${E.ajustado ? 'mini' : ''}">${[['nivel', ic.nivel, 'Nível'], ['alt', ic.alt, 'Altura'], ['dist', ic.dist, 'Distância']].map(g => `<button class="${E.portas[g[0]] ? 'ok' : ''}" data-a="porta" data-p="${g[0]}" aria-label="${g[2]}: ${E.portas[g[0]] ? 'certo' : 'acertar'}">${E.portas[g[0]] ? ic.ok : g[1]}<span>${g[2]}<small>${E.portas[g[0]] ? 'certo' : 'acertar'}</small></span></button>`).join('')}</div>
+    ${E.ajustado ? `<div class="fala"><p>“${p.fala}”<small>confira: ${p.conf}</small></p><button data-a="nada" aria-label="Repetir a fala">${ic.som}</button></div>` : `<p class="proto">protótipo: toque no que está laranja para simular o acerto${certo ? '' : ' · <button class="mesmo" data-a="forca">Tirar mesmo assim</button>'}</p>`}
+    <div class="disparo"><button class="lat" data-a="fantasma" aria-pressed="${E.fantasma}">foto anterior</button>
+      <button class="botao" data-a="${E.ajustado ? 'dispara' : 'ajustado'}" ${livre && !E.torta ? '' : 'disabled'} aria-label="${E.ajustado ? 'Tirar a foto' : 'Confirmar o ajuste'}">${E.ajustado ? (so ? `<span class="n">${E.conta == null ? '▶' : E.conta}</span>` : ic.cam) : ic.ok}</button>
+      <span class="lat n" style="color:var(--t2)">${E.ajustado ? (so ? (E.conta == null ? 'toque e vá para a marca' : 'toque para pausar') : (11 - E.pose) + ' faltam') : 'travado até ficar verde'}</span></div></div>`;
+}
+function fim() {
+  const mud = Object.entries(E.cond).filter(c => !c[1]).map(c => ({ luz:'outra luz', roupa:'outra roupa', lugar:'outro lugar', lente:'outra lente' })[c[0]]);
+  return `<section class="mundo" style="background:var(${E.forcado ? '--tanja' : '--menta'})"><div class="linha0"><span>sessão de hoje</span><span class="n">3 min 50 s</span></div>
+      <p class="quando">guardada</p><h1 class="titulo m">11 de 11, ${E.forcado ? 'fora do padrão' : E.assim ? 'uma fora do padrão' : mud.length ? 'com uma ressalva' : 'todas no padrão'}</h1>
+      <p class="apoio">${E.forcado ? 'O ajuste não foi confirmado. A sessão vale, e aparece com esse aviso ao comparar. ' : ''}${mud.length ? 'Anotado nesta sessão: ' + mud.join(', ') + '. Aparece ao comparar.' : 'Mesmo lugar, mesma luz, mesma roupa, lente 1×.'}</p>
+      <div class="acoes"><button class="vai" data-a="vai" data-t="comparar">Comparar com 06/07 ${ic.seta}</button></div><button class="livre" data-a="vai" data-t="centro">Fechar</button></section>
+    <div class="bloco"><h2 class="h">As onze <small>toque para ver ou refazer</small></h2><div class="grade">${POSES.map((p, i) => `<button data-a="nada">${foto(p, 10)}${E.assim && i === 4 ? '<span class="marca" title="fora do padrão"></span>' : ''}</button>`).join('')}</div></div>
+    <div class="bloco"><h2 class="h">Próxima <small>avisamos na véspera, se quiser</small></h2><p class="apoio">Segunda, 30 de novembro.</p></div>`;
+}
+
+/* ---------- comparar ---------- */
+function comparar() {
+  const c = E.cmp, p = POSES[c.pose], a = SES[c.de], b = SES[c.ate];
+  let palco;
+  if (c.modo === 'lado') palco = `<div class="par">${foto(p, c.de)}${foto(p, c.ate)}</div>`;
+  else if (c.modo === 'cortina') palco = `<div class="cortina" id="cortina">${foto(p, c.ate)}<div class="cima">${foto(p, c.de)}</div><div class="pega"></div><span class="et n" style="left:10px">${a[0]}</span><span class="et n" style="right:10px">${b[0]}</span></div>`;
+  else palco = `<div class="sobre">${foto(p, c.de)}<div class="cima" id="cima" style="opacity:${c.mix / 100}">${foto(p, c.ate, 'style="background:none"')}</div></div><div style="padding:4px 20px 0"><input type="range" min="0" max="100" value="${c.mix}" id="mix" aria-label="Quanto da foto mais nova aparece"></div>`;
+  const dias = [0,15,31,41,49,60,76,87,101,115,129];
+  return `<header class="cab"><button data-a="vai" data-t="centro" aria-label="Voltar">${ic.volta}</button><h1>Comparar</h1><span class="n">${dias[c.ate] - dias[c.de]} dias</span></header>
+    <div class="poses">${POSES.map((x, i) => `<button data-a="cmp-pose" data-i="${i}" aria-pressed="${i === c.pose}">${x.n}</button>`).join('')}</div>
+    <div class="modo">${[['lado', 'Lado a lado'], ['cortina', 'Cortina'], ['sobre', 'Sobrepor']].map(m => `<button data-a="cmp-modo" data-m="${m[0]}" aria-pressed="${c.modo === m[0]}">${m[1]}</button>`).join('')}</div>
+    ${palco}
+    <div class="datas"><div><b class="n">${a[0]}</b>${vir(a[1].toFixed(1))} kg${a[2] ? ' · cintura ' + vir(a[2].toFixed(1)) : ''}</div><div><b class="n">${b[0]}</b>${vir(b[1].toFixed(1))} kg${b[2] ? ' · cintura ' + vir(b[2].toFixed(1)) : ''} · <span class="n">+${vir((b[1] - a[1]).toFixed(1))}</span></div></div>
+    <div class="trilha"><div class="pts">${SES.map((s, i) => `<button class="${i === c.de ? 'de' : i === c.ate ? 'ate' : ''}" data-a="cmp-data" data-i="${i}" aria-label="sessão de ${s[0]}"><i></i>${i === c.de || i === c.ate ? s[0] : ''}</button>`).join('')}</div></div>
+    <div class="bloco" style="padding-top:6px"><p class="apoio" style="font-size:13px;color:var(--t2)">Toque numa sessão para trocar a data mais próxima. O par que abre é o mais longo: em duas semanas a diferença é quase toda água.</p>
+      <div class="acoes"><button class="alt" style="flex:1" data-a="envia">${ic.envia} Mandar para os agentes</button></div></div>`;
+}
+function tempo() {
+  const t = E.tp, p = POSES[t.pose], s = SES[t.i];
+  return `<header class="cab"><button data-a="vai" data-t="centro" aria-label="Voltar">${ic.volta}</button><h1>No tempo</h1><span>11 sessões</span></header>
+    <div class="poses">${POSES.map((x, i) => `<button data-a="tp-pose" data-i="${i}" aria-pressed="${i === t.pose}">${x.n}</button>`).join('')}</div>
+    <div style="padding:10px 56px 0" id="tp-foto">${foto(p, t.i)}</div>
+    <div class="datas"><div><b class="n" id="tp-data">${s[0]}</b>sessão ${t.i + 1} de 11</div><div><b class="n" id="tp-peso">${vir(s[1].toFixed(1))} kg</b>média da semana</div></div>
+    <div style="padding:6px 20px 0"><input type="range" min="0" max="10" step="1" value="${t.i}" id="tp-r" aria-label="Sessão"></div>
+    <div class="bloco" style="padding-top:2px"><div class="acoes" style="margin-top:4px"><button class="vai" data-a="tp-play">${ic.play} Passar do começo</button></div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">Arraste para ir e voltar. Como todas saem do mesmo lugar e na mesma distância, o corpo fica parado e só a mudança aparece.</p></div>`;
+}
+function galeria() {
+  return `<header class="cab"><button data-a="vai" data-t="centro" aria-label="Voltar">${ic.volta}</button><h1>Galeria</h1><button data-a="lixeira" aria-label="Lixeira">${ic.lixo}</button></header>
+    ${[10, 9, 8, 7].map(i => `<div class="sessao"><h2 class="h"><span class="n">${SES[i][0]}</span><small>${i === 9 ? '<span class="selo a">outra luz</span>' : '<span class="selo">' + ic.ok + ' no padrão</span>'}</small></h2>
+      <div class="grade" style="grid-template-columns:repeat(6,1fr);gap:4px">${POSES.slice(0, 6).map((p, k) => `<button data-a="ver" data-s="${i}" data-p="${k}">${foto(p, i)}</button>`).join('')}</div>
+      <button class="livre" data-a="ver" data-s="${i}" data-p="0">ver as 11</button></div>`).join('')}`;
+}
+
+function verFoto() { const g = E.gal, p = POSES[g.p], s = SES[g.s];
+  return `<header class="cab"><button data-a="vai" data-t="galeria" aria-label="Voltar">${ic.volta}</button><h1 class="n">${s[0]}</h1><button data-a="lixo-foto" aria-label="Apagar esta foto">${ic.lixo}</button></header>
+    <div class="ver">${foto(p, g.s)}</div>
+    <div class="ver-n"><button data-a="ver-anda" data-d="-1" aria-label="Pose anterior">${ic.volta}</button><div><b>${p.n}</b><span class="n">foto ${g.p + 1} de 11 · ${vir(s[1].toFixed(1))} kg na semana · 21h1${g.p % 10}</span></div><button data-a="ver-anda" data-d="1" aria-label="Próxima pose">${ic.dir}</button></div>
+    <div class="bloco" style="padding-top:8px"><div class="acoes" style="margin-top:0"><button class="alt" style="flex:1" data-a="vai" data-t="ajustar">Ajustar enquadramento</button><button class="alt" style="flex:1" data-a="cmp-daqui">Comparar</button></div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">${g.s === 9 ? 'Sessão com ressalva: outra luz.' : 'No padrão: nível 0,4°, lente 1×.'} Ajustar não mexe na foto original.</p></div>`; }
+function ajustar() { const g = E.gal, p = POSES[g.p];
+  return `<header class="cab"><button data-a="vai" data-t="verFoto" aria-label="Voltar">${ic.volta}</button><h1>Ajustar</h1><span>${p.n}</span></header>
+    <div class="quadro"><span id="aj-f" style="display:block;transform:rotate(${E.aj.r}deg) scale(${E.aj.z})">${foto(p, g.s)}</span></div>
+    <div class="ctl"><label>Girar <b class="n" id="aj-rv">${vir(E.aj.r.toFixed(1))}°</b></label><input type="range" min="-6" max="6" step="0.1" value="${E.aj.r}" id="aj-r" aria-label="Girar a foto"></div>
+    <div class="ctl" style="padding-top:0"><label>Aproximar <b class="n" id="aj-zv">${vir(E.aj.z.toFixed(2))}×</b></label><input type="range" min="1" max="2" step="0.01" value="${E.aj.z}" id="aj-z" aria-label="Aproximar a foto"></div>
+    <div class="bloco" style="padding-top:2px"><p class="apoio" style="font-size:13px;color:var(--t2)">Ponha a cabeça e os pés nas linhas tracejadas. É o mesmo quadro da câmera.</p>
+      <div class="acoes" style="margin-top:10px"><button class="vai" data-a="vai" data-t="verFoto">Salvar</button><button class="alt" data-a="aj-zera">Original</button></div></div>`; }
+function folha(h) { $('#folha').innerHTML = `<div class="puxa"></div>` + h; $('#folha').classList.add('on'); $('#veu').classList.add('on'); }
+function fecha() { $('#folha').classList.remove('on'); $('#veu').classList.remove('on'); }
+
+const TELAS = { centro, quem, passar, camera, fim, comparar, tempo, galeria, verFoto, ajustar };
+function desenha(topo) {
+  const t = $('#tela'), y = t.scrollTop, ps = t.querySelector('.poses'), px = ps ? ps.scrollLeft : 0;
+  t.innerHTML = TELAS[E.t](); t.style.display = E.t === 'camera' ? 'flex' : ''; t.style.flexDirection = 'column'; t.style.paddingBottom = E.t === 'camera' ? '0' : '';
+  t.scrollTop = topo ? 0 : y; const ps2 = t.querySelector('.poses'); if (ps2) ps2.scrollLeft = px;
+  const co = $('#cortina'); if (co) { const mv = ev => { const r = co.getBoundingClientRect(); co.style.setProperty('--x', Math.max(4, Math.min(96, (ev.clientX - r.left) / r.width * 100)) + '%'); };
+    co.addEventListener('pointerdown', ev => { co.setPointerCapture(ev.pointerId); mv(ev); }); co.addEventListener('pointermove', ev => { if (ev.buttons || ev.pointerType === 'touch') mv(ev); }); }
+  const mix = $('#mix'); if (mix) mix.addEventListener('input', () => { E.cmp.mix = +mix.value; $('#cima').style.opacity = mix.value / 100; });
+  const tr = $('#tp-r'); if (tr) tr.addEventListener('input', () => mostraTempo(+tr.value));
+  const ar = $('#aj-r'), az = $('#aj-z'); if (ar) { const ap = () => { E.aj.r = +ar.value; E.aj.z = Math.max(+az.value, 1 + Math.abs(E.aj.r) * 0.035); az.value = E.aj.z; $('#aj-f').style.transform = `rotate(${E.aj.r}deg) scale(${E.aj.z})`; $('#aj-rv').textContent = vir(E.aj.r.toFixed(1)) + '°'; $('#aj-zv').textContent = vir(E.aj.z.toFixed(2)) + '×'; }; ar.addEventListener('input', ap); az.addEventListener('input', ap); }
+}
+function mostraTempo(i) { E.tp.i = i; const s = SES[i]; $('#tp-foto').innerHTML = foto(POSES[E.tp.pose], i); $('#tp-data').textContent = s[0]; $('#tp-peso').textContent = vir(s[1].toFixed(1)) + ' kg'; $('#tp-data').nextSibling.textContent = 'sessão ' + (i + 1) + ' de 11'; }
+let filme = null, relogio = null;
+function dispara() { const cl = $('#clarao'); if (cl) { cl.classList.remove('on'); void cl.offsetWidth; cl.classList.add('on'); }
+  setTimeout(() => { if (E.pose === 4 && !E.jaTorta && E.quem !== 'sozinho') { E.torta = true; E.jaTorta = true; desenha(); return; } E.pose++; if (E.pose >= POSES.length) { clearInterval(relogio); E.conta = null; vai('fim'); } else { if (E.quem === 'sozinho') E.conta = POSES[E.pose].giro !== POSES[E.pose - 1].giro ? 5 : 3; desenha(); } }, 320); }
+document.addEventListener('click', ev => {
+  if (ev.target.id === 'veu') { fecha(); return; }
+  const b = ev.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
+  if (a === 'vai') { clearInterval(filme); if (b.dataset.t === 'quem') Object.assign(E, { pose:0, portas:{ nivel:false, alt:false, dist:false }, ajustado:false, torta:false, jaTorta:false, assim:false, forcado:false, conta:null }); clearInterval(relogio); vai(b.dataset.t); }
+  else if (a === 'quem') { E.quem = b.dataset.q; desenha(); }
+  else if (a === 'cond') { E.cond[b.dataset.c] = !E.cond[b.dataset.c]; desenha(); }
+  else if (a === 'comeca') vai(E.quem === 'novo' ? 'passar' : 'camera');
+  else if (a === 'porta') { E.portas[b.dataset.p] = true; desenha(); }
+  else if (a === 'ajustado') { E.ajustado = true; desenha(); }
+  else if (a === 'forca') folha(`<h2>Tirar mesmo assim?</h2><p class="sub">As fotos saem e ficam guardadas, mas a sessão entra marcada como fora do padrão, com o que ficou sem acertar. Na comparação ela aparece com esse aviso.</p><div class="acoes"><button class="vai" data-a="fecha">Voltar e acertar</button></div><button class="livre" data-a="forca-ok">Tirar fora do padrão</button>`);
+  else if (a === 'forca-ok') { E.forcado = true; E.ajustado = true; fecha(); desenha(); }
+  else if (a === 'fantasma') { E.fantasma = !E.fantasma; desenha(); }
+  else if (a === 'dispara') { if (E.quem !== 'sozinho') { dispara(); return; }
+    if (E.conta != null) { clearInterval(relogio); E.conta = null; desenha(); return; }
+    E.conta = 5; desenha(); clearInterval(relogio); relogio = setInterval(() => { if (E.t !== 'camera') { clearInterval(relogio); return; } E.conta--; if (E.conta <= 0) dispara(); else desenha(); }, 1000); }
+  else if (a === 'repete') { E.torta = false; desenha(); }
+  else if (a === 'assim') { E.torta = false; E.assim = true; E.pose++; desenha(); }
+  else if (a === 'cmp-pose') { E.cmp.pose = +b.dataset.i; desenha(); }
+  else if (a === 'cmp-modo') { E.cmp.modo = b.dataset.m; desenha(); }
+  else if (a === 'cmp-data') { const i = +b.dataset.i, c = E.cmp; if (Math.abs(i - c.de) <= Math.abs(i - c.ate)) c.de = Math.min(i, c.ate - 1); else c.ate = Math.max(i, c.de + 1); desenha(); }
+  else if (a === 'tp-pose') { E.tp.pose = +b.dataset.i; desenha(); }
+  else if (a === 'tp-play') { clearInterval(filme); let i = 0; $('#tp-r').value = 0; mostraTempo(0); filme = setInterval(() => { i++; if (i > 10 || E.t !== 'tempo') { clearInterval(filme); return; } $('#tp-r').value = i; mostraTempo(i); }, 420); }
+  else if (a === 'envia') folha(`<h2>Mandar para os agentes</h2><p class="sub">Vai o par desta pose, com data, hora, peso da semana e o que mudou em cada sessão. Sempre no mesmo formato, para a leitura ser comparável.</p>
+      <button class="esc" aria-pressed="true"><span class="o">${ic.ok}</span><span><b>Só esta pose</b><span>${POSES[E.cmp.pose].n}, ${SES[E.cmp.de][0]} e ${SES[E.cmp.ate][0]}</span></span></button>
+      <button class="esc" aria-pressed="false"><span class="o">${ic.cam}</span><span><b>As 11 poses</b><span>o par inteiro das duas sessões</span></span></button>
+      <div class="acoes"><button class="vai" data-a="fecha">Mandar</button></div>`);
+  else if (a === 'ver') { E.gal = { s:+b.dataset.s, p:+b.dataset.p }; E.aj = { r:0, z:1 }; vai('verFoto'); }
+  else if (a === 'ver-anda') { E.gal.p = (E.gal.p + +b.dataset.d + 11) % 11; desenha(); }
+  else if (a === 'aj-zera') { E.aj = { r:0, z:1 }; desenha(); }
+  else if (a === 'cmp-daqui') { E.cmp.pose = E.gal.p; E.cmp.ate = Math.max(1, E.gal.s); E.cmp.de = 0; vai('comparar'); }
+  else if (a === 'lixo-foto') folha(`<h2>Apagar esta foto?</h2><p class="sub">Ela vai para a lixeira e fica 30 dias. A sessão passa a ter 10 de 11 poses.</p><div class="acoes"><button class="vai" data-a="fecha">Manter</button><button class="alt" data-a="fecha">Apagar</button></div>`);
+  else if (a === 'ver-velho') { const s = +b.dataset.s; folha(`<h2 class="n">${SES[s][0]}</h2><p class="sub">${vir(SES[s][1].toFixed(1))} kg na semana${s === 9 ? ' · anotado: outra luz' : ' · no padrão'}</p>
+      <div class="grade">${POSES.map(p => `<button data-a="nada">${foto(p, s)}</button>`).join('')}</div>
+      <div class="acoes"><button class="alt" style="flex:1" data-a="fecha">Ajustar enquadramento</button><button class="alt" data-a="fecha" aria-label="Apagar">${ic.lixo}</button></div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">Apagar manda para a lixeira por 30 dias. Ajustar não mexe na foto original.</p>`); }
+  else if (a === 'lixeira') folha(`<h2>Lixeira</h2><p class="sub">Vazia. O que você apagar fica aqui por 30 dias e pode voltar.</p><div class="acoes"><button class="alt" style="flex:1" data-a="fecha">Fechar</button></div>`);
+  else if (a === 'fecha') fecha();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecha(); });
+desenha(true);
+</script>
+</body>
+</html>

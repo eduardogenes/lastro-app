@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lastro — direção 3, segunda passada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --papel:#F6F3EC; --tinta:#0F0F0D; --t2:#56554E; --t3:#77766D; --fio:#DFDACE; --branco:#FFFDF8;
+  --lima:#D2F23A; --tanja:#FF9A4D; --lilas:#D3C6FF; --ceu:#BBDDFB; --menta:#BEEBD2; --areia:#EBE6DA;
+  --mundo:var(--lima);
+  --d:"Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+  --u:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mola:cubic-bezier(.2,.9,.25,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#E7E3D8;color:var(--tinta);font-family:var(--u);overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;text-align:inherit}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible{outline:2.5px solid var(--tinta);outline-offset:3px}
+::selection{background:var(--lima)}
+h1,h2,h3,p{margin:0}
+.n{font-family:var(--d);font-variant-numeric:tabular-nums}
+
+.palco{min-height:100vh;min-height:100svh;display:flex;gap:56px;align-items:center;justify-content:center;padding:32px}
+.lado{max-width:380px}
+.lado h1{font:800 40px/1 var(--d);letter-spacing:-.03em;text-wrap:balance}
+.lado p{color:var(--t2);margin-top:14px;line-height:1.55;text-wrap:pretty}
+.lado ul{color:var(--t2);padding-left:18px;line-height:1.5;display:grid;gap:10px;margin:18px 0 0}
+.lado b{color:var(--tinta)}
+.fone{width:392px;height:830px;flex:0 0 auto;border-radius:48px;background:var(--papel);overflow:hidden;position:relative;
+  box-shadow:0 0 0 11px var(--tinta), 0 40px 70px -30px rgba(15,15,13,.5);display:flex;flex-direction:column}
+@media (max-width:880px){
+  html,body{background:var(--papel)}
+  .palco{padding:0;display:block}.lado{display:none}
+  .fone{width:100%;height:100vh;height:100svh;border-radius:0;box-shadow:none}
+}
+
+/* faixa do protótipo — não é do app */
+.sim{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:12px;color:var(--t3);border-bottom:1px dashed var(--fio)}
+.sim span{flex:1}
+.sim button{padding:5px 10px;border-radius:99px;font-weight:600}
+.sim button[aria-pressed="true"]{background:var(--tinta);color:var(--papel)}
+
+.tela{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 0 120px;scrollbar-width:none}
+.tela::-webkit-scrollbar{display:none}
+
+/* ---------- o MUNDO: o bloco de cor que ocupa o topo e diz onde você está ---------- */
+.mundo{background:var(--mundo);border-radius:0 0 34px 34px;padding:8px 20px 20px;transition:background .45s var(--mola)}
+.linha0{display:flex;align-items:center;justify-content:space-between;min-height:44px;font-size:13px;font-weight:600}
+.linha0 button{min-height:44px;display:flex;align-items:center;gap:6px}
+.linha0 svg{width:22px;height:22px}
+.quando{font:700 14px/1.2 var(--u);margin-top:14px;display:flex;align-items:center;gap:8px}
+.quando i{width:9px;height:9px;border-radius:50%;background:var(--tinta);animation:bate 1.6s ease-in-out infinite}
+@keyframes bate{50%{transform:scale(.55);opacity:.5}}
+.titulo{font:800 56px/.9 var(--d);letter-spacing:-.04em;margin-top:6px;text-wrap:balance}
+.titulo.m{font-size:38px;line-height:.96}
+.mundo.fino{padding-bottom:16px}
+.mundo.fino .titulo{font-size:30px;line-height:1;margin-top:4px}
+.mundo.fino .quando{margin-top:6px}
+.mundo.fino .apoio{font-size:14px;margin-top:6px;max-width:none}
+@keyframes entra{from{opacity:0;transform:translateY(10px)}}
+.mundo .anima > *{animation:entra .42s var(--mola) both}
+.mundo .anima > *:nth-child(2){animation-delay:.04s}.mundo .anima > *:nth-child(3){animation-delay:.08s}.mundo .anima > *:nth-child(4){animation-delay:.12s}.mundo .anima > *:nth-child(5){animation-delay:.16s}
+.apoio{font-size:15px;line-height:1.35;margin-top:8px;max-width:32ch;text-wrap:pretty}
+.acoes{display:flex;gap:8px;margin-top:16px;align-items:stretch}
+.vai{flex:1;min-height:58px;border-radius:99px;background:var(--tinta);color:var(--papel);font:700 19px/1 var(--d);display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:-.01em;transition:transform .12s}
+.vai:active,.alt:active,.gota:active,.pilula:active{transform:scale(.97)}
+.vai svg{width:22px;height:22px}
+.vai.espera{background:transparent;color:var(--tinta);box-shadow:inset 0 0 0 2px rgba(15,15,13,.22);font-size:16px;font-weight:700}
+.alt{min-height:58px;padding:0 20px;border-radius:99px;box-shadow:inset 0 0 0 2px var(--tinta);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;transition:transform .12s}
+.livre{display:block;margin-top:8px;font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:4px;min-height:32px}
+
+/* ---------- abaixo do mundo ---------- */
+.bloco{padding:18px 20px 0}
+.h{font:700 17px/1.1 var(--d);letter-spacing:-.02em;display:flex;justify-content:space-between;align-items:baseline}
+.h small{font:500 13px var(--u);color:var(--t3);letter-spacing:0}
+.trilho{display:flex;gap:8px;overflow-x:auto;margin:12px -22px 0;padding:2px 22px;scrollbar-width:none;scroll-snap-type:x proximity}
+.trilho::-webkit-scrollbar{display:none}
+.pilula{flex:0 0 auto;scroll-snap-align:start;min-height:56px;padding:8px 18px 8px 8px;border-radius:99px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);display:flex;align-items:center;gap:10px;transition:transform .12s}
+.pilula .o{width:40px;height:40px;border-radius:50%;background:var(--areia);display:flex;align-items:center;justify-content:center;font:700 13px var(--d)}
+.pilula .o svg{width:20px;height:20px}
+.pilula b{display:block;font-size:15px;font-weight:600;line-height:1.15;color:var(--tinta)}
+.pilula span{font-size:12px;color:var(--t3)}
+.pilula.ok{box-shadow:none;background:var(--menta)}
+.pilula.ok .o{background:var(--tinta);color:var(--menta)}
+.pilula.agora{box-shadow:inset 0 0 0 2.5px var(--tinta)}
+
+/* os instrumentos opcionais */
+.instr{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.gota{position:relative;overflow:hidden;border-radius:24px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);min-height:92px;padding:11px 13px;display:flex;flex-direction:column;justify-content:space-between;transition:transform .12s}
+.gota .nivel{position:absolute;left:0;right:0;bottom:0;background:var(--ceu);transition:height .5s var(--mola)}
+.gota > *:not(.nivel){position:relative}
+.gota .rt{font-size:13px;font-weight:600}
+.gota .v{font:800 28px/1 var(--d);letter-spacing:-.03em}
+.gota .v small{font:600 13px var(--u);letter-spacing:0;color:var(--t2)}
+.gota .d{font-size:12px;color:var(--t2);font-weight:500}
+
+/* o ritmo: sete dias, sem sequência nem cobrança */
+.ritmo{display:flex;justify-content:space-between;margin-top:10px}
+.ritmo button{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--t3);min-width:40px}
+.bola{width:36px;height:36px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--fio);display:flex;align-items:center;justify-content:center;font:700 14px var(--d);color:var(--tinta);position:relative;overflow:hidden}
+.bola.cheia{background:var(--tinta);color:var(--papel);box-shadow:none}
+.bola.meia{background:linear-gradient(to top,var(--areia) 50%,transparent 50%)}
+.bola.hoje{box-shadow:inset 0 0 0 2.5px var(--tinta)}
+.bola.vazia{box-shadow:none;background:repeating-linear-gradient(135deg,var(--areia) 0 4px,transparent 4px 8px)}
+.pergunta{margin-top:12px;border-radius:24px;background:var(--areia);padding:14px 16px}
+.pergunta p{font:700 18px/1.2 var(--d);letter-spacing:-.01em}
+.pergunta small{display:block;font:500 13px/1.4 var(--u);color:var(--t2);margin-top:4px}
+.resp{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.resp button{min-height:46px;padding:0 16px;border-radius:99px;background:var(--branco);font-weight:600;font-size:15px}
+.resp button.f{background:var(--tinta);color:var(--papel)}
+
+/* ---------- a linha do dia: o dia inteiro em uma faixa ---------- */
+.ld{display:flex;justify-content:space-between;position:relative;margin-top:12px}
+.ld::before{content:"";position:absolute;left:22px;right:22px;top:21px;height:2px;background:var(--fio)}
+.ld button{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;font:600 11px var(--d);color:var(--t3);min-width:44px}
+.ld .p{width:44px;height:44px;border-radius:50%;background:var(--papel);box-shadow:inset 0 0 0 1.5px var(--fio);display:flex;align-items:center;justify-content:center;color:var(--t3);transition:transform .25s var(--mola),background .25s}
+.ld .p svg{width:19px;height:19px}
+.ld .ok .p{background:var(--tinta);color:var(--papel);box-shadow:none}
+.ld .agora .p{background:var(--mundo-do-dia,var(--lima));color:var(--tinta);box-shadow:inset 0 0 0 2.5px var(--tinta);transform:scale(1.12)}
+.ld .agora{color:var(--tinta)}
+.ld .falta .p{box-shadow:none;background:repeating-linear-gradient(135deg,var(--areia) 0 4px,var(--papel) 4px 8px)}
+.ld-leg{display:flex;justify-content:space-between;gap:10px;margin-top:10px;font-size:13px;color:var(--t2);font-weight:500}
+.ld-leg b{color:var(--tinta);font-weight:600}
+
+/* ---------- o que gruda e o que encolhe ao rolar ---------- */
+.meio{flex:1;min-height:0;position:relative;display:flex}
+.grude{position:absolute;left:10px;right:10px;top:8px;z-index:3;height:56px;border-radius:99px;background:var(--mundo-do-dia,var(--lima));box-shadow:inset 0 0 0 2px var(--tinta), 0 10px 24px -14px rgba(15,15,13,.5);display:flex;align-items:center;gap:10px;padding:0 6px 0 18px;transform:translateY(-80px);transition:transform .34s var(--mola);visibility:hidden}
+.grude.on{transform:none;visibility:visible}
+.grude span{flex:1;min-width:0;font:700 16px var(--d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grude span small{font:600 12px var(--u);display:block;opacity:.75}
+.grude button{height:44px;padding:0 18px;border-radius:99px;background:var(--tinta);color:var(--papel);font:700 15px var(--d)}
+.nav button{overflow:hidden}
+.doca.mini .nav{flex:0 0 64px}
+.doca.mini .nav button:not([aria-current="page"]){flex:0 0 0;width:0;opacity:0}
+.doca.mini .nav button[aria-current="page"] span{display:none}
+.doca{transition:gap .3s}
+.nav{transition:flex .36s var(--mola)}
+.doca.mini{justify-content:space-between}
+
+/* ---------- treino: o que já foi neste exercício, e a dica ---------- */
+.tf-cima{padding-top:14px}
+.tf-dica{font-size:14px;line-height:1.4;font-weight:500;max-width:34ch}
+.tf-dica b{font-weight:700}
+.tf-sets{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.tf-sets span{min-height:34px;padding:0 12px;border-radius:99px;display:flex;align-items:center;gap:6px;font:700 14px var(--d);box-shadow:inset 0 0 0 1.5px rgba(15,15,13,.2)}
+.tf-sets span svg{width:15px;height:15px}
+.tf-sets .f{background:var(--tinta);color:var(--lima);box-shadow:none}
+.tf-sets .a{background:var(--branco);box-shadow:inset 0 0 0 2px var(--tinta)}
+.tf-ex{font-size:30px}
+.par{margin:16px 0 12px}
+.par .gr{font-size:68px}
+.tf-pe .vai{min-height:68px}
+/* o descanso enche a tela: de longe, sem ler, dá para saber quanto falta */
+.enche{position:absolute;left:0;right:0;bottom:0;background:var(--lima);transition:height 1s linear;z-index:0}
+.camada .tf{position:relative;z-index:1}
+.conta{font-size:120px}
+.sobrou{margin-top:18px}
+.sobrou p{font-size:14px;font-weight:600;text-align:center}
+.sobrou div{display:flex;gap:8px;justify-content:center;margin-top:8px}
+.sobrou button{width:56px;height:48px;border-radius:99px;background:var(--branco);box-shadow:inset 0 0 0 1.5px rgba(15,15,13,.2);font:700 17px var(--d);text-align:center}
+.sobrou button[aria-pressed="true"]{background:var(--tinta);color:var(--papel);box-shadow:none}
+.prox{margin-top:18px;background:var(--branco);box-shadow:inset 0 0 0 1.5px rgba(15,15,13,.14);display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:24px}
+.prox div{flex:1;min-width:0}
+.prox b{font-size:17px}
+.prox button{flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:99px;background:var(--ceu);font:700 14px var(--d)}
+
+/* ---------- lugares de consulta: cabeçalho fino, mais linhas por tela ---------- */
+.cab{padding:8px 20px 0;display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-height:52px}
+.cab h1{font:800 34px/1 var(--d);letter-spacing:-.035em}
+.cab span{font-size:13px;font-weight:600;color:var(--t2);text-align:right}
+.semanas{gap:6px;margin-top:8px}
+.dd{font-size:14px}
+.resumo-dia{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.resumo-dia div{border-radius:20px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:10px 12px;font-size:12px;color:var(--t2);font-weight:600}
+.resumo-dia b{display:block;font:800 20px/1.1 var(--d);color:var(--tinta);letter-spacing:-.02em}
+.gigante{font-size:96px;margin-top:10px}
+.lin{min-height:60px}
+.lin b{font-size:17px}
+.tile{flex:0 0 156px;height:172px;border-radius:26px;padding:14px}
+.tile .L{font-size:60px}
+.tile b{font-size:15px}
+.crit{padding:12px 0}
+.crit .g{flex:0 0 38px;height:38px}
+.crit b{font-size:17px}
+@keyframes pop{40%{transform:scale(1.18)}}
+.pop{animation:pop .32s var(--mola)}
+
+/* ---------- a doca ---------- */
+.doca{position:absolute;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;z-index:4;pointer-events:none}
+.doca > *{pointer-events:auto}
+.nav{flex:1;height:64px;border-radius:99px;background:var(--tinta);display:flex;align-items:center;padding:6px;gap:2px;box-shadow:0 12px 30px -12px rgba(15,15,13,.55)}
+.nav button{flex:0 0 52px;height:52px;border-radius:99px;display:flex;align-items:center;justify-content:center;gap:8px;color:#A9A79C;font:700 14px var(--d);transition:flex .32s var(--mola),background .2s}
+.nav button svg{width:23px;height:23px;flex:0 0 auto}
+.nav button span{display:none}
+.nav button[aria-current="page"]{flex:1;background:var(--papel);color:var(--tinta)}
+.nav button[aria-current="page"] span{display:inline}
+.mais{flex:0 0 64px;height:64px;border-radius:50%;background:var(--lima);box-shadow:0 12px 30px -12px rgba(15,15,13,.55), inset 0 0 0 2px var(--tinta);display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.mais:active{transform:scale(.92) rotate(45deg)}
+.mais svg{width:28px;height:28px}
+.vivo{position:absolute;left:14px;right:14px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:4;height:54px;border-radius:99px;background:var(--lima);box-shadow:inset 0 0 0 2px var(--tinta);display:none;align-items:center;gap:10px;padding:0 18px;font-weight:700}
+.vivo.on{display:flex}
+.vivo i{width:9px;height:9px;border-radius:50%;background:var(--tinta);animation:bate 1.6s ease-in-out infinite}
+.vivo span{flex:1}
+
+/* ---------- camadas ---------- */
+.camada{position:absolute;inset:0;background:var(--lima);display:flex;flex-direction:column;z-index:6;transform:translateY(102%);transition:transform .38s var(--mola),background .45s var(--mola);visibility:hidden}
+.camada.on{transform:none;visibility:visible}
+.camada.pausa{background:var(--papel)}
+.veu{position:absolute;inset:0;background:rgba(15,15,13,.38);z-index:8;opacity:0;visibility:hidden;transition:opacity .22s}
+.veu.on{opacity:1;visibility:visible}
+.folha{position:absolute;left:0;right:0;bottom:0;z-index:9;background:var(--papel);border-radius:36px 36px 0 0;padding:10px 22px calc(22px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .34s var(--mola);max-height:88%;overflow-y:auto;visibility:hidden;scrollbar-width:none}
+.folha.on{transform:none;visibility:visible}
+.puxa{width:44px;height:5px;border-radius:99px;background:var(--fio);margin:0 auto 18px}
+.folha h2{font:800 32px/1 var(--d);letter-spacing:-.03em}
+.folha .sub{font-size:15px;color:var(--t2);margin-top:6px;line-height:1.4}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+
+/* ---------- a régua: o número se arrasta, não se digita ---------- */
+.regua{position:relative;margin:0 -22px}
+.regua::after{content:"";position:absolute;left:50%;top:0;width:3px;height:44px;margin-left:-1.5px;border-radius:2px;background:var(--tinta);pointer-events:none}
+.regua .rola{overflow-x:auto;scrollbar-width:none;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.regua .rola::-webkit-scrollbar{display:none}
+.regua .fita{display:flex;padding:0 calc(50% - var(--passo,14px) / 2);height:64px;align-items:flex-start}
+.regua .tk{flex:0 0 var(--passo,14px);scroll-snap-align:center;height:22px;display:flex;justify-content:center;position:relative}
+.regua .tk::before{content:"";width:2px;height:100%;border-radius:2px;background:rgba(15,15,13,.28)}
+.regua .tk.g{height:34px}
+.regua .tk.g::before{background:var(--tinta)}
+.regua .tk.g::after{content:attr(data-r);position:absolute;top:40px;font:700 13px var(--d);color:var(--tinta)}
+
+/* ---------- o treino em foco: uma série por tela ---------- */
+.tf{flex:1;display:flex;flex-direction:column;padding:10px 22px calc(20px + env(safe-area-inset-bottom));min-height:0}
+.tf-topo{display:flex;align-items:center;justify-content:space-between;min-height:48px;font-weight:700}
+.tf-topo button{min-width:48px;min-height:48px;display:flex;align-items:center;gap:6px}
+.tf-topo svg{width:24px;height:24px}
+.segs{display:flex;gap:3px;margin-top:4px}
+.segs i{flex:1;height:5px;border-radius:9px;background:rgba(15,15,13,.16)}
+.segs i.f{background:var(--tinta)}
+.segs i.a{background:var(--tinta);opacity:.45}
+.tf-meio{flex:1;display:flex;flex-direction:column;justify-content:flex-end;min-height:0;padding-bottom:6px}
+.tf-meio.c{justify-content:center}
+.tf-ex{font:800 34px/1 var(--d);letter-spacing:-.03em;text-wrap:balance}
+.tf-serie{font-size:15px;font-weight:600;margin-top:8px}
+.par{display:flex;align-items:flex-end;gap:10px;margin:22px 0 14px}
+.par button{flex:1;border-radius:28px;padding:12px 14px 14px;box-shadow:inset 0 0 0 2px rgba(15,15,13,.18);transition:box-shadow .2s,background .2s}
+.par button[aria-pressed="true"]{background:var(--branco);box-shadow:inset 0 0 0 2.5px var(--tinta)}
+.par .rt{font-size:13px;font-weight:600;display:block}
+.par .gr{font:800 76px/.9 var(--d);letter-spacing:-.045em;display:block;margin-top:4px}
+.par .x{font:700 28px var(--d);padding-bottom:22px;flex:0 0 auto}
+.tf-ant{font-size:14px;font-weight:600;text-align:center;margin-top:8px}
+.tf-pe{display:flex;gap:8px;align-items:stretch;margin-top:16px}
+.tf-pe .vai{min-height:72px;font-size:22px}
+.tf-links{display:flex;justify-content:space-between;margin-top:12px}
+.tf-links button{font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:4px;min-height:40px}
+.conta{font:800 132px/.85 var(--d);letter-spacing:-.05em;text-align:center}
+.prox{border-radius:28px;background:var(--areia);padding:16px 18px;margin-top:26px}
+.prox b{font:700 20px/1.15 var(--d);display:block;margin-top:2px}
+.prox span{font-size:13px;font-weight:600;color:var(--t2)}
+.fila button{display:flex;align-items:center;gap:14px;width:100%;min-height:60px;border-top:1.5px solid var(--fio)}
+.fila .o{flex:0 0 40px;height:40px;border-radius:50%;background:var(--areia);display:flex;align-items:center;justify-content:center;font:700 15px var(--d)}
+.fila .feito .o{background:var(--tinta);color:var(--papel)}
+.fila .atual .o{background:var(--lima);box-shadow:inset 0 0 0 2px var(--tinta)}
+.fila b{display:block;font-size:16px;font-weight:600}
+.fila span{font-size:13px;color:var(--t3)}
+
+/* ---------- captura ---------- */
+.diga{display:flex;align-items:center;gap:10px;margin-top:16px;border-radius:99px;background:var(--branco);box-shadow:inset 0 0 0 2px var(--tinta);padding:6px 6px 6px 20px}
+.diga input{flex:1;min-width:0;border:0;background:none;font:500 17px var(--u);color:var(--tinta);min-height:48px;outline:none}
+.diga input::placeholder{color:var(--t3)}
+.diga button{flex:0 0 48px;height:48px;border-radius:50%;background:var(--tinta);color:var(--papel);display:flex;align-items:center;justify-content:center}
+.diga svg{width:22px;height:22px}
+.sug{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.sug button{min-height:76px;border-radius:26px;background:var(--areia);padding:12px 16px;display:flex;flex-direction:column;justify-content:center;transition:transform .12s}
+.sug button:active{transform:scale(.97)}
+.sug button.pri{background:var(--lima);grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between}
+.sug b{font:700 18px/1.15 var(--d);letter-spacing:-.01em;color:var(--tinta)}
+.sug span{font-size:13px;color:var(--t2);font-weight:500}
+.sug svg{width:24px;height:24px}
+.eco{margin-top:12px;font-size:14px;font-weight:600;min-height:20px}
+
+.itens{margin-top:16px}
+.itens div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1.5px solid var(--fio);font-size:15px}
+.itens span:last-child{font-weight:600;color:var(--t2)}
+.liga{display:flex;align-items:center;gap:14px;min-height:64px;border-top:1.5px solid var(--fio);width:100%}
+.liga div{flex:1}
+.liga b{display:block;font-size:16px;font-weight:600}
+.liga span{font-size:13px;color:var(--t3)}
+.chave{flex:0 0 54px;height:32px;border-radius:99px;background:var(--fio);position:relative;transition:background .2s}
+.chave::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--branco);transition:transform .25s var(--mola)}
+.liga[aria-pressed="true"] .chave{background:var(--tinta)}
+.liga[aria-pressed="true"] .chave::after{transform:translateX(22px)}
+
+/* ---------- corpo / dias / semana / plano ---------- */
+.gigante{font:800 112px/.82 var(--d);letter-spacing:-.055em;margin-top:22px;display:flex;align-items:baseline;gap:6px}
+.gigante small{font:700 22px var(--d);letter-spacing:-.01em}
+.lin{display:flex;align-items:center;gap:14px;width:100%;min-height:68px;border-top:1.5px solid var(--fio)}
+.lin:first-of-type{border-top:0}
+.lin div{flex:1;min-width:0}
+.lin b{display:block;font:700 18px/1.15 var(--d);letter-spacing:-.01em}
+.lin span{font-size:13px;color:var(--t3);font-weight:500}
+.lin .val{font:800 22px var(--d);letter-spacing:-.02em;flex:0 0 auto}
+.lin svg{width:20px;height:20px;flex:0 0 auto;color:var(--t3)}
+.semanas{display:grid;gap:8px;margin-top:14px}
+.sem{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dd{aspect-ratio:1;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 15px var(--d);box-shadow:inset 0 0 0 1.5px var(--fio);position:relative;width:100%}
+.dd small{font:600 10px var(--u);color:var(--t3);position:absolute;top:5px}
+.dd.t{background:var(--tinta);color:var(--papel);box-shadow:none}
+.dd.t small{color:#A9A79C}
+.dd.v{box-shadow:none;background:repeating-linear-gradient(135deg,var(--areia) 0 4px,transparent 4px 8px)}
+.dd.fut{opacity:.35;box-shadow:none}
+.dd.hoje{box-shadow:inset 0 0 0 2.5px var(--tinta)}
+.dd.sel{outline:3px solid var(--tanja);outline-offset:2px}
+.crit{display:flex;gap:14px;align-items:flex-start;padding:16px 0;border-top:1.5px solid var(--fio)}
+.crit:first-of-type{border-top:0}
+.crit .g{flex:0 0 44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--menta)}
+.crit .g.n{background:var(--tanja)}
+.crit .g.q{background:var(--areia)}
+.crit .g svg{width:22px;height:22px}
+.crit b{display:block;font:700 19px/1.15 var(--d);letter-spacing:-.01em}
+.crit span{font-size:14px;color:var(--t2);line-height:1.4;display:block;margin-top:2px}
+.tiles{display:flex;gap:10px;overflow-x:auto;margin:14px -22px 0;padding:2px 22px;scrollbar-width:none;scroll-snap-type:x mandatory}
+.tiles::-webkit-scrollbar{display:none}
+.tile{flex:0 0 210px;height:230px;border-radius:32px;background:var(--areia);padding:18px;display:flex;flex-direction:column;justify-content:space-between;scroll-snap-align:start}
+.tile.hoje{background:var(--lima)}
+.tile .L{font:800 84px/.8 var(--d);letter-spacing:-.05em}
+.tile b{font:700 17px/1.2 var(--d);display:block}
+.tile span{font-size:13px;color:var(--t2);font-weight:500}
+
+/* consulta compacta (vem por último para valer sobre as regras de base) */
+.semanas{gap:6px;margin-top:8px}
+.gigante{font-size:96px;margin-top:10px}
+.lin{min-height:60px}
+.lin b{font-size:17px}
+.lin .val{color:var(--tinta)}
+.tile{flex:0 0 150px;height:168px;border-radius:26px;padding:14px}
+.tile .L{font-size:58px;color:var(--tinta)}
+.tile b{font-size:15px;color:var(--tinta)}
+.crit{padding:12px 0}
+.crit .g{flex:0 0 38px;height:38px}
+.crit b{font-size:17px}
+</style>
+</head>
+<body>
+<div class="palco">
+  <aside class="lado">
+    <h1>Lastro, direção 3 · segunda passada</h1>
+    <p>Protótipo navegável. Não é pele nova na mesma estrutura: mudou como se usa.</p>
+    <ul>
+      <li><b>A tela diz uma coisa por vez.</b> O bloco de cor do topo é o que importa agora, em letra grande, com um botão só.</li>
+      <li><b>Registro por exceção.</b> Em vez de marcar sete refeições, uma pergunta: “foi como o plano?”. Um toque responde o dia.</li>
+      <li><b>Número se arrasta.</b> Peso, carga e repetições ficam numa régua. Sem teclado.</li>
+      <li><b>Treino em foco.</b> Uma série por tela, já preenchida com a da última vez. Igual? Um toque em “Feito”.</li>
+      <li><b>Um lugar para registrar tudo:</b> o botão “+”, que sugere o que é mais provável agora.</li>
+      <li><b>Nada é obrigatório.</b> Água, peso, cardio e fotos se ligam e desligam. Dia em branco não vira cobrança.</li>
+    </ul>
+  </aside>
+  <div class="fone" id="fone">
+    <div class="sim" role="group" aria-label="Horário simulado do protótipo"><span>protótipo · simular hora</span>
+      <button data-sim="manha" aria-pressed="true">06:05</button><button data-sim="tarde" aria-pressed="false">12:40</button><button data-sim="noite" aria-pressed="false">21:00</button></div>
+    <div class="meio"><main class="tela" id="tela"></main><div class="grude" id="grude"></div></div>
+    <button class="vivo" id="vivo" data-a="abre-treino"></button>
+    <div class="doca" id="doca"><nav class="nav" id="nav" aria-label="Lugares"></nav><button class="mais" data-a="captura" aria-label="Registrar qualquer coisa" id="mais"></button></div>
+    <section class="camada" id="treino" aria-label="Treino"></section>
+    <div class="veu" id="veu"></div>
+    <section class="folha" id="folha" role="dialog" aria-modal="true"></section>
+  </div>
+</div>
+<script>
+const I = (d, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ic = {
+  hoje: I('<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/>'),
+  dias: I('<circle cx="6" cy="7" r="1.6"/><circle cx="12" cy="7" r="1.6"/><circle cx="18" cy="7" r="1.6"/><circle cx="6" cy="13" r="1.6"/><circle cx="12" cy="13" r="1.6"/><circle cx="18" cy="13" r="1.6"/><circle cx="6" cy="19" r="1.6"/>'),
+  corpo: I('<circle cx="12" cy="5" r="2.6"/><path d="M5 11.5c2.3 1 4.6 1.5 7 1.5s4.7-.5 7-1.5M12 13v4l-2.8 4.5M12 17l2.8 4.5"/>'),
+  semana: I('<path d="M3.5 17l5-5.5 4 3.5 8-9"/><path d="M15.5 6h5v5"/>'),
+  plano: I('<path d="M6 4h12v16.5l-6-3.5-6 3.5z"/>'),
+  mais: I('<path d="M12 5v14M5 12h14"/>', 2.6),
+  ok: I('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 2.8),
+  seta: I('<path d="M5 12h14M13 6l6 6-6 6"/>', 2.4),
+  baixo: I('<path d="M6 9.5l6 6 6-6"/>', 2.4),
+  dir: I('<path d="M9 5.5l6.5 6.5L9 18.5"/>', 2.2),
+  ajuste: I('<path d="M4 8h10M18 8h2M4 16h2M10 16h10"/><circle cx="16" cy="8" r="2.2"/><circle cx="8" cy="16" r="2.2"/>'),
+  x: I('<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>', 2.4),
+  duvida: I('<path d="M9 9.2a3 3 0 115 2.3c-1 .8-2 1.300-2 2.500M12 17.5v.2"/>', 2.4),
+  halter: I('<path d="M7 8v8M4 10v4M17 8v8M20 10v4M7 12h10"/>', 2.2),
+  prato: I('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/>'),
+  lista: I('<path d="M4 7h16M4 12h16M4 17h10"/>', 2.2)
+};
+const REF = [
+  { id:'pre', h:'05:45', n:'Pré-treino', k:163, it:[['Pão Artesano','35 g'],['Doce de leite','20 g'],['Café preto','200 ml']] },
+  { id:'cafe', h:'08:00', n:'Café da manhã', k:629, it:[['Cuscuz cozido','200 g'],['Frango cozido','70 g'],['Requeijão light','30 g'],['Leite integral','250 ml'],['Uva','120 g']] },
+  { id:'almoco', h:'12:30', n:'Almoço', k:719, it:[['Arroz branco cozido','250 g'],['Feijão cozido','50 g'],['Frango cozido','80 g'],['Legumes e verduras','100 g'],['Azeite de oliva','15 g'],['Kiwi','100 g']] },
+  { id:'lanche', h:'16:00', n:'Lanche da tarde', k:819, it:[['Leite integral','250 ml'],['Banana','120 g'],['Aveia','40 g'],['Whey','30 g'],['Pão Artesano','50 g']] },
+  { id:'jantar', h:'19:30', n:'Jantar', k:678, it:[['Arroz branco cozido','250 g'],['Feijão cozido','50 g'],['Lombo suíno cozido','80 g'],['Legumes e verduras','100 g']] },
+  { id:'ceia', h:'21:30', n:'Ceia', k:197, it:[['Leite integral','250 ml'],['Neston 3 cereais','12 g']] }
+];
+const EX = [
+  { n:'Agachamento no Smith', d:'Amplitude máxima confortável. Pés na mesma posição de sempre.', s:2, f:'6–10', rir:'1–2', kg:60, ant:[9,10], un:'kg por lado', desc:180 },
+  { n:'Cadeira flexora sentada', d:'Volte em 2 a 3 segundos.', s:4, f:'8–12', rir:'1', kg:45, ant:[12,11,10,9], un:'kg', desc:120 },
+  { n:'Terra romeno no Smith', d:'Quem protege a lombar é o quadril.', s:3, f:'6–10', rir:'1–2', kg:50, ant:[10,9,9], un:'kg por lado', desc:180 },
+  { n:'Leg press', d:'Desça até onde o quadril não sai do banco.', s:2, f:'10–15', rir:'1–2', kg:160, ant:[14,12], un:'kg', desc:150 },
+  { n:'Cadeira extensora', d:'Um segundo parado no topo.', s:1, f:'10–15', rir:'0–1', kg:55, ant:[13], un:'kg', desc:90 },
+  { n:'Elevação pélvica na máquina', d:'Queixo recolhido, costelas para baixo.', s:3, f:'8–12', rir:'1', kg:80, ant:[12,11,10], un:'kg', desc:120 },
+  { n:'Adutora', d:'Sem embalo na abertura.', s:2, f:'10–15', rir:'1', kg:50, ant:[14,13], un:'kg', desc:90 },
+  { n:'Panturrilha em pé', d:'Dois segundos alongado embaixo.', s:3, f:'6–10', rir:'1', kg:70, ant:[10,9,8], un:'kg', desc:90 },
+  { n:'Panturrilha sentada', d:'Amplitude inteira, sem quicar.', s:2, f:'10–15', rir:'1', kg:35, ant:[14,12], un:'kg', desc:90 }
+];
+const FILA = EX.flatMap((e, i) => Array.from({ length:e.s }, (_, k) => ({ i, k })));
+const SIMS = {
+  manha:{ agora:6*60+5, feitas:[], agua:0, treino:false, peso:null },
+  tarde:{ agora:12*60+40, feitas:['pre','cafe'], agua:6, treino:true, peso:77.4 },
+  noite:{ agora:21*60, feitas:['pre','cafe','almoco'], agua:9, treino:true, peso:77.4 }
+};
+const E = { aba:'hoje', sim:'manha', diaSel:13, mod:{ agua:true, peso:true, cardio:true, fotos:false, medidas:false }, ontem:true };
+let D, T;
+function zera() {
+  const s = SIMS[E.sim];
+  D = { agora:s.agora, feitas:new Set(s.feitas), agua:s.agua, treino:s.treino, peso:s.peso, cardio:0, descanso:false, checkin:false };
+  T = { rir:{}, descTot:1, on:false, p:s.treino ? FILA.length : 0, v:FILA.map(q => ({ kg:EX[q.i].kg, rep:EX[q.i].ant[q.k] })), campo:'rep', ini:0, desc:0, fim:false };
+}
+const min = h => { const [a, b] = h.split(':').map(Number); return a*60+b; };
+const fh = h => h.replace(':','h');
+const $ = s => document.querySelector(s);
+const vir = v => String(v).replace('.', ',');
+
+function agora() {
+  if (T.on) return { k:'sessao' };
+  if (!D.descanso && !D.treino && D.agora <= 9*60+15) return { k:'treino' };
+  const ab = REF.filter(r => !D.feitas.has(r.id));
+  const passadas = ab.filter(r => D.agora - min(r.h) >= 60);
+  if (D.agora >= 20*60 && passadas.length && !D.checkin) return { k:'checkin', n:passadas.length };
+  const vindo = ab.filter(r => min(r.h) >= D.agora && min(r.h) - D.agora <= 30)[0];
+  if (vindo) return { k:'ref', r:vindo };
+  const ult = Math.max(-1, ...REF.filter(r => D.feitas.has(r.id)).map(r => min(r.h)));
+  const passou = ab.filter(r => min(r.h) < D.agora && D.agora - min(r.h) <= 90 && min(r.h) > ult).pop();
+  if (passou) return { k:'ref', r:passou };
+  return { k:'livre', r:ab.filter(r => min(r.h) > D.agora)[0] };
+}
+const COR = { sessao:'--lima', treino:'--lima', ref:'--tanja', checkin:'--lilas', livre:'--menta' };
+
+/* ---------- HOJE ---------- */
+function telaHoje() {
+  const a = agora(); let m;
+  if (a.k === 'treino') { const f = min('06:15') - D.agora;
+    m = `<p class="quando"><i></i>${f > 0 ? 'daqui a ' + f + ' min' : 'agora'}</p><h1 class="titulo">Treino B</h1>
+      <p class="apoio">Pernas completas e panturrilhas. 22 séries, perto de uma hora.</p>
+      <div class="acoes"><button class="vai" data-a="comeca">Começar ${ic.seta}</button></div>
+      <button class="livre" data-a="descanso">Hoje não vou treinar</button>`;
+  } else if (a.k === 'sessao') {
+    m = `<p class="quando"><i></i>em andamento</p><h1 class="titulo">Treino B</h1><p class="apoio">${T.p} de ${FILA.length} séries feitas.</p>
+      <div class="acoes"><button class="vai" data-a="abre-treino">Voltar ao treino ${ic.seta}</button></div>`;
+  } else if (a.k === 'ref') { const d = min(a.r.h) - D.agora;
+    m = `<p class="quando"><i></i>${d > 0 ? 'daqui a ' + d + ' min' : d === 0 ? 'agora' : 'era às ' + fh(a.r.h)}</p><h1 class="titulo ${a.r.n.length > 8 ? 'm' : ''}">${a.r.n}</h1>
+      <p class="apoio">${a.r.it.slice(0,3).map(x => x[0].toLowerCase()).join(', ')}${a.r.it.length > 3 ? ' e mais ' + (a.r.it.length - 3) : ''}.</p>
+      <div class="acoes"><button class="vai" data-a="come" data-id="${a.r.id}">${ic.ok} Comi</button><button class="alt" data-a="ref" data-id="${a.r.id}">Ver</button></div>
+      <button class="livre" data-a="come" data-id="${a.r.id}">Pulei esta</button>`;
+  } else if (a.k === 'checkin') {
+    m = `<p class="quando">${a.n} ${a.n === 1 ? 'refeição ficou' : 'refeições ficaram'} sem resposta</p><h1 class="titulo m">A comida de hoje foi como o plano?</h1>
+      <div class="acoes"><button class="vai" data-a="checkin" data-r="sim">Foi, sim</button><button class="alt" data-a="checkin" data-r="quase">Quase</button></div>
+      <button class="livre" data-a="checkin" data-r="nao">Não sei dizer</button>`;
+  } else {
+    m = `<p class="quando">${D.descanso ? 'dia de descanso' : 'tudo em dia'}</p><h1 class="titulo m">${a.r ? 'Livre até as ' + fh(a.r.h) : 'Dia fechado'}</h1>
+      <p class="apoio">${a.r ? 'O próximo é ' + a.r.n.toLowerCase() + '. Ele aparece aqui meia hora antes.' : 'Nada mais para hoje.'}</p>`;
+  }
+  const itens = [...REF.map(r => ({ ...r })), { id:'treino', h:'06:15', n:'Treino B', tr:true }].filter(r => !(D.descanso && (r.tr || r.id === 'pre'))).sort((x, y) => min(x.h) - min(y.h));
+  const prox = itens.filter(r => !(r.tr ? D.treino : D.feitas.has(r.id)) && min(r.h) > D.agora)[0];
+  const nfeitas = itens.filter(r => r.tr ? D.treino : D.feitas.has(r.id)).length;
+  const rail = itens.map(r => { const ok = r.tr ? D.treino : D.feitas.has(r.id), ag = (a.k === 'ref' && a.r.id === r.id) || (r.tr && (a.k === 'treino' || a.k === 'sessao'));
+    const falta = !ok && !ag && D.agora - min(r.h) >= 60;
+    return `<button class="${ok ? 'ok' : ag ? 'agora' : falta ? 'falta' : ''}" data-a="${r.tr ? 'abre-treino' : 'ref'}" data-id="${r.id}" aria-label="${r.n}, ${fh(r.h)}${ok ? ', feito' : ''}"><span class="p">${ok ? ic.ok : r.tr ? ic.halter : ic.prato}</span><span class="n">${fh(r.h)}</span></button>`; }).join('');
+  const inst = [];
+  if (E.mod.agua) inst.push(`<button class="gota" data-a="agua" aria-label="Somar um copo de água. ${D.agua} de 14"><span class="nivel" style="height:${Math.min(100, D.agua/14*100)}%"></span><span class="rt">Água · +1</span><span><span class="v n">${D.agua}<small> /14</small></span></span></button>`);
+  if (E.mod.peso) inst.push(`<button class="gota" data-a="peso"><span class="rt">Peso${D.peso ? ' · hoje' : ''}</span><span><span class="v n">${D.peso ? vir(D.peso.toFixed(1)) : '<small>pôr</small>'}</span></span></button>`);
+  if (E.mod.cardio) inst.push(`<button class="gota" data-a="cardio"><span class="nivel" style="height:${D.cardio*50}%;background:var(--lima)"></span><span class="rt">Cardio</span><span><span class="v n">${D.cardio}<small> /2</small></span></span></button>`);
+  const dias = [['D','vazia',''],['S','hoje',''],['T','',''],['Q','',''],['Q','',''],['S','',''],['S','','']];
+  const sem = [['S','cheia','B'],['T','cheia','C'],['Q','cheia','D'],['Q','cheia','A'],['S','meia',''],['D','vazia',''],['S','hoje','']];
+  const fino = a.k === 'livre';
+  $('#fone').style.setProperty('--mundo-do-dia', `var(${COR[a.k]})`);
+  const anima = E.heroi !== a.k + (a.r ? a.r.id : ''); E.heroi = a.k + (a.r ? a.r.id : '');
+  return `<section class="mundo ${fino ? 'fino' : ''}" id="mundo" style="--mundo:var(${COR[a.k]})">
+      <div class="linha0"><span>segunda, 16 nov · <span class="n">${fh(String(Math.floor(D.agora/60)).padStart(2,'0') + ':' + String(D.agora%60).padStart(2,'0'))}</span></span><button data-a="painel" aria-label="Escolher o que aparece">${ic.ajuste}</button></div><div class="${anima ? 'anima' : ''}">${m}</div></section>
+    <div class="bloco"><h2 class="h">O dia <small class="n">${nfeitas} de ${itens.length}</small></h2><div class="ld">${rail}</div>
+      <div class="ld-leg"><span>${prox ? 'a seguir: <b>' + prox.n + '</b>, ' + fh(prox.h) : 'nada mais para hoje'}</span>${prox && prox.k ? `<span class="n">${prox.k} kcal</span>` : ''}</div></div>
+    ${inst.length ? `<div class="bloco"><h2 class="h">Se quiser <small>nada aqui é obrigatório</small></h2><div class="instr" style="grid-template-columns:repeat(${inst.length},1fr)">${inst.join('')}</div></div>` : ''}
+    <div class="bloco"><h2 class="h">Seu ritmo <small>últimos 7 dias</small></h2>
+      <div class="ritmo">${sem.map((d, i) => `<button data-a="vai" data-aba="dias"><span class="bola ${d[1]}">${d[2]}</span>${d[0]}</button>`).join('')}</div>
+      ${E.ontem ? `<div class="pergunta"><p>Ontem ficou em branco. Foi como o plano?</p><div class="resp"><button class="f" data-a="ontem">Foi, sim</button><button data-a="ontem">Quase</button><button data-a="ontem">Não lembro</button></div></div>` : ''}</div>`;
+}
+function grude() { const g = $('#grude'), a = agora(); let h = '';
+  if (E.aba === 'hoje') {
+    if (a.k === 'treino') h = `<span>Treino B<small>22 séries</small></span><button data-a="comeca">Começar</button>`;
+    else if (a.k === 'sessao') h = `<span>Treino B<small>${T.p} de ${FILA.length}</small></span><button data-a="abre-treino">Voltar</button>`;
+    else if (a.k === 'ref') h = `<span>${a.r.n}<small>${fh(a.r.h)} · ${a.r.k} kcal</small></span><button data-a="come" data-id="${a.r.id}">Comi</button>`;
+    else if (a.k === 'checkin') h = `<span>A comida de hoje<small>foi como o plano?</small></span><button data-a="checkin" data-r="sim">Foi, sim</button>`;
+  }
+  g.innerHTML = h; g.dataset.tem = h ? '1' : ''; rolou(); }
+let ultY = 0;
+function rolou() { const t = $('#tela'), y = t.scrollTop, m = $('#mundo'), g = $('#grude');
+  g.classList.toggle('on', !!g.dataset.tem && !!m && y > m.offsetHeight - 70);
+  if (y > ultY + 6 && y > 60) $('#doca').classList.add('mini'); else if (y < ultY - 6 || y < 30) $('#doca').classList.remove('mini');
+  ultY = y; }
+
+/* ---------- régua ---------- */
+function regua(id, mn, mx, st, v, cada, px) {
+  let t = ''; const n = Math.round((mx - mn) / st);
+  for (let i = 0; i <= n; i++) { const val = Math.round((mn + i*st) * 100) / 100, g = Math.abs(val / cada - Math.round(val / cada)) < 1e-6; t += `<i class="tk ${g ? 'g' : ''}" ${g ? `data-r="${vir(val)}"` : ''}></i>`; }
+  return `<div class="regua" style="--passo:${px}px"><div class="rola" id="${id}" data-mn="${mn}" data-st="${st}" data-px="${px}" data-v="${v}"><div class="fita">${t}</div></div></div>`;
+}
+function armaRegua(id, aoMudar) {
+  const el = document.getElementById(id); if (!el) return;
+  const mn = +el.dataset.mn, st = +el.dataset.st, px = +el.dataset.px;
+  el.scrollLeft = (+el.dataset.v - mn) / st * px;
+  let ult = +el.dataset.v;
+  el.addEventListener('scroll', () => { const v = Math.round((mn + Math.round(el.scrollLeft / px) * st) * 100) / 100; if (v !== ult) { ult = v; aoMudar(v); } }, { passive:true });
+}
+
+/* ---------- TREINO em foco ---------- */
+function telaTreino() {
+  const tr = $('#treino');
+  const segs = `<div class="segs">${FILA.map((_, j) => `<i class="${j < T.p ? 'f' : j === T.p ? 'a' : ''}"></i>`).join('')}</div>`;
+  const topo = `<div class="tf-topo"><button data-a="fecha-treino" aria-label="Recolher o treino">${ic.baixo}</button><span>Treino B · <span class="n" id="relogio">00:00</span></span><button data-a="fila" aria-label="Ver todos os exercícios" style="justify-content:flex-end">${ic.lista}</button></div>${segs}`;
+  if (T.p >= FILA.length) { tr.className = 'camada pausa' + (E.tv ? ' on' : '');
+    tr.innerHTML = `<div class="tf">${topo}<div class="tf-meio c"><p class="tf-serie">guardado</p><h2 class="titulo">22 séries. Treino B fechado.</h2><p class="apoio">A carga subiu em 2 exercícios em relação à semana passada.</p></div><div class="tf-pe"><button class="vai" data-a="fim">Fechar</button></div></div>`; return; }
+  const q = FILA[T.p], e = EX[q.i], v = T.v[T.p];
+  if (T.desc > Date.now()) { tr.className = 'camada pausa' + (E.tv ? ' on' : '');
+    const rr = T.rir[T.p - 1];
+    tr.innerHTML = `<div class="enche" id="enche" style="height:${Math.min(100, (1 - (T.desc - Date.now()) / T.descTot) * 100)}%"></div><div class="tf">${topo}<div class="tf-meio c"><p class="tf-serie" style="text-align:center">descanso</p><div class="conta n" id="conta">0:00</div>
+      <div class="sobrou"><p>Sobraram quantas repetições? Se quiser dizer.</p><div>${[0,1,2,'3+'].map(x => `<button class="n" data-a="rir" data-r="${x}" aria-pressed="${String(rr) === String(x)}">${x}</button>`).join('')}</div></div>
+      <div class="prox"><div><span>a seguir · série ${q.k + 1} de ${e.s}</span><b>${e.n}</b><span class="n">${v.kg} × ${v.rep}</span></div>${E.mod.agua ? `<button data-a="agua-descanso">Água +1</button>` : ''}</div></div>
+      <div class="tf-pe"><button class="alt" data-a="mais30">+30 s</button><button class="vai" data-a="pula">Começar já</button></div></div>`; tique(); return; }
+  tr.className = 'camada' + (E.tv ? ' on' : '');
+  const ini = T.p - q.k;
+  const sets = Array.from({ length:e.s }, (_, k) => k < q.k ? `<span class="f n">${ic.ok}${vir(T.v[ini + k].kg)} × ${T.v[ini + k].rep}</span>` : k === q.k ? `<span class="a n">série ${k + 1}</span>` : `<span class="n">${k + 1}</span>`).join('');
+  tr.innerHTML = `<div class="tf">${topo}<div class="tf-cima"><p class="tf-dica"><b>Treinador:</b> ${e.d}</p><div class="tf-sets">${sets}</div></div><div class="tf-meio"><h2 class="tf-ex">${e.n}</h2><p class="tf-serie">${e.f} repetições, sobrando ${e.rir}</p>
+      <div class="par"><button data-a="campo" data-c="kg" aria-pressed="${T.campo === 'kg'}"><span class="rt">${e.un}</span><span class="gr n" id="v-kg">${vir(v.kg)}</span></button><span class="x">×</span>
+        <button data-a="campo" data-c="rep" aria-pressed="${T.campo === 'rep'}"><span class="rt">repetições</span><span class="gr n" id="v-rep">${v.rep}</span></button></div>
+      ${T.campo === 'kg' ? regua('rg', 0, 240, 2.5, v.kg, 10, 16) : regua('rg', 1, 30, 1, v.rep, 5, 30)}
+      <p class="tf-ant">da última vez: <span class="n">${e.kg} × ${e.ant[q.k]}</span></p></div>
+    <div class="tf-pe"><button class="vai" data-a="feito">${ic.ok} Feito</button></div>
+    <div class="tf-links"><button data-a="pula-serie">Pular esta série</button><button data-a="fila">Trocar exercício</button></div></div>`;
+  armaRegua('rg', val => { T.v[T.p][T.campo] = val; const el = $('#v-' + T.campo); el.textContent = vir(val); });
+}
+function tique() {
+  const r = $('#relogio'); if (r && T.ini) { const s = Math.floor((Date.now() - T.ini) / 1000); r.textContent = String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+  const c = $('#conta'); if (c) { const s = Math.max(0, Math.ceil((T.desc - Date.now()) / 1000)); c.textContent = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); const en = $('#enche'); if (en) en.style.height = Math.min(100, (1 - (T.desc - Date.now() - 1000) / T.descTot) * 100) + '%'; if (s === 0) { T.desc = 0; telaTreino(); } }
+  const vv = $('#vivo'); if (T.on && !$('#treino').classList.contains('on')) { vv.classList.add('on'); vv.innerHTML = `<i></i><span>Treino B · ${T.p} de ${FILA.length}</span>${ic.seta.replace('<svg','<svg width="20" height="20"')}`; } else vv.classList.remove('on');
+}
+setInterval(tique, 500);
+
+/* ---------- CORPO ---------- */
+function telaCorpo() {
+  const pts = [74.3,75.1,75.9,76.4,77.2,77.6,77.9,77.8,77.5,77.7,77.9,77.6], W = 340, H = 70;
+  const d = pts.map((v, i) => (i ? 'L' : 'M') + (i*(W/(pts.length-1))).toFixed(1) + ' ' + (H - (v-73.8)/4.6*H).toFixed(1)).join(' ');
+  const p0 = D.peso || 77.6;
+  const linhas = [['medidas','Medidas','cintura 86,0 cm · +1,5 desde outubro'],['bio','Bioimpedância','12,5 % de gordura · 38,7 kg de músculo', true],['fotos','Fotos','11 poses em 12/11 · próxima em 10 dias']];
+  return `<section class="mundo" style="--mundo:var(--lilas)"><div class="linha0"><span>Corpo</span><span>${D.peso ? 'pesado hoje' : 'última: sexta'}</span></div>
+      <div class="gigante n"><span id="peso-g">${vir(p0.toFixed(1))}</span><small>kg</small></div>
+      <div style="height:10px"></div>${regua('rg-peso', 60, 100, 0.1, p0, 1, 12)}
+      <div class="acoes" style="margin-top:6px"><button class="vai espera" data-a="guarda-peso" id="guarda">Arraste a régua para pesar hoje</button></div></section>
+    <div class="bloco"><h2 class="h">Doze semanas <small>+3,3 kg</small></h2>
+      <svg viewBox="-4 -10 356 94" style="width:100%;height:auto;display:block;margin-top:10px" role="img" aria-label="Média semanal do peso, de 74,3 para 77,6 kg"><path d="${d}" fill="none" stroke="#0F0F0D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${W}" cy="${(H - (77.6-73.8)/4.6*H).toFixed(1)}" r="6" fill="#D3C6FF" stroke="#0F0F0D" stroke-width="3"/></svg></div>
+    <div class="bloco"><h2 class="h">Também dá para acompanhar <small>só o que você ligar</small></h2><div style="margin-top:8px">
+      ${linhas.map(l => { const on = l[3] || E.mod[l[0]]; return on
+        ? `<button class="lin"><div><b>${l[1]}</b><span>${l[2]}</span></div>${ic.dir}</button>`
+        : `<button class="lin" data-a="liga" data-m="${l[0]}"><div><b style="color:var(--t3)">${l[1]}</b><span>desligado · toque para ligar</span></div>${ic.mais}</button>`; }).join('')}</div></div>`;
+}
+
+/* ---------- DIAS ---------- */
+const MES = {1:'A',2:'·',3:'B',4:'D',5:'B',6:'E',7:'HX',10:'B',11:'C',12:'D',13:'A'};
+function telaDias() {
+  let sem = '', lin = '';
+  for (let d = 1; d <= 28; d++) { const t = MES[d], fut = d > 16;
+    lin += `<button class="dd ${t && t !== '·' ? 't' : ''} ${!t && !fut && d !== 16 ? 'v' : ''} ${fut ? 'fut' : ''} ${d === 16 ? 'hoje' : ''} ${d === E.diaSel ? 'sel' : ''}" data-a="dia" data-d="${d}" ${fut ? 'disabled' : ''} aria-label="dia ${d}"><small>${d}</small>${t && t !== '·' ? t : ''}</button>`;
+    if (d % 7 === 0) { sem += `<div class="sem">${lin}</div>`; lin = ''; } }
+  const t = MES[E.diaSel], nome = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][(E.diaSel - 1) % 7];
+  return `<header class="cab"><h1>Dias</h1><span>novembro · 10 treinos em 16 dias</span></header>
+    <div class="bloco"><div class="sem" style="margin-bottom:8px">${['D','S','T','Q','Q','S','S'].map(x => `<span style="text-align:center;font-size:12px;font-weight:700;color:var(--t3)">${x}</span>`).join('')}</div><div class="semanas">${sem}</div></div>
+    <div class="bloco"><h2 class="h">${nome}, ${E.diaSel} <small>${t && t !== '·' ? (t === 'HX' ? 'aula de HYROX' : 'Treino ' + t + ' · 20 séries') : t === '·' ? 'descanso' : 'sem treino'}</small></h2>
+      <div class="resumo-dia"><div><b class="n">${t && t !== '·' ? '58 min' : '—'}</b>treino</div><div><b class="n">—</b>peso</div><div><b class="n">—</b>água</div></div>
+      <div class="pergunta"><p>A comida deste dia foi como o plano?</p><small>Riscado é dia em branco: fica fora da conta, não vira zero.</small><div class="resp"><button class="f">Foi, sim</button><button>Quase</button><button>Não lembro</button></div></div></div>`;
+}
+
+/* ---------- SEMANA ---------- */
+function telaSemana() {
+  return `<section class="mundo" style="--mundo:var(--ceu)"><div class="linha0"><span>Semana</span><span>o que fazer com a comida</span></div>
+      <h1 class="titulo" style="margin-top:10px">Não mexer.</h1><p class="apoio">O peso parou, mas falta saber se você comeu o plano. Responda os dias e o veredito sai.</p>
+      <div class="acoes"><button class="vai" data-a="catorze">Responder os 14 dias</button></div></section>
+    <div class="bloco"><h2 class="h">O que a regra olha</h2><div style="margin-top:6px">
+      <div class="crit"><span class="g">${ic.ok}</span><div><b>O peso parou</b><span>−0,37 e +0,08 kg por semana. Duas seguidas abaixo de 0,10.</span></div></div>
+      <div class="crit"><span class="g n">${ic.x}</span><div><b>Comida: 0 de 14 dias</b><span>A regra precisa de 11 dias respondidos.</span></div></div>
+      <div class="crit"><span class="g q">${ic.duvida}</span><div><b>Força: ainda sem dado</b><span>Faltam 4 semanas de carga em 3 exercícios. Acontece sozinho, treinando.</span></div></div></div></div>
+    <div class="bloco"><h2 class="h">Séries da semana <small>dia 2 de 7</small></h2><div style="margin-top:8px">
+      ${[['Pernas',0,28],['Peito e ombro',0,24],['Costas',0,17],['Braços',0,15]].map(m => `<button class="lin"><div><b>${m[0]}</b><span>${m[1]} de ${m[2]} séries</span></div>${ic.dir}</button>`).join('')}</div></div>`;
+}
+
+/* ---------- PLANO ---------- */
+function telaPlano() {
+  const tr = [['A','Peito superior, dorsais, lateral, tríceps','20 séries'],['B','Pernas completas e panturrilhas','22 séries · hoje'],['C','Costas, deltoides, bíceps','17 séries'],['D','Lateral, panturrilha, abdômen','18 séries'],['E','Peito superior, costas, braços','18 séries']];
+  return `<header class="cab"><h1>Plano</h1><span>5 treinos · 6 refeições</span></header>
+    <div class="bloco"><h2 class="h">Treinos <small>arraste</small></h2><div class="tiles">${tr.map(t => `<button class="tile ${t[0] === 'B' ? 'hoje' : ''}"><span class="L">${t[0]}</span><span><b>${t[1]}</b><span>${t[2]}</span></span></button>`).join('')}</div></div>
+    <div class="bloco"><h2 class="h">Comida <small class="n">3.204 kcal em dia de treino</small></h2><div style="margin-top:8px">${REF.map(r => `<button class="lin" data-a="ref" data-id="${r.id}"><div><b>${r.n}</b><span class="n">${fh(r.h)} · ${r.it.length} itens</span></div><span class="val n">${r.k}</span>${ic.dir}</button>`).join('')}</div></div>
+    <div class="bloco"><h2 class="h">Regras do treinador</h2><div style="margin-top:8px">${['Dupla progressão: repetição, depois carga','Dor de tendão não se treina por cima','Deload por evidência, não por calendário'].map(r => `<button class="lin"><div><b style="font-size:16px">${r}</b></div>${ic.dir}</button>`).join('')}</div></div>`;
+}
+
+/* ---------- folhas ---------- */
+function folha(h) { $('#folha').innerHTML = `<div class="puxa"></div>` + h; $('#folha').classList.add('on'); $('#veu').classList.add('on'); $('#folha').scrollTop = 0; }
+function fecha() { $('#folha').classList.remove('on'); $('#veu').classList.remove('on'); }
+function folhaCaptura() {
+  const a = agora(), s = [];
+  if (a.k === 'ref') s.push(`<button class="pri" data-a="come" data-id="${a.r.id}"><span><b>Comi o ${a.r.n.toLowerCase()}</b><br><span>${a.r.k} kcal · como o plano</span></span>${ic.ok}</button>`);
+  if (a.k === 'treino') s.push(`<button class="pri" data-a="comeca"><span><b>Começar o Treino B</b><br><span>22 séries</span></span>${ic.seta}</button>`);
+  if (a.k === 'checkin') s.push(`<button class="pri" data-a="checkin" data-r="sim"><span><b>Hoje foi como o plano</b><br><span>responde as ${a.n} que faltam</span></span>${ic.ok}</button>`);
+  s.push(`<button data-a="agua"><b>+1 copo de água</b><span>${D.agua} de 14 hoje</span></button>`);
+  s.push(`<button data-a="peso"><b>Peso de hoje</b><span>${D.peso ? vir(D.peso.toFixed(1)) + ' kg · mudar' : 'última: 77,6 kg'}</span></button>`);
+  s.push(`<button data-a="cardio"><b>Cardio</b><span>bike, 25 min</span></button>`);
+  s.push(`<button data-a="fora"><b>Comi outra coisa</b><span>fora do plano</span></button>`);
+  folha(`<h2>Registrar</h2><p class="sub">O mais provável agora vem primeiro. Ou escreva do seu jeito.</p>
+    <form class="diga" id="diga"><input id="diga-t" placeholder="almocei e tomei 2 copos" autocomplete="off" enterkeyhint="send" aria-label="Escreva o que quer registrar"><button aria-label="Enviar">${ic.seta}</button></form>
+    <p class="eco" id="eco" aria-live="polite"></p><div class="sug">${s.join('')}</div>`);
+}
+function folhaRef(id) { const r = REF.find(x => x.id === id), f = D.feitas.has(id);
+  folha(`<h2>${r.n}</h2><p class="sub n">${fh(r.h)} · ${r.k} kcal</p><div class="itens">${r.it.map(i => `<div><span>${i[0]}</span><span class="n">${i[1]}</span></div>`).join('')}</div>
+    <div class="acoes"><button class="vai" data-a="come" data-id="${id}">${f ? 'Desmarcar' : ic.ok + ' Comi'}</button>${f ? '' : `<button class="alt" data-a="come" data-id="${id}">Parte</button>`}</div>`); }
+function folhaPainel() { const m = [['agua','Água','contar copos'],['peso','Peso','a pesagem da manhã'],['cardio','Cardio','as duas sessões da semana'],['medidas','Medidas','fita e adipômetro'],['fotos','Fotos do corpo','sessão a cada 14 dias']];
+  folha(`<h2>O que aparece</h2><p class="sub">Treino e comida ficam sempre. O resto é seu: ligue só o que for usar. Desligar não apaga nada.</p><div style="margin-top:14px">
+    ${m.map(x => `<button class="liga" data-a="mod" data-m="${x[0]}" aria-pressed="${!!E.mod[x[0]]}"><div><b>${x[1]}</b><span>${x[2]}</span></div><span class="chave"></span></button>`).join('')}</div>`); }
+function folhaFila() { let acc = 0;
+  folha(`<h2>Treino B</h2><p class="sub">${T.p} de ${FILA.length} séries. Toque para pular para um exercício.</p><div class="fila" style="margin-top:14px">${EX.map((e, i) => { const ini = acc; acc += e.s; const fe = Math.max(0, Math.min(e.s, T.p - ini));
+    return `<button class="${fe === e.s ? 'feito' : T.p >= ini && T.p < acc ? 'atual' : ''}" data-a="vai-ex" data-p="${ini}"><span class="o n">${fe === e.s ? ic.ok.replace('<svg','<svg width="18" height="18"') : i + 1}</span><span><b>${e.n}</b><span class="n">${e.s} × ${e.f} · ${fe} de ${e.s}</span></span></button>`; }).join('')}</div>
+    <div class="acoes"><button class="alt" style="flex:1" data-a="encerra">Encerrar o treino</button></div>`); }
+
+/* ---------- desenho e toques ---------- */
+const TELAS = { hoje:telaHoje, dias:telaDias, corpo:telaCorpo, semana:telaSemana, plano:telaPlano };
+const ABAS = [['hoje','Hoje'],['dias','Dias'],['corpo','Corpo'],['semana','Semana'],['plano','Plano']];
+function desenha(topo) {
+  const t = $('#tela'), y = t.scrollTop, tr = t.querySelector('.tiles'), x = tr ? tr.scrollLeft : 0;
+  t.innerHTML = TELAS[E.aba](); t.scrollTop = topo ? 0 : y; if (topo) { ultY = 0; $('#doca').classList.remove('mini'); }
+  const tr2 = t.querySelector('.tiles'); if (tr2 && !topo) tr2.scrollLeft = x;
+  $('#nav').innerHTML = ABAS.map(a => `<button data-a="vai" data-aba="${a[0]}" aria-label="${a[1]}" ${a[0] === E.aba ? 'aria-current="page"' : ''}>${ic[a[0]]}<span>${a[1]}</span></button>`).join('');
+  $('#mais').innerHTML = ic.mais;
+  if (E.aba === 'corpo') armaRegua('rg-peso', v => { $('#peso-g').textContent = vir(v.toFixed(1)); const g = $('#guarda'); g.dataset.v = v; g.classList.remove('espera'); g.innerHTML = ic.ok + ' Guardar ' + vir(v.toFixed(1)) + ' kg'; });
+  grude(); tique();
+}
+$('#tela').addEventListener('scroll', rolou, { passive:true });
+function interpreta(tx) { const t = tx.toLowerCase(), fez = [];
+  [['pré','pre'],['pre-treino','pre'],['café','cafe'],['almo','almoco'],['lanch','lanche'],['jant','jantar'],['ceia','ceia']].forEach(p => { if (t.includes(p[0]) && !D.feitas.has(p[1])) { D.feitas.add(p[1]); fez.push(REF.find(r => r.id === p[1]).n.toLowerCase()); } });
+  const c = t.match(/(\d+)\s*cop/); if (c) { D.agua += +c[1]; fez.push(c[1] + ' copos'); } else if (/cop|água|agua/.test(t)) { D.agua++; fez.push('1 copo'); }
+  const p = t.match(/(\d{2,3}[.,]\d)\s*(kg|quilo)?/); if (p) { D.peso = parseFloat(p[1].replace(',', '.')); fez.push('peso ' + p[1] + ' kg'); }
+  return fez; }
+document.addEventListener('submit', ev => { if (ev.target.id !== 'diga') return; ev.preventDefault(); const i = $('#diga-t'), fez = interpreta(i.value);
+  $('#eco').textContent = fez.length ? 'Guardado: ' + fez.join(', ') + '.' : 'Não entendi. Tente “almocei” ou “2 copos”.'; if (fez.length) { i.value = ''; desenha(); } });
+document.addEventListener('click', ev => {
+  if (ev.target.id === 'veu') { fecha(); return; }
+  const b = ev.target.closest('[data-a],[data-sim]'); if (!b) return;
+  if (b.dataset.sim) { E.sim = b.dataset.sim; document.querySelectorAll('[data-sim]').forEach(x => x.setAttribute('aria-pressed', x === b)); zera(); E.tv = false; $('#treino').className = 'camada'; $('#treino').innerHTML = ''; E.aba = 'hoje'; fecha(); desenha(true); return; }
+  const a = b.dataset.a, id = b.dataset.id;
+  if (a === 'vai') { E.aba = b.dataset.aba; desenha(true); }
+  else if (a === 'captura') folhaCaptura();
+  else if (a === 'painel') folhaPainel();
+  else if (a === 'mod' || a === 'liga') { E.mod[b.dataset.m] = !E.mod[b.dataset.m]; if (a === 'mod') { b.setAttribute('aria-pressed', E.mod[b.dataset.m]); } desenha(); }
+  else if (a === 'come') { D.feitas.has(id) ? D.feitas.delete(id) : D.feitas.add(id); fecha(); desenha(); }
+  else if (a === 'ref') folhaRef(id);
+  else if (a === 'agua') { D.agua = Math.min(20, D.agua + 1); fecha(); desenha(); const g = $('.gota .v'); if (g) g.classList.add('pop'); }
+  else if (a === 'cardio') { D.cardio = Math.min(2, D.cardio + 1); fecha(); desenha(); }
+  else if (a === 'peso') { fecha(); E.aba = 'corpo'; desenha(true); }
+  else if (a === 'guarda-peso') { if (b.dataset.v) { D.peso = +b.dataset.v; E.aba = 'hoje'; desenha(true); } }
+  else if (a === 'fora') folha(`<h2>Comi outra coisa</h2><p class="sub">Não precisa pesar nem listar. Só diga o tamanho.</p><div class="sug" style="margin-top:16px"><button data-a="fecha"><b>Parecido</b><span>mesma quantidade</span></button><button data-a="fecha"><b>Bem mais</b><span>refeição grande</span></button><button data-a="fecha"><b>Bem menos</b><span>quase nada</span></button><button data-a="fecha"><b>Não sei</b><span>fica de fora da conta</span></button></div>`);
+  else if (a === 'fecha') fecha();
+  else if (a === 'descanso') { D.descanso = true; desenha(); }
+  else if (a === 'checkin') { if (b.dataset.r !== 'nao') REF.forEach(r => { if (D.agora - min(r.h) >= 60) D.feitas.add(r.id); }); D.checkin = true; fecha(); desenha(); }
+  else if (a === 'ontem') { E.ontem = false; desenha(); }
+  else if (a === 'catorze') folha(`<h2>Os 14 dias</h2><p class="sub">Se a maior parte foi como o plano, responda tudo de uma vez e corrija só as exceções.</p><div class="ritmo" style="flex-wrap:wrap;gap:8px;justify-content:flex-start;margin-top:18px">${Array.from({length:14}, (_, i) => `<span class="bola vazia n">${i + 3}</span>`).join('')}</div><div class="acoes"><button class="vai" data-a="fecha">Todos como o plano</button></div><button class="livre" data-a="fecha">Responder um por um</button>`);
+  else if (a === 'comeca' || a === 'abre-treino') { fecha(); if (!T.on && !D.treino) { T.on = true; T.ini = Date.now(); } E.tv = true; telaTreino(); desenha(); }
+  else if (a === 'fecha-treino') { E.tv = false; $('#treino').classList.remove('on'); desenha(); }
+  else if (a === 'campo') { T.campo = b.dataset.c; telaTreino(); }
+  else if (a === 'feito') { const e = EX[FILA[T.p].i]; T.p++; T.campo = 'rep'; if (T.p < FILA.length) { T.descTot = e.desc * 1000; T.desc = Date.now() + T.descTot; } telaTreino(); }
+  else if (a === 'pula-serie') { T.p++; telaTreino(); }
+  else if (a === 'pula') { T.desc = 0; telaTreino(); }
+  else if (a === 'mais30') { T.desc += 30000; T.descTot += 30000; tique(); }
+  else if (a === 'rir') { T.rir[T.p - 1] = b.dataset.r; b.parentNode.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); }
+  else if (a === 'agua-descanso') { D.agua++; b.textContent = 'Água ' + D.agua + ' ✓'; b.classList.add('pop'); }
+  else if (a === 'fila') folhaFila();
+  else if (a === 'vai-ex') { T.p = Math.max(T.p, +b.dataset.p); T.desc = 0; fecha(); telaTreino(); }
+  else if (a === 'encerra' || a === 'fim') { T.on = false; T.desc = 0; D.treino = true; T.p = FILA.length; E.tv = false; $('#treino').className = 'camada'; fecha(); E.aba = 'hoje'; desenha(true); }
+  else if (a === 'dia') { E.diaSel = +b.dataset.d; desenha(); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecha(); });
+zera(); desenha(true);
+</script>
+</body>
+</html>

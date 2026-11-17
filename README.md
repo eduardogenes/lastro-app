@@ -22,6 +22,13 @@ A hierarquia entre as duas acepções, a voz e a identidade estão em
 
 ---
 
+> **Em transição de visual (novembro de 2026).** O app está sendo redesenhado
+> na direção 3. As seções "Como se usa" e a árvore de arquivos abaixo
+> descrevem o app **antes** dela: os nomes das abas, as telas e as folhas de
+> estilo citadas são do visual anterior e mudam até o fim do
+> [plano](docs/redesign-3/00-plano.md). Para qualquer trabalho de tela, a
+> referência é o [CLAUDE.md](CLAUDE.md).
+
 ## Sumário
 
 - [Começar](#começar)
@@ -401,15 +408,11 @@ Não negociáveis, e a suíte verifica as que dá para verificar:
    versão antiga.
 3. **Mobile-first de verdade.** Usado de pé, com uma mão, suado, às 6h15. Alvos
    de toque grandes, nada que exija precisão.
-4. **Identidade visual fixa.** O sistema se chama **Instrumento** e a fonte
-   canônica dos valores é [src/tokens.css](src/tokens.css): fundo `#0C0E0C`,
-   elevado `#111411`, fio `#161A15`, régua `#22271F`, borda `#2B302A`, texto
-   `#F2F4EF`, apoio `#A8AFA1`, rótulo `#7C8478`, ácido `#CBF35E` (acento),
-   âmbar `#FFC46B` (atenção), coral `#FF8A6B` (só destrutivo). Raio zero. Space
-   Grotesk para prosa e nome, IBM Plex Mono para todo número. **Cor só em
-   [src/tokens.css](src/tokens.css)** — hexadecimal solto nas outras folhas
-   reprova em `tests/dominio/estilo.test.ts`. O porquê está em
-   [DESIGN.md](DESIGN.md).
+4. **O visual é a direção 3**, descrita em [DESIGN.md](DESIGN.md) e nos
+   protótipos de [docs/redesign-3/](docs/redesign-3/). Tema claro, sempre. O
+   código ainda carrega o visual anterior (Instrumento) até o fim do
+   [plano](docs/redesign-3/00-plano.md); ele não orienta nada novo. Quem chega
+   agora lê primeiro o [CLAUDE.md](CLAUDE.md).
 5. **Tudo em português**, tom direto, sem emoji, sentence case. Única exceção
    autorizada: os marcadores de período no calendário, isolados em `PERIODOS`.
 6. **Não inventar conselho de treino.** A prescrição está definida; isto aqui é

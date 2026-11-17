@@ -1,253 +1,158 @@
-# LASTRO — Contrato de UX
+# Lastro — contrato de UX
 
-As regras de comportamento do app. [DESIGN.md](../DESIGN.md) diz como as coisas
-se **parecem**; este documento diz como elas se **comportam**. Onde os dois se
-tocam, DESIGN manda na forma e este manda na navegação.
+As regras de comportamento do app na direção 3 (16/11/2026).
+[DESIGN.md](../DESIGN.md) diz como as coisas se parecem; este documento diz
+como se comportam. A versão anterior está em
+[historico/UX-CONTRACT-ate-nov-2026.md](historico/UX-CONTRACT-ate-nov-2026.md)
+e vale só para as telas antigas enquanto existirem.
 
-Escrito depois da auditoria de setembro de 2026
-([docs/ux-audit/](ux-audit/)). Vale para tela nova.
+## 1 · As camadas
 
----
-
-## 1 · As três camadas, e só três
-
-| Camada | Estado | Tem tab bar? | O que o Voltar faz |
+| Camada | O que é | Navegação visível | O que o Voltar faz |
 |---|---|---|---|
-| **Aba** | `view.aba` | sim | sai do app (é a raiz) |
-| **Destino** | flag em `view` | **não** | volta à aba, na posição anterior |
-| **Folha** | `view.pilha[]` | irrelevante (cobre) | fecha a folha do topo |
+| **Lugar** | Hoje, Dias, Corpo, Semana, Plano | doca | sai do app (é a raiz) |
+| **Destino** | uma tela aberta de um lugar (uma medida, comparar fotos, um exercício) | cabeçalho fino com voltar; sem doca | volta, na posição em que estava |
+| **Tela de ação** | treino, descanso, medir, câmera, responder dias | só a saída própria | pergunta se há algo a perder; senão, sai |
+| **Folha** | tarefa curta que sobe de baixo | cobre o que houver | fecha a folha de cima |
 
-Não existe quarta camada. Uma tela nova é uma destas três coisas; se não for
-nenhuma, a pergunta está errada.
-
-**A pilha de navegação é derivada, nunca escrita à mão.** `camadasAbertas()` lê
-`view` e devolve a lista de camadas na ordem em que o usuário as vê. Quem abre
-uma camada só liga a flag; quem fecha só desliga. O histórico se sincroniza
-sozinho depois de cada render.
+A pilha de navegação continua **derivada do estado**, nunca escrita à mão
+(`src/ui/navegacao.js`): quem abre liga uma marca, quem fecha desliga, e o
+histórico do navegador acompanha.
 
 ## 2 · Voltar
 
-**Voltar desfaz exatamente uma camada.** Vale para o botão `‹ voltar`, para o
-`×` da folha, para o toque no véu, para o Esc e para o **Voltar do sistema** —
-todos passam pelo mesmo caminho.
+**Voltar desfaz exatamente uma camada.** Vale igual para o botão de voltar, o
+toque no véu, o Esc e o Voltar do sistema.
 
-- Folha aberta → fecha a folha (só a do topo).
-- Destino aberto → volta à aba **e restaura a posição de leitura**.
-- Raiz de uma aba → sai do app. Não se intercepta isso: um app que não deixa
-  sair com o Voltar é pior que um que sai cedo demais.
+Nunca usar Voltar para ir ao Hoje, trocar de lugar ou descartar um treino.
+Não existe botão de voltar na raiz de um lugar.
 
-**Nunca** usar Voltar para: ir para a Home, resetar rota, trocar de aba,
-descartar sessão de treino.
-
-**Proibido** pôr `‹ voltar` na raiz de uma aba.
-
-### Voltar · Fechar · Cancelar · Concluir
-
-| Rótulo | Significa | Onde |
-|---|---|---|
-| `‹ voltar` | sobe na hierarquia | topo de destino |
-| `×` | encerra a superfície | cabeçalho de folha |
-| cancelar | sai sem aplicar | só onde há alteração não aplicada |
-| salvar / concluir | aplica | ação primária; na folha, o último elemento |
-
-Não misturar. Uma folha nunca diz "voltar"; um destino nunca diz "fechar".
+| Rótulo | Significa |
+|---|---|
+| seta para a esquerda | sobe uma camada |
+| × ou seta para baixo | recolhe a tela de ação ou sai dela, sem perder o que foi feito |
+| Cancelar | sai sem aplicar; só onde há alteração não aplicada |
 
 ## 3 · Posição de leitura
 
 | Navegação | Comportamento |
 |---|---|
-| Entrar num destino | topo do destino |
-| **Voltar de um destino** | **restaura a posição exata** |
-| Fechar folha | mantém a posição, sem exceção |
-| Trocar de aba | topo |
-| Atualizar dado na mesma tela | **não mexe** — o topo só vem com troca de aba, de dia, de destino ou fim de fluxo |
+| Entrar num destino | topo |
+| Voltar de um destino | a posição exata de antes |
+| Fechar folha | não mexe |
+| Trocar de lugar | topo |
+| Atualizar dado na mesma tela | **não mexe** |
 
-O último caso é o mais fácil de errar, porque `render(); window.scrollTo(0,0)`
-vira idioma: certo ao entrar num destino, errado ao repintar a tela em que já se
-está. O sinal é o controle — se ele fica no meio da página e é feito para ser
-tocado mais de uma vez (andar mês, trocar filtro, paginar), a rolagem não pode
-sair de baixo do polegar.
+## 4 · A doca
 
-Entrar guarda (`entraNoDestino`), sair devolve (`saiDoDestino`), por chave de
-destino — nunca por pilha, porque destino que abre outro por cima precisa
-devolver os dois.
+Cinco lugares, fixos: **Hoje · Dias · Corpo · Semana · Plano**. Ao lado, o
+botão **"+"**.
 
-## 4 · Cabeçalho
+- A doca é navegação. O "+" é a única ação que mora nela: abre "Registrar",
+  que sugere o mais provável agora e aceita texto livre.
+- Some em destino, em tela de ação e enquanto houver campo em foco.
+- Encolhe ao rolar para baixo e volta ao rolar para cima.
+- Com treino em andamento e fora dele, uma faixa acima da doca leva de volta
+  ao treino.
 
-Três formas, e nenhuma quarta:
+## 5 · Uma ação principal por tela
 
-- **Raiz de aba** — `Cabecalho`: sobrancelha, título, no máximo **uma** ação de
-  estado à direita. Sem Voltar.
-- **Destino** — `TelaCheia`: `‹ voltar` primeiro, título `h1` que **recebe foco
-  ao entrar**, ação opcional à direita.
-- **Folha** — `Folha`: sobrancelha, título, meta opcional, `···` opcional, `×`
-  sempre por último.
+- No Hoje, ela mora no bloco do momento. Quando o bloco rola para fora, a ação
+  gruda no topo, pequena.
+- Em tela de ação, é o botão grande embaixo.
+- A saída discreta ("Pulei esta", "Hoje não vou treinar", "Tirar mesmo assim",
+  "Guardar só esta") fica embaixo do botão principal, sublinhada. Sempre
+  existe quando o caminho principal pode não servir.
 
-Tela cheia focada (treino ativo) pode trocar o título por contexto vivo — o
-relógio sticky de TREINO é o caso, e é sticky com `top: var(--sa-top)`.
+## 6 · Registro
 
-## 5 · Tab bar
+- **Por exceção.** O caminho comum custa um toque e já vem preenchido: a série
+  com a carga e as repetições da última vez, a refeição como o plano, a medida
+  perto da anterior.
+- **Número na régua**, não no teclado.
+- **Confirmar grava na hora.** Não existe "salvar" separado no fim de um
+  fluxo: "Feito", "Comi", "Guardar" já são o registro. Sair no meio não perde
+  o que foi confirmado.
+- **Quem não anotou resolve depois, de uma vez:** "Já fiz mais do que anotei"
+  no treino, "Responder os dias em branco" na comida. O que entra assim fica
+  marcado como registrado depois.
+- **Em branco não é zero.** Dia ou medida sem registro fica fora das contas e
+  é mostrado como em branco, sem cobrança.
 
-Cinco destinos, fixos: HOJE · TREINO · COMIDA · DADOS · GUIA.
+## 7 · Padrão com saída
 
-- É **navegação**, nunca ação. Nenhum item salva, adiciona, finaliza ou confirma.
-- Some em destino de tela cheia (o assunto é um só, e ela convidaria a sair no
-  meio).
-- Some enquanto houver campo em foco (barra `fixed` no iOS flutua sobre o
-  teclado).
-- **Continua visível durante o treino ativo**: o treino acontece dentro da aba
-  TREINO, e sair para conferir a comida e voltar é um caminho legítimo — a
-  sessão não se perde. Esconder a navegação aqui protegeria contra um risco que
-  não existe.
-- `padding-bottom: env(safe-area-inset-bottom)`, com os 46 px de alvo **acima**
-  dela.
+Fotos e medidas precisam ser comparáveis. O app conduz ao padrão e trava a
+ação enquanto ele não é atingido. A saída existe ("Tirar mesmo assim",
+"Guardar só esta"), pede uma confirmação curta na primeira vez e **marca o
+registro**; a marca aparece onde ele é comparado.
 
-## 6 · Folhas
+## 8 · Treino
 
-- Máximo três níveis: 50 · 70 · 80. Uma quarta é redesenho, não exceção.
-- Ao abrir: trava o scroll do corpo (`position: fixed` com o deslocamento
-  gravado), **manda o foco para dentro** e torna **inerte** o que está atrás —
-  menos o cronômetro de descanso e o toast, que moram fora do `#app` de
-  propósito: tornar o "parar" inalcançável durante uma folha seria pior que o
-  vazamento de foco que resta ([06-final-review.md](ux-audit/06-final-review.md)).
-- Ao fechar: destrava, devolve o scroll, **devolve o foco ao acionador**, e a
-  rota por baixo não muda.
-- Fecham por: `×`, véu, Esc e Voltar do sistema.
-- Folha é tarefa curta. Fluxo de várias etapas é destino.
+- Uma série por tela. O que foi feito no exercício fica à vista em cima.
+- O descanso começa sozinho ao confirmar a série, ocupa a tela e mostra a
+  próxima. O cronômetro é escrito por instante-alvo: sobrevive a tela apagada
+  e a recarregar.
+- **Mudar hoje não muda o programa.** Trocar, pular, série a mais, ordem e
+  deload valem só neste treino. No fim, o app pergunta de cada mudança se
+  passa a valer; sem resposta, não passa.
+- A sugestão de subir carga segue a regra do treinador, aparece na série e a
+  pessoa escolhe subir ou manter.
+- Dor registrada mostra a regra do treinador, nas palavras dele.
 
-## 6.1 · Altura de tela
+## 9 · Nada obrigatório
 
-Uma aba que passa de **três telas de rolagem** precisa de justificativa. Não é
-proibição — é o ponto em que a rolagem deixa de ser leitura e vira procura.
+Água, peso, cardio, medidas além das básicas, fotos e lembretes se ligam e
+desligam. Desligar esconde, **nunca apaga**. O que está desligado não aparece
+como pendência em lugar nenhum.
 
-Duas ferramentas, e as duas já existem no sistema:
+## 10 · Ações destrutivas
 
-| Quando | O quê |
-|---|---|
-| A tela faz **dois assuntos** diferentes | `Chips` no topo, um modo por assunto. É o que a COMIDA faz para caber em uma tela, e o DADOS passou a fazer. |
-| A tela tem **referência longa** — prosa que se lê uma vez e depois se consulta | `LinhaExpansivel`: o título fica à vista, o texto vem a um toque. |
-
-**A regra do que pode ser recolhido:** só se o que fica visível já responder à
-pergunta sozinho. O título "Dupla progressão: primeiro repetição, depois carga"
-**é** a regra; a prosa embaixo é a justificativa. Recolher a justificativa é
-divulgação progressiva. Recolher a resposta é esconder.
-
-Não recolher: controle, ação, número que se acompanha, aviso.
-
-Medir antes e depois, em pixels. "Parece grande" não é diagnóstico — o guia
-tinha uma seção que era 64% da tela inteira, e isso não se via rolando.
-
-## 7 · Ação fixa no rodapé
-
-Não usar por reflexo. Só quando concluir a tela depende dela.
-
-Se existir: o conteúdo ganha `padding-bottom` equivalente, o último elemento
-continua inteiro visível, e `safe-area-inset-bottom` é respeitada.
-
-**O rodapé é uma pilha, não um lugar disputado.** Hoje moram lá, de baixo para
-cima: tab bar → cronômetro de descanso → faixa da sessão → toast. Cada camada
-nova **mede** a de baixo em vez de chutar um `bottom`, e o `padding-bottom` da
-página soma todas — senão o fim do conteúdo fica atrás delas, e como já é o fim
-da rolagem não há como trazê-lo à vista. Quem tem altura variável publica a
-medida na raiz (`--ins-timer-h`, `--ins-faixa-h`); quem se empilha lê de lá.
-
-## 8 · Treino ativo
-
-O contexto é: de pé, uma mão, cansado, olhando por segundos.
-
-- **A série entra no histórico assim que carga e reps estão preenchidas.** Não
-  existe botão de salvar, não existe confirmação. Apagar o campo desfaz.
-- **O valor anterior é a referência e o ponto de partida** — visível na linha da
-  série correspondente, e **tocável para preencher**.
-- **O descanso começa sozinho ao completar qualquer série.** Exceções: bi-set
-  encadeia sem pausa; a mesma série não redispara.
-- **O cronômetro é escrito por instante-alvo**, nunca por contador — sobrevive à
-  tela apagada, ao segundo plano e ao reload.
-- Ação frequente não mora atrás de menu, `···` ou tela intermediária.
-- Estado de treino grava por interação e **descarrega ao sair** (`pagehide`,
-  `visibilitychange` oculto).
-
-## 9 · Ações destrutivas
-
-- Reversível → prefere desfazer a confirmar. O desfazer pode ser o próprio
-  gesto — apagar o campo da série, tocar a última célula cheia —, e o que
-  executa sem confirmar tem de ter volta.
-- Difícil de reverter → confirma, com o que se perde dito em português.
-- Destrutivo mora **um nível para dentro**, em coral, nunca na lista.
+- Reversível: prefere desfazer a confirmar.
+- Difícil de reverter: confirma, dizendo em português o que se perde e o que
+  não se perde.
+- Apagar foto manda para a lixeira por 30 dias.
 - Não confirmar ação comum: confirmação repetida deixa de ser lida.
 
-## 10 · Estados
+## 11 · Estados
 
-Tela que depende de E/S — nuvem, fotos, câmera, arquivo — declara os quatro:
-**carregando · vazio · erro · conteúdo**. As que só leem o estado local declaram
-vazio e conteúdo: o dado já está em memória, e não há o que carregar nem o que
-falhar.
+Toda tela tem estado vazio que diz o que falta e, se houver, a ação. Sem
+ilustração, sem consolo.
 
-- Vazio diz o que falta, e a ação quando existe uma. Sem ilustração, sem
-  mascote, sem consolo ([MARCA.md](../MARCA.md), Voz).
-- Erro aparece perto do que o causou, permite tentar de novo e **nunca apaga o
-  que o usuário digitou**.
-- Sem layout shift ao sair de carregando.
+- **Sem rede:** uma faixa quieta avisa uma vez; nada é bloqueado.
+- **Falha ao guardar:** é o único aviso que não some sozinho. Fica no topo
+  até resolver, mostra o que não foi guardado e nunca apaga o que a pessoa
+  informou.
+- Tela que depende de câmera, arquivo ou conta declara carregando, vazio,
+  erro e conteúdo, sem pulo de layout entre eles.
 
-## 11 · Acessibilidade — piso
+## 12 · Acessibilidade — piso
 
-- WCAG 2.2 AA onde aplicável.
-- **Todo controle tem nome acessível.** Campo sem rótulo visível leva
-  `aria-label`. Botão cujo conteúdo é símbolo (`·`, `×`, `···`) leva `aria-label`.
-- Alvo ≥ 24×24 (norma); ≥ 46 px para controle repetido (padrão interno).
-  Controle secundário em linha cheia pode ter 28 px de **desenho**, com a área
-  estendida a ≥ 44 por `::after` — desenho e alvo são medidas diferentes
-  ([DESIGN.md](../DESIGN.md), Toque).
-- Foco sempre visível, e nunca escondido atrás de sticky.
+- Todo controle tem nome acessível; botão só com ícone leva `aria-label`.
+- Alvo de 44 px ou mais; ver [DESIGN.md](../DESIGN.md).
+- Foco sempre visível. Ao abrir folha ou destino, o foco entra; ao fechar,
+  volta para quem abriu.
 - Estado nunca só por cor.
-- `prefers-reduced-motion` desliga todo movimento do sistema
-  ([DESIGN.md](../DESIGN.md), Movimento).
+- "Reduzir movimento" troca deslize e escala por troca seca.
+- A régua tem alternativa sem arrastar: setas do teclado e botões de passo.
 
-## 12 · Viewport e área segura
+## 13 · Viewport e área segura
 
-- Altura de tela cheia: `100vh` só como recuo, `100svh` valendo.
-- `env(safe-area-inset-*)` via tokens `--sa-*` em cabeçalho, tab bar, folha e
-  sticky. Ação importante não encosta no Home Indicator.
-- Sem `overflow` diferente de `visible` entre um sticky e quem rola — senão o
-  sticky troca de âncora e some.
-- Retrato é o cenário. Deitado mostra `#deitado`, que **preserva todo o estado**.
+- Altura de tela cheia em `100svh`, com `100vh` só de recuo.
+- Área segura respeitada em cima, embaixo e dos lados; nada importante encosta
+  na barra de gestos.
+- Nenhum ancestral com `overflow` diferente de `visible` entre um elemento
+  grudado e quem rola (para cortar na horizontal, `overflow-x: clip`).
+- A página nunca rola na horizontal.
+- Retrato é o cenário. Deitado preserva todo o estado.
 
----
+## Antes de dar uma tela por pronta
 
-# Checklist de tela nova
-
-Antes de considerar pronta:
-
-- [ ] tipo definido: aba, destino ou folha
-- [ ] altura medida; acima de três telas, §6.1
-- [ ] cabeçalho na forma certa do tipo
-- [ ] Voltar desfaz uma camada, e só uma
-- [ ] tab bar conforme §5
-- [ ] posição de leitura ao entrar e ao voltar definida
-- [ ] ação fixa justificada (ou ausente)
-- [ ] teclado: campo em foco continua visível
-- [ ] área segura em cima, embaixo e nas laterais
-- [ ] tela com E/S: estado de carregando
-- [ ] estado vazio que diz o que falta, e a ação quando existe
-- [ ] tela com E/S: estado de erro com recuperação, sem perder entrada
-- [ ] foco entra ao abrir e volta ao fechar
-- [ ] todo controle com nome acessível
-- [ ] alvos conforme §11
-- [ ] contraste conforme DESIGN.md
-- [x] **320 px deixou de ser alvo em 08/10, por decisão do dono** — e o que
-      fica no lugar é a invariante barata: **nada com largura fixa maior que a
-      tela, e a página nunca rola na horizontal.** O contexto da decisão:
-      o aparelho dele tem 414 px, o segundo usuário não existe no dado, e a
-      frente 3 calculou que o nome "Prescrição" já transborda a fatia da aba a
-      320 px — atender obrigaria a renomear um dos cinco lugares por um usuário
-      que ainda não existe. **Declarado fora, não esquecido:** se um segundo
-      usuário chegar num telefone pequeno, a lista do que quebra está escrita
-      (medição G da frente 4).
-- [ ] 390 e 430 px conferidos
-- [ ] deitado não quebra nem reinicia
-- [ ] Voltar do sistema conferido
-- [ ] PWA instalado conferido — **o dono, no aparelho dele**, depois de mudança
-      de layout, área segura ou rodapé. Nenhum teste alcança isto, e escrever o
-      item sem o responsável era o mesmo que não ter o item.
-- [ ] reload no meio da tarefa preserva o estado
-
+- [ ] é lugar, destino, tela de ação ou folha, e se comporta como tal
+- [ ] uma ação principal; saída discreta onde o caminho principal pode não servir
+- [ ] Voltar desfaz uma camada, e só uma; o Voltar do sistema também
+- [ ] posição de leitura ao entrar e ao voltar
+- [ ] o caminho comum custa um toque e vem preenchido
+- [ ] estado vazio, e erro com recuperação quando há câmera, arquivo ou conta
+- [ ] nomes acessíveis, foco, alvos de 44 px
+- [ ] 414 × 896 conferido; sem rolagem horizontal
+- [ ] recarregar no meio da tarefa preserva o que foi confirmado

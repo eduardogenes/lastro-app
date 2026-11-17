@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lastro — lote 4, Dias, Semana, Plano e Ajustes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+
+:root{
+  color-scheme: light;
+  --papel:#F6F3EC; --tinta:#0F0F0D; --t2:#56554E; --t3:#77766D; --fio:#DFDACE; --branco:#FFFDF8;
+  --lima:#D2F23A; --tanja:#FF9A4D; --lilas:#D3C6FF; --ceu:#BBDDFB; --menta:#BEEBD2; --areia:#EBE6DA; --parede:#E4DFD3; --chao:#CFC8B8;
+  --d:"Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+  --u:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mola:cubic-bezier(.2,.9,.25,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#E7E3D8;color:var(--tinta);font-family:var(--u);overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;text-align:inherit}
+button:focus-visible,[tabindex]:focus-visible{outline:2.5px solid var(--tinta);outline-offset:3px}
+::selection{background:var(--lima)}
+h1,h2,h3,p{margin:0}
+.n{font-family:var(--d);font-variant-numeric:tabular-nums}
+.palco{min-height:100vh;min-height:100svh;display:flex;gap:56px;align-items:center;justify-content:center;padding:32px}
+.lado{max-width:380px}
+.lado h1{font:800 40px/1 var(--d);letter-spacing:-.03em;text-wrap:balance}
+.lado p{color:var(--t2);margin-top:14px;line-height:1.55;text-wrap:pretty}
+.lado ul{color:var(--t2);padding-left:18px;line-height:1.5;display:grid;gap:10px;margin:18px 0 0}
+.lado b{color:var(--tinta)}
+.fone{width:392px;height:830px;flex:0 0 auto;border-radius:48px;background:var(--papel);overflow:hidden;position:relative;box-shadow:0 0 0 11px var(--tinta), 0 40px 70px -30px rgba(15,15,13,.5);display:flex;flex-direction:column}
+@media (max-width:880px){html,body{background:var(--papel)}.palco{padding:0;display:block}.lado{display:none}.fone{width:100%;height:100vh;height:100svh;border-radius:0;box-shadow:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+
+.tela{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:28px;scrollbar-width:none}
+.tela::-webkit-scrollbar{display:none}
+.mundo{background:var(--lilas);border-radius:0 0 34px 34px;padding:8px 20px 20px}
+.linha0{display:flex;align-items:center;justify-content:space-between;min-height:44px;font-size:13px;font-weight:600}
+.linha0 button{min-height:44px;min-width:44px;display:flex;align-items:center;gap:4px;font-weight:700}
+.linha0 svg{width:22px;height:22px}
+.quando{font:700 14px/1.2 var(--u);margin-top:12px}
+.titulo{font:800 50px/.92 var(--d);letter-spacing:-.04em;margin-top:6px;text-wrap:balance}
+.titulo.m{font-size:36px;line-height:.98}
+.apoio{font-size:15px;line-height:1.38;margin-top:8px;text-wrap:pretty}
+.acoes{display:flex;gap:8px;margin-top:16px;align-items:stretch}
+.vai{flex:1;min-height:58px;border-radius:99px;background:var(--tinta);color:var(--papel);font:700 18px/1 var(--d);display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .12s}
+.vai:active,.alt:active,.esc:active{transform:scale(.97)}
+.vai svg{width:22px;height:22px}
+.vai[disabled]{background:rgba(15,15,13,.18);color:var(--t2)}
+.alt{min-height:58px;padding:0 20px;border-radius:99px;box-shadow:inset 0 0 0 2px var(--tinta);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s}
+.livre{display:block;margin-top:8px;font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:4px;min-height:36px}
+.bloco{padding:18px 20px 0}
+.h{font:700 17px/1.1 var(--d);letter-spacing:-.02em;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.h small{font:500 13px var(--u);color:var(--t3);letter-spacing:0;text-align:right}
+.cab{padding:8px 12px 0 8px;display:flex;align-items:center;gap:4px;min-height:52px}
+.cab button{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+.cab svg{width:24px;height:24px}
+.cab h1{font:800 28px/1 var(--d);letter-spacing:-.03em;flex:1}
+.cab span{font-size:13px;font-weight:600;color:var(--t2)}
+.lin{display:flex;align-items:center;gap:14px;width:100%;min-height:62px;border-top:1.5px solid var(--fio)}
+.lin:first-of-type{border-top:0}
+.lin div{flex:1;min-width:0}
+.lin b{display:block;font:700 17px/1.15 var(--d);letter-spacing:-.01em}
+.lin span{font-size:13px;color:var(--t3);font-weight:500}
+.lin > svg{width:20px;height:20px;flex:0 0 auto;color:var(--t3)}
+
+/* ---------- a régua: o número se arrasta, não se digita ---------- */
+.regua{position:relative;margin:0 -22px}
+.regua::after{content:"";position:absolute;left:50%;top:0;width:3px;height:44px;margin-left:-1.5px;border-radius:2px;background:var(--tinta);pointer-events:none}
+.regua .rola{overflow-x:auto;scrollbar-width:none;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.regua .rola::-webkit-scrollbar{display:none}
+.regua .fita{display:flex;padding:0 calc(50% - var(--passo,14px) / 2);height:64px;align-items:flex-start}
+.regua .tk{flex:0 0 var(--passo,14px);scroll-snap-align:center;height:22px;display:flex;justify-content:center;position:relative}
+.regua .tk::before{content:"";width:2px;height:100%;border-radius:2px;background:rgba(15,15,13,.28)}
+.regua .tk.g{height:34px}
+.regua .tk.g::before{background:var(--tinta)}
+.regua .tk.g::after{content:attr(data-r);position:absolute;top:40px;font:700 13px var(--d);color:var(--tinta)}
+
+
+.liga{display:flex;align-items:center;gap:14px;min-height:64px;border-top:1.5px solid var(--fio);width:100%}
+.liga div{flex:1}
+.liga b{display:block;font-size:16px;font-weight:600}
+.liga span{font-size:13px;color:var(--t3)}
+.chave{flex:0 0 54px;height:32px;border-radius:99px;background:var(--fio);position:relative;transition:background .2s}
+.chave::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--branco);transition:transform .25s var(--mola)}
+.liga[aria-pressed="true"] .chave{background:var(--tinta)}
+.liga[aria-pressed="true"] .chave::after{transform:translateX(22px)}
+
+
+.veu{position:absolute;inset:0;background:rgba(15,15,13,.38);z-index:8;opacity:0;visibility:hidden;transition:opacity .22s}
+.veu.on{opacity:1;visibility:visible}
+.folha{position:absolute;left:0;right:0;bottom:0;z-index:9;background:var(--papel);border-radius:36px 36px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .34s var(--mola);max-height:90%;overflow-y:auto;visibility:hidden;scrollbar-width:none}
+.folha.on{transform:none;visibility:visible}
+.puxa{width:44px;height:5px;border-radius:99px;background:var(--fio);margin:0 auto 16px}
+.folha h2{font:800 30px/1 var(--d);letter-spacing:-.03em}
+.folha .sub{font-size:15px;color:var(--t2);margin-top:6px;line-height:1.4}
+
+.alt svg{width:20px;height:20px;flex:0 0 auto}
+
+.selo{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 10px;border-radius:99px;background:var(--menta);font:700 12px var(--d);white-space:nowrap}
+.selo.a{background:var(--tanja)}.selo.n{background:var(--areia)}.selo.l{background:var(--lima)}
+.lin .val{font:800 19px var(--d);letter-spacing:-.02em;flex:0 0 auto;color:var(--tinta);text-align:right}
+.lin .val small{display:block;font:600 12px var(--u);color:var(--t3);letter-spacing:0}
+.lin .o{flex:0 0 42px;height:42px;border-radius:50%;background:var(--areia);display:flex;align-items:center;justify-content:center;font:800 15px var(--d)}
+.lin .o svg{width:20px;height:20px}
+.seg{display:flex;background:var(--areia);border-radius:99px;padding:4px;gap:2px;margin-top:10px}
+.seg button{flex:1;min-height:38px;border-radius:99px;font:700 14px var(--d);text-align:center}
+.seg button[aria-pressed="true"]{background:var(--tinta);color:var(--papel)}
+/* dias */
+.sem{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.semanas{display:grid;gap:6px;margin-top:8px}
+.dd{aspect-ratio:1;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 14px var(--d);box-shadow:inset 0 0 0 1.5px var(--fio);position:relative;width:100%}
+.dd small{font:600 10px var(--u);color:var(--t3);position:absolute;top:5px}
+.dd.t{background:var(--tinta);color:var(--papel);box-shadow:none}.dd.t small{color:#A9A79C}
+.dd.v{box-shadow:none;background:repeating-linear-gradient(135deg,var(--areia) 0 4px,transparent 4px 8px)}
+.dd.fut{opacity:.35;box-shadow:none}.dd.hoje{box-shadow:inset 0 0 0 2.5px var(--tinta)}
+.dd.sel{outline:3px solid var(--tanja);outline-offset:2px}
+.dd .c{position:absolute;bottom:3px;width:6px;height:6px;border-radius:50%;background:var(--menta)}
+.dd.t .c{background:var(--lima)}
+.res3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.res3 div,.res3 button{border-radius:20px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:10px 12px;font-size:12px;color:var(--t2);font-weight:600}
+.res3 b{display:block;font:800 19px/1.1 var(--d);color:var(--tinta);letter-spacing:-.02em}
+.pergunta{margin-top:10px;border-radius:24px;background:var(--areia);padding:14px 16px}
+.pergunta p{font:700 17px/1.2 var(--d)}
+.pergunta small{display:block;font:500 13px/1.4 var(--u);color:var(--t2);margin-top:3px}
+.resp{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.resp button{min-height:46px;padding:0 16px;border-radius:99px;background:var(--branco);font-weight:600;font-size:15px}
+.resp button.f,.resp button[aria-pressed="true"]{background:var(--tinta);color:var(--papel)}
+/* responder vários */
+.rv{flex:1;display:flex;flex-direction:column;min-height:0;padding:6px 20px calc(18px + env(safe-area-inset-bottom));background:var(--lilas)}
+.rv-topo{display:flex;align-items:center;justify-content:space-between;min-height:48px;font-weight:700;font-size:14px}
+.rv-topo button{min-width:44px;min-height:44px;display:flex;align-items:center}
+.rv-topo svg{width:24px;height:24px}
+.pts{display:flex;gap:4px}
+.pts i{flex:1;height:8px;border-radius:9px;background:rgba(15,15,13,.16)}
+.pts i.s{background:var(--tinta)}.pts i.q{background:var(--tinta);opacity:.55}.pts i.n{background:repeating-linear-gradient(135deg,rgba(15,15,13,.4) 0 3px,transparent 3px 6px)}.pts i.a{background:var(--branco);box-shadow:inset 0 0 0 2px var(--tinta)}
+.rv-meio{flex:1;display:flex;flex-direction:column;justify-content:center}
+.rv-dia{font:800 52px/.92 var(--d);letter-spacing:-.04em}
+.rv-o{font-size:16px;font-weight:600;margin-top:10px;line-height:1.4}
+.rv-b{display:grid;gap:8px}
+.rv-b .vai{min-height:66px;font-size:20px}
+.rv-b .alt{min-height:58px}
+/* semana */
+.crit{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1.5px solid var(--fio)}
+.crit:first-of-type{border-top:0}
+.crit .g{flex:0 0 38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--menta)}
+.crit .g.n{background:var(--tanja)}.crit .g.q{background:var(--areia)}
+.crit .g svg{width:20px;height:20px}
+.crit b{display:block;font:700 17px/1.15 var(--d)}
+.crit span{font-size:14px;color:var(--t2);line-height:1.4;display:block;margin-top:2px}
+.mus{padding:10px 0;border-top:1.5px solid var(--fio)}
+.mus:first-of-type{border-top:0}
+.mus div{display:flex;justify-content:space-between;align-items:baseline;font:700 15px var(--d)}
+.mus div span{font:600 12px var(--u);color:var(--t3)}
+.mus .br{display:flex;height:10px;border-radius:9px;overflow:hidden;background:var(--areia);margin-top:6px}
+.mus .br i{display:block;height:100%}
+.mus .br .f{background:var(--tinta)}.mus .br .v{background:repeating-linear-gradient(135deg,var(--t3) 0 3px,var(--areia) 3px 6px)}
+.legm{display:flex;gap:14px;font-size:12px;font-weight:600;color:var(--t2);margin-top:8px}
+.legm i{display:inline-block;width:14px;height:8px;border-radius:9px;margin-right:5px;vertical-align:middle}
+/* comida */
+.it{display:flex;align-items:center;gap:12px;min-height:58px;border-top:1.5px solid var(--fio);width:100%}
+.it:first-of-type{border-top:0}
+.it div{flex:1;min-width:0}
+.it b{display:block;font:700 16px/1.2 var(--d)}
+.it span{font-size:13px;color:var(--t3);font-weight:500}
+.it .q{flex:0 0 auto;min-height:40px;padding:0 14px;border-radius:99px;background:var(--areia);font:800 15px var(--d);display:flex;align-items:center}
+.macro{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:6px;margin-top:10px}
+.macro div{border-radius:18px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:9px 11px;font-size:12px;color:var(--t2);font-weight:600}
+.macro b{display:block;font:800 19px/1.1 var(--d);color:var(--tinta)}
+.busca{display:flex;align-items:center;gap:10px;border-radius:99px;background:var(--branco);box-shadow:inset 0 0 0 2px var(--tinta);padding:0 18px;min-height:52px;margin-top:8px}
+.busca input{flex:1;border:0;background:none;font:500 16px var(--u);color:var(--tinta);outline:none;min-width:0}
+.busca svg{width:20px;height:20px}
+.cmp{display:flex;align-items:center;gap:12px;min-height:56px;border-top:1.5px solid var(--fio);width:100%}
+.cmp:first-of-type{border-top:0}
+.cmp .ck{flex:0 0 32px;height:32px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--fio);display:flex;align-items:center;justify-content:center;color:transparent}
+.cmp .ck svg{width:16px;height:16px}
+.cmp[aria-pressed="true"] .ck{background:var(--tinta);color:var(--lima);box-shadow:none}
+.cmp[aria-pressed="true"] b{text-decoration:line-through;color:var(--t3)}
+.cmp div{flex:1}.cmp b{font:700 16px var(--d)}
+.cmp span{font:800 15px var(--d)}
+.gig{font:800 64px/.86 var(--d);letter-spacing:-.05em;display:flex;align-items:baseline;gap:6px}
+.gig small{font:700 18px var(--d);letter-spacing:0}
+/* ajustes / estados */
+.campo{display:block;margin-top:10px}
+.campo span{display:block;font-size:13px;font-weight:600;color:var(--t2);margin-bottom:4px}
+.campo input{width:100%;min-height:54px;border:0;border-radius:18px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:0 16px;font:500 16px var(--u);color:var(--tinta)}
+.campo input:focus{outline:none;box-shadow:inset 0 0 0 2.5px var(--tinta)}
+.faixa{display:flex;align-items:center;gap:10px;margin:8px 12px 0;border-radius:99px;background:var(--tanja);box-shadow:inset 0 0 0 2px var(--tinta);min-height:48px;padding:0 6px 0 16px;font:700 14px var(--d)}
+.faixa span{flex:1}
+.faixa button{min-height:36px;padding:0 14px;border-radius:99px;background:var(--tinta);color:var(--papel);font:700 13px var(--d)}
+.faixa.c{background:var(--areia);box-shadow:none}
+.vazio{border-radius:28px;background:var(--areia);padding:22px 20px;margin-top:12px}
+.vazio h3{font:800 26px/1.05 var(--d);letter-spacing:-.02em;margin:0}
+.vazio p{font-size:15px;line-height:1.45;color:var(--t2);margin-top:8px}
+.esc{display:flex;align-items:center;gap:14px;width:100%;border-radius:26px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:16px 18px;margin-top:8px}
+.esc[aria-pressed="true"]{background:var(--lima);box-shadow:inset 0 0 0 2.5px var(--tinta)}
+.esc b{display:block;font:700 18px/1.15 var(--d);color:var(--tinta)}
+.esc span{font-size:14px;color:var(--t2);line-height:1.35;display:block;margin-top:2px}
+.passos3{display:flex;gap:4px;margin:4px 20px 0}
+.passos3 i{flex:1;height:5px;border-radius:9px;background:var(--fio)}.passos3 i.f{background:var(--tinta)}
+</style>
+</head>
+<body>
+<div class="palco">
+  <aside class="lado">
+    <h1>Lote 4 · o restante</h1>
+    <p>Protótipo navegável das áreas que faltavam. A primeira tela é só um índice do protótipo.</p>
+    <ul>
+      <li><b>Dias:</b> o dia aberto cabe numa tela, e “Responder os dias” resolve 14 dias em 14 toques.</li>
+      <li><b>Semana:</b> o veredito muda quando a comida é respondida. As séries por músculo separam o que já foi feito do que ainda vem na semana, para a segunda-feira não parecer alarme.</li>
+      <li><b>Comida:</b> quantidade se muda na régua, com as calorias recalculando na hora. Lista de compras sai do plano.</li>
+      <li><b>Ajustes, primeira vez, tela vazia, sem rede e falha ao guardar.</b></li>
+    </ul>
+  </aside>
+  <div class="fone" id="fone">
+    <main class="tela" id="tela"></main>
+    <div class="veu" id="veu"></div>
+    <section class="folha" id="folha" role="dialog" aria-modal="true"></section>
+  </div>
+</div>
+<script>
+const I = (d, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ic = { volta: I('<path d="M15 5.5L8.5 12l6.5 6.5"/>', 2.4), dir: I('<path d="M9 5.5l6.5 6.5L9 18.5"/>', 2.2), seta: I('<path d="M5 12h14M13 6l6 6-6 6"/>', 2.4), ok: I('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 2.8), mais: I('<path d="M12 5v14M5 12h14"/>', 2.6), x: I('<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>', 2.4), duvida: I('<path d="M9 9.200a3 3 0 115 2.300c-1 .800-2 1.300-2 2.500M12 17.500v.200"/>', 2.4), lupa: I('<circle cx="11" cy="11" r="6.500"/><path d="M16 16l4.500 4.500"/>', 2.2), nuvem: I('<path d="M7 18.500a4.500 4.500 0 01-.500-9A6 6 0 0118 10.500a4 4 0 01-.500 8z"/>', 2) };
+const $ = s => document.querySelector(s);
+const vir = v => String(v).replace('.', ',');
+function regua(id, mn, mx, st, v, cada, px) {
+  let t = ''; const n = Math.round((mx - mn) / st);
+  for (let i = 0; i <= n; i++) { const val = Math.round((mn + i*st) * 100) / 100, g = Math.abs(val / cada - Math.round(val / cada)) < 1e-6; t += `<i class="tk ${g ? 'g' : ''}" ${g ? `data-r="${vir(val)}"` : ''}></i>`; }
+  return `<div class="regua" style="--passo:${px}px"><div class="rola" id="${id}" data-mn="${mn}" data-st="${st}" data-px="${px}" data-v="${v}"><div class="fita">${t}</div></div></div>`;
+}
+function armaRegua(id, aoMudar) {
+  const el = document.getElementById(id); if (!el) return;
+  const mn = +el.dataset.mn, st = +el.dataset.st, px = +el.dataset.px;
+  el.scrollLeft = (+el.dataset.v - mn) / st * px;
+  let ult = +el.dataset.v;
+  el.addEventListener('scroll', () => { const v = Math.round((mn + Math.round(el.scrollLeft / px) * st) * 100) / 100; if (v !== ult) { ult = v; aoMudar(v); } }, { passive:true });
+}
+
+
+
+const E = { t:'indice', dia:13, resp:{}, rv:0, tipo:'treino', ref:'almoco', busca:'', comp:{}, conta:false, mod:{ agua:true, peso:true, cardio:true, noite:true, fotos:true }, on:0, onb:{ treino:null, comida:null }, rede:true };
+const vai = t => { E.t = t; desenha(true); };
+const MES = {1:'A',2:'·',3:'B',4:'D',5:'B',6:'E',7:'HX',10:'B',11:'C',12:'D',13:'A'};
+const DS = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+const nomeDia = d => DS[(d - 1) % 7];
+const Q14 = Array.from({ length:14 }, (_, i) => 15 - i);   // de ontem (15) para trás até 02
+const respondidos = () => Q14.filter(d => E.resp[d] && E.resp[d] !== 'n').length;
+
+/* ---------- índice ---------- */
+function indice() { const l = [['dias', 'Dias', 'o mês, o dia aberto, responder vários dias'], ['semana', 'Semana', 'o veredito, os critérios, séries por músculo'], ['comida', 'Plano · comida', 'refeições, quantidades na régua, alimentos'], ['compras', 'Lista de compras', 'sai do plano, para a semana'], ['ajustes', 'Ajustes e conta', 'entrar, cópia de segurança, lembretes'], ['onb', 'Primeira vez', 'três passos, todos puláveis'], ['estados', 'Vazio, sem rede e falha', 'o que o app diz quando falta algo']];
+  return `<header class="cab"><h1 style="padding-left:12px">Lote 4</h1><span>índice do protótipo</span></header><div class="bloco" style="padding-top:2px"><div>${l.map(x => `<button class="lin" data-a="vai" data-t="${x[0]}"><div><b>${x[1]}</b><span>${x[2]}</span></div>${ic.dir}</button>`).join('')}</div></div>`; }
+
+/* ---------- DIAS ---------- */
+function dias() { let sem = '', lin = '';
+  for (let d = 1; d <= 28; d++) { const t = MES[d], fut = d > 16, r = E.resp[d];
+    lin += `<button class="dd ${t && t !== '·' ? 't' : ''} ${!t && !fut && d !== 16 && !r ? 'v' : ''} ${fut ? 'fut' : ''} ${d === 16 ? 'hoje' : ''} ${d === E.dia ? 'sel' : ''}" data-a="dia" data-d="${d}" ${fut ? 'disabled' : ''} aria-label="dia ${d}"><small>${d}</small>${t && t !== '·' ? t : ''}${r && r !== 'n' ? '<i class="c"></i>' : ''}</button>`;
+    if (d % 7 === 0) { sem += `<div class="sem">${lin}</div>`; lin = ''; } }
+  const d = E.dia, t = MES[d], r = E.resp[d], n = respondidos();
+  return `<header class="cab"><button data-a="vai" data-t="indice" aria-label="Voltar">${ic.volta}</button><h1>Dias</h1><span>novembro · 10 treinos em 16 dias</span></header>
+    <div class="bloco" style="padding-top:2px"><div class="sem" style="margin-bottom:6px">${['D','S','T','Q','Q','S','S'].map(x => `<span style="text-align:center;font-size:12px;font-weight:700;color:var(--t3)">${x}</span>`).join('')}</div><div class="semanas">${sem}</div>
+      <div class="legm"><span><i style="background:var(--tinta)"></i>treino</span><span><i style="background:var(--menta)"></i>comida respondida</span><span><i style="background:repeating-linear-gradient(135deg,var(--areia) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px var(--fio)"></i>em branco</span></div></div>
+    <div class="bloco"><h2 class="h">${nomeDia(d)}, ${d} de novembro <small>${d === 16 ? 'hoje' : ''}</small></h2>
+      <div class="res3"><button data-a="treino-dia"><b class="n">${t && t !== '·' ? (t === 'HX' ? 'HYROX' : 'Treino ' + t) : t === '·' ? 'Descanso' : '—'}</b>${t && t !== '·' ? '20 séries · 58 min' : t === '·' ? 'marcado' : 'tocar para pôr'}</button><div><b class="n">${d % 3 ? '77,' + (d % 9) : '—'}</b>peso</div><div><b class="n">${d % 4 === 1 ? '8 de 14' : '—'}</b>água</div></div>
+      <div class="pergunta"><p>${r ? 'Comida: ' + ({ s:'foi como o plano', q:'quase como o plano', n:'não lembro' })[r] : 'A comida deste dia foi como o plano?'}</p><small>${r === 'n' ? 'Fica fora da conta. Não vira zero.' : r ? 'Conta para os 14 dias da regra.' : 'Sem resposta, o dia fica fora da conta. Não vira zero.'}</small>
+        <div class="resp">${[['s', 'Foi, sim'], ['q', 'Quase'], ['n', 'Não lembro']].map(o => `<button data-a="resp-dia" data-r="${o[0]}" aria-pressed="${r === o[0]}">${o[1]}</button>`).join('')}</div></div></div>
+    <div class="bloco"><div class="acoes" style="margin-top:0"><button class="${n >= 11 ? 'alt' : 'vai'}" style="flex:1" data-a="rv">Responder os dias em branco ${ic.seta}</button></div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)"><span class="n">${n}</span> de 14 respondidos. A regra do nutricionista precisa de 11.</p></div>
+    <div class="bloco"><h2 class="h">No mês</h2><div class="res3"><div><b class="n">4,75</b>dias de treino por semana</div><div><b class="n">6h15</b>horário mais comum</div><div><b class="n">0</b>cardio no mês</div></div></div>`; }
+
+/* ---------- responder vários ---------- */
+function rv() { const falt = Q14.filter(d => !E.resp[d]), d = falt[0];
+  if (d == null) { const n = respondidos(); return `<div class="rv" style="background:var(--menta)"><div class="rv-topo"><button data-a="vai" data-t="dias" aria-label="Fechar">${ic.x}</button><span>14 de 14</span><span style="min-width:44px"></span></div>
+      <div class="pts">${Q14.map(x => `<i class="${E.resp[x]}"></i>`).join('')}</div>
+      <div class="rv-meio"><h2 class="rv-dia">${n} dias respondidos.</h2><p class="rv-o">${n >= 11 ? 'Já dá para a regra do nutricionista decidir. O veredito está em Semana.' : 'A regra precisa de 11. Os que ficaram como “não lembro” não contam contra você.'}</p></div>
+      <div class="rv-b"><button class="vai" data-a="vai" data-t="semana">Ver o veredito ${ic.seta}</button><button class="alt" data-a="vai" data-t="dias">Voltar aos dias</button></div></div>`; }
+  const t = MES[d];
+  return `<div class="rv"><div class="rv-topo"><button data-a="vai" data-t="dias" aria-label="Fechar">${ic.x}</button><span class="n">${14 - falt.length + 1} de 14</span><button data-a="rv-desfaz" style="justify-content:flex-end;font-size:14px;text-decoration:underline;text-underline-offset:4px" ${falt.length === 14 ? 'disabled style="opacity:0"' : ''}>voltar um</button></div>
+    <div class="pts">${Q14.map(x => `<i class="${E.resp[x] || (x === d ? 'a' : '')}"></i>`).join('')}</div>
+    <div class="rv-meio"><h2 class="rv-dia">${nomeDia(d)}, ${d}</h2><p class="rv-o">${t && t !== '·' ? 'Dia de ' + (t === 'HX' ? 'HYROX' : 'Treino ' + t) + ', de manhã.' : t === '·' ? 'Dia de descanso.' : 'Sem treino registrado.'} A comida foi como o plano?</p></div>
+    <div class="rv-b"><button class="vai" data-a="rv-r" data-r="s" data-d="${d}">Foi, sim</button><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="alt" data-a="rv-r" data-r="q" data-d="${d}">Quase</button><button class="alt" data-a="rv-r" data-r="n" data-d="${d}">Não lembro</button></div>
+      <button class="livre" data-a="rv-todos" style="text-align:center">Todos os que faltam foram como o plano</button></div></div>`; }
+
+/* ---------- SEMANA ---------- */
+const MUS = [['Pernas', 0, 28, 28], ['Peito e ombro', 0, 24, 24], ['Costas', 0, 17, 17], ['Braços', 0, 15, 15]];
+function semana() { const n = respondidos(), pode = n >= 11;
+  return `<section class="mundo" style="background:var(${pode ? '--lima' : '--ceu'})"><div class="linha0"><button data-a="vai" data-t="indice">${ic.volta} Semana</button><span>o que fazer com a comida</span></div>
+      <h1 class="titulo" style="margin-top:8px">${pode ? 'Pode subir.' : 'Não mexer.'}</h1>
+      <p class="apoio">${pode ? 'O peso parou por duas semanas e a comida foi seguida. Pela regra do nutricionista, o arroz sobe de 500 para 550 g por dia.' : 'O peso parou, mas falta saber se você comeu o plano. Responda os dias e o veredito sai.'}</p>
+      <div class="acoes">${pode ? `<button class="vai" data-a="aplica">Aplicar no plano</button><button class="alt" data-a="nada">Ainda não</button>` : `<button class="vai" data-a="rv">Responder os 14 dias ${ic.seta}</button>`}</div></section>
+    <div class="bloco"><h2 class="h">O que a regra olha</h2><div style="margin-top:4px">
+      <div class="crit"><span class="g">${ic.ok}</span><div><b>O peso parou</b><span>−0,37 e +0,08 kg por semana. Duas seguidas abaixo de 0,10.</span></div></div>
+      <div class="crit"><span class="g ${pode ? '' : 'n'}">${pode ? ic.ok : ic.x}</span><div><b>Comida: ${n} de 14 dias</b><span>${pode ? 'Passou dos 11 que a regra pede.' : 'A regra precisa de 11 dias respondidos.'}</span></div></div>
+      <div class="crit"><span class="g q">${ic.duvida}</span><div><b>Força: ainda sem dado</b><span>Faltam 4 semanas de carga em 3 exercícios. Acontece sozinho, treinando.</span></div></div></div></div>
+    <div class="bloco"><h2 class="h">Séries da semana <small>dia 2 de 7</small></h2><div style="margin-top:4px">
+      ${MUS.map(m => `<div class="mus"><div>${m[0]}<span class="n">${m[1]} feitas · ${m[3]} ainda vêm · alvo ${m[2]}</span></div><div class="br"><i class="f" style="width:${m[1] / m[2] * 100}%"></i><i class="v" style="width:${m[3] / m[2] * 100}%"></i></div></div>`).join('')}
+      <div class="legm"><span><i style="background:var(--tinta)"></i>feitas</span><span><i style="background:repeating-linear-gradient(135deg,var(--t3) 0 3px,var(--areia) 3px 6px)"></i>nos treinos que faltam</span></div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">A semana começou ontem. Só vira aviso o que não couber nos treinos que ainda faltam.</p></div></div>
+    <div class="bloco"><div><button class="lin" data-a="nada"><div><b>Cardio</b><span>0 de 2 nesta semana · hoje: 20 a 25 min, leve</span></div>${ic.dir}</button>
+      <button class="lin" data-a="nada"><div><b>Progressão de carga</b><span>1 exercício pronto para subir</span></div>${ic.dir}</button>
+      <button class="lin" data-a="nada"><div><b>Retrospectiva do bloco</b><span>22 sessões em 4,7 semanas</span></div>${ic.dir}</button></div></div>`; }
+
+/* ---------- COMIDA ---------- */
+const AL = { arroz:['Arroz branco cozido', 128, 2.5, 28, .3], feijao:['Feijão cozido', 76, 4.8, 13.6, .5], frango:['Frango cozido', 165, 31, 0, 3.6], legumes:['Legumes e verduras', 35, 2, 7, .2], azeite:['Azeite de oliva', 887, 0, 0, 100], kiwi:['Kiwi', 61, 1.1, 14.7, .5], cuscuz:['Cuscuz cozido', 112, 2.2, 25, .7], leite:['Leite integral', 61, 3.2, 4.7, 3.3], banana:['Banana', 89, 1.1, 23, .3], aveia:['Aveia', 389, 17, 66, 7], whey:['Whey concentrado', 400, 78, 8, 6], pao:['Pão Artesano', 280, 9, 52, 4], lombo:['Lombo suíno cozido', 210, 30, 0, 9] };
+const REF = { pre:['Pré-treino', '05h45', [['pao', 35], ['banana', 60]], true], cafe:['Café da manhã', '08h00', [['cuscuz', 200], ['frango', 70], ['leite', 250], ['banana', 120]]], almoco:['Almoço', '12h30', [['arroz', 250], ['feijao', 50], ['frango', 80], ['legumes', 100], ['azeite', 15], ['kiwi', 100]]],
+  lanche:['Lanche da tarde', '16h00', [['leite', 250], ['banana', 120], ['aveia', 40], ['whey', 30], ['pao', 50]]], jantar:['Jantar', '19h30', [['arroz', 250], ['feijao', 50], ['lombo', 80], ['legumes', 100], ['azeite', 15]]], ceia:['Ceia', '21h30', [['leite', 250], ['aveia', 12]]] };
+const kc = it => it.reduce((a, x) => a + AL[x[0]][1] * x[1] / 100, 0);
+const mc = (it, i) => it.reduce((a, x) => a + AL[x[0]][i] * x[1] / 100, 0);
+const doDia = () => Object.entries(REF).filter(r => E.tipo === 'treino' || !r[1][3]);
+function comida() { const l = doDia(), tot = l.reduce((a, r) => a + kc(r[1][2]), 0);
+  return `<header class="cab"><button data-a="vai" data-t="indice" aria-label="Voltar">${ic.volta}</button><h1>Comida</h1><span>do nutricionista</span></header>
+    <div class="bloco" style="padding-top:2px"><div class="seg" style="margin-top:0">${[['treino', 'Dia de treino'], ['descanso', 'Dia de descanso']].map(s => `<button data-a="tipo" data-k="${s[0]}" aria-pressed="${E.tipo === s[0]}">${s[1]}</button>`).join('')}</div>
+      <div class="gig n" style="margin-top:14px">${Math.round(tot).toLocaleString('pt-BR')}<small>kcal · ${l.length} refeições</small></div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">Somado dos alimentos. Mudar uma quantidade recalcula na hora.</p></div>
+    <div class="bloco"><div>${l.map(r => `<button class="lin" data-a="ref" data-k="${r[0]}"><div><b>${r[1][0]}</b><span class="n">${r[1][1]} · ${r[1][2].length} itens${r[1][3] ? ' · só em dia de treino' : ''}</span></div><span class="val n">${Math.round(kc(r[1][2]))}<small>kcal</small></span>${ic.dir}</button>`).join('')}</div>
+      <div class="acoes"><button class="alt" style="flex:1" data-a="nada">${ic.mais} Refeição</button><button class="alt" style="flex:1" data-a="vai" data-t="alimentos">Alimentos</button></div></div>`; }
+function refeicao() { const r = REF[E.ref], it = r[2];
+  return `<header class="cab"><button data-a="vai" data-t="comida" aria-label="Voltar">${ic.volta}</button><h1>${r[0]}</h1><span class="n">${r[1]}</span></header>
+    <div class="bloco" style="padding-top:2px"><div class="macro"><div><b class="n">${Math.round(kc(it))}</b>kcal</div><div><b class="n">${Math.round(mc(it, 2))} g</b>proteína</div><div><b class="n">${Math.round(mc(it, 3))} g</b>carbo</div><div><b class="n">${Math.round(mc(it, 4))} g</b>gordura</div></div></div>
+    <div class="bloco"><h2 class="h">O que tem dentro <small>toque na quantidade para mudar</small></h2><div style="margin-top:4px">
+      ${it.map((x, i) => `<div class="it"><div><b>${AL[x[0]][0]}</b><span class="n">${Math.round(AL[x[0]][1] * x[1] / 100)} kcal</span></div><button class="q n" data-a="qtd" data-i="${i}">${x[1]} g</button></div>`).join('')}</div>
+      <div class="acoes"><button class="alt" style="flex:1" data-a="vai" data-t="alimentos">${ic.mais} Alimento</button></div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">A mudança vale daqui para a frente. O que você já marcou em dias passados não muda.</p></div>`; }
+function alimentos() { const q = E.busca.toLowerCase(), l = Object.values(AL).filter(a => a[0].toLowerCase().includes(q));
+  return `<header class="cab"><button data-a="vai" data-t="comida" aria-label="Voltar">${ic.volta}</button><h1>Alimentos</h1><span class="n">${Object.keys(AL).length}</span></header>
+    <div class="bloco" style="padding-top:0"><label class="busca">${ic.lupa}<input id="busca" value="${E.busca}" placeholder="Buscar alimento" aria-label="Buscar alimento" autocomplete="off"></label>
+      <div style="margin-top:8px" id="al-l">${l.map(a => `<button class="lin" data-a="nada"><div><b>${a[0]}</b><span class="n">P ${vir(a[2])} · C ${vir(a[3])} · G ${vir(a[4])} por 100 g</span></div><span class="val n">${a[1]}<small>kcal</small></span></button>`).join('') || '<div class="vazio"><h3>Nada com esse nome</h3><p>Dá para criar o alimento com as calorias e os macros do rótulo.</p></div>'}</div>
+      <div class="acoes"><button class="alt" style="flex:1" data-a="nada">${ic.mais} Novo alimento</button></div></div>`; }
+function compras() { const tot = {}; Object.values(REF).forEach(r => r[2].forEach(x => { tot[x[0]] = (tot[x[0]] || 0) + x[1] * 7; }));
+  const l = Object.entries(tot).sort((a, b) => b[1] - a[1]), n = l.filter(x => E.comp[x[0]]).length;
+  return `<header class="cab"><button data-a="vai" data-t="indice" aria-label="Voltar">${ic.volta}</button><h1>Compras</h1><span class="n">${n} de ${l.length}</span></header>
+    <div class="bloco" style="padding-top:2px"><p class="apoio" style="font-size:14px;color:var(--t2)">O plano de um dia de treino vezes sete. Quantidades do alimento pronto.</p>
+      <div style="margin-top:6px">${l.map(x => `<button class="cmp" data-a="comp" data-k="${x[0]}" aria-pressed="${!!E.comp[x[0]]}"><span class="ck">${ic.ok}</span><div><b>${AL[x[0]][0]}</b></div><span class="n">${x[1] >= 1000 ? vir((x[1] / 1000).toFixed(1)) + ' kg' : x[1] + ' g'}</span></button>`).join('')}</div>
+      <div class="acoes"><button class="alt" style="flex:1" data-a="copia">Copiar a lista</button></div></div>`; }
+
+/* ---------- AJUSTES ---------- */
+function ajustes() { const lm = [['noite', 'Pergunta da noite', '“A comida de hoje foi como o plano?”, às 21h'], ['fotos', 'Véspera das fotos', 'um aviso no dia anterior à sessão']];
+  return `<header class="cab"><button data-a="vai" data-t="indice" aria-label="Voltar">${ic.volta}</button><h1>Ajustes</h1></header>
+    <div class="bloco" style="padding-top:2px"><h2 class="h">Conta <small>${E.conta ? 'sincronizado há 2 min' : 'só neste aparelho'}</small></h2>
+      ${E.conta ? `<div style="margin-top:4px"><div class="lin"><span class="o">${ic.nuvem}</span><div><b>eduardo@…</b><span>registro igual no celular e no computador</span></div></div></div><button class="livre" data-a="conta">Sair desta conta</button>`
+        : `<p class="apoio" style="font-size:14px;color:var(--t2)">O app funciona sem conta e sem rede. Com a conta, o registro fica igual no celular e no computador, e as fotos ganham cópia.</p>
+          <label class="campo"><span>E-mail</span><input type="email" autocomplete="email" inputmode="email"></label><label class="campo"><span>Senha</span><input type="password" autocomplete="current-password"></label>
+          <div class="acoes"><button class="vai" data-a="conta">Entrar</button></div>`}</div>
+    <div class="bloco"><h2 class="h">Lembretes <small>todos opcionais</small></h2><div style="margin-top:4px">${lm.map(x => `<button class="liga" data-a="mod" data-m="${x[0]}" aria-pressed="${E.mod[x[0]]}"><div><b>${x[1]}</b><span>${x[2]}</span></div><span class="chave"></span></button>`).join('')}</div></div>
+    <div class="bloco"><h2 class="h">O que aparece no Hoje</h2><div style="margin-top:4px">${[['agua', 'Água'], ['peso', 'Peso'], ['cardio', 'Cardio']].map(x => `<button class="liga" data-a="mod" data-m="${x[0]}" aria-pressed="${E.mod[x[0]]}"><div><b>${x[1]}</b></div><span class="chave"></span></button>`).join('')}</div></div>
+    <div class="bloco"><h2 class="h">Cópia de segurança <small>última: 29/10</small></h2><div style="margin-top:4px">
+      <button class="lin" data-a="exporta"><div><b>Guardar uma cópia</b><span>um arquivo com todo o registro, sem as fotos</span></div>${ic.dir}</button>
+      <button class="lin" data-a="importa"><div><b>Restaurar de uma cópia</b><span>substitui o que está neste aparelho, com confirmação</span></div>${ic.dir}</button></div></div>`; }
+
+/* ---------- PRIMEIRA VEZ ---------- */
+function onb() { const p = E.on, pas = `<div class="passos3">${[0, 1, 2].map(i => `<i class="${i <= p ? 'f' : ''}"></i>`).join('')}</div>`;
+  const topo = `<header class="cab"><button data-a="${p ? 'onb-volta' : 'vai'}" data-t="indice" aria-label="Voltar">${ic.volta}</button><h1 style="font-size:22px">${['Seu treino', 'Sua comida', 'O que acompanhar'][p]}</h1><button data-a="onb-segue" style="font-size:14px;font-weight:700;text-decoration:underline;text-underline-offset:4px;min-width:auto;padding:0 8px">pular</button></header>${pas}`;
+  const esc = (k, ops) => ops.map(o => `<button class="esc" data-a="onb-esc" data-k="${k}" data-v="${o[0]}" aria-pressed="${E.onb[k] === o[0]}"><span><b>${o[1]}</b><span>${o[2]}</span></span></button>`).join('');
+  if (p === 0) return topo + `<div class="bloco"><h2 class="titulo m" style="margin-top:0">De onde vem o seu treino?</h2><p class="apoio" style="color:var(--t2)">O app não monta treino: ele executa o que foi prescrito para você.</p>
+      ${esc('treino', [['colar', 'Tenho o texto do treinador', 'Você cola e o app organiza em treinos e séries.'], ['modelo', 'Começar com um modelo', 'Um programa pronto, que você ajusta depois.'], ['depois', 'Monto depois', 'Dá para registrar treino livre enquanto isso.']])}
+      <div class="acoes"><button class="vai" data-a="onb-segue">Continuar ${ic.seta}</button></div></div>`;
+  if (p === 1) return topo + `<div class="bloco"><h2 class="titulo m" style="margin-top:0">E a comida?</h2><p class="apoio" style="color:var(--t2)">Com um plano, o registro vira uma pergunta por dia. Sem plano, o app só não acompanha comida.</p>
+      ${esc('comida', [['colar', 'Tenho um plano alimentar', 'Você cola e o app separa refeições e quantidades.'], ['nao', 'Não acompanho comida', 'A parte de comida fica desligada. Dá para ligar depois.']])}
+      <div class="acoes"><button class="vai" data-a="onb-segue">Continuar ${ic.seta}</button></div></div>`;
+  return topo + `<div class="bloco"><h2 class="titulo m" style="margin-top:0">O que mais você quer ver?</h2><p class="apoio" style="color:var(--t2)">Nada aqui é obrigatório, e tudo se liga e desliga depois.</p>
+      <div style="margin-top:8px">${[['peso', 'Peso', 'a pesagem da manhã'], ['agua', 'Água', 'contar copos'], ['cardio', 'Cardio', 'sessões da semana'], ['fotos', 'Fotos do corpo', 'sessão padronizada a cada 14 dias']].map(x => `<button class="liga" data-a="mod" data-m="${x[0]}" aria-pressed="${E.mod[x[0]]}"><div><b>${x[1]}</b><span>${x[2]}</span></div><span class="chave"></span></button>`).join('')}</div>
+      <div class="acoes"><button class="vai" data-a="vai" data-t="estados">Abrir o app ${ic.seta}</button></div></div>`; }
+
+/* ---------- ESTADOS ---------- */
+function estados() {
+  return `<header class="cab"><button data-a="vai" data-t="indice" aria-label="Voltar">${ic.volta}</button><h1>Estados</h1><span>o que o app diz</span></header>
+    ${E.rede ? '' : `<div class="faixa c"><span>Sem rede. Tudo fica guardado neste aparelho.</span></div>`}
+    <div class="bloco" style="padding-top:8px"><h2 class="h">Primeiro dia, sem nada <small>Hoje</small></h2>
+      <div class="vazio" style="background:var(--lima)"><h3>Nada para agora.</h3><p style="color:var(--tinta)">Quando houver um treino ou uma refeição no plano, o próximo aparece aqui, com um botão só.</p><div class="acoes"><button class="vai" data-a="vai" data-t="onb">Pôr o meu plano ${ic.seta}</button></div></div></div>
+    <div class="bloco"><h2 class="h">Lugar sem dado ainda <small>Corpo</small></h2>
+      <div class="vazio"><h3>Uma pesagem não faz linha.</h3><p>Com duas aparece a diferença; com uma semana, a média. Não precisa pesar todo dia.</p></div></div>
+    <div class="bloco"><h2 class="h">Sem rede <small>faixa no topo</small></h2>
+      <button class="liga" data-a="rede" aria-pressed="${!E.rede}"><div><b>Simular sem rede</b><span>o app avisa uma vez, sem bloquear nada</span></div><span class="chave"></span></button></div>
+    <div class="bloco"><h2 class="h">Não conseguiu guardar <small>o único que interrompe</small></h2>
+      <div class="faixa" style="margin:10px 0 0"><span>1 série não foi guardada</span><button data-a="falha">Ver</button></div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">Fica no topo até resolver. É o único aviso que não some sozinho, porque é o único em que você pode perder registro.</p></div>`; }
+
+function folha(h) { $('#folha').innerHTML = `<div class="puxa"></div>` + h; $('#folha').classList.add('on'); $('#veu').classList.add('on'); $('#folha').scrollTop = 0; }
+function fecha() { $('#folha').classList.remove('on'); $('#veu').classList.remove('on'); }
+const TELAS = { indice, dias, rv, semana, comida, refeicao, alimentos, compras, ajustes, onb, estados };
+function desenha(topo) { const t = $('#tela'), y = t.scrollTop; t.innerHTML = TELAS[E.t](); const ch = E.t === 'rv';
+  t.style.display = ch ? 'flex' : ''; t.style.flexDirection = 'column'; t.style.paddingBottom = ch ? '0' : ''; t.scrollTop = topo ? 0 : y;
+  const bu = $('#busca'); if (bu) bu.addEventListener('input', () => { E.busca = bu.value; const q = E.busca.toLowerCase(); $('#al-l').innerHTML = Object.values(AL).filter(a => a[0].toLowerCase().includes(q)).map(a => `<button class="lin" data-a="nada"><div><b>${a[0]}</b><span class="n">P ${vir(a[2])} · C ${vir(a[3])} · G ${vir(a[4])} por 100 g</span></div><span class="val n">${a[1]}<small>kcal</small></span></button>`).join('') || '<div class="vazio"><h3>Nada com esse nome</h3><p>Dá para criar o alimento com as calorias e os macros do rótulo.</p></div>'; }); }
+let qi = null;
+document.addEventListener('click', ev => {
+  if (ev.target.id === 'veu') { fecha(); return; }
+  const b = ev.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
+  if (a === 'vai') { fecha(); if (b.dataset.t === 'onb') E.on = 0; vai(b.dataset.t); }
+  else if (a === 'dia') { E.dia = +b.dataset.d; desenha(); }
+  else if (a === 'resp-dia') { E.resp[E.dia] = E.resp[E.dia] === b.dataset.r ? null : b.dataset.r; desenha(); }
+  else if (a === 'rv') vai('rv');
+  else if (a === 'rv-r') { E.resp[b.dataset.d] = b.dataset.r; E.ult = (E.ult || []).concat(+b.dataset.d); desenha(); }
+  else if (a === 'rv-desfaz') { const d = (E.ult || []).pop(); if (d != null) { delete E.resp[d]; desenha(); } }
+  else if (a === 'rv-todos') { Q14.forEach(d => { if (!E.resp[d]) E.resp[d] = 's'; }); desenha(); }
+  else if (a === 'treino-dia') folha(`<h2>${nomeDia(E.dia)}, ${E.dia}</h2><p class="sub">${MES[E.dia] && MES[E.dia] !== '·' ? 'Treino ' + MES[E.dia] + ' · 20 séries · 6h00 às 6h58' : 'Nenhum treino registrado neste dia.'}</p><div style="margin-top:10px">
+      ${MES[E.dia] && MES[E.dia] !== '·' ? `<button class="lin" data-a="fecha"><div><b>Ver as séries</b><span>e corrigir alguma, se precisar</span></div>${ic.dir}</button>` : `<button class="lin" data-a="fecha"><div><b>Treinei neste dia</b><span>marca os exercícios feitos, como da última vez</span></div>${ic.dir}</button><button class="lin" data-a="fecha"><div><b>Foi descanso</b><span>marca o dia como descanso</span></div>${ic.dir}</button>`}
+      <button class="lin" data-a="fecha"><div><b>Registrar cardio</b><span>bike, esteira, outro</span></div>${ic.dir}</button></div>`);
+  else if (a === 'aplica') folha(`<h2>Arroz: 500 → 550 g</h2><p class="sub">Entra no almoço e no jantar, 25 g em cada, a partir de amanhã. O dia sobe cerca de 64 kcal. Fica anotado quando e por quê, e dá para desfazer.</p><div class="acoes"><button class="vai" data-a="fecha">Aplicar</button><button class="alt" data-a="fecha">Agora não</button></div>`);
+  else if (a === 'tipo') { E.tipo = b.dataset.k; desenha(); }
+  else if (a === 'ref') { E.ref = b.dataset.k; vai('refeicao'); }
+  else if (a === 'qtd') { qi = +b.dataset.i; const x = REF[E.ref][2][qi], al = AL[x[0]]; folha(`<h2>${al[0]}</h2><p class="sub">${REF[E.ref][0]} · arraste para mudar a quantidade</p>
+      <div class="gig n" style="margin:18px 0 10px"><span id="q-v">${x[1]}</span><small>g · <span id="q-k">${Math.round(al[1] * x[1] / 100)}</span> kcal</small></div>${regua('rg-q', 0, 500, 5, x[1], 50, 14)}
+      <div class="acoes"><button class="vai" data-a="qtd-ok">Usar esta quantidade</button></div><button class="livre" data-a="qtd-tira">Tirar da refeição</button>`);
+    armaRegua('rg-q', v => { $('#q-v').textContent = v; $('#q-k').textContent = Math.round(al[1] * v / 100); $('#rg-q').dataset.novo = v; }); }
+  else if (a === 'qtd-ok') { const v = $('#rg-q').dataset.novo; if (v != null) REF[E.ref][2][qi][1] = +v; fecha(); desenha(); }
+  else if (a === 'qtd-tira') { REF[E.ref][2].splice(qi, 1); fecha(); desenha(); }
+  else if (a === 'comp') { E.comp[b.dataset.k] = !E.comp[b.dataset.k]; desenha(); }
+  else if (a === 'copia') folha(`<h2>Lista copiada</h2><p class="sub">Em texto simples, um item por linha, para colar onde quiser.</p><div class="acoes"><button class="vai" data-a="fecha">Fechar</button></div>`);
+  else if (a === 'conta') { E.conta = !E.conta; desenha(); }
+  else if (a === 'mod') { E.mod[b.dataset.m] = !E.mod[b.dataset.m]; b.setAttribute('aria-pressed', E.mod[b.dataset.m]); }
+  else if (a === 'exporta') folha(`<h2>Guardar uma cópia</h2><p class="sub">Um arquivo com treinos, comida e medidas. As fotos não vão no arquivo: elas ficam no aparelho e, com a conta, na cópia remota.</p><div class="acoes"><button class="vai" data-a="fecha">Guardar o arquivo</button></div>`);
+  else if (a === 'importa') folha(`<h2>Restaurar de uma cópia?</h2><p class="sub">O que está neste aparelho é substituído pelo que está no arquivo. Antes de trocar, o app guarda uma cópia do estado atual.</p><div class="acoes"><button class="vai" data-a="fecha">Escolher o arquivo</button><button class="alt" data-a="fecha">Cancelar</button></div>`);
+  else if (a === 'onb-esc') { E.onb[b.dataset.k] = b.dataset.v; desenha(); }
+  else if (a === 'onb-segue') { if (E.on < 2) { E.on++; desenha(true); } else vai('estados'); }
+  else if (a === 'onb-volta') { E.on--; desenha(true); }
+  else if (a === 'rede') { E.rede = !E.rede; desenha(); }
+  else if (a === 'falha') folha(`<h2>1 série não foi guardada</h2><p class="sub">Leg press, série 2: 160 kg × 12. O aparelho recusou a gravação. O número continua aqui na tela até dar certo.</p><div class="acoes"><button class="vai" data-a="fecha">Tentar de novo</button></div><button class="livre" data-a="fecha">Copiar o registro em texto</button>`);
+  else if (a === 'fecha') fecha();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecha(); });
+desenha(true);
+</script>
+</body>
+</html>

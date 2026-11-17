@@ -1,5 +1,11 @@
 # Arquitetura
 
+> **Sobre telas (16/11/2026):** este documento vale para estado, migração,
+> sincronia, fotos e navegação. Onde ele descreve aparência ou nomes de tela,
+> é o visual anterior; o atual está em [DESIGN.md](../DESIGN.md) e no
+> [CLAUDE.md](../CLAUDE.md).
+
+
 Documento para quem for mexer no código — inclusive eu daqui a seis meses.
 O [README](../README.md) cobre o uso; aqui está o porquê das decisões.
 

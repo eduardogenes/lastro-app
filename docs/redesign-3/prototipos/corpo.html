@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lastro — lote 2, Corpo e evolução</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+
+:root{
+  color-scheme: light;
+  --papel:#F6F3EC; --tinta:#0F0F0D; --t2:#56554E; --t3:#77766D; --fio:#DFDACE; --branco:#FFFDF8;
+  --lima:#D2F23A; --tanja:#FF9A4D; --lilas:#D3C6FF; --ceu:#BBDDFB; --menta:#BEEBD2; --areia:#EBE6DA; --parede:#E4DFD3; --chao:#CFC8B8;
+  --d:"Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+  --u:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mola:cubic-bezier(.2,.9,.25,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#E7E3D8;color:var(--tinta);font-family:var(--u);overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;text-align:inherit}
+button:focus-visible,[tabindex]:focus-visible{outline:2.5px solid var(--tinta);outline-offset:3px}
+::selection{background:var(--lima)}
+h1,h2,h3,p{margin:0}
+.n{font-family:var(--d);font-variant-numeric:tabular-nums}
+.palco{min-height:100vh;min-height:100svh;display:flex;gap:56px;align-items:center;justify-content:center;padding:32px}
+.lado{max-width:380px}
+.lado h1{font:800 40px/1 var(--d);letter-spacing:-.03em;text-wrap:balance}
+.lado p{color:var(--t2);margin-top:14px;line-height:1.55;text-wrap:pretty}
+.lado ul{color:var(--t2);padding-left:18px;line-height:1.5;display:grid;gap:10px;margin:18px 0 0}
+.lado b{color:var(--tinta)}
+.fone{width:392px;height:830px;flex:0 0 auto;border-radius:48px;background:var(--papel);overflow:hidden;position:relative;box-shadow:0 0 0 11px var(--tinta), 0 40px 70px -30px rgba(15,15,13,.5);display:flex;flex-direction:column}
+@media (max-width:880px){html,body{background:var(--papel)}.palco{padding:0;display:block}.lado{display:none}.fone{width:100%;height:100vh;height:100svh;border-radius:0;box-shadow:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+
+.tela{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:28px;scrollbar-width:none}
+.tela::-webkit-scrollbar{display:none}
+.mundo{background:var(--lilas);border-radius:0 0 34px 34px;padding:8px 20px 20px}
+.linha0{display:flex;align-items:center;justify-content:space-between;min-height:44px;font-size:13px;font-weight:600}
+.linha0 button{min-height:44px;min-width:44px;display:flex;align-items:center;gap:4px;font-weight:700}
+.linha0 svg{width:22px;height:22px}
+.quando{font:700 14px/1.2 var(--u);margin-top:12px}
+.titulo{font:800 50px/.92 var(--d);letter-spacing:-.04em;margin-top:6px;text-wrap:balance}
+.titulo.m{font-size:36px;line-height:.98}
+.apoio{font-size:15px;line-height:1.38;margin-top:8px;text-wrap:pretty}
+.acoes{display:flex;gap:8px;margin-top:16px;align-items:stretch}
+.vai{flex:1;min-height:58px;border-radius:99px;background:var(--tinta);color:var(--papel);font:700 18px/1 var(--d);display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .12s}
+.vai:active,.alt:active,.esc:active{transform:scale(.97)}
+.vai svg{width:22px;height:22px}
+.vai[disabled]{background:rgba(15,15,13,.18);color:var(--t2)}
+.alt{min-height:58px;padding:0 20px;border-radius:99px;box-shadow:inset 0 0 0 2px var(--tinta);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s}
+.livre{display:block;margin-top:8px;font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:4px;min-height:36px}
+.bloco{padding:18px 20px 0}
+.h{font:700 17px/1.1 var(--d);letter-spacing:-.02em;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.h small{font:500 13px var(--u);color:var(--t3);letter-spacing:0;text-align:right}
+.cab{padding:8px 12px 0 8px;display:flex;align-items:center;gap:4px;min-height:52px}
+.cab button{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+.cab svg{width:24px;height:24px}
+.cab h1{font:800 28px/1 var(--d);letter-spacing:-.03em;flex:1}
+.cab span{font-size:13px;font-weight:600;color:var(--t2)}
+.lin{display:flex;align-items:center;gap:14px;width:100%;min-height:62px;border-top:1.5px solid var(--fio)}
+.lin:first-of-type{border-top:0}
+.lin div{flex:1;min-width:0}
+.lin b{display:block;font:700 17px/1.15 var(--d);letter-spacing:-.01em}
+.lin span{font-size:13px;color:var(--t3);font-weight:500}
+.lin > svg{width:20px;height:20px;flex:0 0 auto;color:var(--t3)}
+
+/* ---------- a régua: o número se arrasta, não se digita ---------- */
+.regua{position:relative;margin:0 -22px}
+.regua::after{content:"";position:absolute;left:50%;top:0;width:3px;height:44px;margin-left:-1.5px;border-radius:2px;background:var(--tinta);pointer-events:none}
+.regua .rola{overflow-x:auto;scrollbar-width:none;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.regua .rola::-webkit-scrollbar{display:none}
+.regua .fita{display:flex;padding:0 calc(50% - var(--passo,14px) / 2);height:64px;align-items:flex-start}
+.regua .tk{flex:0 0 var(--passo,14px);scroll-snap-align:center;height:22px;display:flex;justify-content:center;position:relative}
+.regua .tk::before{content:"";width:2px;height:100%;border-radius:2px;background:rgba(15,15,13,.28)}
+.regua .tk.g{height:34px}
+.regua .tk.g::before{background:var(--tinta)}
+.regua .tk.g::after{content:attr(data-r);position:absolute;top:40px;font:700 13px var(--d);color:var(--tinta)}
+
+
+.liga{display:flex;align-items:center;gap:14px;min-height:64px;border-top:1.5px solid var(--fio);width:100%}
+.liga div{flex:1}
+.liga b{display:block;font-size:16px;font-weight:600}
+.liga span{font-size:13px;color:var(--t3)}
+.chave{flex:0 0 54px;height:32px;border-radius:99px;background:var(--fio);position:relative;transition:background .2s}
+.chave::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--branco);transition:transform .25s var(--mola)}
+.liga[aria-pressed="true"] .chave{background:var(--tinta)}
+.liga[aria-pressed="true"] .chave::after{transform:translateX(22px)}
+
+
+.foto{position:relative;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:linear-gradient(to bottom,var(--parede) 0 88%,var(--chao) 88%);display:block;width:100%}
+.foto svg{position:absolute;inset:6% 0 4%;width:100%;height:90%}
+.gigante{font:800 92px/.82 var(--d);letter-spacing:-.055em;margin-top:8px;display:flex;align-items:baseline;gap:6px}
+.gigante small{font:700 22px var(--d);letter-spacing:-.01em}
+.vai.espera{background:transparent;color:var(--tinta);box-shadow:inset 0 0 0 2px rgba(15,15,13,.22);font-size:16px}
+.lin .val{font:800 20px var(--d);letter-spacing:-.02em;flex:0 0 auto;color:var(--tinta);text-align:right}
+.lin .val small{display:block;font:600 12px var(--u);color:var(--t3);letter-spacing:0}
+.lin .sp{flex:0 0 64px;height:30px}
+.lin .sp svg{width:100%;height:100%;display:block}
+.lin.off b{color:var(--t3)}
+.seg{display:flex;background:var(--areia);border-radius:99px;padding:4px;gap:2px;margin-top:10px}
+.seg button{flex:1;min-height:38px;border-radius:99px;font:700 14px var(--d);text-align:center}
+.seg button[aria-pressed="true"]{background:var(--tinta);color:var(--papel)}
+.graf{display:block;width:100%;height:auto;margin-top:10px;touch-action:pan-y}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;font-weight:600;color:var(--t2);margin-top:6px}
+.leg i{display:inline-block;width:14px;height:8px;border-radius:9px;margin-right:5px;vertical-align:middle}
+.taxa{display:flex;align-items:center;gap:12px;min-height:50px;border-top:1.5px solid var(--fio)}
+.taxa:first-of-type{border-top:0}
+.taxa span{flex:1;font-size:14px;font-weight:600}
+.taxa span small{display:block;font-size:12px;color:var(--t3);font-weight:500}
+.taxa b{font:800 18px var(--d)}
+.selo{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 10px;border-radius:99px;background:var(--menta);font:700 12px var(--d);white-space:nowrap}
+.selo.a{background:var(--tanja)}.selo.n{background:var(--areia)}
+/* medir: uma medida por tela */
+.md{flex:1;display:flex;flex-direction:column;min-height:0;padding:6px 20px calc(18px + env(safe-area-inset-bottom));background:var(--lilas);transition:background .4s var(--mola)}
+.md.dobra{background:var(--ceu)}
+.md-topo{display:flex;align-items:center;justify-content:space-between;min-height:48px;font-weight:700;font-size:14px}
+.md-topo button{min-width:44px;min-height:44px;display:flex;align-items:center}
+.md-topo svg{width:24px;height:24px}
+.segs{display:flex;gap:3px}
+.segs i{flex:1;height:5px;border-radius:9px;background:rgba(15,15,13,.16)}
+.segs i.f{background:var(--tinta)}.segs i.a{background:var(--tinta);opacity:.45}
+.md-onde{display:flex;gap:14px;align-items:center;margin-top:14px}
+.md-onde .bon{flex:0 0 96px;height:150px;border-radius:22px;background:var(--branco);box-shadow:inset 0 0 0 1.5px rgba(15,15,13,.16);position:relative;overflow:hidden}
+.md-onde .bon svg{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px)}
+.md-onde p{font-size:14px;line-height:1.4;font-weight:500}
+.md-onde p b{display:block;font:700 16px/1.2 var(--d);margin-bottom:4px}
+.md-meio{flex:1;display:flex;flex-direction:column;justify-content:flex-end;min-height:0}
+.md-n{font:800 34px/1 var(--d);letter-spacing:-.03em}
+.md-v{font:800 96px/.85 var(--d);letter-spacing:-.05em;display:flex;align-items:baseline;gap:6px;margin:10px 0 12px}
+.md-v small{font:700 22px var(--d);letter-spacing:0}
+.md-ant{font-size:14px;font-weight:600;text-align:center;margin-top:8px;min-height:20px}
+.leit{display:flex;gap:6px;margin-top:10px;min-height:34px;flex-wrap:wrap}
+.leit span{min-height:34px;padding:0 12px;border-radius:99px;background:var(--tinta);color:var(--lima);font:700 14px var(--d);display:flex;align-items:center}
+.leit span.m{background:var(--branco);color:var(--tinta);box-shadow:inset 0 0 0 2px var(--tinta)}
+.md-pe{display:flex;gap:8px;margin-top:12px}
+.md-pe .vai{min-height:66px;font-size:20px}
+.md-links{display:flex;justify-content:space-between;margin-top:10px}
+.md-links button{font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:4px;min-height:40px}
+/* tudo na mesma data */
+.cursor{display:grid;grid-template-columns:96px 1fr;gap:10px;margin-top:12px;align-items:stretch}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.quad div{border-radius:18px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:8px 11px;font-size:12px;color:var(--t2);font-weight:600}
+.quad b{display:block;font:800 19px/1.1 var(--d);color:var(--tinta);letter-spacing:-.02em}
+.quad small{font-size:11px;font-weight:500;color:var(--t3)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:none;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:9px;background:var(--fio)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:34px;height:34px;border-radius:50%;background:var(--lima);box-shadow:inset 0 0 0 2.5px var(--tinta);margin-top:-14px}
+input[type=range]::-moz-range-track{height:6px;border-radius:9px;background:var(--fio)}
+input[type=range]::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:var(--lima);border:2.5px solid var(--tinta)}
+.hist{display:flex;align-items:center;gap:12px;min-height:52px;border-top:1.5px solid var(--fio);width:100%}
+.hist:first-of-type{border-top:0}
+.hist span{flex:1;font-size:14px;font-weight:600}
+.hist span small{display:block;font-size:12px;color:var(--t3);font-weight:500}
+.hist b{font:800 18px var(--d)}
+.hist svg{width:18px;height:18px;color:var(--t3)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.g2 button{border-radius:22px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:12px 14px;font-size:13px;color:var(--t2);font-weight:600}
+.g2 b{display:block;font:800 26px/1.05 var(--d);color:var(--tinta);letter-spacing:-.03em}
+.g2 small{font-size:12px;font-weight:600}
+.g2 .sp{height:26px;margin-top:6px}
+.g2 .sp svg{width:100%;height:100%;display:block}
+.veu{position:absolute;inset:0;background:rgba(15,15,13,.38);z-index:8;opacity:0;visibility:hidden;transition:opacity .22s}
+.veu.on{opacity:1;visibility:visible}
+.folha{position:absolute;left:0;right:0;bottom:0;z-index:9;background:var(--papel);border-radius:36px 36px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .34s var(--mola);max-height:90%;overflow-y:auto;visibility:hidden;scrollbar-width:none}
+.folha.on{transform:none;visibility:visible}
+.puxa{width:44px;height:5px;border-radius:99px;background:var(--fio);margin:0 auto 16px}
+.folha h2{font:800 30px/1 var(--d);letter-spacing:-.03em}
+.folha .sub{font-size:15px;color:var(--t2);margin-top:6px;line-height:1.4}
+
+.alt svg{width:20px;height:20px;flex:0 0 auto}
+</style>
+</head>
+<body>
+<div class="palco">
+  <aside class="lado">
+    <h1>Lote 2 · Corpo e evolução</h1>
+    <p>Protótipo navegável, com os seus números reais de peso, cintura e bioimpedância.</p>
+    <ul>
+      <li><b>Tudo na mesma data.</b> Arraste um cursor pelo tempo e peso, cintura, gordura, músculo e a foto mudam juntos.</li>
+      <li><b>Medir é uma medida por tela</b>, com a régua e o desenho de onde passar a fita. A segunda leitura é sempre pedida; “guardar só esta” existe e fica marcada.</li>
+      <li><b>O app não pergunta o que sabe calcular.</b> A massa de gordura sai do peso e do percentual.</li>
+      <li><b>Só o que você ligar.</b> Braço, coxa, peito e dobras ficam desligados até você querer.</li>
+    </ul>
+  </aside>
+  <div class="fone" id="fone">
+    <main class="tela" id="tela"></main>
+    <div class="veu" id="veu"></div>
+    <section class="folha" id="folha" role="dialog" aria-modal="true"></section>
+  </div>
+</div>
+<script>
+const I = (d, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ic = { volta: I('<path d="M15 5.5L8.5 12l6.5 6.5"/>', 2.4), dir: I('<path d="M9 5.5l6.5 6.5L9 18.5"/>', 2.2), seta: I('<path d="M5 12h14M13 6l6 6-6 6"/>', 2.4), ok: I('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 2.8), mais: I('<path d="M12 5v14M5 12h14"/>', 2.6), x: I('<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>', 2.4), lixo: I('<path d="M5 7h14M9.500 7V4.500h5V7M7 7l.800 12.500h8.400L17 7"/>') };
+const $ = s => document.querySelector(s);
+const vir = v => String(v).replace('.', ',');
+const f1 = v => vir(v.toFixed(1));
+/* o manequim: `s` é a sessão (0..10), que alarga ombro e tronco aos poucos */
+function gente(p, s, fantasma) {
+  const k = s / 10, o = 25 + 4*k, c = 15 + 1.5*k, cor = fantasma ? 'none' : '#3A3934', tr = fantasma ? 'stroke="#0F0F0D" stroke-width="1.6" stroke-dasharray="4 4"' : '';
+  const L = (d, w) => fantasma ? `<path d="${d}" fill="none" stroke="#0F0F0D" stroke-width="1.6" stroke-dasharray="4 4"/>` : `<path d="${d}" fill="none" stroke="#3A3934" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  let arms = '', sx = p.v === 'perfil' ? .58 : 1;
+  const ox = 60 - o, dx = 60 + o;
+  if (p.b === 'solto') arms = L(`M${ox} 64L${ox - 7} 150`, 11) + L(`M${dx} 64L${dx + 7} 150`, 11);
+  if (p.b === 'A') arms = L(`M${ox} 64L${ox - 26} 140`, 11) + L(`M${dx} 64L${dx + 26} 140`, 11);
+  if (p.b === 'biceps') arms = L(`M${ox} 64L${ox - 24} 62L${ox - 26} 30`, 11) + L(`M${dx} 64L${dx + 24} 62L${dx + 26} 30`, 11);
+  if (p.b === 'nuca') arms = L(`M${ox} 64L${ox - 18} 44L60 26`, 10) + L(`M${dx} 64L${dx + 18} 44L60 26`, 10);
+  if (p.b === 'cintura') arms = L(`M${ox} 64L${ox - 22} 104L${60 - c} 136`, 10) + L(`M${dx} 64L${dx + 22} 104L${60 + c} 136`, 10);
+  if (p.v === 'perfil' && p.b === 'solto') arms = L(`M62 66L66 150`, 11);
+  if (p.v === 'perfil' && p.b === 'nuca') arms = L(`M60 64L86 44L62 28`, 10);
+  const tronco = `M${ox} 58Q60 50 ${dx} 58L${60 + c} 138L${60 + c + 4} 168L${60 - c - 4} 168L${60 - c} 138Z`;
+  const corpo = `<circle cx="60" cy="27" r="15" fill="${cor}" ${tr}/><path d="M54 40h12v14H54z" fill="${cor}" ${tr}/><path d="${tronco}" fill="${cor}" ${tr} stroke-linejoin="round"/>` +
+    L(`M${60 - c + 3} 168L${60 - 13} 288`, 17) + L(`M${60 + c - 3} 168L${60 + 13} 288`, 17) + arms;
+  return `<svg viewBox="0 0 120 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(60 0) scale(${sx} 1) translate(-60 0)">${corpo}</g></svg>`;
+}
+
+function regua(id, mn, mx, st, v, cada, px) {
+  let t = ''; const n = Math.round((mx - mn) / st);
+  for (let i = 0; i <= n; i++) { const val = Math.round((mn + i*st) * 100) / 100, g = Math.abs(val / cada - Math.round(val / cada)) < 1e-6; t += `<i class="tk ${g ? 'g' : ''}" ${g ? `data-r="${vir(val)}"` : ''}></i>`; }
+  return `<div class="regua" style="--passo:${px}px"><div class="rola" id="${id}" data-mn="${mn}" data-st="${st}" data-px="${px}" data-v="${v}"><div class="fita">${t}</div></div></div>`;
+}
+function armaRegua(id, aoMudar) {
+  const el = document.getElementById(id); if (!el) return;
+  const mn = +el.dataset.mn, st = +el.dataset.st, px = +el.dataset.px;
+  el.scrollLeft = (+el.dataset.v - mn) / st * px;
+  let ult = +el.dataset.v;
+  el.addEventListener('scroll', () => { const v = Math.round((mn + Math.round(el.scrollLeft / px) * st) * 100) / 100; if (v !== ult) { ult = v; aoMudar(v); } }, { passive:true });
+}
+
+
+
+/* ---------- os dados (os seus) ---------- */
+const DIA0 = new Date(2026, 8, 20), NDIAS = 57;
+const dataDe = d => { const x = new Date(DIA0.getTime() + d * 86400000); return String(x.getDate()).padStart(2, '0') + '/' + String(x.getMonth() + 1).padStart(2, '0'); };
+const SEM = [74.3, 75.3, 76.2, 77.3, 78.2, 78.2, 77.8, 77.9, 77.6];
+const pesoEm = d => { const i = Math.min(7, Math.floor(d / 7)), t = (d - i * 7) / 7; return SEM[i] + (SEM[i + 1] - SEM[i]) * t; };
+const PESAGENS = []; for (let d = 0; d < 54; d++) if ((d * 7) % 9 < 7 && PESAGENS.length < 43) PESAGENS.push([d, Math.round((pesoEm(d) + Math.sin(d * 2.3) * 0.45) * 10) / 10]); PESAGENS.push([54, 77.6]);
+const CINT = [[11, 84.5], [39, 86.0]], BIO = [[16, { g: 11.0, m: 38.1, a: 49.2 }], [47, { g: 12.5, m: 38.7, a: 49.3 }]];
+const FOTOS = [0, 11, 25, 39, 53];
+const ate = (arr, d) => { let r = null; arr.forEach(x => { if (x[0] <= d) r = x; }); return r; };
+const MED = [
+  { k:'cintura', n:'Cintura', u:'cm', on:true, v:[[11, 84.5], [39, 86.0]], onde:'Na altura do umbigo', como:'Fita paralela ao chão, barriga relaxada. Meça no fim de uma expiração normal.', y:138, mn:60, mx:130 },
+  { k:'braco', n:'Braço direito', u:'cm', on:true, v:[], onde:'No meio do braço, relaxado', como:'Braço solto ao lado do corpo. A fita no ponto médio entre o ombro e o cotovelo.', y:100, braco:true, mn:20, mx:60, partida:35 },
+  { k:'coxa', n:'Coxa direita', u:'cm', on:false, v:[], onde:'No meio da coxa', como:'Em pé, peso nas duas pernas.', y:205, perna:true, mn:35, mx:90, partida:56 },
+  { k:'panturrilha', n:'Panturrilha direita', u:'cm', on:false, v:[], onde:'Na parte mais larga', como:'Em pé, peso nas duas pernas.', y:255, perna:true, mn:25, mx:60, partida:37 },
+  { k:'peito', n:'Peito', u:'cm', on:false, v:[], onde:'Na linha dos mamilos', como:'Braços soltos, depois de soltar o ar.', y:82, mn:70, mx:140, partida:100 },
+  { k:'quadril', n:'Quadril', u:'cm', on:false, v:[], onde:'Na parte mais larga', como:'Pés juntos, fita paralela ao chão.', y:165, mn:70, mx:140, partida:96 }
+];
+const DOBRA = [{ k:'dAbd', n:'Dobra abdominal', u:'mm', onde:'Dois dedos ao lado do umbigo', como:'Pinça vertical. Leia dois segundos depois de soltar o adipômetro.', y:140, mn:2, mx:60, partida:14 },
+  { k:'dSup', n:'Dobra suprailíaca', u:'mm', onde:'Acima do osso do quadril', como:'Pinça inclinada, seguindo a linha natural da pele.', y:150, mn:2, mx:60, partida:10 }];
+const E = { t:'corpo', pesoHoje:null, faixa:'tudo', cur:NDIAS, md:null, medida:'cintura', dobras:false };
+const vai = t => { E.t = t; desenha(true); };
+
+/* gráfico de linha: pontos [x,y] em dias × valor */
+function linha(pts, o) { o = o || {}; const W = 340, H = o.h || 120, x0 = o.x0 ?? 0, x1 = o.x1 ?? NDIAS, ys = pts.map(p => p[1]).concat(o.extra || []), mn = Math.min(...ys) - (o.folga || .4), mx = Math.max(...ys) + (o.folga || .4);
+  const X = d => (d - x0) / (x1 - x0) * W, Y = v => H - (v - mn) / (mx - mn) * H; let s = '';
+  if (o.banda) s += `<path d="M${X(o.banda[0])} ${Y(o.banda[1])}L${X(x1)} ${Y(o.banda[1] + (x1 - o.banda[0]) / 7 * .30)}L${X(x1)} ${Y(o.banda[1] + (x1 - o.banda[0]) / 7 * .15)}Z" fill="#D3C6FF"/>`;
+  (o.marcas || []).filter(d => d >= x0).forEach(d => { s += `<path d="M${X(d)} ${H + 4}v8" stroke="#0F0F0D" stroke-width="3" stroke-linecap="round"/>`; });
+  (o.pontos || []).filter(p => p[0] >= x0).forEach(p => { s += `<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="2.6" fill="#0F0F0D" opacity=".28"/>`; });
+  const v = pts.filter(p => p[0] >= x0 - 7);
+  s += `<path d="${v.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="#0F0F0D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if (o.bolas) v.forEach(p => { s += `<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="5" fill="#F6F3EC" stroke="#0F0F0D" stroke-width="3"/>`; });
+  if (o.cur != null) { const c = Math.max(x0, o.cur); s += `<path d="M${X(c)} -6V${H + 12}" stroke="#0F0F0D" stroke-width="2" stroke-dasharray="3 4"/><circle cx="${X(c)}" cy="${Y(o.curY)}" r="7" fill="#D2F23A" stroke="#0F0F0D" stroke-width="3"/>`; }
+  else { const u = v[v.length - 1]; s += `<circle cx="${X(u[0])}" cy="${Y(u[1])}" r="6" fill="#D3C6FF" stroke="#0F0F0D" stroke-width="3"/>`; }
+  return `<svg class="graf" viewBox="-8 -10 356 ${H + 26}" role="img" aria-label="${o.rotulo || 'gráfico'}">${s}</svg>`; }
+const mini = (ys) => { const mn = Math.min(...ys), mx = Math.max(...ys), n = ys.length; return `<svg viewBox="-3 -3 70 36" preserveAspectRatio="none"><path d="${ys.map((y, i) => (i ? 'L' : 'M') + (i / (n - 1) * 64).toFixed(1) + ' ' + (30 - (mx === mn ? .5 : (y - mn) / (mx - mn)) * 30).toFixed(1)).join('')}" fill="none" stroke="#0F0F0D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`; };
+const SEMPTS = SEM.map((v, i) => [i * 7, v]);
+const boneco = (m) => `<svg viewBox="0 0 120 300" aria-hidden="true">${gente({ v:'frente', b:'A' }, 8).replace(/^<svg[^>]*>|<\/svg>$/g, '')}<path d="${m.braco ? 'M22 96L40 104' : m.perna ? `M40 ${m.y}L60 ${m.y}` : `M32 ${m.y}L88 ${m.y}`}" stroke="#D2F23A" stroke-width="9" stroke-linecap="round"/><path d="${m.braco ? 'M22 96L40 104' : m.perna ? `M40 ${m.y}L60 ${m.y}` : `M32 ${m.y}L88 ${m.y}`}" stroke="#0F0F0D" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 5"/></svg>`;
+const fotoMini = d => `<span class="foto">${gente({ v:'frente', b:'solto' }, Math.round(d / NDIAS * 10))}</span>`;
+
+/* ---------- CORPO ---------- */
+function corpo() {
+  const p0 = E.pesoHoje || 77.6, c = CINT[1], b = BIO[1][1];
+  const ligadas = MED.filter(m => m.on), desl = MED.filter(m => !m.on);
+  return `<section class="mundo"><div class="linha0"><span>Corpo</span><span>${E.pesoHoje ? 'pesado hoje' : 'última: sexta, 13/11'}</span></div>
+      <div class="gigante n"><span id="peso-g">${f1(p0)}</span><small>kg</small></div><div style="height:8px"></div>${regua('rg-peso', 60, 100, 0.1, p0, 1, 12)}
+      <div class="acoes" style="margin-top:6px"><button class="vai ${E.pesoHoje ? '' : 'espera'}" data-a="guarda-peso" id="guarda">${E.pesoHoje ? ic.ok + ' Guardado hoje' : 'Arraste a régua para pesar hoje'}</button></div></section>
+    <div class="bloco"><h2 class="h">Evolução <small>8 semanas</small></h2><div class="g2">
+      <button data-a="vai" data-t="peso"><b class="n">+3,3 <small>kg</small></b>peso<div class="sp">${mini(SEM)}</div></button>
+      <button data-a="abre-medida" data-k="cintura"><b class="n">+1,5 <small>cm</small></b>cintura<div class="sp">${mini([84.5, 86])}</div></button>
+      <button data-a="vai" data-t="bio"><b class="n">${f1(b.g)} <small>%</small></b>gordura · +1,5<div class="sp">${mini([11, 12.5])}</div></button>
+      <button data-a="vai" data-t="bio"><b class="n">${f1(b.m)} <small>kg</small></b>músculo · +0,6<div class="sp">${mini([38.1, 38.7])}</div></button></div>
+      <div class="acoes" style="margin-top:10px"><button class="vai" data-a="vai" data-t="tudo">Ver tudo na mesma data ${ic.seta}</button></div></div>
+    <div class="bloco"><h2 class="h">Medidas <small>fita · última em 29/10</small></h2><div style="margin-top:6px">
+      ${ligadas.map(m => { const u = m.v[m.v.length - 1], a = m.v[m.v.length - 2]; return `<button class="lin" data-a="abre-medida" data-k="${m.k}"><div><b>${m.n}</b><span>${u ? (a ? (u[1] - a[1] >= 0 ? '+' : '') + f1(u[1] - a[1]) + ' ' + m.u + ' desde ' + dataDe(a[0]) : 'primeira medida') : 'ainda sem medida'}</span></div><span class="val n">${u ? f1(u[1]) : '—'}<small>${m.u}</small></span>${ic.dir}</button>`; }).join('')}
+      <button class="lin off" data-a="ligar"><div><b>Mais ${desl.length + 2} medidas</b><span>${desl.map(m => m.n.toLowerCase().replace(' direita', '')).join(', ')} e dobras · desligadas</span></div>${ic.mais}</button></div>
+      <div class="acoes" style="margin-top:8px"><button class="alt" style="flex:1" data-a="medir">Medir agora · ${ligadas.length + (E.dobras ? 2 : 0)} medidas</button></div></div>
+    <div class="bloco"><h2 class="h">Bioimpedância <small>06/11 · uma vez por mês</small></h2><div style="margin-top:6px">
+      <button class="lin" data-a="vai" data-t="bio"><div><b>${f1(b.g)} % de gordura</b><span>${f1(b.m)} kg de músculo · ${f1(b.a)} L de água</span></div>${ic.dir}</button></div></div>
+    <div class="bloco"><h2 class="h">Fotos <small>12/11 · próxima em 10 dias</small></h2>
+      <div style="display:flex;gap:5px;margin-top:10px">${[0, 2, 5, 8, 10].map(i => `<span class="foto" style="flex:1">${gente({ v:'frente', b:'solto' }, i)}</span>`).join('')}</div></div>`;
+}
+
+/* ---------- PESO ---------- */
+function peso() {
+  const x0 = E.faixa === '4' ? 29 : 0, tx = [[49, '08/11 a 14/11', '+0,08', 'abaixo', 4], [42, '01/11 a 07/11', '−0,37', 'abaixo', 4], [35, '25/10 a 31/10', '−0,03', 'abaixo', 3], [28, '18/10 a 24/10', '+0,90', 'acima', 4], [21, '11/10 a 17/10', '+1,10', 'acima', 5]];
+  return `<header class="cab"><button data-a="vai" data-t="corpo" aria-label="Voltar">${ic.volta}</button><h1>Peso</h1><span class="n">${PESAGENS.length} pesagens</span></header>
+    <div class="bloco" style="padding-top:4px"><div class="gigante n" style="font-size:64px;margin-top:0">77,6<small>kg · +3,3 em 8 semanas</small></div>
+      <div class="seg">${[['4', '4 semanas'], ['tudo', 'Tudo']].map(s => `<button data-a="faixa" data-f="${s[0]}" aria-pressed="${E.faixa === s[0]}">${s[1]}</button>`).join('')}</div>
+      ${linha(SEMPTS, { x0, pontos:PESAGENS, banda:x0 ? null : [0, 74.3], h:150, bolas:true, rotulo:'Média semanal do peso com as pesagens do dia' })}
+      <div class="leg"><span><i style="background:#0F0F0D"></i>média da semana</span><span><i style="background:rgba(15,15,13,.28)"></i>pesagem do dia</span>${x0 ? '' : '<span><i style="background:#D3C6FF"></i>alvo: +0,15 a +0,30 por semana</span>'}</div></div>
+    <div class="bloco"><h2 class="h">Por semana <small>kg em relação à anterior</small></h2><div style="margin-top:4px">
+      ${tx.map(t => `<div class="taxa"><span>${t[1]}<small>${t[4]} pesagens</small></span><b class="n">${t[2]}</b><span class="selo ${t[3] === 'acima' ? 'a' : 'n'}" style="flex:0 0 auto">${t[3]} do alvo</span></div>`).join('')}</div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">Duas semanas seguidas abaixo de +0,10 é o que a regra do nutricionista olha. O que fazer com isso está em Semana.</p></div>
+    <div class="bloco"><h2 class="h">Pesagens <small>toque para corrigir</small></h2><div style="margin-top:4px">
+      ${PESAGENS.slice(-5).reverse().map(p => `<button class="hist" data-a="nada"><span>${dataDe(p[0])}<small>de manhã</small></span><b class="n">${f1(p[1])} kg</b>${ic.dir}</button>`).join('')}
+      <button class="livre" data-a="nada">ver as ${PESAGENS.length}</button></div></div>`;
+}
+
+/* ---------- MEDIR: uma por tela ---------- */
+function fila() { return MED.filter(m => m.on).concat(E.dobras ? DOBRA : []); }
+function medir() {
+  const q = fila(), s = E.md, m = q[s.i], ult = m.v && m.v.length ? m.v[m.v.length - 1][1] : null;
+  if (s.i >= q.length) return '';
+  const media = s.leit.length ? s.leit.reduce((a, b) => a + b, 0) / s.leit.length : null, dif = s.leit.length >= 2 ? Math.abs(s.leit[0] - s.leit[1]) : 0;
+  const pede3 = s.leit.length === 2 && dif > 0.5;
+  return `<div class="md ${m.u === 'mm' ? 'dobra' : ''}"><div class="md-topo"><button data-a="vai" data-t="corpo" aria-label="Sair">${ic.x}</button><span>${m.u === 'mm' ? 'adipômetro' : 'fita'} · <span class="n">${s.i + 1} de ${q.length}</span></span><span style="min-width:44px"></span></div>
+    <div class="segs">${q.map((_, j) => `<i class="${j < s.i ? 'f' : j === s.i ? 'a' : ''}"></i>`).join('')}</div>
+    <div class="md-onde"><div class="bon">${boneco(m)}</div><p><b>${m.onde}</b>${m.como}</p></div>
+    <div class="md-meio"><h2 class="md-n">${m.n}</h2>
+      <div class="md-v n"><span id="md-v">${f1(s.v)}</span><small>${m.u}</small></div>
+      ${regua('rg-md', m.mn, m.mx, m.u === 'mm' ? 0.5 : 0.1, s.v, m.u === 'mm' ? 5 : 1, m.u === 'mm' ? 14 : 12)}
+      <p class="md-ant">${pede3 ? 'As duas diferem ' + f1(dif) + ' ' + m.u + '. Meça mais uma: fica a média das três.' : s.leit.length === 1 ? 'Primeira guardada. Tire a fita, passe de novo e guarde a segunda.' : s.leit.length ? 'As duas batem. Fica a média.' : ult ? 'da última vez: ' + f1(ult) + ' ' + m.u : 'primeira vez: comece perto de ' + m.partida + ' ' + m.u}</p>
+      <div class="leit">${s.leit.map((l, j) => `<span class="n">${j + 1}ª · ${f1(l)}</span>`).join('')}${s.leit.length > 1 ? `<span class="m n">média ${f1(media)}</span>` : ''}</div></div>
+    <div class="md-pe">${s.leit.length === 2 && !pede3 ? `<button class="vai" data-a="md-segue">${s.i + 1 < q.length ? 'Próxima' : 'Terminar'} ${ic.seta}</button>` : `<button class="vai" data-a="md-leitura">${ic.ok} ${pede3 ? 'Guardar a 3ª' : s.leit.length === 1 ? 'Guardar a 2ª' : 'Guardar a 1ª'}</button>`}</div>
+    <div class="md-links">${s.leit.length === 1 ? `<button data-a="md-segue">Guardar só esta</button>` : `<button data-a="md-pula">Pular esta</button>`}<button data-a="md-como">Ver como medir</button></div></div>`;
+}
+function medido() {
+  const r = E.feitas || [];
+  return `<section class="mundo" style="background:var(--menta)"><div class="linha0"><span>medidas de hoje</span><span class="n">16/11</span></div>
+      <p class="quando">guardadas</p><h1 class="titulo m">${r.length} ${r.length === 1 ? 'medida' : 'medidas'}, com a hora de agora</h1>
+      <div class="acoes"><button class="vai" data-a="vai" data-t="corpo">Fechar</button></div></section>
+    <div class="bloco"><div>${r.map(x => `<div class="lin"><div><b>${x.n}</b><span>${x.dif == null ? 'primeira medida' : (x.dif >= 0 ? '+' : '') + f1(x.dif) + ' ' + x.u + ' desde a última'}${x.nl > 1 ? ' · média de ' + x.nl + ' leituras' : ' · <b style="display:inline;font:700 13px var(--u);color:var(--tinta);background:var(--tanja);padding:1px 7px;border-radius:99px">uma leitura só</b>'}</span></div><span class="val n">${f1(x.v)}<small>${x.u}</small></span></div>`).join('') || '<p class="apoio">Nenhuma medida guardada. Tudo bem: fica para outro dia.</p>'}</div></div>`;
+}
+
+/* ---------- uma medida ---------- */
+function medida() {
+  const m = MED.find(x => x.k === E.medida), u = m.v[m.v.length - 1], a = m.v[0];
+  return `<header class="cab"><button data-a="vai" data-t="corpo" aria-label="Voltar">${ic.volta}</button><h1>${m.n}</h1><span>${m.onde.toLowerCase()}</span></header>
+    <div class="bloco" style="padding-top:4px">${u ? `<div class="gigante n" style="font-size:64px;margin-top:0">${f1(u[1])}<small>${m.u}${m.v.length > 1 ? ' · ' + (u[1] - a[1] >= 0 ? '+' : '') + f1(u[1] - a[1]) + ' desde ' + dataDe(a[0]) : ''}</small></div>
+      ${m.v.length > 1 ? linha(m.v, { bolas:true, marcas:FOTOS, h:110, folga:1, rotulo:'Evolução da medida, com as sessões de fotos marcadas' }) + '<div class="leg"><span><i style="background:#0F0F0D;width:3px;height:10px"></i>sessão de fotos</span><span>20/09 a 16/11</span></div>' : ''}` : `<h2 class="titulo m" style="margin-top:6px">Ainda sem medida</h2><p class="apoio">Com duas medidas aparece a linha; com três, a tendência.</p>`}
+      <div class="acoes"><button class="vai" data-a="medir-uma">Medir agora ${ic.seta}</button></div></div>
+    <div class="bloco"><h2 class="h">Como medir</h2><div class="md-onde" style="margin-top:8px"><div class="bon" style="box-shadow:inset 0 0 0 1.5px var(--fio)">${boneco(m)}</div><p><b>${m.onde}</b>${m.como} Meça duas vezes; se diferirem mais de 0,5 cm, uma terceira decide.</p></div></div>
+    ${m.v.length ? `<div class="bloco"><h2 class="h">Histórico <small>toque para corrigir ou apagar</small></h2><div style="margin-top:4px">${m.v.slice().reverse().map(p => `<button class="hist" data-a="nada"><span>${dataDe(p[0])}<small>à noite</small></span><b class="n">${f1(p[1])} ${m.u}</b>${ic.dir}</button>`).join('')}</div></div>` : ''}`;
+}
+
+/* ---------- bioimpedância ---------- */
+function bio() {
+  const a = BIO[0][1], b = BIO[1][1], mg = v => v.g / 100 * (v === a ? 75 : 76.5);
+  const c = [['Gordura', f1(b.g) + ' %', b.g - a.g, [a.g, b.g]], ['Músculo', f1(b.m) + ' kg', b.m - a.m, [a.m, b.m]], ['Massa de gordura', f1(mg(b)) + ' kg', mg(b) - mg(a), [mg(a), mg(b)]], ['Água', f1(b.a) + ' L', b.a - a.a, [a.a, b.a]]];
+  return `<header class="cab"><button data-a="vai" data-t="corpo" aria-label="Voltar">${ic.volta}</button><h1>Bioimpedância</h1><span>2 leituras</span></header>
+    <div class="bloco" style="padding-top:4px"><div class="g2" style="margin-top:0">${c.map(x => `<button data-a="nada"><b class="n">${x[1]}</b>${x[0].toLowerCase()} · ${(x[2] >= 0 ? '+' : '') + f1(x[2])}<div class="sp">${mini(x[3])}</div></button>`).join('')}</div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">Leituras de 06/10 e 06/11. A massa de gordura não é digitada: sai do peso e do percentual.</p>
+      <div class="acoes"><button class="vai" data-a="bio-nova">Nova leitura ${ic.seta}</button></div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">Uma vez por mês, na mesma balança e no mesmo horário. A próxima cai perto de 06/12.</p></div>
+    <div class="bloco"><h2 class="h">Leituras</h2><div style="margin-top:4px">${BIO.slice().reverse().map(x => `<button class="hist" data-a="nada"><span>${dataDe(x[0])}<small>${f1(x[1].m)} kg de músculo · ${f1(x[1].a)} L</small></span><b class="n">${f1(x[1].g)} %</b>${ic.dir}</button>`).join('')}</div></div>`;
+}
+
+/* ---------- tudo na mesma data ---------- */
+function tudo() {
+  return `<header class="cab"><button data-a="vai" data-t="corpo" aria-label="Voltar">${ic.volta}</button><h1>Tudo na mesma data</h1></header>
+    <div class="bloco" style="padding-top:2px"><div id="tudo-g"></div>
+      <input type="range" min="0" max="${NDIAS}" step="1" value="${E.cur}" id="cur" aria-label="Data">
+      <div id="tudo-c"></div>
+      <p class="apoio" style="font-size:13px;color:var(--t2)">Arraste para andar no tempo. Cada número é a leitura mais recente até aquela data; os traços embaixo do gráfico são as sessões de fotos.</p></div>`;
+}
+function pintaTudo() { const d = E.cur, c = ate(CINT, d), b = ate(BIO, d), fo = ate(FOTOS.map(x => [x]), d), p = pesoEm(d);
+  $('#tudo-g').innerHTML = linha(SEMPTS, { pontos:PESAGENS, marcas:FOTOS, cur:d, curY:p, h:130, rotulo:'Peso ao longo do tempo com cursor' });
+  $('#tudo-c').innerHTML = `<div class="cursor"><div>${fo ? fotoMini(fo[0]) : '<span class="foto"></span>'}<p style="font-size:11px;font-weight:600;color:var(--t3);text-align:center;margin-top:4px" class="n">${fo ? 'fotos de ' + dataDe(fo[0]) : 'sem fotos ainda'}</p></div>
+    <div><p class="n" style="font:800 30px/1 var(--d);letter-spacing:-.03em;margin-bottom:8px">${dataDe(d)}</p><div class="quad">
+      <div><b class="n">${f1(p)} kg</b>peso · <span class="n">${(p - 74.3 >= 0 ? '+' : '') + f1(p - 74.3)}</span></div>
+      <div><b class="n">${c ? f1(c[1]) + ' cm' : '—'}</b>cintura${c ? ' <small class="n">' + dataDe(c[0]) + '</small>' : ''}</div>
+      <div><b class="n">${b ? f1(b[1].g) + ' %' : '—'}</b>gordura${b ? ' <small class="n">' + dataDe(b[0]) + '</small>' : ''}</div>
+      <div><b class="n">${b ? f1(b[1].m) + ' kg' : '—'}</b>músculo${b ? ' <small class="n">' + dataDe(b[0]) + '</small>' : ''}</div></div></div></div>`; }
+
+function folha(h) { $('#folha').innerHTML = `<div class="puxa"></div>` + h; $('#folha').classList.add('on'); $('#veu').classList.add('on'); }
+function fecha() { $('#folha').classList.remove('on'); $('#veu').classList.remove('on'); }
+const TELAS = { corpo, peso, medir, medido, medida, bio, tudo };
+function desenha(topo) {
+  const t = $('#tela'), y = t.scrollTop; t.innerHTML = TELAS[E.t](); const cheia = E.t === 'medir';
+  t.style.display = cheia ? 'flex' : ''; t.style.flexDirection = 'column'; t.style.paddingBottom = cheia ? '0' : ''; t.scrollTop = topo ? 0 : y;
+  if (E.t === 'corpo') armaRegua('rg-peso', v => { $('#peso-g').textContent = f1(v); const g = $('#guarda'); g.dataset.v = v; g.classList.remove('espera'); g.innerHTML = ic.ok + ' Guardar ' + f1(v) + ' kg'; });
+  if (E.t === 'medir') armaRegua('rg-md', v => { E.md.v = v; $('#md-v').textContent = f1(v); });
+  if (E.t === 'tudo') { pintaTudo(); $('#cur').addEventListener('input', e => { E.cur = +e.target.value; pintaTudo(); }); }
+}
+function comeca(lista) { E.feitas = []; E.mdLista = lista; const m = fila()[0]; E.md = { i:0, v:m.v && m.v.length ? m.v[m.v.length - 1][1] : m.partida, leit:[] }; vai('medir'); }
+function proxima(guarda) { const q = fila(), s = E.md, m = q[s.i];
+  if (guarda && s.leit.length) { const v = Math.round(s.leit.reduce((a, b) => a + b, 0) / s.leit.length * 10) / 10, ult = m.v && m.v.length ? m.v[m.v.length - 1][1] : null; E.feitas.push({ n:m.n, u:m.u, v, dif:ult == null ? null : v - ult, nl:s.leit.length }); if (m.v) m.v.push([NDIAS, v]); }
+  s.i++; if (s.i >= q.length || E.soUma) { E.soUma = false; vai('medido'); return; } const n = q[s.i]; s.v = n.v && n.v.length ? n.v[n.v.length - 1][1] : n.partida; s.leit = []; desenha(true); }
+document.addEventListener('click', ev => {
+  if (ev.target.id === 'veu') { fecha(); return; }
+  const b = ev.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
+  if (a === 'vai') vai(b.dataset.t);
+  else if (a === 'guarda-peso') { if (b.dataset.v) { E.pesoHoje = +b.dataset.v; desenha(); } }
+  else if (a === 'faixa') { E.faixa = b.dataset.f; desenha(); }
+  else if (a === 'abre-medida') { E.medida = b.dataset.k; vai('medida'); }
+  else if (a === 'medir') { E.soUma = false; comeca(); }
+  else if (a === 'medir-uma') { E.soUma = true; E.feitas = []; const q = fila(), i = q.findIndex(m => m.k === E.medida), m = q[i]; E.md = { i, v:m.v.length ? m.v[m.v.length - 1][1] : m.partida, leit:[] }; vai('medir'); }
+  else if (a === 'md-leitura') { E.md.leit.push(E.md.v); if (E.md.leit.length >= 3) proxima(true); else desenha(); }
+  else if (a === 'md-segue') proxima(true);
+  else if (a === 'md-pula') proxima(false);
+  else if (a === 'md-como') { const m = fila()[E.md.i]; folha(`<h2>${m.n}</h2><p class="sub"><b>${m.onde}.</b> ${m.como}</p><p class="sub">Fita justa na pele, sem apertar e sem folga. Sempre do lado direito, sempre no mesmo horário.</p><div class="acoes"><button class="vai" data-a="fecha">Entendi</button></div>`); }
+  else if (a === 'ligar') folha(`<h2>O que medir</h2><p class="sub">Ligue só o que for acompanhar. Desligar não apaga o que já foi medido.</p><div style="margin-top:12px">${MED.map(m => `<button class="liga" data-a="liga" data-k="${m.k}" aria-pressed="${m.on}"><div><b>${m.n}</b><span>${m.onde.toLowerCase()}</span></div><span class="chave"></span></button>`).join('')}
+      <button class="liga" data-a="liga" data-k="dobras" aria-pressed="${E.dobras}"><div><b>Dobras com adipômetro</b><span>abdominal e suprailíaca, em milímetros</span></div><span class="chave"></span></button></div>`);
+  else if (a === 'liga') { if (b.dataset.k === 'dobras') E.dobras = !E.dobras; else { const m = MED.find(x => x.k === b.dataset.k); m.on = !m.on; } b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); const y = $('#tela').scrollTop; $('#tela').innerHTML = corpo(); $('#tela').scrollTop = y; armaRegua('rg-peso', () => {}); }
+  else if (a === 'bio-nova') folha(`<h2>Nova leitura</h2><p class="sub">Três números da balança, um por tela, na régua. O peso da leitura e a massa de gordura o app preenche.</p><div class="acoes"><button class="vai" data-a="fecha">Começar pela gordura ${ic.seta}</button></div><p class="apoio" style="font-size:13px;color:var(--t2)">É o mesmo fluxo de “Medir agora”: gordura em %, músculo em kg, água em litros.</p>`);
+  else if (a === 'fecha') fecha();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecha(); });
+desenha(true);
+</script>
+</body>
+</html>

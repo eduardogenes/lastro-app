@@ -11,7 +11,7 @@ Thumbs.db
 .vscode/
 
 # capturas da medição do coordenador (os scripts ficam versionados)
-docs/redesign/_medicao/shots/
+docs/historico/redesign/_medicao/shots/
 
 # capturas e gravações do time de motion (os scripts ficam versionados)
-docs/motion/_medicao/shots/
+docs/historico/motion/_medicao/shots/
