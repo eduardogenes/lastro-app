@@ -91,3 +91,49 @@ test('ontem em branco: a pergunta aparece no ritmo, e responder fecha o dia de o
   assert.ok(!a.$('.v3-perg'), 'e a pergunta sai');
   a.fechar();
 });
+
+test('cardio: o toque no Hoje abre a folha, e gravar registra pela porta de sempre', async () => {
+  const a = await noHoje(15, 0);
+  a.clicar('[data-a="hoje-cardio"]');
+  await a.esperar(40);
+  assert.ok(a.$('[data-a="cardio-grava"]'), 'a folha do cardio');
+  a.clicar('[data-a="cardio-m-remo"]');
+  a.clicar('[data-a="cardio-min-30"]');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="cardio-min-30"]').getAttribute('aria-pressed'), 'true');
+  assert.ok(/30 min de remo/.test(a.texto('[data-a="cardio-grava"]')));
+  a.clicar('[data-a="cardio-grava"]');
+  await a.esperar(60);
+  const c = a.E('S.cardio[S.cardio.length - 1]');
+  assert.strictEqual(c.m, 'remo'); assert.strictEqual(c.min, 30);
+  assert.ok(!a.$('[data-a="cardio-grava"]'), 'e a folha fecha');
+  a.fechar();
+});
+
+test('o tipo do dia: "Hoje não vou treinar" vira descanso, e a folha da data volta, com turno e demanda alta', async () => {
+  const a = await noHoje(5, 30);
+  assert.strictEqual(a.vJ('ctx.hojeV3').bloco.k, 'treino');
+  a.clicar('[data-a="hoje-nao-treino"]');
+  await a.esperar(40);
+  assert.strictEqual(a.E('diaDeComida().cadencia'), 'descanso');
+  assert.notStrictEqual(a.vJ('ctx.hojeV3').bloco.k, 'treino', 'o bloco deixa de ser o treino');
+  assert.ok(/descanso/.test(a.texto('[data-a="hoje-tipo"]')));
+  a.clicar('[data-a="hoje-tipo"]');
+  await a.esperar(40);
+  assert.ok(a.$('[data-a="jafiz-cardio"]'), 'descanso oferece o "já fiz"');
+  a.clicar('[data-a="dia-e-treino"]');
+  await a.esperar(40);
+  assert.strictEqual(a.E('diaDeComida().cadencia'), 'treino');
+  a.clicar('[data-a="hoje-tipo"]');
+  await a.esperar(40);
+  a.clicar('[data-a="dia-alta"]');
+  await a.esperar();
+  assert.strictEqual(a.E('diaDeComida().alta'), 1, 'demanda alta');
+  a.clicar('[data-a="aderencia-fora"]');
+  await a.esperar();
+  assert.strictEqual(a.E('diaDeComida().aderencia'), 'fora');
+  a.clicar('[data-a="turno-noite"]');
+  await a.esperar();
+  assert.strictEqual(a.E('diaDeComida().turno'), 'noite');
+  a.fechar();
+});

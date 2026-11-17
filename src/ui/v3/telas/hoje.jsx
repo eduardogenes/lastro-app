@@ -6,13 +6,16 @@
 
 import { useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Bloco, Botao, Chave, Folha, Pergunta, Saida, Secao } from '../base.jsx';
+import { Acoes, Apoio, Bloco, Botao, Chave, Fichas, Folha, Linha, Pergunta, Saida, Secao } from '../base.jsx';
 
 const RESPOSTAS = [{ k: 'sim', t: 'Foi, sim' }, { k: 'quase', t: 'Quase' }, { k: 'naosei', t: 'Não sei dizer' }];
 
 function Momento({ ctx, h }) {
   const b = h.bloco;
-  const linha0 = <><span>{h.data} · <span class="v3-n">{h.hora.replace(':', 'h')}</span></span>
+  // a data diz também o tipo do dia, e tocar confirma ou corrige (folha `dia`)
+  const linha0 = <><button data-a="hoje-tipo" onClick={() => ctx.abreFolha({ k: 'dia' })}
+                           aria-label={h.data + ', ' + (h.tipo === 'descanso' ? 'descanso' : 'dia de treino') + '. Mudar o tipo do dia'}>
+      {h.data} · <span class="v3-n">{h.hora.replace(':', 'h')}</span> · {h.tipo === 'descanso' ? 'descanso' : 'treino'}{ic.baixo}</button>
     <button onClick={() => ctx.abreFolha({ k: 'oQueAparece' })} aria-label="Escolher o que aparece" data-a="hoje-aparece">{ic.ajuste}</button></>;
   let acoes = null;
   if (b.k === 'sessao') {
@@ -25,7 +28,10 @@ function Momento({ ctx, h }) {
       <Botao tipo="contorno" data-a="hoje-fim-corrige" onClick={() => ctx.abreSessaoDoDia({ k: 'sessao', t: b.fim })}>Corrigir</Botao></Acoes>;
   } else if (b.k === 'treino' || b.k === 'aula') {
     acoes = <><Acoes><Botao data-a="hoje-comeca" onClick={ctx.abreTreinoDeHoje}>{b.k === 'aula' ? 'Fiz a aula' : 'Começar'} {ic.seta}</Botao></Acoes>
-      <Saida data-a="hoje-ja-treinei" onClick={ctx.lancaTreinoDeHoje}>Já treinei e não anotei</Saida></>;
+      <div class="v3-saidas">
+        <Saida data-a="hoje-ja-treinei" onClick={ctx.lancaTreinoDeHoje}>Já treinei e não anotei</Saida>
+        {b.k === 'treino' && <Saida data-a="hoje-nao-treino" onClick={() => ctx.setCadenciaDeHoje('descanso')}>Hoje não vou treinar</Saida>}
+      </div></>;
   } else if (b.k === 'refeicao') {
     acoes = b.pergunta
       ? <><Acoes><Botao tipo="contorno" data-a="hoje-fora" onClick={() => ctx.marcaLinhaDaComida(b.id, 'fora')}>Comi outra coisa</Botao>
@@ -209,6 +215,77 @@ export function FolhaOQueAparece({ ctx }) {
         {M.map(m => <Chave key={m[0]} titulo={m[1]} apoio={m[2]} ligada={ctx.moduloLigado(m[0])} data-a={'aparece-' + m[0]} aoMudar={on => ctx.ligaModulo(m[0], on)} />)}
       </div>
       <Acoes><Botao onClick={() => ctx.fechaFolha()}>Pronto</Botao></Acoes>
+    </Folha>
+  );
+}
+
+/**
+ * O CARDIO RÁPIDO: modalidade, minutos e intensidade, cada um num toque, e um
+ * botão que grava agora. O aviso do dia de perna sinaliza e não bloqueia (a
+ * regra é do treinador, e quem decide é a pessoa). Dados: `ctx.cromoDoTreino`.
+ */
+export function FolhaCardioV3({ ctx }) {
+  const c = ctx.cromoDoTreino().cardio;
+  return (
+    <Folha titulo="Cardio" sub={c.resumo} aoFechar={() => ctx.fechaFolha()}>
+      <p class="v3-rotulo">Modalidade</p>
+      <Fichas rotulo="Modalidade" opcoes={c.modais} prefixo="cardio-m-" aoTocar={k => ctx.cardioSet('m', k)} />
+      <p class="v3-rotulo">Minutos</p>
+      <Fichas rotulo="Minutos" opcoes={c.minutos} prefixo="cardio-min-" aoTocar={k => ctx.cardioSet('min', k)} />
+      <p class="v3-rotulo">Intensidade</p>
+      <Fichas rotulo="Intensidade" opcoes={c.intensidades} prefixo="cardio-i-" aoTocar={k => ctx.cardioSet('i', k)} />
+      {c.aviso && <p class="v3-atencao" role="note">{c.aviso}</p>}
+      <Acoes><Botao data-a="cardio-grava" onClick={() => { ctx.fechaFolha(); ctx.addCardio(); }}>{c.acao}</Botao></Acoes>
+      <Apoio>Esqueceu de anotar um cardio de outro dia? Ele entra pelo dia, em Dias.</Apoio>
+    </Folha>
+  );
+}
+
+/**
+ * O TIPO DO DIA: confirma ou corrige o palpite da cadência (treino ou
+ * descanso), e os ajustes de hoje que dependem dele: o turno do treino, a
+ * demanda alta e como foi o dia. Muda o plano da comida de hoje, e mais nada.
+ * Dados: `ctx.seletorDeDia`.
+ */
+export function FolhaTipoDoDia({ ctx }) {
+  const d = ctx.seletorDeDia();
+  const ordem = d.cadencia === 'descanso' ? ['descanso', 'treino'] : ['treino', 'descanso'];
+  const turno = d.turnos.filter(t => t.on)[0];
+  return (
+    <Folha titulo={d.pergunta} sub={d.sub} aoFechar={() => ctx.fechaFolha()}>
+      {!d.fato && (
+        <div class="v3-escolhas">
+          {ordem.map(k => (
+            <Linha key={k} data-a={'dia-e-' + k} marca={d.cadencia === k ? ic.ok : ''}
+                   titulo={k === 'descanso' ? 'É descanso' : 'Vou treinar hoje'}
+                   apoio={k === 'descanso' ? d.efeitoDescanso : d.efeitoTreino}
+                   aoTocar={() => ctx.setCadenciaDeHoje(k)} />
+          ))}
+        </div>
+      )}
+      {d.cadencia === 'descanso' && (
+        <>
+          <p class="v3-rotulo">Já fiz alguma coisa hoje</p>
+          <Fichas rotulo="Já fiz alguma coisa hoje" prefixo="jafiz-" aoTocar={k => ctx.jaFizHoje(k)}
+                  opcoes={[{ k: 'cardio', t: 'Cardio' }, { k: 'aula', t: 'Aula' }, { k: 'fora', t: 'Treino fora da prescrição' }]} />
+          <Apoio>Cardio em dia de descanso fica no descanso: não é treino.</Apoio>
+        </>
+      )}
+      {d.cadencia === 'treino' && (
+        <>
+          <p class="v3-rotulo">O turno do treino</p>
+          <Fichas rotulo="O turno do treino" prefixo="turno-" aoTocar={k => ctx.setTurno(k)}
+                  opcoes={d.turnos.map(t => ({ k: t.k, t: t.n + ' · ' + t.hora.replace(':', 'h'), on: t.on }))} />
+          <Apoio>Anda o pré-treino e o intra; as outras refeições ficam na hora delas.{turno && turno.pos ? ' O pós-treino passa a ser o ' + turno.pos.toLowerCase() + '.' : ''}</Apoio>
+        </>
+      )}
+      <Chave titulo="Demanda alta" apoio="entra o carboidrato extra do intra-treino; para o dia de perna pesada"
+             ligada={d.alta} data-a="dia-alta" aoMudar={on => ctx.setAlta(on)} />
+      <p class="v3-rotulo">Como foi o dia</p>
+      <Fichas rotulo="Como foi o dia" prefixo="aderencia-" aoTocar={k => ctx.setAderencia(k)}
+              opcoes={d.aderencias.map(x => ({ k: x.k, t: x.t, on: d.aderencia === x.k }))} />
+      <Apoio>Entra na régua da comida: com menos de 11 dos últimos 14 dias que dão para ler, o app avisa do ganho mas não tira comida do plano.</Apoio>
+      <Acoes><Botao data-a="dia-pronto" onClick={() => ctx.fechaFolha()}>Pronto</Botao></Acoes>
     </Folha>
   );
 }

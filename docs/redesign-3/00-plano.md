@@ -114,19 +114,29 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 
 ### Antes da Fase 5: o que ainda abre a tela antiga dentro do visual novo
 
-Apagar o visual antigo exige recriar isto primeiro (levantado em 17/11/2026):
+Apagar o visual antigo exige recriar isto primeiro (levantado em 17/11/2026,
+conferido porta a porta: o que uma tela nova chama e cai numa tela antiga).
 
-- **Destinos**: o dia aberto (`dia`), o detalhe de uma sessão passada
-  (`sessao`), registrar treino passado e "já treinei e não anotei" (`add`), a
-  retrospectiva (`retro`). ~~O painel de detalhe da falha ao guardar
-  (`falhou`) e a confirmação de ação destrutiva (`pare`)~~: **feitos**
-  (`src/ui/v3/pare.jsx`), na moldura da folha, acima de qualquer outra,
-  com o caminho seguro como principal e o foco nele.
-- **Folhas**: `decidir`, o seletor do tipo do dia (`dia`, `seletor`),
-  `editaAlimento`, `editaRefeicao`, a foto do aparelho (`foto`), `peso`,
-  `pesoRapido`, `poeODia`, e o cardio rápido.
-- **Dentro de telas novas**: corrigir uma sessão passada no histórico de um
-  exercício e o catálogo de adicionar exercício (programa e aula).
+| # | Peça | De onde se chega no visual novo | Estado |
+|---|---|---|---|
+| 1 | Confirmação (`pare`) e aviso de falha (`falhou`) | qualquer ação que apaga; gravação recusada | **feito** (`src/ui/v3/pare.jsx`) |
+| 2 | Cardio rápido | Hoje, "Cardio" (o toque não mostrava nada no visual novo) | **feito** (`FolhaCardioV3`, `hoje.jsx`) |
+| 3 | O tipo do dia: treino ou descanso, "já fiz", turno, demanda alta, como foi o dia | Hoje, "Hoje não vou treinar" (do protótipo) e a data do bloco, que diz o tipo do dia | **feito** (`FolhaTipoDoDia`, `hoje.jsx`) |
+| 4 | O dia aberto (`dia`): registros, cardio corrigível, descanso, cardio esquecido, a comida do dia | Dias, "Abrir o dia" | a fazer |
+| 5 | Pôr o dia em dia (folha `poeODia`) | o dia aberto | a fazer |
+| 6 | Sessão passada (`sessao`): começo e fim, corrigir o tempo, cada série corrigível, lousa, apagar | o dia aberto; Hoje, "Corrigir" a duração; histórico do exercício, "corrigir" | a fazer |
+| 7 | Registrar treino passado (`add`): que treino foi, hora, séries, ou fora da prescrição | Hoje, "Já treinei e não anotei"; o dia aberto | a fazer |
+| 8 | Comida: editar refeição, escolher alimento (`seletor`), editar alimento | Plano e Hoje ("Trocar ou ajustar", "+ Refeição", alimentos) | a fazer |
+| 9 | Catálogo de adicionar exercício, com criar um novo | Programa e aula | a fazer |
+| 10 | Foto do aparelho (`foto`) | some no visual novo; volta pelo exercício | a fazer |
+| 11 | Retrospectiva do bloco (`retro`) | some no visual novo; volta pela Semana | a fazer |
+
+Não precisam de versão nova, porque o visual novo já cobre o que faziam: a
+folha de peso e o peso no descanso (`peso`, `pesoRapido`: a régua do Corpo) e
+`decidir` (a revisão das mudanças, no Programa).
+
+Depois disso, a **Fase 5** (apagar o visual antigo e o interruptor) espera o
+dono usar o visual novo, como está no plano.
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta

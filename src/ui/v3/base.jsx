@@ -128,6 +128,22 @@ export function Seletor({ opcoes, valor, aoMudar, rotulo }) {
   );
 }
 
+/**
+ * FICHAS: escolha entre opções de texto longo ou em número variável, que
+ * quebram linha (o `Seletor` é a barra de duas a quatro opções curtas).
+ * `opcoes`: `[{ k, t, on }]`; `prefixo` vira o `data-a` de cada uma.
+ */
+export function Fichas({ opcoes, aoTocar, rotulo, prefixo }) {
+  return (
+    <div class="v3-fichas" role="group" aria-label={rotulo}>
+      {opcoes.map(o => (
+        <button key={o.k} class="v3-ficha" aria-pressed={o.on ? 'true' : 'false'}
+                data-a={prefixo ? prefixo + o.k : undefined} onClick={() => aoTocar(o.k)}>{o.t}</button>
+      ))}
+    </div>
+  );
+}
+
 /** Grade de números com legenda. `itens`: `[{ k, valor, unidade, rotulo, aoTocar }]`. */
 export function Quadros({ itens, colunas = 2 }) {
   return (

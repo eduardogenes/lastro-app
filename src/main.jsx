@@ -3084,7 +3084,7 @@ const CTX = {
    */
   jaFizHoje: function (k) {
     pilha().pop();
-    if (k === 'cardio') { view.cardioRapido = true; render(); return; }
+    if (k === 'cardio') { if (visualNovo()) CTX.abreFolha({ k: 'cardio' }); else { view.cardioRapido = true; render(); } return; }
     abrirAdicionar(Date.now());
   },
   /**
@@ -10129,7 +10129,8 @@ CTX.camposDaBioV3 = function () {
 CTX.apagaMedida = function (k, t) { delBody(k, t); };
 CTX.apagaCardio = function (t) { delCardio(t); };
 CTX.corrigeCardio = function (t, campo, valor) { return corrigeCardio(t, campo, valor); };
-CTX.abreCardio = function () { abrirCardioRapido(); };
+// No visual novo o cardio rápido é uma folha; no antigo, o painel do Agora.
+CTX.abreCardio = function () { if (visualNovo()) CTX.abreFolha({ k: 'cardio' }); else abrirCardioRapido(); };
 
 // ---------- edição de COMIDA ----------
 // Lei 3 do sistema: não existe modo de edição. Toda refeição carrega o próprio
@@ -13897,6 +13898,8 @@ CTX.hojeV3 = function () {
   const cardioSemana = (S.cardio || []).filter(function (x) { return x.t >= semana; }).length;
   return {
     data: DIAS_LONGOS[new Date(agora).getDay()] + ', ' + fmtDate(agora), hora: horaHHMM(agora),
+    // o tipo do dia, que a folha `dia` confirma ou corrige
+    tipo: diaResolvido().cadencia === 'descanso' ? 'descanso' : 'treino',
     bloco: bloco,
     linha: linha, feitas: linha.filter(function (x) { return x.feita; }).length,
     proxima: prox ? { n: prox.n, t: prox.t, kcal: prox.kcal } : null,
