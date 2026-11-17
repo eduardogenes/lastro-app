@@ -47,7 +47,38 @@ function Momento({ ctx, h }) {
   );
 }
 
+/**
+ * A PRIMEIRA VEZ: o aparelho sem nenhum registro. Começar com o programa e o
+ * plano que já estão no app, colar o texto do treinador, ou restaurar uma
+ * cópia; e escolher o que aparece. Nada aqui é obrigatório.
+ */
+function PrimeiraVez({ ctx, v }) {
+  return (
+    <>
+      <Bloco cor="lima" chave="primeira-vez" quando="primeira vez aqui" titulo="Comece pelo que já está aqui" medio
+             apoio={'O treino: ' + v.programa + '. A comida: ' + v.plano + '.'}>
+        <Acoes><Botao data-a="primeira-comeca" onClick={ctx.comecaAqui}>Começar assim {ic.seta}</Botao></Acoes>
+        <Saida data-a="primeira-aparece" onClick={() => ctx.abreFolha({ k: 'oQueAparece' })}>Escolher o que aparece</Saida>
+      </Bloco>
+      <Secao titulo="Ou traga o seu">
+        <div>
+          <button class="v3-lin" data-a="primeira-treinador" onClick={ctx.abreRevisao}>
+            <span class="v3-lin-t"><b>Colar o texto do treinador</b><span>o app organiza em treinos e séries, e você confirma</span></span>{ic.dir}
+          </button>
+          <label class="v3-lin v3-lin-arq">
+            <span class="v3-lin-t"><b>Restaurar de uma cópia</b><span>o arquivo que você guardou em outro aparelho</span></span>
+            <input type="file" accept="application/json,.json" hidden data-a="primeira-importa" onChange={e => ctx.importaArquivo(e.currentTarget)} />
+          </label>
+        </div>
+        {v.semRede && <Apoio>Sem rede agora: tudo funciona e fica guardado neste aparelho.</Apoio>}
+      </Secao>
+    </>
+  );
+}
+
 export function HojeV3({ ctx }) {
+  const vazio = ctx.enderecoVazio();
+  if (vazio) return <div class="v3"><PrimeiraVez ctx={ctx} v={vazio} /><div class="v3-fim-da-tela" /></div>;
   const h = ctx.hojeV3();
   const q = h.seQuiser;
   const tem = q.agua || q.peso || q.cardio;

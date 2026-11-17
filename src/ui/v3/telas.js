@@ -16,6 +16,7 @@ import { FolhaOQueAparece, FolhaRefeicaoV3, FolhaRegistrar, HojeV3 } from './tel
 import { DiasV3, ResponderDias } from './telas/dias.jsx';
 import { FolhaMusculos, SemanaV3 } from './telas/semana.jsx';
 import { FolhaAlimentos, FolhaCompras, FolhaRefeicaoDoPlano, PlanoV3 } from './telas/plano.jsx';
+import { AjustesV3 } from './telas/ajustes.jsx';
 export const TELAS_V3 = {
   // Fase 2
   corpo: CorpoV3,
@@ -60,7 +61,8 @@ export const DESTINOS_V3 = {
   hist: ExercicioV3,
   prog: ProgramaV3,
   revisao: RevisaoV3,
-  responderDias: ResponderDias
+  responderDias: ResponderDias,
+  ajustes: AjustesV3
 };
 export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada, mandar: FolhaMandar,
   ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir, corrigeMarca: FolhaCorrigeMarca, bio: FolhaBioV3,

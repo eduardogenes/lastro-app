@@ -22,6 +22,7 @@ import { Pare, Falhou, NaoGuardado } from './instrumento/pare.jsx';
 import { visualNovo } from '../infra/visual';
 import { Doca } from './v3/doca.jsx';
 import { TELAS_V3 } from './v3/telas.js';
+import { EstadosV3 } from './v3/estados.jsx';
 
 /** A hora de parede no cabeçalho do Agora, andando com o relógio. */
 function HoraDoCabecalho() {
@@ -45,7 +46,7 @@ export function App({ ctx }) {
   // O painel de PARE vem por último nas duas cascas: ele é a camada mais alta,
   // e uma ação destrutiva pode ser pedida de dentro de um destino.
   const pare = <>
-    <NaoGuardado n={ctx.naoGuardado()} aberto={!!ctx.falhou()} onTenta={ctx.tentaGravar} />
+    {visualNovo() ? <EstadosV3 ctx={ctx} /> : <NaoGuardado n={ctx.naoGuardado()} aberto={!!ctx.falhou()} onTenta={ctx.tentaGravar} />}
     <Falhou f={ctx.falhou()} onTenta={ctx.tentaGravar} onCopia={ctx.copiaRegistro} onBaixa={ctx.exportar} onFecha={ctx.dispensaFalha} />
     <Pare p={ctx.pare()} onResponde={ctx.respondePare} />
   </>;

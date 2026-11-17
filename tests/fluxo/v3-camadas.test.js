@@ -73,8 +73,8 @@ test('na confirmação segura, o principal é voltar e a ação arriscada é a s
   const a = await comVisualNovo();
   a.E(aviso(`, seguro: true, nao: 'Voltar e acertar'`));
   await a.esperar(40);
-  assert.strictEqual(a.$('.v3-btn.p').textContent, 'Voltar e acertar');
-  assert.strictEqual(a.$('.v3-saida').textContent, 'Tirar fora do padrão');
+  assert.strictEqual(a.$('.v3-folha .v3-btn.p').textContent, 'Voltar e acertar');
+  assert.strictEqual(a.$('.v3-folha .v3-saida').textContent, 'Tirar fora do padrão');
   a.fechar();
 });
 

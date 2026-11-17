@@ -14,6 +14,7 @@ async function noHoje(h, m, extra) {
   a.E('CTX.alternaVisual()');
   // num dia de treino o app abre no treino; o Hoje fica por baixo dele
   a.v('ctx.fechaModoDeSessao');
+  a.v('ctx.comecaAqui');        // aparelho vazio: passa da primeira vez
   await a.esperar();
   return a;
 }

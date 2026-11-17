@@ -105,7 +105,10 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Dias (o mês em grade com a letra do treino e a marca da comida, o dia escolhido com a pergunta) e responder os dias (um por tela, voltar um, "os que faltam") | **feito** (`src/ui/v3/telas/dias.jsx`; `tests/fluxo/v3-dias.test.js`). Abrir o dia ainda usa a tela antiga do dia |
 | Semana: o veredito da comida com o que a regra olha, e as séries por região separando feitas de ainda vêm | **feito** (`treinosQueVem` e `somaPorGrupo` em `src/dominio/volume.ts`, com teste; `src/ui/v3/telas/semana.jsx`) |
 | Plano: o que espera decisão, os treinos, os dias de treino, a comida com a quantidade pela régua, alimentos e compras | **feito** (`src/ui/v3/telas/plano.jsx`, `ctx.planoV3`; `tests/fluxo/v3-plano.test.js`). Nova refeição, trocar alimentos e editar um alimento ainda abrem as folhas antigas |
-| Ajustes, primeira vez, estados | a fazer |
+| Ajustes: conta e sincronia, o que aparece, cópia de segurança (guardar e restaurar por arquivo), o interruptor do visual, voltar ao programa e ao plano, apagar | **feito** (`src/ui/v3/telas/ajustes.jsx`). Colar a cópia como texto ficou só no visual antigo |
+| Primeira vez (aparelho vazio, no Hoje): começar com o que já está no app, colar o texto do treinador, restaurar uma cópia, escolher o que aparece | **feito**. **Para o dono decidir**: importar o plano alimentar por texto (não existe importador) e uma parte "não acompanho comida" |
+| Estados: as faixas fixas de "não guardado" e "sem rede" | **feito** (`src/ui/v3/estados.jsx`); o painel de detalhe da falha continua o de sempre. `tests/fluxo/v3-ajustes.test.js` |
+| Lembretes (pergunta da noite, véspera das fotos) | **para o dono decidir**: no iPhone exigem o app instalado e permissão de notificação |
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
