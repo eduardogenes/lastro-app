@@ -168,7 +168,7 @@ function abrirApp(opcoes) {
           const id = Number(painel.getAttribute('data-pare'));
           if (id <= ultimoPare) return;
           ultimoPare = id;
-          registro.confirmou.push(painel.querySelector('.pare-t').textContent);
+          registro.confirmou.push(painel.querySelector('.pare-t, .v3-pare-t').textContent);
           const aceita = o.confirmar !== false && registro.aceita;
           painel.querySelector(aceita ? '[data-a="pare-sim"]' : '[data-a="pare-nao"]').click();
         }).observe(w.document.body, { childList: true, subtree: true });

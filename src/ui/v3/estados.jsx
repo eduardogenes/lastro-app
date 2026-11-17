@@ -2,7 +2,7 @@
 // é a única que não some sozinha, porque é a única em que se pode perder
 // registro; "sem rede" avisa uma vez, sem bloquear nada (tudo fica no
 // aparelho). Protótipo: docs/redesign-3/prototipos/resto.html ("Estados").
-// O painel de detalhe da falha (copiar, baixar) continua o de sempre.
+// O painel de detalhe da falha (copiar, baixar) está em `pare.jsx`.
 
 import { useEffect, useState } from 'preact/hooks';
 import { Faixa } from './base.jsx';

@@ -23,6 +23,7 @@ import { visualNovo } from '../infra/visual';
 import { Doca } from './v3/doca.jsx';
 import { TELAS_V3 } from './v3/telas.js';
 import { EstadosV3 } from './v3/estados.jsx';
+import { PareV3, FalhouV3 } from './v3/pare.jsx';
 
 /** A hora de parede no cabeçalho do Agora, andando com o relógio. */
 function HoraDoCabecalho() {
@@ -47,8 +48,13 @@ export function App({ ctx }) {
   // e uma ação destrutiva pode ser pedida de dentro de um destino.
   const pare = <>
     {visualNovo() ? <EstadosV3 ctx={ctx} /> : <NaoGuardado n={ctx.naoGuardado()} aberto={!!ctx.falhou()} onTenta={ctx.tentaGravar} />}
-    <Falhou f={ctx.falhou()} onTenta={ctx.tentaGravar} onCopia={ctx.copiaRegistro} onBaixa={ctx.exportar} onFecha={ctx.dispensaFalha} />
-    <Pare p={ctx.pare()} onResponde={ctx.respondePare} />
+    {visualNovo() ? <>
+      <FalhouV3 f={ctx.falhou()} onTenta={ctx.tentaGravar} onCopia={ctx.copiaRegistro} onBaixa={ctx.exportar} onFecha={ctx.dispensaFalha} />
+      <PareV3 p={ctx.pare()} onResponde={ctx.respondePare} />
+    </> : <>
+      <Falhou f={ctx.falhou()} onTenta={ctx.tentaGravar} onCopia={ctx.copiaRegistro} onBaixa={ctx.exportar} onFecha={ctx.dispensaFalha} />
+      <Pare p={ctx.pare()} onResponde={ctx.respondePare} />
+    </>}
   </>;
   if (ctx.emTelaCheia()) return <>{ctx.telaCheia()}{ctx.folhas()}{pare}</>;
 

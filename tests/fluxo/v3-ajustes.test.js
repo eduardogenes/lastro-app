@@ -41,6 +41,37 @@ test('ajustes: a conta, o que aparece e o interruptor do visual', async () => {
   a.fechar();
 });
 
+test('confirmação: a folha nova, com "Deixar como está" como principal e com o foco nele', async () => {
+  const a = await app({ aba: 'agora', agora: agoraEstavel(15), estado: { logs: {}, done: [] }, painelManual: true });
+  await a.pronto();
+  a.E('CTX.alternaVisual()');
+  a.v('ctx.fechaModoDeSessao');
+  a.v('ctx.comecaAqui');
+  await a.esperar();
+  a.E(`window.__r = 'nada'; pare({ texto: 'Apagar isto tira tudo.', sim: 'Apagar' }).then(r => { window.__r = r; });`);
+  await a.esperar(80);
+  assert.strictEqual(a.texto('.v3-pare-w .v3-pare-t'), 'Apagar isto tira tudo.');
+  assert.ok(!a.$('.pare-w'), 'e não o painel antigo');
+  const nao = a.$('[data-a="pare-nao"]');
+  assert.ok(nao.classList.contains('p'), 'o caminho seguro é o principal');
+  assert.strictEqual(a.window.document.activeElement, nao, 'o foco começa nele');
+  a.clicar('[data-a="pare-sim"]');
+  await a.esperar();
+  assert.strictEqual(a.E('window.__r'), true);
+  assert.ok(!a.$('.v3-pare-w'), 'e a folha fecha');
+
+  a.E(`view.naoGuardado = { motivo: 'cota', oQue: 'a série 2', valor: '80 kg', salvo: '' }; view.falhou = true; render();`);
+  await a.esperar(80);
+  assert.ok(/Não guardei a série 2/.test(a.texto('#falhou-t')));
+  assert.ok(/está cheio.*80 kg/.test(a.texto('.v3-pare-w .v3-folha-s')), a.texto('.v3-pare-w .v3-folha-s'));
+  assert.ok(a.$('[data-a="falhou-copia"]') && a.$('[data-a="falhou-baixa"]'));
+  a.clicar('[data-a="falhou-fecha"]');
+  await a.esperar();
+  assert.ok(!a.$('#falhou-t'), 'fechar só fecha o aviso');
+  assert.ok(/a série 2/.test(a.texto('.v3-estados')), 'e a faixa fica');
+  a.fechar();
+});
+
 test('estados: a gravação que falhou vira a faixa fixa, e sem rede avisa sem bloquear', async () => {
   const a = await comVisual();
   a.v('ctx.comecaAqui');

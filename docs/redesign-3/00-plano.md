@@ -118,8 +118,10 @@ Apagar o visual antigo exige recriar isto primeiro (levantado em 17/11/2026):
 
 - **Destinos**: o dia aberto (`dia`), o detalhe de uma sessão passada
   (`sessao`), registrar treino passado e "já treinei e não anotei" (`add`), a
-  retrospectiva (`retro`), o painel de detalhe da falha ao guardar
-  (`falhou`) e a confirmação de ação destrutiva (`pare`).
+  retrospectiva (`retro`). ~~O painel de detalhe da falha ao guardar
+  (`falhou`) e a confirmação de ação destrutiva (`pare`)~~: **feitos**
+  (`src/ui/v3/pare.jsx`), na moldura da folha, acima de qualquer outra,
+  com o caminho seguro como principal e o foco nele.
 - **Folhas**: `decidir`, o seletor do tipo do dia (`dia`, `seletor`),
   `editaAlimento`, `editaRefeicao`, a foto do aparelho (`foto`), `peso`,
   `pesoRapido`, `poeODia`, e o cardio rápido.
