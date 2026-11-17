@@ -17,6 +17,8 @@ const virgula = n => String(Math.round(n * 100) / 100).replace('.', ',');
 const relogio = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
 export function TreinoEmFoco({ ctx }) {
+  const fim = ctx.fimV3();
+  if (fim) return <TreinoEncerrado ctx={ctx} f={fim} />;
   const des = ctx.descansoV3();
   if (des) return <Descanso ctx={ctx} des={des} />;
   const f = ctx.focoV3();
@@ -137,9 +139,37 @@ function FimDoTreino({ ctx, f }) {
              linha0={<><button onClick={ctx.fechaModoDeSessao} aria-label="Voltar">{ic.volta} Hoje</button><span class="v3-n">{f.feitas} de {f.prescritas}</span></>}
              titulo={f.feitas >= f.prescritas ? 'Tudo feito' : 'Nada mais na fila'}
              apoio={f.feitas >= f.prescritas ? 'Todas as séries de ' + f.nome + ' estão guardadas.' : 'O que ficou para trás foi pulado. Encerrar grava o fim agora.'}>
-        <Acoes>{f.sessaoAberta && <Botao data-a="fim-encerra" onClick={ctx.finalizarSessao}>Encerrar o treino</Botao>}</Acoes>
+        <Acoes>{f.sessaoAberta && <Botao data-a="fim-encerra" onClick={ctx.encerraTreinoV3}>Encerrar o treino</Botao>}</Acoes>
         <Saida onClick={() => ctx.abreFolha({ k: 'listaTreino' })}>Ver a lista do treino</Saida>
       </Bloco>
+    </>
+  );
+}
+
+/** O treino encerrado: o resumo e o "vira regra?" do que mudou nele. */
+function TreinoEncerrado({ ctx, f }) {
+  return (
+    <>
+      <Bloco cor="menta" chave="encerrado" medio quando="guardado"
+             titulo={f.series + (f.series === 1 ? ' série. ' : ' séries. ') + f.nome + ' fechado.'}
+             apoio={f.depois ? (f.depois === 1 ? 'Um exercício registrado depois' : f.depois + ' exercícios registrados depois') + ', com os números da última vez.' : null}>
+        <Acoes><Botao data-a="encerrado-fecha" onClick={ctx.fechaFimV3}>Fechar</Botao></Acoes>
+      </Bloco>
+      {f.mudancas.length > 0 && (
+        <Secao titulo="O que você mudou hoje" nota="vira regra?">
+          {f.mudancas.map((m, i) => (
+            <div key={m.txt} class="v3-decide">
+              <p>{m.txt}</p>
+              {m.impacto && <small>{m.impacto}</small>}
+              <div class="v3-acoes">
+                <Botao tipo="contorno" data-a={'regra-hoje-' + i} onClick={() => ctx.respondeMudanca(f.sid, i, false)}>Só hoje</Botao>
+                <Botao tipo="contorno" data-a={'regra-sempre-' + i} onClick={() => ctx.respondeMudanca(f.sid, i, true)}>Passa a valer</Botao>
+              </div>
+            </div>
+          ))}
+          <Apoio>Sem resposta agora, a pergunta continua no Hoje. {f.vence}</Apoio>
+        </Secao>
+      )}
     </>
   );
 }
@@ -273,7 +303,7 @@ export function FolhaMenuSessaoV3({ ctx }) {
         {m.deload && <Linha titulo={m.deload.rotulo} apoio={m.deload.detalhe} data-a="deload" aoTocar={faz(() => ctx.setDeload(!m.deload.ligado))} />}
         <Linha titulo="Progressão do treino" apoio="prontos para subir, ganhando repetição, parados" data-a="menu-progressao"
                aoTocar={faz(() => ctx.abreProgressao())} />
-        {m.encerrar && <Linha titulo={m.encerrar.rotulo} apoio={m.encerrar.detalhe} data-a="encerrar" aoTocar={faz(ctx.finalizarSessao)} />}
+        {m.encerrar && <Linha titulo={m.encerrar.rotulo} apoio={m.encerrar.detalhe} data-a="encerrar" aoTocar={faz(ctx.encerraTreinoV3)} />}
       </div>
       {m.descartar && <Saida data-a="descartar" onClick={faz(ctx.descartarSessao)}>{m.descartar.rotulo} · {m.descartar.detalhe}</Saida>}
     </Folha>

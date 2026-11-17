@@ -175,6 +175,35 @@ test('pôr em dia: desmarcar tira a série que não foi feita, e a marca sobrevi
   a.fechar();
 });
 
+test('encerrar: o fim fica na tela com o resumo, e o "vira regra?" decide pela fila de sempre', async () => {
+  const a = await emFoco();
+  a.clicar('[data-a="serie-feita"]');
+  await a.esperar(40);
+  a.v('ctx.paraDescanso');
+  a.E('ACOES.maisUmaSerie(0)');                // uma mudança do dia: o primeiro ganha uma série
+  await a.esperar();
+  const sid = a.E('S.sessao.sid');
+  a.v('ctx.abreFolha', { k: 'menuSessao' });
+  await a.esperar(40);
+  a.clicar('[data-a="encerrar"]');
+  await a.esperar(60);
+  assert.ok(a.perguntas().some(q => /pendente/.test(JSON.stringify(q))), 'pergunta pelos pendentes, como sempre: ' + JSON.stringify(a.perguntas()));
+  await a.esperar(120);
+  assert.strictEqual(a.E('S.sessao'), null, 'encerrado');
+  assert.ok(/1 série\. .* fechado\./.test(a.texto('.v3-bloco-t')), a.texto('.v3-bloco-t'));
+  assert.ok(a.$('[data-a="regra-sempre-0"]'), 'a mudança do dia pergunta se vira regra');
+  assert.ok(a.E(`S.promoPendente.some(g => g.sid === ${sid})`), 'na fila de sempre');
+
+  a.clicar('[data-a="regra-hoje-0"]');
+  await a.esperar(80);
+  assert.ok(!a.$('[data-a="regra-sempre-0"]'), 'respondida, sai');
+  assert.ok(!a.E(`(S.promoPendente || []).some(g => g.sid === ${sid})`), 'e sai da fila');
+  a.clicar('[data-a="encerrado-fecha"]');
+  await a.esperar();
+  assert.strictEqual(a.vista().modoSessao, false, 'fechar sai do modo');
+  a.fechar();
+});
+
 test('"não, só parei" tira o aviso até a próxima série', async () => {
   const a = await emFoco();
   a.clicar('[data-a="serie-feita"]');

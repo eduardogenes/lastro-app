@@ -359,3 +359,8 @@
 .v3-sess b { font: 800 16px var(--f-titulo); }
 .v3-ex-foto { display: block; width: 100%; border-radius: 18px; margin-bottom: 8px; }
 .v3 .v3-campo { display: block; width: 100%; min-height: 52px; margin-top: 14px; padding: 0 14px; border-radius: 16px; border: 1.5px solid var(--fio); background: var(--branco); font: 500 17px var(--f-texto); color: var(--tinta); }
+.v3-decide { padding: 12px 0; border-top: 1.5px solid var(--fio); }
+.v3-decide:first-child { border-top: 0; }
+.v3-decide p { font: 700 16px/1.25 var(--f-titulo); }
+.v3-decide small { display: block; font-size: 13px; color: var(--tinta-2); margin-top: 2px; }
+.v3-decide .v3-acoes { margin-top: 10px; }

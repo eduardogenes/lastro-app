@@ -14363,6 +14363,38 @@ CTX.exercicioV3 = function () {
   };
 };
 
+/**
+ * ENCERRAR no visual novo: o mesmo `finalizarSessao` (que pergunta pelos
+ * pendentes e guarda as mudanças do dia na fila `promoPendente`), e depois o
+ * fim fica na tela, com o resumo e o "vira regra?" daquela sessão. Encerrar
+ * troca o dia em tela para o próximo treino; por isso o fim guarda o dele.
+ */
+CTX.encerraTreinoV3 = async function () {
+  const s = S.sessao;
+  if (!s) return;
+  const sid = s.sid, dia = s.day;
+  await finalizarSessao();
+  if (S.sessao && S.sessao.sid === sid) return;   // voltou ao treino, ou não encerrou
+  let series = 0, depois = 0;
+  Object.keys(S.logs).forEach(function (k) {
+    (S.logs[k] || []).forEach(function (l) {
+      if (l.sid !== sid) return;
+      series += l.sets.filter(Boolean).length;
+      if (l.dp) depois++;
+    });
+  });
+  if (!series) return;                             // descartada: nada a resumir
+  view.fimV3 = { sid: sid, dia: dia, series: series, depois: depois };
+  render(); rola(0);
+};
+CTX.fimV3 = function () {
+  const f = view.fimV3; if (!f) return null;
+  const g = CTX.mudancasQueEsperam().filter(function (x) { return x.sid === f.sid; })[0];
+  return Object.assign({}, f, { nome: (treino(f.dia) || {}).name || 'Treino ' + f.dia,
+    mudancas: g ? g.mudancas : [], vence: g ? g.vence : null });
+};
+CTX.fechaFimV3 = function () { view.fimV3 = null; CTX.fechaModoDeSessao(); };
+
 /** Corrigir uma sessão passada ainda é da tela antiga do histórico: a mesma camada, desenhada por ela. */
 CTX.corrigeSessaoNoHistorico = function () { if (view.hist) { view.hist.v3 = false; render(); rola(0); } };
 
