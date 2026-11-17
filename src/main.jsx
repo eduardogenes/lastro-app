@@ -3472,7 +3472,7 @@ async function aplicarModeloDeAula(id) {
 async function apagarModeloDeAula(id) {
   const a = (S.aulas || []).filter(function (x) { return x.id === id; })[0];
   if (!a) return;
-  if (!confirm('Apagar o modelo "' + a.nome + '"? As sessões já registradas com ele não mudam.')) return;
+  if (!(await pare({ texto: 'Apagar o modelo "' + a.nome + '"? As sessões já registradas com ele não mudam.', sim: 'Apagar o modelo' }))) return;
   // Lápide, não delete seco: a fusão une as duas listas pela chave natural, e o
   // que só existe de um lado VOLTA na primeira sincronização.
   lapide(chaveDeAula(a));
@@ -4020,7 +4020,7 @@ async function moverProg(d, i, delta) {
 
 async function progRemove(d, i) {
   const sl = S.prog[d].ex[i];
-  if (!confirm('Tirar ' + nomeEx(sl.id) + ' do treino ' + d + '?\n\nO histórico do exercício continua guardado.')) return;
+  if (!(await pare({ texto: 'Tirar ' + nomeEx(sl.id) + ' do treino ' + d + '? O histórico do exercício continua guardado.', sim: 'Tirar do treino' }))) return;
   S.prog[d].ex.splice(i, 1);
   logProg(d, nomeEx(sl.id) + ' saiu do treino');
   view.swapOpen = null;
@@ -4035,8 +4035,9 @@ async function progSetTroca(d, i, idEx) {
   const de = sl.id;
   const sem = semanasNoPrograma(sl);
   if (sem != null && sem < 6 &&
-      !confirm('Trocar ' + nomeEx(de) + ' mesmo assim?\n\nEle está no programa há ' +
-               semanasDe(sl.desde) + ', e o treinador pede 6 a 8 semanas antes de trocar os principais.')) return;
+      !(await pare({ tom: 'pergunta', texto: 'Trocar ' + nomeEx(de) + ' mesmo assim? Ele está no programa há ' +
+               semanasDe(sl.desde) + ', e o treinador pede 6 a 8 semanas antes de trocar os principais.',
+               sim: 'Trocar mesmo assim', nao: 'Manter' }))) return;
   sl.id = idEx;
   sl.desde = Date.now();
   logProg(d, nomeEx(idEx) + ' no lugar de ' + nomeEx(de));
@@ -4097,7 +4098,7 @@ async function criarTreino() {
 
 async function restaurarDia(d) {
   if (!baseTreinador()[d]) {
-    if (!confirm('Apagar o treino ' + d + '?\n\nEle não existe no programa atual do treinador.')) return;
+    if (!(await pare({ texto: 'Apagar o treino ' + d + '? Ele não existe no programa atual do treinador.', sim: 'Apagar o treino ' + d }))) return;
     delete S.prog[d];
     S.rot = rot().filter(function (x) { return x !== d; });
     logProg(d, 'treino ' + d + ' apagado');
@@ -4107,8 +4108,8 @@ async function restaurarDia(d) {
   }
   const n = difDoDia(d).length;
   if (!n) { toast('O treino ' + d + ' já está igual ao do treinador.'); return; }
-  if (!confirm('Desfazer ' + n + (n===1?' mudança':' mudanças') + ' no treino ' + d +
-               ' e voltar ao que o treinador prescreveu?\n\nO histórico não é tocado.')) return;
+  if (!(await pare({ texto: 'Desfazer ' + n + (n===1?' mudança':' mudanças') + ' no treino ' + d +
+               ' e voltar ao que o treinador prescreveu? O histórico não é tocado.', sim: 'Voltar ao do treinador' }))) return;
   S.prog[d] = JSON.parse(JSON.stringify(baseTreinador()[d]));
   logProg(d, 'treino ' + d + ' restaurado para o do treinador');
   await save(); render();
@@ -4118,8 +4119,8 @@ async function restaurarDia(d) {
 async function restaurarTudo() {
   const n = difTotal();
   if (!n) { toast('Seu programa já é o do treinador.'); return; }
-  if (!confirm('Desfazer ' + n + (n===1?' diferença':' diferenças') +
-               ' e voltar ao programa do treinador?\n\nO histórico e os exercícios que você cadastrou não são tocados.')) return;
+  if (!(await pare({ texto: 'Desfazer ' + n + (n===1?' diferença':' diferenças') +
+               ' e voltar ao programa do treinador? O histórico e os exercícios que você cadastrou não são tocados.', sim: 'Voltar ao programa do treinador' }))) return;
   S.prog = JSON.parse(JSON.stringify(baseTreinador()));
   S.rot = rotTreinador().slice();
   logProg('-', 'programa restaurado para o do treinador');
@@ -9149,8 +9150,8 @@ CTX.alternaCadencia = function (i) {
 };
 
 CTX.restauraPrograma = function () { restaurarTudo(); };
-CTX.restauraPlano = function () {
-  if (!confirm('Restaurar o plano do nutricionista?\n\nSeus alimentos cadastrados e todo o histórico ficam. Volta só a prescrição.')) return;
+CTX.restauraPlano = async function () {
+  if (!(await pare({ texto: 'Voltar ao plano do nutricionista? Seus alimentos cadastrados e todo o histórico ficam. Volta só a prescrição.', sim: 'Voltar ao plano dele' }))) return;
   // O carimbo vem DEPOIS da pergunta, e por isso: ele estava antes, então
   // cancelar subia a versão do plano sem o plano mudar, e o app passava a
   // relatar divergência em dias que não divergiram. É o erro espelhado do que
@@ -10258,10 +10259,10 @@ CTX.duplicaRefeicao = function (id) {
   toast('Refeição duplicada.');
 };
 
-CTX.removeRefeicao = function (id) {
+CTX.removeRefeicao = async function (id) {
   const r = achaRefeicao(id);
   if (!r) return;
-  if (!confirm('Remover "' + r.n + '" do plano?\n\nIsso vale para todo dia. O histórico do que você já marcou não muda.')) return;
+  if (!(await pare({ texto: 'Tirar "' + r.n + '" do plano? Vale para todo dia. O histórico do que você já marcou não muda.', sim: 'Tirar do plano' }))) return;
   // a versão do plano sobe só se ele mudou: cancelar não é mudança
   planoMudou();
   const plano = planoDeComida();
@@ -10288,15 +10289,15 @@ CTX.setQuantidade = function (refId, idx, q) {
   queueSave(); render();
 };
 
-CTX.removeItem = function (refId, idx) {
+CTX.removeItem = async function (refId, idx) {
   const r = achaRefeicao(refId);
   if (!r || !r.itens[idx]) return;
   // O item sai do plano de TODO dia, e voltar pede achar o alimento de novo e
   // digitar a quantidade que estava aqui. Confirma, e diz o que não se perde.
   const a = catalogoAlimentos()[r.itens[idx].f];
-  if (!confirm('Tirar ' + (a ? a.n.toLowerCase() : 'este item') + ' de ' + r.n + '?\n\n' +
+  if (!(await pare({ texto: 'Tirar ' + (a ? a.n.toLowerCase() : 'este item') + ' de ' + r.n + '? ' +
       'Muda o plano de todos os dias, não só o de hoje. ' +
-      'O alimento continua na biblioteca.')) return;
+      'O alimento continua na biblioteca.', sim: 'Tirar da refeição' }))) return;
   planoMudou();
   // Não há o que devolver aqui, e é diferente da troca de propósito: o item SAI
   // do plano, e com ele os gramas que o ajuste lhe deu. O que o defeito tirava
@@ -10403,7 +10404,7 @@ CTX.salvaAlimento = function (id, campos) {
   return alvo;
 };
 
-CTX.removeAlimento = function (id) {
+CTX.removeAlimento = async function (id) {
   const cat = catalogoAlimentos();
   const a = cat[id];
   if (!a) return;
@@ -10413,10 +10414,10 @@ CTX.removeAlimento = function (id) {
     return r.itens.some(function (i) { return i.f === id; });
   });
   const aviso = usos.length
-    ? '\n\nEle está em ' + usos.length + (usos.length === 1 ? ' refeição' : ' refeições') +
+    ? ' Ele está em ' + usos.length + (usos.length === 1 ? ' refeição' : ' refeições') +
       ': ' + usos.map(function (r) { return r.n; }).join(', ') + '. Vai sair de lá também.'
     : '';
-  if (!confirm('Remover "' + a.n + '" da biblioteca?' + aviso)) return;
+  if (!(await pare({ texto: 'Tirar "' + a.n + '" da biblioteca?' + aviso, sim: 'Tirar da biblioteca' }))) return;
 
   planoDeComida().forEach(function (r) {
     r.itens = r.itens.filter(function (i) { return i.f !== id; });
@@ -10513,7 +10514,7 @@ CTX.entrarNaNuvem = async function () {
 };
 
 CTX.sairDaNuvem = async function () {
-  if (!confirm('Sair da conta neste aparelho?\n\nO histórico continua aqui. Só para de sincronizar.')) return;
+  if (!(await pare({ tom: 'pergunta', texto: 'Sair da conta neste aparelho? O histórico continua aqui. Só para de sincronizar.', sim: 'Sair da conta', nao: 'Continuar na conta' }))) return;
   await NUVEM.sair();
   sync.v = null; sync.em = 0; sync.sujo = false; sync.erro = null;
   gravaSync(); render();
