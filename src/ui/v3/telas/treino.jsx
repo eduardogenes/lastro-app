@@ -21,6 +21,8 @@ export function TreinoEmFoco({ ctx }) {
   if (fim) return <TreinoEncerrado ctx={ctx} f={fim} />;
   const des = ctx.descansoV3();
   if (des) return <Descanso ctx={ctx} des={des} />;
+  const aula = ctx.aulaV3();
+  if (aula) return <Aula ctx={ctx} t={aula} />;
   const f = ctx.focoV3();
   if (!f) return null;
   if (f.fim) return <FimDoTreino ctx={ctx} f={f} />;
@@ -170,6 +172,78 @@ function TreinoEncerrado({ ctx, f }) {
           <Apoio>Sem resposta agora, a pergunta continua no Hoje. {f.vence}</Apoio>
         </Secao>
       )}
+    </>
+  );
+}
+
+/**
+ * A AULA DO BOX: os movimentos de hoje, a lista rápida para o fim da aula (o
+ * valor entra em todas as passadas, e a linha diz), os modelos, a última aula,
+ * o texto colado e a foto da lousa.
+ */
+function Aula({ ctx, t }) {
+  const A = ctx.acoesAulas;
+  const r = t.rapido;
+  const [colado, setColado] = useState('');
+  return (
+    <>
+      <Bloco cor="lilas" chave={'aula-' + t.dia}
+             linha0={<><button onClick={ctx.fechaModoDeSessao} aria-label="Voltar, deixando a aula aberta">{ic.volta} Hoje</button>
+                       <button onClick={() => ctx.abreFolha({ k: 'menuSessao' })} data-a="menu-sessao" aria-label="Opções desta sessão">{ic.lista}</button></>}
+             quando={t.movimentos ? t.movimentos + (t.movimentos === 1 ? ' movimento' : ' movimentos') : 'aula aberta'}
+             titulo={t.nome} medio
+             apoio={t.quadro || (t.movimentos ? 'Anote no fim da aula, um número por movimento.' : 'Comece pela aula de hoje: repita a última, use um modelo ou cole o texto.')}>
+        {t.movimentos > 0 && (
+          <Acoes>
+            <Botao tipo="contorno" data-a="aula-por-serie" onClick={() => ctx.setAulaPorSerie(true)}>Série por série</Botao>
+            <Botao tipo="contorno" data-a="aula-add" onClick={ctx.acoesAdd.abre}>{ic.mais} Movimento</Botao>
+          </Acoes>
+        )}
+      </Bloco>
+
+      {r && r.linhas.length > 0 && (
+        <Secao titulo="Lista rápida" nota="o mesmo em todas as passadas">
+          {r.linhas.map(l => (
+            <div key={l.i} class="v3-rapida">
+              <span class="v3-lin-t"><b>{l.nome}</b><span>{l.prescricao}{l.nota ? ' · ' + l.nota : ''}</span></span>
+              <label class="v3-rapida-c"><input id={'rapida-c-' + l.i} inputmode="decimal" value={l.carga} aria-label={'Carga de ' + l.nome + ' em ' + l.unidade}
+                     onChange={e => ctx.anotaRapidaV3(l.i, 0, e.currentTarget.value)} /><small>{l.unidade}</small></label>
+              <label class="v3-rapida-c"><input id={'rapida-v-' + l.i} inputmode="numeric" value={l.valor} aria-label={l.nome + ' em ' + l.medida}
+                     onChange={e => ctx.anotaRapidaV3(l.i, 1, e.currentTarget.value)} /><small>{l.medida}</small></label>
+            </div>
+          ))}
+        </Secao>
+      )}
+
+      {!t.movimentos && t.aulas && (
+        <Secao titulo="A aula de hoje">
+          <div>
+            {t.aulas.ultima && <Linha titulo="Repetir a última aula" apoio={t.aulas.ultima.n + ' movimentos · ' + t.aulas.ultima.quando} data-a="aula-repete" aoTocar={A.repete} />}
+            {t.aulas.modelos.map(m => <Linha key={m.id} titulo={m.nome} apoio={m.sub} data-a={'aula-modelo-' + m.id} aoTocar={() => A.aplica(m.id)} />)}
+            <Linha titulo="Adicionar movimento" mais data-a="aula-add" aoTocar={ctx.acoesAdd.abre} />
+          </div>
+          <textarea id="aula-texto" class="v3-campo v3-texto" placeholder="Ou cole o texto da aula" aria-label="Texto da aula"
+                    onInput={e => setColado(e.currentTarget.value)}>{colado}</textarea>
+          <Acoes><Botao tipo="contorno" cheio data-a="aula-importa" disabled={!colado.trim()} onClick={() => A.importa(colado)}>Montar a aula pelo texto</Botao></Acoes>
+        </Secao>
+      )}
+
+      {t.lousa && (
+        <Secao titulo="Lousa" nota={t.lousa.tem ? t.lousa.quando : 'a foto do quadro do box'}>
+          {t.lousa.tem && t.lousa.url && <img class="v3-ex-foto" src={t.lousa.url} alt="Foto da lousa do box" />}
+          <Acoes>
+            <label class="v3-btn c cheio">{ic.camera} {t.lousa.tem ? 'Tirar de novo' : 'Fotografar a lousa'}
+              <input type="file" accept="image/*" capture="environment" hidden onChange={e => ctx.tiraFotoDaLousa(e.currentTarget)} />
+            </label>
+            {t.lousa.tem && t.lousa.podeMandar && <Botao tipo="contorno" onClick={ctx.mandaLousa}>Mandar</Botao>}
+          </Acoes>
+        </Secao>
+      )}
+
+      {t.aulas && t.aulas.podeSalvar && (
+        <Secao><Saida data-a="aula-salva" onClick={A.salva}>Guardar esta aula como modelo</Saida></Secao>
+      )}
+      <div class="v3-fim-curto" />
     </>
   );
 }

@@ -14413,6 +14413,19 @@ CTX.fimV3 = function () {
 };
 CTX.fechaFimV3 = function () { view.fimV3 = null; CTX.fechaModoDeSessao(); };
 
+/**
+ * A AULA DO BOX no visual novo (dia aberto): a lista rápida grava pela porta
+ * de sempre dela (`anotaSerieRapida`: o valor entra em todas as passadas do
+ * movimento, e a tela diz isso). "Série por série" leva ao treino em foco.
+ */
+CTX.anotaRapidaV3 = function (i, pos, valor) { anotaSerieRapida(Number(i), pos, valor); render(); };
+CTX.setAulaPorSerie = function (on) { view.aulaPorSerie = !!on; view.focoV3 = null; render(); };
+CTX.aulaV3 = function () {
+  const d = view.day || diaResolvido().treino || proximoTreino(S, ROT_BASE);
+  if (!diaAberto(d) || view.aulaPorSerie) return null;
+  return CTX.treino();
+};
+
 /** Corrigir uma sessão passada ainda é da tela antiga do histórico: a mesma camada, desenhada por ela. */
 CTX.corrigeSessaoNoHistorico = function () { if (view.hist) { view.hist.v3 = false; render(); rola(0); } };
 

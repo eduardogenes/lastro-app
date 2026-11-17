@@ -389,3 +389,10 @@
 .v3-ed-s b { min-width: 24px; text-align: center; font: 800 18px var(--f-titulo); }
 .v3-ed-troca { flex: 0 0 100%; padding: 4px 0 10px 50px; }
 .v3 .v3-texto { min-height: 180px; padding: 12px 14px; line-height: 1.45; resize: vertical; }
+
+/* ---- Aula do box -------------------------------------------------------- */
+.v3-rapida { display: flex; align-items: center; gap: 8px; min-height: 64px; border-top: 1.5px solid var(--fio); }
+.v3-rapida:first-child { border-top: 0; }
+.v3-rapida-c { flex: 0 0 76px; display: flex; flex-direction: column; align-items: center; }
+.v3 .v3-rapida-c input { width: 100%; min-height: 46px; border-radius: 14px; border: 1.5px solid var(--fio); background: var(--branco); text-align: center; font: 800 18px var(--f-titulo); color: var(--tinta); }
+.v3-rapida-c small { font-size: 12px; font-weight: 600; color: var(--tinta-2); }

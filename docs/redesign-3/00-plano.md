@@ -96,7 +96,7 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Progressão (prontos para subir, ganhando repetição, parados) e um exercício (próximo passo, sessão a sessão, trocar o nome) | **feito** (`estadoDaProgressao` em `src/dominio/progressao.ts`, com teste; `src/ui/v3/telas/progressao.jsx`). Corrigir uma sessão passada ainda abre a tela antiga do histórico, a recriar até a Fase 5 |
 | Fim do treino com o resumo e "vira regra?" | **feito**: `ctx.encerraTreinoV3` usa o mesmo `finalizarSessao` (pendentes, fila `promoPendente`) e o fim fica na tela; responder usa `respondeMudanca` |
 | Programa (treinos com a ordem, diferenças, histórico de mudanças, criar treino), editor (subir e descer, séries, trocar e tirar, faixa de séries por músculo contra o treinador) e revisão do treinador | **feito** (`src/ui/v3/telas/programa.jsx`, `ctx.faixaDoTreinoV3`; `tests/fluxo/v3-programa.test.js`). Adicionar exercício ainda abre o catálogo da tela antiga, na mesma camada. A revisão aplica os treinos inteiros, como o fluxo de sempre (o protótipo escolhia mudança por mudança) |
-| Aula do box | a fazer |
+| Aula do box | **feito**: repetir a última aula, modelos, texto colado, foto da lousa, lista rápida (pela mesma `anotaSerieRapida`, o valor em todas as passadas) e "série por série" no treino em foco. **Fase 3 fechada** (`tests/fluxo/v3-aula.test.js`) |
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
