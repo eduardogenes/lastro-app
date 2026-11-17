@@ -95,7 +95,7 @@ const FOLHA_BANCADA = 'palco.css';
 // lista existe para a folha nova não passar sem ser declarada. As guardas do
 // visual novo entram com a estratégia de testes do plano
 // (docs/redesign-3/00-plano.md).
-const FOLHAS_V3 = ['v3/v3.css', 'v3/tokens.css', 'v3/fontes.css', 'v3/base.css', 'v3/componentes.css', 'v3/fotos.css'];
+const FOLHAS_V3 = ['v3/v3.css', 'v3/tokens.css', 'v3/fontes.css', 'v3/base.css', 'v3/componentes.css', 'v3/fotos.css', 'v3/registro.css'];
 
 const css = () => juntos(FOLHAS.map(f => 'src/' + f));
 

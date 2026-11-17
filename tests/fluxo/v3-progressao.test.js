@@ -52,9 +52,7 @@ test('um exercício: o próximo passo diz para quanto subir, e sessão a sessão
   a.clicar('[data-a="prog-ex-2"]');
   await a.esperar();
   assert.ok(/Série 2: mais 3/.test(a.texto('[data-a="ex-passo"]')), 'quanto falta em cada série: ' + a.texto('[data-a="ex-passo"]'));
-  a.clicar('[data-a="ex-corrige"]');
-  await a.esperar();
-  assert.ok(!a.$('.v3-sess'), 'corrigir uma sessão passada abre a tela que sabe corrigir');
-  assert.ok(a.vista().hist, 'na mesma camada');
+  // sem a sessão em `S.done`, a linha não tem para onde abrir, e fica só leitura
+  assert.ok(!a.$('[data-a="ex-sessao"]'));
   a.fechar();
 });

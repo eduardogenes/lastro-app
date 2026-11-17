@@ -66,7 +66,10 @@ export function camadasAbertas(view) {
   if (view.diaAberto) c.push('dia');
   // Responder os dias (visual novo), uma tela de ação a partir de Dias ou de Semana.
   if (view.responderDias) c.push('responderDias');
-  if (view.sessao) c.push('sessao');
+  // A sessão aberta do histórico de um exercício (visual novo: tocar numa
+  // sessão para corrigir) fica por CIMA dele; aberta do dia, fica aqui.
+  const sessaoDoHistorico = !!(view.sessao && view.hist);
+  if (view.sessao && !sessaoDoHistorico) c.push('sessao');
   if (view.add) c.push('add');
   if (view.retro) c.push('retro');
   if (view.prog) c.push('prog');
@@ -78,6 +81,7 @@ export function camadasAbertas(view) {
   // programa — não o lugar. Antes a ordem era a inversa, e com os dois abertos
   // o programa ganhava e o histórico não aparecia.
   if (view.hist) c.push('hist');
+  if (sessaoDoHistorico) c.push('sessao');
   // A Evolução ABAIXO da comparação: comparar abre de dentro dela.
   if (view.evolucao) c.push('evolucao');
   // O CENTRO DAS FOTOS (visual novo), abaixo de tudo que abre dele: a galeria,

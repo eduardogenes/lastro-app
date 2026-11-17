@@ -14629,7 +14629,10 @@ CTX.exercicioV3 = function () {
     passo: passo,
     linha: h.map(function (l) { return { t: l.t, v: maxLoad(l) }; }),
     sessoes: h.slice().reverse().map(function (l) {
-      return { t: l.t, data: fmtDate(l.t), carga: fmtNum(maxLoad(l)).replace('.', ','), dp: !!l.dp,
+      // a sessão do registro, que abre para corrigir (pelo `sid`; o registro
+      // antigo sem `sid`, pelo dia)
+      const m = S.done.filter(function (x) { return l.sid != null ? x.sid === l.sid : sameDay(x.t, l.t) && !x.livre; })[0];
+      return { t: l.t, data: fmtDate(l.t), carga: fmtNum(maxLoad(l)).replace('.', ','), dp: !!l.dp, sessao: m ? m.t : null,
                reps: l.sets.map(function (s) { return s ? { r: s[1], topo: isFinite(topo) && s[1] >= topo } : null; }).filter(Boolean) };
     }),
     temFoto: !!S.fotos[ex.id],
@@ -14684,7 +14687,79 @@ CTX.aulaV3 = function () {
 };
 
 /** Corrigir uma sessão passada ainda é da tela antiga do histórico: a mesma camada, desenhada por ela. */
-CTX.corrigeSessaoNoHistorico = function () { if (view.hist) { view.hist.v3 = false; render(); rola(0); } };
+/**
+ * A sessão inteira, aberta do histórico de um exercício (visual novo): é ela
+ * que sabe corrigir cada série. Fica por cima do histórico (`camadasAbertas`).
+ */
+CTX.abreSessaoDoHistorico = function (t) { if (t != null) abrirSessao(t); };
+
+// ---------- a SÉRIE PASSADA no visual novo (folha `seriePassada`) ----------
+// As mesmas portas da tela antiga (`abreSerieDaPassada`, `gravaNaPassada`,
+// `lancaSerieDaPassada`, `apagaSerieDaPassada`); muda só o desenho: as duas
+// réguas da série de hoje e um "Guardar".
+CTX.abreSeriePassadaV3 = function (idEx, chave, k) {
+  view.passada = null; view.teclado = null;
+  abreSerieDaPassada(idEx, chave, k);
+  if (view.passada) CTX.abreFolha({ k: 'seriePassada' });
+};
+CTX.fechaSeriePassadaV3 = function () { view.passada = null; view.teclado = null; CTX.fechaFolha(); };
+CTX.seriePassadaV3 = function () {
+  const p = view.passada, m = view.sessao;
+  if (!p || !m) return null;
+  const x = p.novo ? null : serieDaPassada();
+  if (!p.novo && !(x && x.s)) return null;
+  const e = x ? x.e : (p.chave ? registroPorChave(p.idEx, p.chave) : null);
+  const P = m.day ? treino(m.day) : null;
+  const ex = e ? exDoRegistro(p.idEx, e)
+    : P ? P.ex.filter(function (q) { return q.id === p.idEx || q.orig === p.idEx; })[0] || null : null;
+  const tipo = cargaTipo(p.idEx, ex || exDe(p.idEx));
+  const fx = faixaDoTexto(ex ? ex.r : null);
+  const sr = x ? x.s : null;
+  return {
+    titulo: 'Série ' + (p.k + 1),
+    sub: nomeEx(p.idEx) + ' · ' + (p.novo
+      ? (p.ref ? 'não registrada; a carga vem da série de referência' : 'não registrada')
+      : 'guardada: ' + textoDaSerieDaPassada(p.idEx, p.era)),
+    novo: !!p.novo,
+    un: CARGAS[tipo].rot,
+    semCarga: tipo === 'corpo',
+    passo: tipo === 'lado' || tipo === 'barra' ? 1.25 : tipo === 'halter' ? 1 : 2.5,
+    carga: sr ? (+sr[0] || 0) : (+p.carga || 0),
+    reps: sr ? (+sr[1] || 0) : (p.ref ? +p.ref[1] || 0 : fx ? fx[0] : 10),
+    rir: sr && sr[2] != null ? sr[2] : null,
+    rirs: RIR_ESCALA,
+    faixa: fx ? 'faixa do treino: ' + ex.r + ' repetições' : null,
+    falhou: p.tocado ? 'Não foi gravado: o aparelho recusou. O que está guardado não mudou.' : null
+  };
+};
+CTX.guardaSeriePassadaV3 = async function (carga, reps, rir) {
+  const p = view.passada;
+  if (!p) return;
+  const n = Math.round(+reps);
+  if (!(n >= 0) || n > 200) return;
+  if (p.novo) {
+    if (carga != null) p.carga = carga;
+    await lancaSerieDaPassada(n);
+    if (!view.passada || view.passada.tocado) return;
+    if (rir != null) await gravaNaPassada(function (s) { s[2] = rir; }, { k: 'rir', v: rir });
+  } else {
+    await gravaNaPassada(function (s) {
+      if (carga != null) s[0] = carga;
+      s[1] = n;
+      if (rir == null) s.length = 2; else s[2] = rir;
+    }, { k: 'tudo', v: n });
+  }
+  if (!view.passada || view.passada.tocado) return;
+  const x = serieDaPassada();
+  const txt = x && x.s ? textoDaSerieDaPassada(x.p.idEx, x.s) : '';
+  view.passada = null;
+  CTX.fechaFolha();
+  toast((p.novo ? 'Série lançada: ' : 'Série corrigida: ') + txt + '.');
+};
+CTX.apagaSerieDaPassadaV3 = async function () {
+  await apagaSerieDaPassada();
+  if (!view.passada) CTX.fechaFolha();
+};
 
 /** "Não, só parei": o aviso some até a próxima série. */
 CTX.dispensaIntervalo = function () { if (S.sessao) { view.intervaloDispensado = S.sessao.ultima; render(); } };

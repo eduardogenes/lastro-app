@@ -17,6 +17,7 @@ import { DiasV3, ResponderDias } from './telas/dias.jsx';
 import { FolhaMusculos, SemanaV3 } from './telas/semana.jsx';
 import { FolhaAlimentos, FolhaCompras, FolhaRefeicaoDoPlano, PlanoV3 } from './telas/plano.jsx';
 import { AjustesV3 } from './telas/ajustes.jsx';
+import { DiaAbertoV3, FolhaPoeODiaV3, FolhaSeriePassada, RegistrarPassadoV3, SessaoPassadaV3 } from './telas/diaaberto.jsx';
 export const TELAS_V3 = {
   // Fase 2
   corpo: CorpoV3,
@@ -62,11 +63,15 @@ export const DESTINOS_V3 = {
   prog: ProgramaV3,
   revisao: RevisaoV3,
   responderDias: ResponderDias,
-  ajustes: AjustesV3
+  ajustes: AjustesV3,
+  // antes da Fase 5: o dia, a sessão passada, o treino que não foi anotado
+  dia: DiaAbertoV3,
+  sessao: SessaoPassadaV3,
+  add: RegistrarPassadoV3
 };
 export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada, mandar: FolhaMandar,
   ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir, corrigeMarca: FolhaCorrigeMarca, bio: FolhaBioV3,
   listaTreino: FolhaListaTreino, mudarEx: FolhaMudarEx, menuSessao: FolhaMenuSessaoV3, porEmDia: FolhaPorEmDia,
   renomeiaEx: FolhaRenomeiaEx,
-  registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, refeicao: FolhaRefeicaoV3, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos,
+  registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, poeODia: FolhaPoeODiaV3, seriePassada: FolhaSeriePassada, refeicao: FolhaRefeicaoV3, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos,
   refeicaoDoPlano: FolhaRefeicaoDoPlano, alimentos: FolhaAlimentos, compras: FolhaCompras };

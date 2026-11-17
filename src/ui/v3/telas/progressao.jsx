@@ -68,21 +68,25 @@ export function ExercicioV3({ ctx }) {
       {e.sessoes.length > 0 && (
         <Secao titulo="Sessão a sessão" nota={'em destaque, a série que bateu o topo (' + e.topo + ')'}>
           <div>
-            {e.sessoes.map(s => (
-              <div key={s.t} class="v3-sess">
+            {e.sessoes.map(s => {
+              const dentro = <>
                 <span class="v3-n">{s.data}{s.dp ? <small> · posta em dia</small> : null}</span>
                 <div>{s.reps.map((r, j) => <i key={j} class={'v3-n' + (r.topo ? ' t' : '')}>{r.r}</i>)}</div>
                 <b class="v3-n">{s.carga} {e.unidade}</b>
-              </div>
-            ))}
+              </>;
+              // a sessão abre inteira, e é lá que cada série se corrige
+              return s.sessao != null
+                ? <button key={s.t} class="v3-sess" data-a="ex-sessao" aria-label={'Sessão de ' + s.data + ': abrir para ver ou corrigir'}
+                          onClick={() => ctx.abreSessaoDoHistorico(s.sessao)}>{dentro}</button>
+                : <div key={s.t} class="v3-sess">{dentro}</div>;
+            })}
           </div>
+          <Apoio>Digitou um número errado? Toque na sessão para corrigir a série.</Apoio>
         </Secao>
       )}
       <Secao>
         <div>
           {e.temFoto && e.foto && <img class="v3-ex-foto" src={e.foto} alt={'Foto do aparelho: ' + e.n} />}
-          {e.sessoes.length > 0 && <Linha titulo="Corrigir uma sessão" apoio="digitou um número errado numa sessão passada" data-a="ex-corrige"
-                                          aoTocar={ctx.corrigeSessaoNoHistorico} />}
           <Linha titulo="Trocar o nome" apoio="o histórico continua neste exercício" data-a="ex-renomeia"
                  aoTocar={() => ctx.abreFolha({ k: 'renomeiaEx', id: e.id, nome: e.renome.nome, doCodigo: e.renome.doCodigo })} />
         </div>
