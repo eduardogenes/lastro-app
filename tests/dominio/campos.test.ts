@@ -149,6 +149,8 @@ const TEXTO: Record<string, string> = {
     'nome do exercício novo — §6.1 "criar exercício (6 campos): do sistema; seis campos, dois deles texto; é cadastro, não registro"',
   'src/ui/telas/historico.jsx · exnome':
     'renomear o exercício no histórico — é texto, e é sentado',
+  'src/ui/v3/telas/progressao.jsx · renomeia-ex':
+    'renomear o exercício no visual novo — o mesmo caso do de cima: texto, e sentado',
   'src/ui/telas/retroativo.jsx · add-nome':
     'nome do treino avulso — §6.1 "do sistema; é texto"',
   'src/ui/telas/protocolo.jsx · pr-obs':

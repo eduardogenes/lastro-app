@@ -4,7 +4,7 @@
 // rápido do que tendão consegue se adaptar. As regras daqui são o freio, e por
 // isso valem mais como função pura testável do que como trecho de render.
 
-import { temUnidade, topReps } from './carga';
+import { maxLoad, repsOf, temUnidade, topReps } from './carga';
 import type { Exercicio, IdEx, Log, Serie } from './tipos';
 
 const DIA = 86400000;
@@ -87,4 +87,36 @@ export function proximaCarga(carga: number | null | undefined, tipo: string): nu
   if (tipo === 'corpo') return null;
   const passo = tipo === 'lado' || tipo === 'barra' ? 1.25 : tipo === 'halter' ? 2 : 2.5;
   return Math.round((carga + passo) * 100) / 100;
+}
+
+/**
+ * A PROGRESSÃO de um exercício, para a tela que agrupa (direção 3):
+ * - `subir`: a última sessão bateu o topo da faixa em todas as séries (`shouldUp`);
+ * - `parado`: as três últimas sessões com a mesma carga e as mesmas repetições;
+ * - `rep`: ganhando repetição, e quanto falta em cada série para chegar ao topo.
+ * A regra é a do treinador: primeiro repetição até o topo, depois carga.
+ * Movimento com grandeza própria (metro, caloria, segundo) e exercício sem
+ * histórico ficam de fora (`null`).
+ */
+export type EstadoDaProgressao =
+  | { k: 'subir' }
+  | { k: 'parado' }
+  | { k: 'rep'; falta: Array<[number, number]> };
+export function estadoDaProgressao(
+  h: Log[], ex: Partial<Exercicio> & { s: number; r: string }, pausaDias: number
+): EstadoDaProgressao | null {
+  if (temUnidade(ex) || !h || !h.length) return null;
+  const u = h[h.length - 1];
+  if (!u || !Array.isArray(u.sets) || !u.sets.some(Boolean)) return null;
+  if (shouldUp(u, ex, pausaDias)) return { k: 'subir' };
+  const tres = h.slice(-3);
+  if (tres.length === 3 && tres.every(function (l) { return maxLoad(l) === maxLoad(u) && repsOf(l) === repsOf(u); })) return { k: 'parado' };
+  const topo = topReps(ex.r);
+  const falta: Array<[number, number]> = [];
+  for (let k = 0; k < ex.s; k++) {
+    const s = u.sets[k];
+    const r = s ? s[1] : 0;
+    if (isFinite(topo) && r < topo) falta.push([k + 1, topo - r]);
+  }
+  return { k: 'rep', falta: falta };
 }

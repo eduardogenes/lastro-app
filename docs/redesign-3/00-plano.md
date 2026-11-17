@@ -93,7 +93,8 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Sugestão "subir para X?" | **feito**: `proximaCarga` em `src/dominio/progressao.ts` (1,25 kg por lado, halter +2, placa +2,5), **regra de partida a revisar com o dono** |
 | Lista do treino (com deload), mudar este exercício (trocar, mais uma série, fazer o próximo antes, pular, dor), opções da sessão | **feito** (folhas `listaTreino`, `mudarEx`, `menuSessao`) |
 | Pôr em dia ("Já fiz mais do que anotei") e aviso de intervalo longo | **feito**: `ctx.poeEmDia` grava pela mesma `anotaSerie`, com os números da última vez, marca `Log.dp` (a projeção e a hidratação carregam a marca) e não começa descanso; o aviso sai de `intervaloLongo` em `src/dominio/sessao.ts` (três vezes o descanso, mínimo de 6 min). "Já treinei e não anotei" (depois do treino) fica com o Hoje, na Fase 4 |
-| Fim com "vira regra?", progressão, um exercício, programa, editor, revisão, aula do box | a fazer |
+| Progressão (prontos para subir, ganhando repetição, parados) e um exercício (próximo passo, sessão a sessão, trocar o nome) | **feito** (`estadoDaProgressao` em `src/dominio/progressao.ts`, com teste; `src/ui/v3/telas/progressao.jsx`). Corrigir uma sessão passada ainda abre a tela antiga do histórico, a recriar até a Fase 5 |
+| Fim com "vira regra?", programa, editor, revisão, aula do box | a fazer |
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta

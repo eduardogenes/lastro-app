@@ -81,7 +81,7 @@ import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGR
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
-         setsFor as _setsFor, proximaCarga } from './dominio/progressao';
+         setsFor as _setsFor, proximaCarga, estadoDaProgressao } from './dominio/progressao';
 import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
@@ -2806,7 +2806,7 @@ const CTX = {
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.galeria || view.diaAberto || view.ajuste || view.camera ||
-              view.ajustes || view.modoSessao || view.revisao || view.fotos || view.noTempo || view.naMesmaData);
+              view.ajustes || view.modoSessao || view.revisao || view.fotos || view.noTempo || view.naMesmaData || view.progressao);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -3119,7 +3119,9 @@ function telaCheia() {
   if (visualNovo()) {
     const destinos = camadasAbertas(view).filter(function (c) { return c.indexOf('folha:') !== 0 && c !== 'pare' && c !== 'falhou'; });
     const D = DESTINOS_V3[destinos[destinos.length - 1]];
-    if (D) return <div class="v3"><D ctx={CTX} /></div>;
+    // `so`: o destino novo que só assume a camada em certas condições (o
+    // histórico de um exercício, aberto pela progressão nova)
+    if (D && (!D.so || D.so(view))) return <div class="v3"><D ctx={CTX} /></div>;
   }
   if (view.ajustes) return <Ajustes ctx={CTX} />;
   if (view.camera) return <Camera ctx={CTX} />;
@@ -8336,6 +8338,7 @@ const FECHA_CAMADA = {
   fotos:     function () { CTX.fechaCentroDasFotos(); },
   noTempo:   function () { CTX.fechaNoTempo(); },
   naMesmaData: function () { CTX.fechaNaMesmaData(); },
+  progressao: function () { CTX.fechaProgressao(); },
   comparar:  function () { CTX.fechaComparar(); },
   revisao:   function () { CTX.fechaRevisao(); },
   evolucao:  function () { CTX.fechaEvolucao(); },
@@ -14286,6 +14289,83 @@ CTX.focoV3 = function () {
       ? { minutos: Math.round((Date.now() - S.sessao.ultima) / 60000) } : null
   });
 };
+/**
+ * A PROGRESSÃO (visual novo): os exercícios de um treino agrupados em
+ * "prontos para subir", "ganhando repetição" e "parados" (`estadoDaProgressao`,
+ * em dominio/progressao.ts).
+ */
+CTX.abreProgressao = function (dia) {
+  view.progressao = { dia: dia || view.day || diaResolvido().treino || proximoTreino(S, ROT_BASE) };
+  entraNoDestino('progressao'); render(); rola(0);
+};
+CTX.fechaProgressao = function () { view.progressao = null; render(); saiDoDestino('progressao'); };
+CTX.setDiaDaProgressao = function (d) { if (view.progressao && treino(d)) { view.progressao.dia = d; render(); } };
+CTX.progressaoV3 = function () {
+  const p = view.progressao; if (!p) return null;
+  const P = treino(p.dia);
+  const grupos = { subir: [], rep: [], parado: [] };
+  if (P) P.ex.forEach(function (ex, i) {
+    const key = logKey(p.dia, i);
+    const h = historico(key);
+    const e = estadoDaProgressao(h, Object.assign({}, ex, { s: setsFor(ex) }), pausaEx(key));
+    if (!e) return;
+    const u = h[h.length - 1];
+    const tipo = cargaTipo(key, ex);
+    grupos[e.k].push({ i: i, n: nomeEx(key), carga: fmtNum(maxLoad(u)).replace('.', ','), unidade: CARGAS[tipo].rot,
+      reps: u.sets.filter(Boolean).map(function (s) { return s[1]; }).join(' · '),
+      serie: h.slice(-8).map(function (l) { return maxLoad(l) * (1 + repsOf(l) / Math.max(1, l.sets.filter(Boolean).length) / 30); }) });
+  });
+  return { dia: p.dia, nome: P ? P.name : '', dias: rot().filter(function (d) { return treino(d) && !diaAberto(d); }), grupos: grupos };
+};
+/** Um exercício, aberto da progressão: a mesma camada `hist` do histórico antigo. */
+CTX.abreExercicioV3 = function (dia, i) {
+  view.hist = { day: dia, i: Number(i), key: logKey(dia, Number(i)), v3: true }; view.edit = null;
+  entraNoDestino('hist'); render(); rola(0);
+};
+CTX.exercicioV3 = function () {
+  const v = view.hist; if (!v) return null;
+  const P = treino(v.day); const ex = P && P.ex[v.i];
+  if (!ex) return null;
+  const key = v.key || logKey(v.day, v.i);
+  const h = (S.logs[key] || []).filter(function (l) { return l && Array.isArray(l.sets) && l.sets.some(Boolean); });
+  const tipo = cargaTipo(key, ex);
+  const ns = setsFor(ex);
+  const topo = topReps(ex.r || '');
+  const e = estadoDaProgressao(historico(key), Object.assign({}, ex, { s: ns }), pausaEx(key));
+  const u = h[h.length - 1], a = h[0];
+  const un = CARGAS[tipo].rot;
+  let passo = null;
+  if (e && e.k === 'subir') {
+    const nova = proximaCarga(maxLoad(u), tipo);
+    passo = { tom: 'subir', t: nova ? 'Na próxima, suba para ' + fmtNum(nova).replace('.', ',') + ' ' + un : 'Pronto para subir',
+              d: 'Todas as séries chegaram a ' + topo + ' repetições com ' + fmtNum(maxLoad(u)).replace('.', ',') + '. Com a carga nova, o alvo volta para o começo da faixa.' };
+  } else if (e && e.k === 'parado') {
+    passo = { tom: 'parado', t: 'Parado há 3 sessões', d: 'Mesma carga e mesmas repetições. Não quer dizer erro: vale olhar descanso, sono e a ordem no treino antes de mexer.' };
+  } else if (e && e.k === 'rep') {
+    passo = { tom: 'rep', t: 'Ganhando repetição', d: 'Mantenha ' + fmtNum(maxLoad(u)).replace('.', ',') + ' ' + un + '. ' +
+      e.falta.map(function (x) { return 'Série ' + x[0] + ': mais ' + x[1]; }).join('. ') + (e.falta.length ? '. ' : '') + 'Quando todas chegarem a ' + topo + ', sobe.' };
+  }
+  return {
+    n: nomeEx(key), id: key, dia: v.day, i: v.i,
+    prescricao: ns + ' × ' + (ex.r || '') + (ex.rir ? ' · sobrando ' + ex.rir : ''),
+    unidade: un, topo: topo,
+    atual: u ? fmtNum(maxLoad(u)).replace('.', ',') : null,
+    desde: u && a && h.length > 1 ? fmtSig(Math.round((maxLoad(u) - maxLoad(a)) * 100) / 100) + ' desde ' + fmtDate(a.t) : null,
+    passo: passo,
+    linha: h.map(function (l) { return { t: l.t, v: maxLoad(l) }; }),
+    sessoes: h.slice().reverse().map(function (l) {
+      return { t: l.t, data: fmtDate(l.t), carga: fmtNum(maxLoad(l)).replace('.', ','), dp: !!l.dp,
+               reps: l.sets.map(function (s) { return s ? { r: s[1], topo: isFinite(topo) && s[1] >= topo } : null; }).filter(Boolean) };
+    }),
+    temFoto: !!S.fotos[ex.id],
+    foto: FOTO.urlDaFoto(ex.id, S.fotos[ex.id]),
+    renome: { nome: nomeEx(key), doCodigo: (S.ex[key] && S.ex[key].n && nomeDoCodigo(key) !== nomeEx(key)) ? nomeDoCodigo(key) : null }
+  };
+};
+
+/** Corrigir uma sessão passada ainda é da tela antiga do histórico: a mesma camada, desenhada por ela. */
+CTX.corrigeSessaoNoHistorico = function () { if (view.hist) { view.hist.v3 = false; render(); rola(0); } };
+
 /** "Não, só parei": o aviso some até a próxima série. */
 CTX.dispensaIntervalo = function () { if (S.sessao) { view.intervaloDispensado = S.sessao.ultima; render(); } };
 

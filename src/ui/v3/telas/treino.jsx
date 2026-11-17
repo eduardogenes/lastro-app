@@ -231,6 +231,8 @@ export function FolhaMudarEx({ ctx, f }) {
           <>
             {m.podeMaisSerie && <Linha titulo="Mais uma série" apoio="só hoje" mais data-a="mudar-mais" aoTocar={faz(() => a.maisUmaSerie(f.i))} />}
             {m.proximo && <Linha titulo={'Fazer ' + m.proximo + ' antes'} apoio="este fica para depois" data-a="mudar-antes" aoTocar={faz(() => a.fazAntesOProximo(f.i))} />}
+            <Linha titulo="Histórico deste exercício" apoio="sessão a sessão, e se está pronto para subir" data-a="mudar-historico"
+                   aoTocar={faz(() => ctx.abreExercicioV3(ctx.focoV3().dia, f.i))} />
             <Linha titulo={m.pulado ? 'Desfazer o pulo' : 'Pular hoje'} apoio={m.pulado ? 'volta para a fila' : 'fica anotado como pulado'} data-a="mudar-pular"
                    aoTocar={faz(() => a.pularEx(f.i))} />
           </>
@@ -269,6 +271,8 @@ export function FolhaMenuSessaoV3({ ctx }) {
       <div class="v3-menu-l">
         {m.editar && <Linha titulo={m.editar.rotulo} apoio={m.editar.detalhe} data-a="menu-editar" aoTocar={faz(ctx.modoEdicao)} />}
         {m.deload && <Linha titulo={m.deload.rotulo} apoio={m.deload.detalhe} data-a="deload" aoTocar={faz(() => ctx.setDeload(!m.deload.ligado))} />}
+        <Linha titulo="Progressão do treino" apoio="prontos para subir, ganhando repetição, parados" data-a="menu-progressao"
+               aoTocar={faz(() => ctx.abreProgressao())} />
         {m.encerrar && <Linha titulo={m.encerrar.rotulo} apoio={m.encerrar.detalhe} data-a="encerrar" aoTocar={faz(ctx.finalizarSessao)} />}
       </div>
       {m.descartar && <Saida data-a="descartar" onClick={faz(ctx.descartarSessao)}>{m.descartar.rotulo} · {m.descartar.detalhe}</Saida>}

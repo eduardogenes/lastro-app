@@ -127,6 +127,18 @@ test('para quanto subir: o menor passo de cada tipo de carga, e peso do corpo n�
   assert.strictEqual(proximaCarga(null, 'pino'), null);
 });
 
+test('progressão: subir quando todas bateram o topo, parado com três iguais, senão quanto falta por série', async () => {
+  const { estadoDaProgressao } = await import('../../src/dominio/progressao');
+  const ex = { s: 3, r: '8-10' };
+  const l = (r: number[], c = 40) => ({ t: 1, sid: 1, sets: r.map(x => [c, x] as [number, number]) });
+  assert.deepStrictEqual(estadoDaProgressao([l([10, 10, 10])], ex, 0), { k: 'subir' });
+  assert.deepStrictEqual(estadoDaProgressao([l([9, 8, 8]), l([9, 8, 8]), l([9, 8, 8])], ex, 0), { k: 'parado' });
+  assert.deepStrictEqual(estadoDaProgressao([l([9, 8, 8]), l([10, 9, 8])], ex, 0), { k: 'rep', falta: [[2, 1], [3, 2]] });
+  assert.strictEqual(estadoDaProgressao([], ex, 0), null, 'sem histórico, fora');
+  assert.strictEqual(estadoDaProgressao([l([10, 10, 10])], { s: 3, r: '8-10', u: 'm' } as never, 0), null, 'grandeza própria, fora');
+  assert.deepStrictEqual(estadoDaProgressao([l([10, 10, 10])], ex, 30), { k: 'rep', falta: [] }, 'voltando de pausa, não manda subir');
+});
+
 test('intervalo longo: três vezes o descanso, e nunca menos de seis minutos', async () => {
   const { intervaloLongo, limiteDoIntervalo } = await import('../../src/dominio/sessao');
   assert.strictEqual(limiteDoIntervalo(180), 9 * 60000);

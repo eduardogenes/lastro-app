@@ -68,6 +68,8 @@ export function camadasAbertas(view) {
   if (view.add) c.push('add');
   if (view.retro) c.push('retro');
   if (view.prog) c.push('prog');
+  // A progressão (visual novo), abaixo do histórico de um exercício, que abre dela.
+  if (view.progressao) c.push('progressao');
   // O HISTÓRICO fica ACIMA do programa, e isto mudou quando a Prescrição ganhou
   // a porta do histórico em cada linha do programa (achado 1 da frente 1):
   // abrindo de lá, ele é a camada de cima, e o Voltar tem de devolver o

@@ -10,6 +10,7 @@
 import { CorpoV3, FolhaComoMedir, FolhaLigarMedidas, MedirAgora } from './telas/corpo.jsx';
 import { FolhaBioV3, FolhaCorrigeMarca, MedidaV3, NaMesmaData, PesoV3 } from './telas/corpoconsulta.jsx';
 import { FolhaListaTreino, FolhaMenuSessaoV3, FolhaMudarEx, FolhaPorEmDia, TreinoEmFoco } from './telas/treino.jsx';
+import { ExercicioV3, FolhaRenomeiaEx, Progressao } from './telas/progressao.jsx';
 export const TELAS_V3 = {
   // Fase 2
   corpo: CorpoV3
@@ -44,8 +45,11 @@ export const DESTINOS_V3 = {
   medida: MedidaV3,
   naMesmaData: NaMesmaData,
   // Fase 3, treino
-  modoSessao: TreinoEmFoco
+  modoSessao: TreinoEmFoco,
+  progressao: Progressao,
+  hist: ExercicioV3
 };
 export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada, mandar: FolhaMandar,
   ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir, corrigeMarca: FolhaCorrigeMarca, bio: FolhaBioV3,
-  listaTreino: FolhaListaTreino, mudarEx: FolhaMudarEx, menuSessao: FolhaMenuSessaoV3, porEmDia: FolhaPorEmDia };
+  listaTreino: FolhaListaTreino, mudarEx: FolhaMudarEx, menuSessao: FolhaMenuSessaoV3, porEmDia: FolhaPorEmDia,
+  renomeiaEx: FolhaRenomeiaEx };
