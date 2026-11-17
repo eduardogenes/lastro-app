@@ -772,6 +772,8 @@ function medidasCsv(b: Base): string {
 
 function ajusteDaFoto(f: FotoRef): string {
   const e = f.enq;
+  // a sugestão do app que ainda não foi aceita: a foto aparece como saiu
+  if (!e && f.sug) return 'alinhamento sugerido pelo app, ainda não aceito';
   if (!e || (Math.abs(e.r || 0) < 0.05 && Math.abs((e.z || 1) - 1) < 0.005 && Math.abs((e.cx ?? 0.5) - 0.5) < 0.005 && Math.abs((e.cy ?? 0.5) - 0.5) < 0.005)) return '';
   const p: string[] = [];
   if (Math.abs(e.r || 0) >= 0.05) p.push('giro ' + br(e.r, 1) + '°');

@@ -112,12 +112,14 @@ test('a pasta dos agentes diz se a detecção mediu e se o enquadramento foi do 
   const S = { protocolo: { poses: null, sessoes: [{ d: '2026-11-10', t: T, fotos: {
     'frente-relaxado': { v: T, ext: 'webp', enq: { r: 0, z: 1.2, cx: 0.5, cy: 0.52, m: T, auto: 1 },
                          cap: { via: 'app', l: 1, a: 1, det: { ativa: true, qps: 14 } } },
-    'perfil-direito': { v: T + 1, ext: 'webp', cap: { via: 'app', l: 1, a: 1, det: { ativa: false, qps: 0 } } }
+    'perfil-direito': { v: T + 1, ext: 'webp', cap: { via: 'app', l: 1, a: 1, det: { ativa: false, qps: 0 } },
+                        sug: { r: 0, z: 1.3, cx: 0.5, cy: 0.5, m: T, auto: 1 } }
   } }] } };
   const fotos = montaArquivos(S as never, { agora: T + 86400000 })['corpo/fotos.md'] as string;
   assert.ok(fotos.includes('altura e distância medidas pelo app (14 quadros/s)'));
   assert.ok(fotos.includes('altura e distância conferidas a olho'));
-  assert.ok(fotos.includes('alinhado pelo app'));
+  assert.ok(fotos.includes('alinhado pelo app'), 'o aceito');
+  assert.ok(fotos.includes('alinhamento sugerido pelo app, ainda não aceito'), 'e o que ainda não foi');
 });
 
 test('o cache do motor no service worker tem o nome da versão instalada do MediaPipe', async () => {

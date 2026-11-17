@@ -120,6 +120,7 @@ e entra nesta lista. Para ver todos funcionando com dados de exemplo:
 | **Faixa de aviso** | sem rede (areia, some sozinha) e falha ao guardar (tangerina, fica até resolver). |
 | **Escolha grande** | cartão branco com ícone num círculo, nome e uma linha; o escolhido fica lima com contorno de tinta. Para decidir um cenário antes de começar ("quem vai segurar o celular?"). Classe `v3-esc`. |
 | **Foto** | a foto do corpo em 3:4 com o ajuste aplicado (`src/ui/v3/foto.jsx`), sempre pelo mesmo `transform` do enquadramento; o ponto tangerina marca a foto fora do padrão. |
+| **Sugestão do app** | bloco lilás com o que o app propõe, "Ver como fica" (prévia sem gravar), um principal para aceitar e "Agora não". Para o que o app calcula mas é o dono quem decide (o alinhamento da foto). |
 | **Luzes** | as três do disparo da câmera (nível, altura, distância): tangerina até acertar, lima quando certas; grandes no ajuste, em pílula depois. A que o app não mede é tocável ("toque ao conferir"). |
 
 ## Movimento

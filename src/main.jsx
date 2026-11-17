@@ -11786,8 +11786,9 @@ async function guardaFotoDaPose(d, pose, reduzida) {
   if (reduzida.via && reduzida.fonte) {
     ses.fotos[pose].cap = registroDaCaptura(reduzida);
   }
-  // o alinhamento automático, pelos pontos do corpo no disparo (visual novo)
-  if (reduzida.enqAuto) ses.fotos[pose].enq = reduzida.enqAuto;
+  // o alinhamento que o app sugere, pelos pontos do corpo no disparo (visual
+  // novo): fica como sugestão até o dono aceitar (decisão de 17/11/2026)
+  if (reduzida.enqAuto) ses.fotos[pose].sug = reduzida.enqAuto;
   ses.m = Date.now();
   CORPO.solta(d, pose);                // a versão anterior sai da memória
   await CORPO.carrega(d, pose, ses.fotos[pose]);
@@ -12251,6 +12252,7 @@ CTX.fimDaSessaoV3 = function () {
     titulo: tituloDoFim(lista.length, lista.length, r),
     noPadrao: r.noPadrao,
     fora: r.fora.length,
+    sugeridas: lista.filter(function (p) { const f = ses.fotos[p.id]; return f && f.sug && !f.enq; }).length,
     muda: r.muda.length ? 'Anotado nesta sessão: ' + textoDaMudanca(r.muda) + '. Aparece ao comparar.' : null,
     tempo: base.tempo,
     subida: base.subida,
@@ -12707,6 +12709,30 @@ CTX.noTempoV3 = function () {
   };
 };
 
+/**
+ * O ALINHAMENTO SUGERIDO: aceitar grava a sugestão como o ajuste da foto,
+ * marcado como do app; dispensar só apaga a sugestão. O arquivo não muda.
+ */
+function trocaRefDaFoto(d, pose, muda) {
+  const ses = sessaoDe(S.protocolo.sessoes, d);
+  const ref = ses && ses.fotos[pose];
+  if (!ref || !ref.sug) return false;
+  const novo = Object.assign({}, ref);
+  muda(novo);
+  delete novo.sug;
+  ses.fotos = Object.assign({}, ses.fotos);
+  ses.fotos[pose] = novo;
+  ses.m = Date.now();
+  queueSave(); render();
+  return true;
+}
+CTX.aceitaAlinhamento = function (d, pose) {
+  if (trocaRefDaFoto(d, pose, function (r) { r.enq = Object.assign(normalizaEnq(r.sug), { m: Date.now(), auto: 1 }); })) {
+    toast('Foto alinhada. "Original" no ajuste desfaz.');
+  }
+};
+CTX.dispensaAlinhamento = function (d, pose) { trocaRefDaFoto(d, pose, function () {}); };
+
 /** A galeria, com o selo de cada sessão e o ajuste de cada foto. */
 CTX.galeriaV3 = function () {
   const g = CTX.galeria();
@@ -12729,6 +12755,8 @@ CTX.galeriaV3 = function () {
     const peso = mediaDaSemana(S.body.peso, g.foto.d);
     Object.assign(g.foto, {
       enq: enq(g.foto.d, g.foto.pose),
+      // a sugestão do app, só quando a foto ainda não tem ajuste
+      sug: ref && ref.sug && !ref.enq ? normalizaEnq(ref.sug) : null,
       indice: i + 1, total: ses ? ses.fotos.length : 0,
       anterior: ses && i > 0 ? ses.fotos[i - 1].pose : null,
       proxima: ses && i >= 0 && i < ses.fotos.length - 1 ? ses.fotos[i + 1].pose : null,
@@ -14201,6 +14229,8 @@ CTX.salvaAjuste = async function () {
        : neutro ? undefined : Object.assign({}, v.enq, { m: Date.now() })
   });
   if (novo.enq === undefined) delete novo.enq;
+  // ajustou à mão: a sugestão do app perdeu o sentido
+  delete novo.sug;
 
   ses.fotos = Object.assign({}, ses.fotos);
   ses.fotos[v.pose] = novo;
@@ -14386,16 +14416,18 @@ function falaDoAjuste(c, antes, agora) {
 /**
  * O DISPARO SOZINHO, com a detecção ativa: em vez da contagem fixa, o app
  * espera as três luzes verdes e o corpo parado por um segundo, e então conta
- * três. Sem a detecção (ou depois de 20 s esperando), a contagem fixa de antes.
+ * cinco. Sem a detecção (ou depois de 20 s esperando), a contagem fixa de antes.
  */
 const ESPERA_MAXIMA = 20000;
+/** Com a pessoa parada na marca, conta cinco (decisão do dono, 17/11/2026). */
+const CONTA_PARADO = 5;
 function esperaParadoEDispara(c, contagemFixa) {
   const vez = sequencia, t0 = agoraMs();
   c.esperando = true;
   const confere = function () {
     if (view.camera !== c || !c.seguido || vez !== sequencia || c.contagem != null) { c.esperando = false; return; }
     if (!deteccaoAtiva(c) || agoraMs() - t0 > ESPERA_MAXIMA) { c.esperando = false; contaEDispara(contagemFixa); return; }
-    if (liberado(luzesDaCamera(c), c.forcado) && parado(c.det.rastros, agoraMs())) { c.esperando = false; contaEDispara(3); return; }
+    if (liberado(luzesDaCamera(c), c.forcado) && parado(c.det.rastros, agoraMs())) { c.esperando = false; contaEDispara(CONTA_PARADO); return; }
     setTimeout(confere, 200);
   };
   confere();

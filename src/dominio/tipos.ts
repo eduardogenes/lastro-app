@@ -345,9 +345,9 @@ export interface Enquadramento {
   /** quando o ajuste mudou. É o que a fusão compara quando `v` empata. */
   m: number;
   /**
-   * Feito pelo app, com os pontos do corpo da foto (`alinhamentoAutomatico`,
-   * em dominio/deteccao.ts), e não à mão. Ajustar à mão grava sem a marca;
-   * "Original" desfaz como qualquer ajuste.
+   * Sugerido pelo app com os pontos do corpo da foto (`alinhamentoAutomatico`,
+   * em dominio/deteccao.ts) e aceito pelo dono, e não feito à mão. Ajustar à
+   * mão grava sem a marca; "Original" desfaz como qualquer ajuste.
    */
   auto?: 1;
 }
@@ -366,6 +366,13 @@ export interface FotoRef {
   r?: number;
   /** o enquadramento ajustado, quando existe. Ausente = "a foto como saiu". */
   enq?: Enquadramento;
+  /**
+   * O ALINHAMENTO SUGERIDO pelo app, com os pontos do corpo no disparo
+   * (`alinhamentoAutomatico`), ainda não aceito. O dono decidiu em 17/11/2026
+   * que o app sugere e ele aceita: aceitar vira `enq` (com `auto`); ajustar à
+   * mão ou dispensar apaga a sugestão.
+   */
+  sug?: Enquadramento;
   /**
    * Como a foto de corpo foi capturada: pela câmera de dentro do app ou pela do
    * sistema, e o tamanho que o navegador DISSE que a fonte tinha.

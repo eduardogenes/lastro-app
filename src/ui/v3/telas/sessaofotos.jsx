@@ -147,7 +147,8 @@ function Fim({ ctx, fim }) {
              quando="guardada" titulo={fim.titulo}
              apoio={[
                fim.muda || (fim.noPadrao ? 'Mesmo lugar, mesma luz, mesma roupa, lente 1×.' : null),
-               fim.fora ? 'As marcadas saíram fora do padrão: valem, e aparecem com o aviso ao comparar.' : null
+               fim.fora ? 'As marcadas saíram fora do padrão: valem, e aparecem com o aviso ao comparar.' : null,
+               fim.sugeridas ? (fim.sugeridas === 1 ? 'Uma foto tem alinhamento sugerido' : fim.sugeridas + ' fotos têm alinhamento sugerido') + ': aceite na galeria.' : null
              ].filter(Boolean).join(' ')}>
         <Acoes>
           <Botao data-a="fim-medir" onClick={ctx.medirDepoisDasFotos}>Medir agora</Botao>

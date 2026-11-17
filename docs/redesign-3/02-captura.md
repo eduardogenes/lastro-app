@@ -2,7 +2,10 @@
 
 Fase 0, item 7 do [plano](00-plano.md). O dono deixou a decisão com liberdade
 total ("quero que seja impecável") e garantiu que **sempre há rede** na hora
-das fotos. Decidido em 17/11/2026; mostrar a ele antes de fechar a Fase 1.
+das fotos. Decidido em 17/11/2026 e mostrado a ele no mesmo dia. Respostas
+dele: a voz de ajuste só no modo sozinho; a foto tremida conta como fora do
+padrão; o alinhamento é sugerido e ele aceita; sozinho, conta 5; no fim, o
+principal é "Medir agora".
 
 ## O que precisa dar certo
 
@@ -53,7 +56,7 @@ em nada para "confirmar o ajuste": o app vê.
 | Cenário | Disparo |
 |---|---|
 | **A pessoa de sempre** e **alguém novo** | quem segura toca. O app mostra "pronto" com as três luzes verdes; a pessoa fotografada pode estar no meio da pose, e só quem vê sabe |
-| **Sozinho** | **automático**: com as três verdes e o corpo parado por cerca de 1 s, o app conta 3 e dispara. Substitui a contagem fixa: não dispara com a pessoa ainda andando para a marca |
+| **Sozinho** | **automático**: com as três verdes e o corpo parado por cerca de 1 s, o app conta 5 e dispara (o dono escolheu 5 em 17/11/2026). Substitui a contagem fixa: não dispara com a pessoa ainda andando para a marca |
 
 ### 4 · O que o app marca sozinho na foto
 
@@ -61,11 +64,14 @@ em nada para "confirmar o ajuste": o app vê.
 - `tremida`: pelo giroscópio, que o app já lê (`Captura.mov`), quando o
   celular girava acima do limite no toque.
 
-### 5 · O enquadramento se alinha sozinho depois
+### 5 · O app sugere o alinhamento, e o dono aceita
 
 Com os pontos do corpo de cada foto, o app calcula o ajuste que põe cabeça e
-pés nas mesmas linhas e guarda como ajuste da foto (`FotoRef.enq`), **marcado
-como automático**. O arquivo original não muda, e "Original" desfaz como hoje.
+pés nas mesmas linhas e guarda como **sugestão** (`FotoRef.sug`). Na foto
+aberta da galeria, o dono vê como fica e aceita (vira o ajuste da foto,
+`FotoRef.enq`, marcado `auto`) ou dispensa. O arquivo original não muda, e
+"Original" desfaz como hoje. Decidido pelo dono em 17/11/2026: "só sugere, e
+eu aceito"; o desenho anterior aplicava sozinho.
 
 É a automação que mais ajuda a comparar: mesmo uma foto um pouco fora sai
 alinhada com as outras no lado a lado, na cortina e no "no tempo".
@@ -118,12 +124,12 @@ Decidido na construção:
 
 - **Sozinho, o toque no play pede só o nível**: quem toca está ao lado do
   celular, fora do quadro. Com a detecção ativa, o app espera as três luzes
-  com a pessoa na marca e o corpo parado por 1 s, e conta 3. Sem a detecção,
+  com a pessoa na marca e o corpo parado por 1 s, e conta 5. Sem a detecção,
   ou depois de 20 s esperando, a contagem fixa de antes.
 - **A frase de ajuste falada** ("um passo para trás") só no modo sozinho,
   enquanto o app espera a pessoa: acompanhado, quem segura lê a tela, e mandar
   a pessoa fotografada andar tiraria ela da marca no chão.
-- **O alinhamento automático só aproxima e centraliza**, sem girar: corpo
+- **O alinhamento sugerido só aproxima e centraliza**, sem girar: corpo
   grande demais no quadro não tem conserto (afastar não existe), e o giro já
   vem medido pelo nível no disparo.
 

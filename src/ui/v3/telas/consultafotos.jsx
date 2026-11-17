@@ -3,7 +3,7 @@
 // Protótipo: docs/redesign-3/prototipos/fotos.html. Dados: `ctx.*V3()` em
 // src/main.jsx, que somam a ressalva de cada sessão ao que já existia.
 
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
 import { Acoes, Apoio, Bloco, Botao, Cabecalho, Folha, Linha, Pergunta, Saida, Secao, Seletor, Selo, Vazio } from '../base.jsx';
 import { Foto } from '../foto.jsx';
@@ -281,7 +281,12 @@ export function GaleriaV3({ ctx }) {
 export function GaleriaFotoV3({ ctx }) {
   const g = ctx.galeriaV3();
   const f = g && g.foto;
+  // "Ver como fica": a sugestão do app desenhada na foto, sem gravar nada
+  // amarrada à foto: passar para outra pose desliga a prévia
+  const [previa, setPrevia] = useState(null);
   if (!f) return null;
+  const chave = f.d + '|' + f.pose;
+  const vendo = previa === chave && !!f.sug;
   const apaga = () => ctx.abreFolha({
     k: 'aviso', titulo: 'Apagar esta foto?', texto: 'Ela vai para a lixeira e fica 30 dias. Dá para devolver de lá.',
     sim: 'Apagar', nao: 'Manter', aoSim: () => ctx.apagaDaGaleria(f.d, f.pose)
@@ -290,7 +295,17 @@ export function GaleriaFotoV3({ ctx }) {
     <>
       <Cabecalho titulo={f.data} aoVoltar={ctx.fechaFotoDaGaleria}
                  acao={<button onClick={apaga} data-a="foto-apagar" aria-label="Apagar esta foto">{ic.lixo}</button>} />
-      <div class="v3-ver"><Foto url={f.url} enq={f.enq} alt={f.n} vazio={f.aviso || 'buscando…'} /></div>
+      <div class="v3-ver"><Foto url={f.url} enq={vendo ? f.sug : f.enq} alt={f.n} vazio={f.aviso || 'buscando…'} /></div>
+      {f.sug && (
+        <div class="v3-sug" role="status">
+          <p><b>O app sugere alinhar esta foto.</b> Aproxima e centraliza até a cabeça e os pés caírem nas linhas. O arquivo não muda.</p>
+          <div class="v3-sug-b">
+            <button class="v3-sug-ver" data-a="sug-ver" aria-pressed={vendo ? 'true' : 'false'} onClick={() => setPrevia(vendo ? null : chave)}>{vendo ? 'Ver como saiu' : 'Ver como fica'}</button>
+            <button class="v3-sug-sim" data-a="sug-aceitar" onClick={() => { setPrevia(null); ctx.aceitaAlinhamento(f.d, f.pose); }}>Aceitar</button>
+          </div>
+          <Saida data-a="sug-nao" onClick={() => { setPrevia(null); ctx.dispensaAlinhamento(f.d, f.pose); }}>Agora não</Saida>
+        </div>
+      )}
       <div class="v3-ver-n">
         <button disabled={!f.anterior} data-a="foto-anterior" onClick={() => ctx.abreFotoDaGaleria(f.d, f.anterior)} aria-label="Pose anterior">{ic.volta}</button>
         <div><b>{f.n}</b><span class="v3-n">foto {f.indice} de {f.total}{f.peso ? ' · ' + f.peso : ''}{f.hora ? ' · ' + f.hora : ''}</span></div>

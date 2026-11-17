@@ -70,10 +70,11 @@ test('com a detecção ativa, altura e distância acendem sozinhas e não se toc
   assert.ok(f.cap.det.qps > 0, 'e a quantos quadros por segundo');
   assert.strictEqual(f.cap.fora, undefined);
   assert.strictEqual(f.enq, undefined, 'nas linhas já, nada a alinhar');
+  assert.strictEqual(f.sug, undefined, 'nem a sugerir');
   a.fechar();
 });
 
-test('corpo pequeno no quadro: a frase manda chegar a cadeira, e a foto tirada assim sai alinhada pelo app', async () => {
+test('corpo pequeno no quadro: a frase manda chegar a cadeira, e a foto tirada assim sai com o alinhamento sugerido, não aplicado', async () => {
   const a = await camera();
   a.E('globalThis.__corpo = { topo: 0.12, base: 0.86, meio: 0.47 }');
   await a.esperar(250);
@@ -88,8 +89,9 @@ test('corpo pequeno no quadro: a frase manda chegar a cadeira, e a foto tirada a
   await a.esperar(150);
   const f = foto(a);
   assert.ok(f.cap.fora.indexOf('distancia') >= 0, 'fora do padrão na distância');
-  assert.strictEqual(f.enq.auto, 1, 'alinhada pelo app');
-  assert.ok(f.enq.z > 1.2, 'aproximou: ' + f.enq.z);
+  assert.strictEqual(f.enq, undefined, 'o app não aplica sozinho: o dono aceita (17/11/2026)');
+  assert.strictEqual(f.sug.auto, 1, 'a sugestão fica guardada');
+  assert.ok(f.sug.z > 1.2, 'aproximando: ' + f.sug.z);
   a.fechar();
 });
 
@@ -109,7 +111,7 @@ test('o motor falhou: a câmera volta às linhas conferidas a olho, e a foto diz
   a.fechar();
 });
 
-test('sozinho: o toque pede só o nível, e a contagem espera a pessoa parada na marca', async () => {
+test('sozinho: o toque pede só o nível, e a contagem de cinco espera a pessoa parada na marca', async () => {
   const a = await camera({ sozinho: true });
   // a pessoa ainda ao lado do celular, fora do quadro
   a.E('globalThis.__corpo = { topo: 0.3, base: 1.2, meio: 0.5 }');
@@ -124,6 +126,6 @@ test('sozinho: o toque pede só o nível, e a contagem espera a pessoa parada na
 
   a.E('globalThis.__corpo = { topo: 0.04, base: 0.96, meio: 0.5 }');
   await a.esperar(1400);
-  assert.ok([3, 2, 1].indexOf(a.vista().camera.contagem) >= 0, 'parada na marca, conta três: ' + a.vista().camera.contagem);
+  assert.ok([5, 4].indexOf(a.vista().camera.contagem) >= 0, 'parada na marca, conta cinco: ' + a.vista().camera.contagem);
   a.fechar();
 });

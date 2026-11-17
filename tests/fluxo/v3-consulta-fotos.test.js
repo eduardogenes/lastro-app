@@ -195,3 +195,41 @@ test('mandar para os agentes: escolhe a pose ou as onze, grava o pedido, e manda
   assert.strictEqual(a.S().paraAvaliar.length, 1, 'o mesmo par só renova a data');
   a.fechar();
 });
+
+test('o alinhamento sugerido: a foto aberta mostra a prévia, aceitar grava como do app, e "agora não" só apaga a sugestão', async () => {
+  const a = await comTresSessoes();
+  a.E(`S.protocolo.sessoes[1].fotos['${POSE}'].sug = { r: 0, z: 1.3, cx: 0.5, cy: 0.48, m: 5, auto: 1 };
+       S.protocolo.sessoes[0].fotos['${POSE}'].sug = { r: 0, z: 1.2, cx: 0.5, cy: 0.5, m: 5, auto: 1 };`);
+  // os bytes da foto no aparelho: sem eles a tela mostra o quadro vazio, e não a foto
+  await a.E(`(async () => {
+    const c = await caches.open('lastro-corpo');
+    await c.put('./corpo/${atras(14)}/${POSE}.webp', new Response(new Blob(['x'], { type: 'image/webp' })));
+  })()`);
+  a.v('ctx.abreGaleria');
+  a.v('ctx.abreFotoDaGaleria', atras(14), POSE);
+  await a.esperar(150);
+  assert.ok(a.$('.v3-sug'), 'a sugestão aparece');
+  const img = () => a.$('.v3-ver img');
+  assert.ok(img(), 'a foto está na tela');
+  assert.ok(!/scale\(1\.3/.test(img().getAttribute('style')), 'antes, a foto como saiu');
+  a.clicar('[data-a="sug-ver"]');
+  await a.esperar();
+  assert.ok(/scale\(1\.3/.test(img().getAttribute('style')), 'a prévia desenha a sugestão: ' + img().getAttribute('style'));
+  assert.strictEqual(a.S().protocolo.sessoes[1].fotos[POSE].enq, undefined, 'ver não grava');
+  a.clicar('[data-a="sug-aceitar"]');
+  await a.esperar(60);
+  const f = a.S().protocolo.sessoes[1].fotos[POSE];
+  assert.strictEqual(f.enq.auto, 1, 'aceita, vira o ajuste da foto, marcado como do app');
+  assert.strictEqual(f.enq.z, 1.3);
+  assert.strictEqual(f.sug, undefined);
+  assert.ok(!a.$('.v3-sug'), 'e a sugestão sai da tela');
+
+  a.v('ctx.abreFotoDaGaleria', atras(28), POSE);
+  await a.esperar();
+  a.clicar('[data-a="sug-nao"]');
+  await a.esperar(60);
+  const g = a.S().protocolo.sessoes[0].fotos[POSE];
+  assert.strictEqual(g.sug, undefined, 'dispensada');
+  assert.strictEqual(g.enq, undefined, 'e a foto continua como saiu');
+  a.fechar();
+});
