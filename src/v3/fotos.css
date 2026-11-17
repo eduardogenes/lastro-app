@@ -364,3 +364,28 @@
 .v3-decide p { font: 700 16px/1.25 var(--f-titulo); }
 .v3-decide small { display: block; font-size: 13px; color: var(--tinta-2); margin-top: 2px; }
 .v3-decide .v3-acoes { margin-top: 10px; }
+
+/* ---- Programa e editor ------------------------------------------------- */
+.v3-tiles { display: grid; gap: 8px; }
+.v3-tile { display: flex; align-items: stretch; gap: 6px; border-radius: 22px; background: var(--branco); box-shadow: inset 0 0 0 1.5px var(--fio); }
+.v3 .v3-tile-b { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.v3-tile-l { flex: 0 0 44px; height: 44px; border-radius: 14px; background: var(--lima); display: flex; align-items: center; justify-content: center; font: 800 20px var(--f-titulo); box-shadow: inset 0 0 0 2px var(--tinta); }
+.v3-tile-m, .v3-ed-m { display: flex; flex-direction: column; justify-content: center; }
+.v3 .v3-tile-m button, .v3 .v3-ed-m button { min-width: var(--alvo); min-height: 32px; display: flex; align-items: center; justify-content: center; }
+.v3-tile-m button:disabled, .v3-ed-m button:disabled { color: var(--tinta-28); }
+.v3-tile-m svg, .v3-ed-m svg { width: 20px; height: 20px; }
+.v3-vol { display: flex; gap: 6px; overflow-x: auto; padding: 8px var(--margem) 2px; scrollbar-width: none; }
+.v3-vol span { flex: 0 0 auto; padding: 8px 12px; border-radius: 16px; background: var(--areia); font-size: 12px; font-weight: 600; color: var(--tinta-2); }
+.v3-vol span b { display: block; font: 800 17px var(--f-titulo); color: var(--tinta); }
+.v3-vol span.mais { background: var(--lima); }
+.v3-vol span.menos { background: var(--tanja); }
+.v3-ed { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 64px; border-top: 1.5px solid var(--fio); }
+.v3-ed:first-child { border-top: 0; }
+.v3 .v3-ed-n { flex: 1; min-width: 0; min-height: var(--alvo); }
+.v3-ed-n b { display: block; font: 700 16px/1.15 var(--f-titulo); }
+.v3-ed-n span { font-size: 13px; color: var(--tinta-3); }
+.v3-ed-s { display: flex; align-items: center; gap: 4px; }
+.v3 .v3-ed-s button { min-width: 40px; min-height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--tinta-18); font: 800 18px var(--f-titulo); }
+.v3-ed-s b { min-width: 24px; text-align: center; font: 800 18px var(--f-titulo); }
+.v3-ed-troca { flex: 0 0 100%; padding: 4px 0 10px 50px; }
+.v3 .v3-texto { min-height: 180px; padding: 12px 14px; line-height: 1.45; resize: vertical; }

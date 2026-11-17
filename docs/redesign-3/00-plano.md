@@ -95,7 +95,8 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Pôr em dia ("Já fiz mais do que anotei") e aviso de intervalo longo | **feito**: `ctx.poeEmDia` grava pela mesma `anotaSerie`, com os números da última vez, marca `Log.dp` (a projeção e a hidratação carregam a marca) e não começa descanso; o aviso sai de `intervaloLongo` em `src/dominio/sessao.ts` (três vezes o descanso, mínimo de 6 min). "Já treinei e não anotei" (depois do treino) fica com o Hoje, na Fase 4 |
 | Progressão (prontos para subir, ganhando repetição, parados) e um exercício (próximo passo, sessão a sessão, trocar o nome) | **feito** (`estadoDaProgressao` em `src/dominio/progressao.ts`, com teste; `src/ui/v3/telas/progressao.jsx`). Corrigir uma sessão passada ainda abre a tela antiga do histórico, a recriar até a Fase 5 |
 | Fim do treino com o resumo e "vira regra?" | **feito**: `ctx.encerraTreinoV3` usa o mesmo `finalizarSessao` (pendentes, fila `promoPendente`) e o fim fica na tela; responder usa `respondeMudanca` |
-| Programa, editor, revisão, aula do box | a fazer |
+| Programa (treinos com a ordem, diferenças, histórico de mudanças, criar treino), editor (subir e descer, séries, trocar e tirar, faixa de séries por músculo contra o treinador) e revisão do treinador | **feito** (`src/ui/v3/telas/programa.jsx`, `ctx.faixaDoTreinoV3`; `tests/fluxo/v3-programa.test.js`). Adicionar exercício ainda abre o catálogo da tela antiga, na mesma camada. A revisão aplica os treinos inteiros, como o fluxo de sempre (o protótipo escolhia mudança por mudança) |
+| Aula do box | a fazer |
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta

@@ -11816,6 +11816,24 @@ function programaHist() {
   };
 }
 
+/**
+ * A FAIXA DO EDITOR (visual novo): as séries por músculo neste treino, e
+ * quanto saiu do que o treinador prescreveu para ele.
+ */
+CTX.faixaDoTreinoV3 = function (d) {
+  const meu = S.prog[d], dele = baseTreinador()[d];
+  if (!meu) return [];
+  const soma = function (p) {
+    const r = {};
+    ((p && p.ex) || []).forEach(function (sl) { const g = exDe(sl.id).g; if (g) r[g] = (r[g] || 0) + (sl.s || 0); });
+    return r;
+  };
+  const a = soma(meu), b = soma(dele);
+  return Object.keys(Object.assign({}, b, a)).map(function (g) {
+    return { g: g, series: a[g] || 0, diferenca: (a[g] || 0) - (b[g] || 0) };
+  });
+};
+
 CTX.acoesPrograma = {
   volta: function () {
     if (view.prog.day || view.prog.modo !== 'lista') abrirPrograma(null);
