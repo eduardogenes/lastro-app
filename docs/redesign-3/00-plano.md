@@ -37,7 +37,7 @@ Atualizado a cada peça entregue. É por aqui que uma sessão nova retoma.
 | 4. Dado novo, fusão, cópia de segurança e espelho | **feito**, sem migração (ver abaixo) |
 | 5. Estratégia de testes (classificar os 61 de fluxo e o `estilo.test`) | **feito**: [01-testes.md](01-testes.md); guarda do visual novo em `tests/dominio/estilo-v3.test.ts` |
 | 6. Especificação de cada lote | a fazer · Fable |
-| 7. O que a captura de fotos automatiza | a fazer · Fable (Fase 1) |
+| 7. O que a captura de fotos automatiza | **decidido**: [02-captura.md](02-captura.md); mostrar ao dono antes de fechar a Fase 1 |
 
 ### O dado novo (item 4), para quem constrói as telas
 
