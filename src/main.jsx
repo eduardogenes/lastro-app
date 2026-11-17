@@ -2807,7 +2807,7 @@ const CTX = {
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.galeria || view.diaAberto || view.ajuste || view.camera ||
-              view.ajustes || view.modoSessao || view.revisao || view.fotos || view.noTempo || view.naMesmaData || view.progressao);
+              view.ajustes || view.modoSessao || view.revisao || view.fotos || view.noTempo || view.naMesmaData || view.progressao || view.responderDias);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -8340,6 +8340,7 @@ const FECHA_CAMADA = {
   noTempo:   function () { CTX.fechaNoTempo(); },
   naMesmaData: function () { CTX.fechaNaMesmaData(); },
   progressao: function () { CTX.fechaProgressao(); },
+  responderDias: function () { CTX.fechaResponderDias(); },
   comparar:  function () { CTX.fechaComparar(); },
   revisao:   function () { CTX.fechaRevisao(); },
   evolucao:  function () { CTX.fechaEvolucao(); },
@@ -14181,6 +14182,50 @@ CTX.abreHistoricoDaPrescricao = function (dia, i) {
   view.day = dia;
   openHist(i);
 };
+
+/**
+ * RESPONDER OS DIAS (visual novo): os 13 dias antes de hoje, cada um com a
+ * resposta que já tem ("sim", "quase", "naosei") e se já tem marca de comida.
+ * A sequência pergunta, um por tela, só os que não têm nenhuma das duas.
+ */
+function diasParaResponder() {
+  const hoje = hojeISO();
+  const porData = {};
+  (Array.isArray(S.comidaHist) ? S.comidaHist : []).forEach(function (h) { if (h && h.d) porData[h.d] = h; });
+  const out = [];
+  for (let k = 13; k >= 1; k--) {
+    const d = new Date(hoje + 'T12:00:00');
+    d.setDate(d.getDate() - k);
+    const iso = hojeISO(d.getTime());
+    const h = porData[iso];
+    out.push({ iso: iso, rotulo: maiuscula(DIAS_LONGOS[d.getDay()]) + ', ' + fmtDate(d.getTime()),
+               resposta: CTX.respostaDoDia(iso), marcado: !!(h && Object.keys(h.done || {}).length) });
+  }
+  return out;
+}
+CTX.abreResponderDias = function () {
+  const falta = diasParaResponder().filter(function (x) { return !x.resposta && !x.marcado; }).map(function (x) { return x.iso; });
+  view.responderDias = { fila: falta, i: 0 };
+  entraNoDestino('responderDias'); render(); rola(0);
+};
+CTX.fechaResponderDias = function () { view.responderDias = null; render(); saiDoDestino('responderDias'); };
+CTX.responderDiasV3 = function () {
+  const v = view.responderDias; if (!v) return null;
+  const todos = diasParaResponder();
+  const porIso = {}; todos.forEach(function (x) { porIso[x.iso] = x; });
+  const atual = v.i < v.fila.length ? porIso[v.fila[v.i]] : null;
+  return { total: v.fila.length, i: v.i, atual: atual,
+           respondidos: todos.filter(function (x) { return x.resposta || x.marcado; }).length, de: todos.length };
+};
+/** Responde o dia em tela e anda; `todos` responde o mesmo para ele e os que faltam. */
+CTX.respondeNaSequencia = function (resposta, todos) {
+  const v = view.responderDias; if (!v) return;
+  const alvo = todos ? v.fila.slice(v.i) : [v.fila[v.i]];
+  alvo.forEach(function (iso) { if (iso) CTX.respondeODia(iso, resposta); });
+  v.i = todos ? v.fila.length : v.i + 1;
+  render();
+};
+CTX.voltaUmNaSequencia = function () { const v = view.responderDias; if (v && v.i > 0) { v.i--; render(); } };
 
 CTX.quatorzeDias = function () {
   const hoje = hojeISO();

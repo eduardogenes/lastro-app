@@ -64,6 +64,8 @@ export function camadasAbertas(view) {
 
   // O dia aberto, abaixo da sessão e do registro de treino passado, que abrem dele.
   if (view.diaAberto) c.push('dia');
+  // Responder os dias (visual novo), uma tela de ação a partir de Dias ou de Semana.
+  if (view.responderDias) c.push('responderDias');
   if (view.sessao) c.push('sessao');
   if (view.add) c.push('add');
   if (view.retro) c.push('retro');

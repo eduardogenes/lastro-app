@@ -13,11 +13,13 @@ import { FolhaListaTreino, FolhaMenuSessaoV3, FolhaMudarEx, FolhaPorEmDia, Trein
 import { ExercicioV3, FolhaRenomeiaEx, Progressao } from './telas/progressao.jsx';
 import { ProgramaV3, RevisaoV3 } from './telas/programa.jsx';
 import { FolhaOQueAparece, FolhaRefeicaoV3, FolhaRegistrar, HojeV3 } from './telas/hoje.jsx';
+import { DiasV3, ResponderDias } from './telas/dias.jsx';
 export const TELAS_V3 = {
   // Fase 2
   corpo: CorpoV3,
   // Fase 4
-  agora: HojeV3
+  agora: HojeV3,
+  dias: DiasV3
 };
 
 // Destinos (tela cheia) e folhas do visual novo. A chave do destino é a da
@@ -53,7 +55,8 @@ export const DESTINOS_V3 = {
   progressao: Progressao,
   hist: ExercicioV3,
   prog: ProgramaV3,
-  revisao: RevisaoV3
+  revisao: RevisaoV3,
+  responderDias: ResponderDias
 };
 export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada, mandar: FolhaMandar,
   ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir, corrigeMarca: FolhaCorrigeMarca, bio: FolhaBioV3,
