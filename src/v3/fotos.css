@@ -454,3 +454,17 @@
 .v3-cal-c { position: absolute; bottom: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--tinta); }
 .v3-dia-txt { font-size: 15px; line-height: 1.4; margin-bottom: 10px; }
 .v3-resp-pe { display: grid; gap: 8px; width: 100%; }
+
+/* ---- Semana (Fase 4) ---------------------------------------------------- */
+.v3-crit { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1.5px solid var(--fio); }
+.v3-crit:first-child { border-top: 0; }
+.v3-crit .g { flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--menta); display: flex; align-items: center; justify-content: center; }
+.v3-crit .g.n { background: var(--tanja); }
+.v3-crit .g svg { width: 18px; height: 18px; }
+.v3-crit b { display: block; font: 700 16px/1.2 var(--f-titulo); }
+.v3-crit span { font-size: 13px; color: var(--tinta-2); line-height: 1.4; }
+.v3-musc { display: flex; align-items: center; gap: 12px; min-height: 56px; border-top: 1.5px solid var(--fio); }
+.v3-musc:first-child { border-top: 0; }
+.v3-musc-b { flex: 0 0 96px; height: 10px; border-radius: 9px; overflow: hidden; display: flex; background: var(--areia); }
+.v3-musc-b .f { background: var(--tinta); }
+.v3-musc-b .v { background: var(--lilas); }

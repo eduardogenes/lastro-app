@@ -103,7 +103,8 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Hoje: o bloco do momento (pela regra `cartaoDeCima`, com a pergunta da noite antes da refeição seguinte), a linha do dia, "se quiser" pelo que está ligado, o ritmo dos 7 dias e a pergunta de ontem | **feito** (`src/ui/v3/telas/hoje.jsx`, `ctx.hojeV3`; `tests/fluxo/v3-hoje.test.js`) |
 | O "+" com o texto livre ("almocei e tomei 2 copos", "pesei 77,6") | **feito**: a regra mora em `src/dominio/textolivre.ts` (o lote pedia `captura.ts`, que já é das luzes da câmera), com teste; só o que tem certeza vira registro |
 | Dias (o mês em grade com a letra do treino e a marca da comida, o dia escolhido com a pergunta) e responder os dias (um por tela, voltar um, "os que faltam") | **feito** (`src/ui/v3/telas/dias.jsx`; `tests/fluxo/v3-dias.test.js`). Abrir o dia ainda usa a tela antiga do dia |
-| Semana, Plano (comida, alimentos, compras), Ajustes, primeira vez, estados | a fazer |
+| Semana: o veredito da comida com o que a regra olha, e as séries por região separando feitas de ainda vêm | **feito** (`treinosQueVem` e `somaPorGrupo` em `src/dominio/volume.ts`, com teste; `src/ui/v3/telas/semana.jsx`) |
+| Plano (comida, alimentos, compras), Ajustes, primeira vez, estados | a fazer |
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta

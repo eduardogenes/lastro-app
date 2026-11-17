@@ -76,7 +76,7 @@ import {
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
-         seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
+         seriesPorMusculo as _seriesPorMusculo, leituraDaSemana, treinosQueVem, somaPorGrupo } from './dominio/volume';
 import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGRA_DA_FITA, REGRA_DA_DOBRA, MEDIDAS_DE_DOBRA, ORDEM_DE_MEDIR, CONFERIR_ACIMA, doMeio, mediaDaFita, pedeTerceira, passoDaLeitura, naMesmaData, pesoDaSemana, medidaDoCorpo, ondeMediu,
          mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
@@ -8952,6 +8952,40 @@ async function gravaOPasso(muda, oQue) {
   render();
   return true;
 }
+
+/**
+ * A SEMANA no visual novo (Fase 4): o veredito do nutricionista com o que a
+ * regra olha, e as séries por região do corpo separando as feitas das que
+ * ainda vêm (`treinosQueVem`, em dominio/volume.ts).
+ */
+CTX.semanaV3 = function () {
+  const D = CTX.dados();
+  const agora = Date.now();
+  const semana = weekStart(agora);
+  const feitas = seriesPorMusculo(semana, agora + 1);
+  const treinouHoje = (S.done || []).some(function (x) { return x && !x.livre && sameDay(x.t, agora); }) || !!S.sessao;
+  const vemDias = treinosQueVem(rot(), proximoTreino(S, ROT_BASE), cadenciaDaSemana(), new Date(agora).getDay(), treinouHoje)
+    .filter(function (d) { return treino(d) && !diaAberto(d); });
+  const vem = somaPorGrupo(vemDias.map(function (d) {
+    const r = {};
+    treino(d).ex.forEach(function (ex) { if (ex.g) r[ex.g] = (r[ex.g] || 0) + setsFor(ex); });
+    return r;
+  }));
+  const porRegiao = {};
+  Object.keys(Object.assign({}, feitas, vem)).forEach(function (g) {
+    const reg = regiaoDe(g);
+    const x = porRegiao[reg] || (porRegiao[reg] = { regiao: reg, feitas: 0, vem: 0, musculos: [] });
+    x.feitas += feitas[g] || 0; x.vem += vem[g] || 0;
+    x.musculos.push({ g: g, feitas: feitas[g] || 0, vem: vem[g] || 0 });
+  });
+  return {
+    veredito: D.veredito,
+    dia: Math.min(7, Math.floor((agora - semana) / 86400000) + 1),
+    vemDias: vemDias,
+    regioes: Object.keys(porRegiao).map(function (k) { return porRegiao[k]; })
+      .sort(function (a, b) { return (b.feitas + b.vem) - (a.feitas + a.vem); })
+  };
+};
 
 CTX.aplicaAjuste = async function () {
   const v = veredito();

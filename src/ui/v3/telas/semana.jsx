@@ -1,0 +1,73 @@
+// A SEMANA no visual novo (Fase 4): o que fazer com a comida (o veredito do
+// nutricionista e o que a regra olha) e as séries da semana por região do
+// corpo, separando as feitas das que ainda vêm. Protótipo: docs/redesign-3/
+// prototipos/hoje.html ("Semana"). Dados: `ctx.semanaV3`.
+
+import { ic } from '../icones.jsx';
+import { Acoes, Apoio, Bloco, Botao, Folha, Linha, Saida, Secao } from '../base.jsx';
+
+export function SemanaV3({ ctx }) {
+  const s = ctx.semanaV3();
+  const v = s.veredito;
+  const precisaDias = (v.portoes || []).some(g => g.k === 'adesao' && !g.ok);
+  return (
+    <div class="v3">
+      <Bloco cor="ceu" chave={'semana-' + v.t} linha0={<><span>Semana</span><span>o que fazer com a comida</span></>}
+             titulo={v.t} medio={v.t.length > 14} apoio={v.p}>
+        <Acoes>
+          {v.podeAplicar && v.acaoTxt && <Botao data-a="semana-aplica" onClick={ctx.aplicaAjuste}>{v.acaoTxt.charAt(0).toUpperCase() + v.acaoTxt.slice(1)}</Botao>}
+          {precisaDias && <Botao tipo={v.podeAplicar ? 'contorno' : 'principal'} data-a="semana-responder" onClick={ctx.abreResponderDias}>Responder os dias</Botao>}
+        </Acoes>
+        {v.naoVolta && <p class="v3-bloco-a">{v.naoVolta}</p>}
+        {v.podeDesfazer && <Saida data-a="semana-desfaz" onClick={ctx.desfazAjuste}>Desfazer o último ajuste</Saida>}
+      </Bloco>
+      {v.portoes && (
+        <Secao titulo="O que a regra olha">
+          <div>
+            {v.portoes.map(g => (
+              <div key={g.k} class="v3-crit">
+                <span class={'g' + (g.ok ? '' : ' n')}>{g.ok ? ic.ok : ic.x}</span>
+                <div><b>{g.t}</b><span>{g.d}</span></div>
+              </div>
+            ))}
+          </div>
+          {v.promessa && <Apoio>{v.promessa}</Apoio>}
+        </Secao>
+      )}
+      {v.estado && <Secao><Apoio>{v.estado}</Apoio></Secao>}
+      <Secao titulo="Séries da semana" nota={'dia ' + s.dia + ' de 7' + (s.vemDias.length ? ' · ainda vêm: ' + s.vemDias.join(', ') : '')}>
+        <div>
+          {s.regioes.map(r => (
+            <Linha key={r.regiao} titulo={r.regiao.charAt(0).toUpperCase() + r.regiao.slice(1)}
+                   apoio={r.feitas + ' feitas' + (r.vem ? ' · ' + r.vem + ' ainda vêm' : '')}
+                   valor={String(r.feitas + r.vem)} unidade="na semana" data-a={'semana-' + r.regiao}
+                   aoTocar={() => ctx.abreFolha({ k: 'musculos', regiao: r.regiao })} />
+          ))}
+        </div>
+        <Apoio>"Ainda vêm" são as séries dos treinos que faltam nesta semana, pela rotação e pelos dias de treino.</Apoio>
+      </Secao>
+      <div class="v3-fim-da-tela" />
+    </div>
+  );
+}
+
+/** Os músculos de uma região: feitas e as que ainda vêm. */
+export function FolhaMusculos({ ctx, f }) {
+  const r = ctx.semanaV3().regioes.filter(x => x.regiao === f.regiao)[0];
+  if (!r) return null;
+  return (
+    <Folha titulo={r.regiao.charAt(0).toUpperCase() + r.regiao.slice(1)} sub={r.feitas + ' séries feitas e ' + r.vem + ' que ainda vêm nesta semana.'} aoFechar={() => ctx.fechaFolha()}>
+      <div>
+        {r.musculos.map(m => (
+          <div key={m.g} class="v3-musc">
+            <span class="v3-lin-t"><b>{m.g}</b><span>{m.feitas} feitas{m.vem ? ' · ' + m.vem + ' ainda vêm' : ''}</span></span>
+            <span class="v3-musc-b" aria-hidden="true">
+              <i class="f" style={'flex:' + m.feitas} /><i class="v" style={'flex:' + m.vem} />
+            </span>
+          </div>
+        ))}
+      </div>
+      <Acoes><Botao onClick={() => ctx.fechaFolha()}>Fechar</Botao></Acoes>
+    </Folha>
+  );
+}

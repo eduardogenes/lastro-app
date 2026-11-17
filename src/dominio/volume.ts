@@ -310,3 +310,30 @@ export function leituraDaSemana(
 
   return out;
 }
+
+/**
+ * O QUE AINDA VEM NA SEMANA (direção 3, a Semana): os treinos que faltam, a
+ * partir do próximo da rotação, um por dia de treino que resta na semana pela
+ * cadência. Hoje conta se ainda não houve treino hoje. Domingo fecha a semana.
+ */
+export function treinosQueVem(
+  rotacao: string[], proximo: string, cadencia: Array<'treino' | 'descanso'>, hojeDow: number, treinouHoje: boolean
+): string[] {
+  if (!rotacao.length) return [];
+  let i = Math.max(0, rotacao.indexOf(proximo));
+  const out: string[] = [];
+  // da semana que começa no domingo (0), os dias de hoje (se ainda vale) até sábado (6)
+  for (let d = treinouHoje ? hojeDow + 1 : hojeDow; d <= 6; d++) {
+    if (cadencia[d] !== 'treino') continue;
+    out.push(rotacao[i % rotacao.length]);
+    i++;
+  }
+  return out;
+}
+
+/** As séries por músculo de uma lista de treinos (cada um como `{ grupo: séries }`). */
+export function somaPorGrupo(treinos: Array<Record<string, number>>): Record<string, number> {
+  const r: Record<string, number> = {};
+  treinos.forEach(function (t) { Object.keys(t || {}).forEach(function (g) { r[g] = (r[g] || 0) + (t[g] || 0); }); });
+  return r;
+}

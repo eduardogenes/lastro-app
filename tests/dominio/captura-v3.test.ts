@@ -147,3 +147,15 @@ test('intervalo longo: três vezes o descanso, e nunca menos de seis minutos', a
   assert.strictEqual(intervaloLongo(0, 9 * 60000 + 1, 180), true);
   assert.strictEqual(intervaloLongo(null, 1e12, 180), false, 'sem série, sem pergunta');
 });
+
+test('o que ainda vem na semana: um treino por dia de treino que resta, seguindo a rotação', async () => {
+  const { treinosQueVem, somaPorGrupo } = await import('../../src/dominio/volume');
+  const cad = ['descanso', 'treino', 'treino', 'treino', 'treino', 'treino', 'treino'] as Array<'treino' | 'descanso'>;
+  assert.deepStrictEqual(treinosQueVem(['A', 'B', 'C', 'D', 'E', 'HX'], 'C', cad, 3, false), ['C', 'D', 'E', 'HX'], 'quarta sem treino ainda: de hoje a sábado');
+  assert.deepStrictEqual(treinosQueVem(['A', 'B', 'C', 'D', 'E', 'HX'], 'D', cad, 3, true), ['D', 'E', 'HX'], 'treinou hoje: a partir de amanhã');
+  assert.deepStrictEqual(treinosQueVem(['A', 'B'], 'B', cad, 4, false), ['B', 'A', 'B'], 'a rotação dá a volta');
+  assert.deepStrictEqual(treinosQueVem(['A'], 'A', cad, 0, false).length, 6, 'domingo é descanso e não conta');
+  assert.deepStrictEqual(treinosQueVem([], 'A', cad, 1, false), []);
+  assert.deepStrictEqual(somaPorGrupo([{ peito: 3, ombro: 2 }, { peito: 4 }]), { peito: 7, ombro: 2 });
+});
+
