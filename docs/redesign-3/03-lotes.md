@@ -95,6 +95,18 @@ de [`prototipos/hoje.html`](prototipos/hoje.html).
 | **Bioimpedância** | `ctx.bioimpedancia()` | `ctx.registraBio`, `ctx.apagaLeituraBio` | a nova leitura no fluxo uma-por-tela |
 | **Tudo na mesma data** (destino) | `S.body`, `S.protocolo` | arrastar o cursor | `ctx.naMesmaDataV3(t)`: para uma data, a leitura mais recente de cada medida e a sessão de fotos mais próxima, com a data de cada uma. Regra em `src/dominio/corpo.ts`, com teste |
 
+Decidido na construção:
+
+- **Dobra não tem "guardar só esta"**: a regra dela é medir três vezes e
+  gravar a do meio (`REGRA_DA_DOBRA`), e uma leitura só não é essa medida. A
+  fita mantém a saída, como o lote pede.
+- **"Medir agora" é a mesma porta (`ctx.abreMedidas`)**: no visual novo ela
+  abre o fluxo de uma por tela, inclusive vindo do fim da sessão de fotos.
+- **Pesar pela régua grava na hora**; pesar de novo no mesmo dia corrige a
+  pesagem do dia, como sempre foi (uma por dia).
+- **A régua posiciona a fita de forma síncrona** (`useLayoutEffect`): com o
+  efeito no quadro seguinte, um toque rápido no "+" era desfeito.
+
 Testes a reescrever: `corpo`.
 
 ## Fase 3 · Treino

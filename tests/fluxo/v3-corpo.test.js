@@ -1,0 +1,130 @@
+// O Corpo no visual novo (direção 3, Fase 2): pesar pela régua, ligar e
+// desligar medidas, e o "medir agora" de uma medida por tela, com a segunda
+// leitura sempre pedida e a terceira quando as duas diferem.
+// Especificação: docs/redesign-3/03-lotes.md, Fase 2.
+
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app } from './harness.js';
+
+async function corpo(antes) {
+  const a = await app({ aba: 'corpo' });
+  await a.pronto();
+  if (antes) antes(a);
+  a.E('CTX.alternaVisual()');
+  await a.esperar();
+  return a;
+}
+const hojeNoPeso = a => a.S().body.peso.filter(x => new Date(x.t).toDateString() === new Date(Date.now()).toDateString());
+const mais = async (a, n = 1) => { for (let i = 0; i < n; i++) { a.clicar('.v3-regua-p button:last-child'); await a.esperar(5); } };
+const leituras = (a, k) => a.S().body[k].slice(-1)[0];
+
+test('pesar pela régua: guarda a de hoje, e mexer de novo corrige a mesma', async () => {
+  const a = await corpo(x => x.E(`S.body.peso = [{ t: Date.now() - 3 * 86400000, v: 77.6, m: 1 }]`));
+  assert.ok(a.$('.v3-bloco'), 'o Corpo novo');
+  assert.strictEqual(a.texto('.v3-gigante'), '77,6kg');
+  await mais(a, 2);
+  await a.esperar();
+  assert.strictEqual(a.texto('.v3-gigante'), '77,8kg');
+  a.clicar('[data-a="corpo-pesa"]');
+  await a.esperar(60);
+  assert.deepStrictEqual(hojeNoPeso(a).map(x => x.v), [77.8]);
+  assert.ok(/Guardado hoje/.test(a.texto('[data-a="corpo-pesa"]')));
+
+  await mais(a);
+  await a.esperar();
+  assert.ok(/Corrigir para 77,9/.test(a.texto('[data-a="corpo-pesa"]')));
+  a.clicar('[data-a="corpo-pesa"]');
+  await a.esperar(60);
+  assert.deepStrictEqual(hojeNoPeso(a).map(x => x.v), [77.9], 'uma pesagem por dia: corrigiu, não somou');
+  a.fechar();
+});
+
+test('mais medidas: ligar a coxa e as dobras as põe na lista e na fila de medir', async () => {
+  const a = await corpo();
+  const antes = a.$$('[data-a^="corpo-medida-"]').length;
+  a.clicar('[data-a="corpo-ligar"]');
+  await a.esperar(40);
+  a.clicar('[data-a="ligar-coxa"]');
+  a.clicar('[data-a="ligar-dobras"]');
+  await a.esperar(40);
+  a.v('ctx.fechaFolha');
+  await a.esperar();
+  assert.ok(a.$('[data-a="corpo-medida-coxa"]'), 'a coxa entrou');
+  assert.ok(a.$('[data-a="corpo-medida-dobraAbdominal"]'), 'e as dobras');
+  assert.strictEqual(a.$$('[data-a^="corpo-medida-"]').length, antes + 4);
+  a.clicar('[data-a="corpo-medir"]');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.medirV3').total, antes + 4, 'a fila de medir é a das ligadas');
+  a.fechar();
+});
+
+test('medir agora: a segunda sempre pedida, a terceira quando diferem, e "guardar só esta" grava uma leitura', async () => {
+  const a = await corpo(x => x.E(`S.body.cintura = [{ t: Date.now() - 20 * 86400000, v: 85, m: 1 }]; S.body.braco = [];`));
+  a.clicar('[data-a="corpo-medir"]');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.medirV3').m.k, 'braco', 'a ordem de medir do protocolo');
+  assert.ok(a.$('.v3-acao'), 'tela de ação');
+  assert.ok(/primeira vez: comece perto de 35/.test(a.texto('.v3-medir-f')), a.texto('.v3-medir-f'));
+
+  a.clicar('[data-a="medir-guarda"]');                      // 1ª: 35,0
+  await a.esperar();
+  assert.ok(/Guardar a 2ª/.test(a.texto('[data-a="medir-guarda"]')), 'a segunda é pedida');
+  assert.ok(a.$('[data-a="medir-so-esta"]'), 'com a saída de guardar só esta');
+  await mais(a, 10);                                               // 36,0: difere 1,0
+  await a.esperar();
+  a.clicar('[data-a="medir-guarda"]');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.medirV3').passo, 3, 'diferem mais de 0,5: a terceira');
+  assert.ok(/diferem 1/.test(a.texto('.v3-medir-f')), 'frase: ' + a.texto('.v3-medir-f'));
+  a.clicar('[data-a="medir-guarda"]');                      // 3ª: 36,0
+  await a.esperar();
+  a.clicar('[data-a="medir-segue"]');
+  await a.esperar();
+
+  assert.strictEqual(a.vJ('ctx.medirV3').m.k, 'cintura', 'a próxima medida');
+  assert.ok(/da última vez: 85/.test(a.texto('.v3-medir-f')), 'parte da última: ' + a.texto('.v3-medir-f'));
+  a.clicar('[data-a="medir-guarda"]');
+  await a.esperar();
+  a.clicar('[data-a="medir-so-esta"]');
+  await a.esperar(80);
+
+  assert.strictEqual(leituras(a, 'braco').n, 3, 'braço com três leituras');
+  assert.strictEqual(leituras(a, 'cintura').n, 1, 'cintura com uma só');
+  assert.ok(a.texto('.v3-sec').includes('uma leitura só'), 'e o resumo diz');
+  a.clicar('[data-a="medido-fecha"]');
+  await a.esperar();
+  assert.strictEqual(a.vista().medidas, null);
+  a.fechar();
+});
+
+test('dobra: três leituras sempre, sem "guardar só esta", e grava a do meio', async () => {
+  const a = await corpo(x => x.E(`S.modulos = { dobras: 1, fita: { cintura: 0, braco: 0 } }`));
+  a.v('ctx.abreMedirAgora');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.medirV3').m.dobra, true);
+  a.clicar('[data-a="medir-guarda"]');
+  await a.esperar();
+  assert.ok(!a.$('[data-a="medir-so-esta"]'), 'na dobra não há guardar só esta');
+  await mais(a, 2);
+  await a.esperar();
+  a.clicar('[data-a="medir-guarda"]');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.medirV3').passo, 3, 'a terceira, mesmo batendo');
+  await mais(a, 4);
+  await a.esperar();
+  a.clicar('[data-a="medir-guarda"]');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.medirV3').grava, '13,0', 'a do meio de 12, 13 e 15');
+  a.fechar();
+});
+
+test('o fim das fotos leva ao medir agora do visual novo', async () => {
+  const a = await corpo();
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.medirDepoisDasFotos');
+  await a.esperar();
+  assert.ok(a.vJ('ctx.medirV3'), 'o mesmo fluxo de uma por tela');
+  assert.ok(a.$('.v3-acao'));
+  a.fechar();
+});

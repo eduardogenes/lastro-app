@@ -7,7 +7,11 @@
 //
 // Cada tela nova embrulha o próprio conteúdo em `<div class="v3">`: é essa
 // classe que liga os estilos do visual novo, e o `<main>` do app fica como é.
-export const TELAS_V3 = {};
+import { CorpoV3, FolhaComoMedir, FolhaLigarMedidas, MedirAgora } from './telas/corpo.jsx';
+export const TELAS_V3 = {
+  // Fase 2
+  corpo: CorpoV3
+};
 
 // Destinos (tela cheia) e folhas do visual novo. A chave do destino é a da
 // camada em `camadasAbertas()` (`src/ui/navegacao.js`: `galeria`, `comparar`,
@@ -31,6 +35,9 @@ export const DESTINOS_V3 = {
   galeria: GaleriaV3,
   galeriaFoto: GaleriaFotoV3,
   lixeira: LixeiraV3,
-  ajuste: AjustarV3
+  ajuste: AjustarV3,
+  // Fase 2, corpo
+  medidas: MedirAgora
 };
-export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada, mandar: FolhaMandar };
+export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada, mandar: FolhaMandar,
+  ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir };

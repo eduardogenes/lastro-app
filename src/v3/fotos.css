@@ -275,3 +275,17 @@
 .v3 .v3-sug-ver { box-shadow: inset 0 0 0 2px var(--tinta); }
 .v3 .v3-sug-ver[aria-pressed="true"] { background: var(--branco); }
 .v3 .v3-sug-sim { background: var(--tinta); color: var(--papel); }
+
+/* ---- Corpo (Fase 2) ----------------------------------------------------- */
+.v3-mini { display: block; width: 100%; height: 26px; margin-top: 6px; color: var(--tinta); }
+.v3 .v3-fita-b { display: flex; width: 100%; border-radius: 12px; }
+.v3-fim-da-tela { height: calc(var(--doca-h) + 44px + var(--sa-bottom, 0px)); }
+.v3-ligar { margin-top: 10px; }
+.v3-como { font-size: 15px; line-height: 1.45; margin-top: 12px; }
+.v3-medir-onde { margin-top: 14px; font-size: 14px; }
+.v3-medir-n { font: 800 34px/1 var(--f-titulo); letter-spacing: -.03em; margin-top: 6px; text-wrap: balance; }
+.v3-medir-f { font-size: 15px; line-height: 1.4; margin-top: 10px; min-height: 42px; }
+.v3-leituras { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.v3-leituras span { min-height: 30px; padding: 0 11px; display: inline-flex; align-items: center; border-radius: var(--r-pilula); background: var(--branco); font: 700 13px var(--f-titulo); }
+.v3-leituras span.m { background: var(--tinta); color: var(--papel); }
+.v3-vazio-alvo { min-width: var(--alvo); }

@@ -850,3 +850,19 @@ export function cinturaMes(cintura: Marca[]): Cintura | null {
   if (dias < 21) return null;
   return { W, last, ref, dias, delta: last.v - ref.v, mes: (last.v - ref.v) / (dias / 30) };
 }
+
+/**
+ * MEDIR AGORA, uma medida por tela (direção 3): o que pedir depois das
+ * leituras já guardadas. Fita: a segunda sempre, e a terceira quando as duas
+ * diferem mais que a regra (`pedeTerceira`). Dobra: três, e grava a do meio
+ * (REGRA_DA_DOBRA). `pronta` é quando a medida já pode seguir.
+ */
+export type PassoDaLeitura = 1 | 2 | 3 | 'pronta';
+export function passoDaLeitura(dobra: boolean, leituras: number[]): PassoDaLeitura {
+  const n = leituras.length;
+  if (dobra) return n >= 3 ? 'pronta' : ((n + 1) as 1 | 2 | 3);
+  if (n === 0) return 1;
+  if (n === 1) return 2;
+  if (n === 2) return pedeTerceira(leituras[0], leituras[1]) ? 3 : 'pronta';
+  return 'pronta';
+}

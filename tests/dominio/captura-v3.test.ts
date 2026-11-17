@@ -95,3 +95,14 @@ test('o que mudou é lido limpo: sem valor estranho, sem repetição, na ordem f
   assert.deepStrictEqual(mudancasDaSessao('luz'), []);
   assert.strictEqual(textoDaMudanca(['lugar']), 'outro lugar');
 });
+
+test('medir agora: a fita pede a segunda sempre e a terceira só quando diferem; a dobra pede três', async () => {
+  const { passoDaLeitura } = await import('../../src/dominio/corpo');
+  assert.strictEqual(passoDaLeitura(false, []), 1);
+  assert.strictEqual(passoDaLeitura(false, [85]), 2, 'a segunda sempre');
+  assert.strictEqual(passoDaLeitura(false, [85, 85.4]), 'pronta', 'batendo, segue');
+  assert.strictEqual(passoDaLeitura(false, [85, 86]), 3, 'diferindo mais de 0,5, a terceira');
+  assert.strictEqual(passoDaLeitura(false, [85, 86, 85.5]), 'pronta');
+  assert.strictEqual(passoDaLeitura(true, [12, 12]), 3, 'a dobra pede três mesmo batendo');
+  assert.strictEqual(passoDaLeitura(true, [12, 12, 13]), 'pronta');
+});

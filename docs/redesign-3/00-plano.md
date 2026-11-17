@@ -78,6 +78,12 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Mostrar ao dono as decisões da captura | **respondido** em 17/11/2026: voz de ajuste só sozinho, tremida conta como fora do padrão, alinhamento só sugerido (ele aceita), sozinho conta 5, no fim "Medir agora". **Fase 1 fechada** |
 | Detecção do corpo na câmera | **feito**: luzes de altura e distância sozinhas, frase do que mexer, disparo sozinho com a pessoa parada, `Captura.det`, queda para as linhas (ver [02-captura.md](02-captura.md), "Como ficou no código") |
 
+| Fase 2 | Estado |
+|---|---|
+| Corpo (lugar): peso pela régua, evolução, medidas ligadas e "Mais N medidas", bioimpedância, fotos (a entrada do centro das fotos) | **feito** (`src/ui/v3/telas/corpo.jsx`, `ctx.corpoV3`, `ctx.pesaHoje`; `tests/fluxo/v3-corpo.test.js`) |
+| Medir agora, uma medida por tela | **feito**: a segunda leitura sempre pedida, a terceira quando diferem, "guardar só esta" grava `Marca.n = 1`; dobra com três leituras e a do meio (`passoDaLeitura` em `src/dominio/corpo.ts`). Toda porta que abria o formulário antigo abre este no visual novo |
+| Peso, uma medida, bioimpedância, tudo na mesma data | a fazer |
+
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
 máquina e passam sozinhos. Antes de tratar como regressão, rodar o arquivo

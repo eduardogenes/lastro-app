@@ -4,7 +4,7 @@
 // é o passo que está sob o ponteiro do centro. Para quem não arrasta, há os
 // botões de passo embaixo e as setas do teclado: a régua é um `slider`.
 
-import { useEffect, useRef } from 'preact/hooks';
+import { useLayoutEffect, useRef } from 'preact/hooks';
 
 const arred = v => Math.round(v * 1000) / 1000;
 const txt = v => String(v).replace('.', ',');
@@ -28,7 +28,11 @@ export function Regua({ min, max, passo, valor, cada, largura = 14, aoMudar, rot
   // Põe a fita no valor quando ele muda POR FORA (outra série, outro campo).
   // Enquanto o dedo arrasta, o valor que volta é o que a própria fita mandou,
   // e mexer na rolagem aí brigaria com o dedo.
-  useEffect(() => {
+  //
+  // Síncrono, logo depois do desenho, e não no quadro seguinte: com
+  // `useEffect` o acerto da montagem rodava depois de um toque rápido no "+",
+  // e devolvia a fita ao valor de antes, desfazendo o toque.
+  useLayoutEffect(() => {
     const r = el.current;
     if (!r) return;
     if (arred(valor) !== arred(ultimo.current) || r.dataset.pronta !== '1') {
