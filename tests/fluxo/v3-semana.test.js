@@ -41,3 +41,20 @@ test('com a adesão faltando, o caminho é responder os dias', async () => {
   assert.ok(a.vJ('ctx.responderDiasV3'), 'abre a sequência de responder os dias');
   a.fechar();
 });
+
+test('a retrospectiva do bloco abre da Semana, na tela nova, e fechar volta', async () => {
+  const a = await app({ aba: 'semana', agora: agoraEstavel(10), estado: { logs: {}, done: [] } });
+  await a.pronto();
+  a.E('CTX.alternaVisual()');
+  a.v('ctx.fechaModoDeSessao');
+  await a.esperar();
+  a.clicar('[data-a="semana-retro"]');
+  await a.esperar(40);
+  assert.strictEqual(a.texto('.v3-cab h1'), 'O bloco');
+  assert.ok(!a.$('.tc-res, .retro-fim'), 'e não a antiga');
+  assert.ok(a.$('.v3-vazio'), 'sem sessões, diz que ainda é cedo');
+  a.clicar('[data-a="retro-fecha"]');
+  await a.esperar(40);
+  assert.ok(a.$('[data-a="semana-retro"]'), 'de volta à Semana');
+  a.fechar();
+});

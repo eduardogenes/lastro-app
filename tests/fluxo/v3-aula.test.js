@@ -68,3 +68,17 @@ test('a lista rápida grava o valor em todas as passadas, e "série por série" 
   assert.ok(a.$('[data-a="serie-feita"]'), 'série por série');
   a.fechar();
 });
+
+test('"+ Movimento" na aula abre o catálogo, e o movimento entra só no dia', async () => {
+  const a = await naAula();
+  a.clicar('[data-a="aula-add"]');
+  await a.esperar(40);
+  assert.ok(a.$('#catalogo-busca'), 'o catálogo (antes o toque não mostrava nada)');
+  assert.ok(/Só no treino de hoje/.test(a.texto('.v3-folha-s')));
+  const alvo = a.$('[data-a="catalogo-wall-balls"]') || a.$('[data-a^="catalogo-"]:not([data-a="catalogo-novo"])');
+  const id = alvo.getAttribute('data-a').slice(9);
+  alvo.click();
+  await a.esperar(60);
+  assert.ok(a.vJ('treino', 'HX').ex.some(x => x.id === id), 'entrou no dia');
+  a.fechar();
+});

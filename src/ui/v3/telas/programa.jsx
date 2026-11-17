@@ -125,8 +125,7 @@ function EditorV3({ ctx, p }) {
     </>
   );
 }
-// o catálogo de adicionar exercício continua na tela antiga do programa
-ProgramaV3.so = view => !(view.prog && view.addEx);
+// o catálogo de adicionar exercício é a folha `catalogo` (catalogo.jsx)
 
 // ---------- revisão do treinador ----------
 

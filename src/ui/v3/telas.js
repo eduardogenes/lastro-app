@@ -10,13 +10,14 @@
 import { CorpoV3, FolhaComoMedir, FolhaLigarMedidas, MedirAgora } from './telas/corpo.jsx';
 import { FolhaBioV3, FolhaCorrigeMarca, MedidaV3, NaMesmaData, PesoV3 } from './telas/corpoconsulta.jsx';
 import { FolhaListaTreino, FolhaMenuSessaoV3, FolhaMudarEx, FolhaPorEmDia, TreinoEmFoco } from './telas/treino.jsx';
-import { ExercicioV3, FolhaRenomeiaEx, Progressao } from './telas/progressao.jsx';
+import { ExercicioV3, FolhaFotoV3, FolhaRenomeiaEx, Progressao } from './telas/progressao.jsx';
 import { ProgramaV3, RevisaoV3 } from './telas/programa.jsx';
 import { FolhaCardioV3, FolhaOQueAparece, FolhaRefeicaoV3, FolhaRegistrar, FolhaTipoDoDia, HojeV3 } from './telas/hoje.jsx';
 import { DiasV3, ResponderDias } from './telas/dias.jsx';
-import { FolhaMusculos, SemanaV3 } from './telas/semana.jsx';
+import { FolhaMusculos, RetrospectivaV3, SemanaV3 } from './telas/semana.jsx';
 import { FolhaAlimentos, FolhaCompras, FolhaRefeicaoDoPlano, PlanoV3 } from './telas/plano.jsx';
 import { AjustesV3 } from './telas/ajustes.jsx';
+import { FolhaCatalogo } from './telas/catalogo.jsx';
 import { FolhaEditaAlimentoV3, FolhaEditaRefeicaoV3, FolhaSeletorV3 } from './telas/comida.jsx';
 import { DiaAbertoV3, FolhaPoeODiaV3, FolhaSeriePassada, RegistrarPassadoV3, SessaoPassadaV3 } from './telas/diaaberto.jsx';
 export const TELAS_V3 = {
@@ -68,12 +69,13 @@ export const DESTINOS_V3 = {
   // antes da Fase 5: o dia, a sessão passada, o treino que não foi anotado
   dia: DiaAbertoV3,
   sessao: SessaoPassadaV3,
-  add: RegistrarPassadoV3
+  add: RegistrarPassadoV3,
+  retro: RetrospectivaV3
 };
 export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada, mandar: FolhaMandar,
   ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir, corrigeMarca: FolhaCorrigeMarca, bio: FolhaBioV3,
   listaTreino: FolhaListaTreino, mudarEx: FolhaMudarEx, menuSessao: FolhaMenuSessaoV3, porEmDia: FolhaPorEmDia,
   renomeiaEx: FolhaRenomeiaEx,
   registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, poeODia: FolhaPoeODiaV3, seriePassada: FolhaSeriePassada,
-  editaRefeicao: FolhaEditaRefeicaoV3, seletor: FolhaSeletorV3, editaAlimento: FolhaEditaAlimentoV3, refeicao: FolhaRefeicaoV3, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos,
+  editaRefeicao: FolhaEditaRefeicaoV3, seletor: FolhaSeletorV3, editaAlimento: FolhaEditaAlimentoV3, catalogo: FolhaCatalogo, foto: FolhaFotoV3, refeicao: FolhaRefeicaoV3, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos,
   refeicaoDoPlano: FolhaRefeicaoDoPlano, alimentos: FolhaAlimentos, compras: FolhaCompras };

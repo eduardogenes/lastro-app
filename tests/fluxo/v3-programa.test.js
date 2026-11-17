@@ -48,14 +48,52 @@ test('o programa: os treinos, e o editor muda séries com a faixa por músculo d
   a.fechar();
 });
 
-test('adicionar exercício abre o catálogo de sempre, na mesma camada', async () => {
+test('adicionar exercício: o catálogo é uma folha sobre o editor, busca e põe no programa', async () => {
   const a = await noPrograma();
   a.clicar('[data-a="prog-dia-A"]');
   await a.esperar();
   a.clicar('[data-a="ed-add"]');
+  await a.esperar(40);
+  assert.ok(a.$('#catalogo-busca'), 'o catálogo novo');
+  assert.ok(!a.$('.addex'), 'e não o antigo');
+  assert.ok(/^Treino A/.test(a.texto('.v3-cab h1')), 'o editor continua por baixo');
+  const busca = a.$('#catalogo-busca');
+  busca.value = 'remo';
+  busca.dispatchEvent(new a.window.Event('input', { bubbles: true }));
   await a.esperar();
-  assert.ok(a.vista().addEx, 'o catálogo abriu');
-  assert.ok(!a.$('.v3-ed'), 'pela tela que sabe adicionar');
+  const alvo = a.$('[data-a^="catalogo-"]:not([data-a="catalogo-novo"])');
+  assert.ok(alvo, 'a busca acha');
+  const id = alvo.getAttribute('data-a').slice(9);
+  const antes = a.E('S.prog.A.ex.length');
+  alvo.click();
+  await a.esperar(60);
+  assert.strictEqual(a.E('S.prog.A.ex.length'), antes + 1);
+  assert.strictEqual(a.E('S.prog.A.ex[S.prog.A.ex.length - 1].id'), id, 'entrou no programa');
+  assert.ok(!a.$('#catalogo-busca'), 'e a folha fecha');
+  a.fechar();
+});
+
+test('cadastrar um exercício novo pelo catálogo: só com nome, e já entra no treino', async () => {
+  const a = await noPrograma();
+  a.clicar('[data-a="prog-dia-A"]');
+  await a.esperar();
+  a.clicar('[data-a="ed-add"]');
+  await a.esperar(40);
+  a.clicar('[data-a="catalogo-novo"]');
+  await a.esperar();
+  assert.ok(a.$('[data-a="novo-ex-cria"]').disabled, 'sem nome, não cria');
+  const nome = a.$('#novo-ex-nome');
+  nome.value = 'Remada articulada do box';
+  nome.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  await a.esperar();
+  a.clicar('[data-a="novo-ex-composto"]');
+  await a.esperar();
+  a.clicar('[data-a="novo-ex-cria"]');
+  await a.esperar(80);
+  const ult = a.E('S.prog.A.ex[S.prog.A.ex.length - 1].id');
+  assert.strictEqual(a.E(`S.ex[${JSON.stringify(ult)}].n`), 'Remada articulada do box');
+  assert.strictEqual(a.E(`S.ex[${JSON.stringify(ult)}].c`), 1, 'composto');
+  assert.ok(!a.$('#novo-ex-nome'), 'a folha fecha');
   a.fechar();
 });
 

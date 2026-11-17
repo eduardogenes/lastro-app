@@ -56,3 +56,21 @@ test('um exercício: o próximo passo diz para quanto subir, e sessão a sessão
   assert.ok(!a.$('[data-a="ex-sessao"]'));
   a.fechar();
 });
+
+test('a foto do aparelho: abre do exercício na folha nova, e apagar passa pela confirmação', async () => {
+  const a = await comHistorico();
+  const id = a.E(`treino('A').ex[0].id`);
+  a.E(`S.fotos = Object.assign({}, S.fotos, { [${JSON.stringify(id)}]: { v: 1, ext: 'webp' } })`);
+  a.v('ctx.abreExercicioV3', 'A', 0);
+  await a.esperar(40);
+  a.clicar('[data-a="ex-foto"]');
+  await a.esperar(40);
+  assert.ok(a.$('[data-a="foto-tira"]'), 'a folha nova');
+  assert.ok(!a.$('.fotoex, .foto-vazio'), 'e não a antiga');
+  assert.strictEqual(a.E('fotoAberta()'), id, 'é a foto deste exercício que muda');
+  a.clicar('[data-a="foto-apaga"]');
+  await a.esperar(80);
+  assert.ok(a.perguntas().some(p => /Apagar a foto do equipamento/.test(p)), 'perguntou antes');
+  assert.ok(!a.E(`S.fotos[${JSON.stringify(id)}]`), 'apagou');
+  a.fechar();
+});

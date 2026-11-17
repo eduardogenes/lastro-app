@@ -335,6 +335,8 @@ export function FolhaMudarEx({ ctx, f }) {
           <>
             {m.podeMaisSerie && <Linha titulo="Mais uma série" apoio="só hoje" mais data-a="mudar-mais" aoTocar={faz(() => a.maisUmaSerie(f.i))} />}
             {m.proximo && <Linha titulo={'Fazer ' + m.proximo + ' antes'} apoio="este fica para depois" data-a="mudar-antes" aoTocar={faz(() => a.fazAntesOProximo(f.i))} />}
+            <Linha titulo="O aparelho" apoio="a foto da máquina, para achar e regular" data-a="mudar-foto"
+                   aoTocar={faz(() => ctx.abreFotoDoAparelhoV3(m.id))} />
             <Linha titulo="Histórico deste exercício" apoio="sessão a sessão, e se está pronto para subir" data-a="mudar-historico"
                    aoTocar={faz(() => ctx.abreExercicioV3(ctx.focoV3().dia, f.i))} />
             <Linha titulo={m.pulado ? 'Desfazer o pulo' : 'Pular hoje'} apoio={m.pulado ? 'volta para a fila' : 'fica anotado como pulado'} data-a="mudar-pular"

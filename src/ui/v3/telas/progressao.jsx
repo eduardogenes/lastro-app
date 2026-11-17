@@ -87,6 +87,8 @@ export function ExercicioV3({ ctx }) {
       <Secao>
         <div>
           {e.temFoto && e.foto && <img class="v3-ex-foto" src={e.foto} alt={'Foto do aparelho: ' + e.n} />}
+          <Linha titulo={e.temFoto ? 'A foto do aparelho' : 'Fotografar o aparelho'} apoio={e.temFoto ? 'trocar ou apagar' : 'para achar e regular a máquina da próxima vez'}
+                 data-a="ex-foto" aoTocar={() => ctx.abreFotoDoAparelhoV3(e.id)} />
           <Linha titulo="Trocar o nome" apoio="o histórico continua neste exercício" data-a="ex-renomeia"
                  aoTocar={() => ctx.abreFolha({ k: 'renomeiaEx', id: e.id, nome: e.renome.nome, doCodigo: e.renome.doCodigo })} />
         </div>
@@ -112,3 +114,28 @@ export function FolhaRenomeiaEx({ ctx, f }) {
 // assume a camada `hist` só quando aberta pela progressão nova; a tela antiga
 // continua sendo a da correção de sessão passada (`corrigeSessaoNoHistorico`)
 ExercicioV3.so = view => !!(view.hist && view.hist.v3);
+
+/**
+ * A FOTO DO APARELHO: a imagem (ou o que diz que ela não está aqui), a dica do
+ * treinador, e fotografar, trocar ou apagar. `capture` abre a câmera no celular
+ * e vira seletor de arquivo no computador.
+ */
+export function FolhaFotoV3({ ctx, f }) {
+  const x = ctx.foto(f.id);
+  if (!x) return null;
+  return (
+    <Folha titulo={x.nome} sub="O aparelho" aoFechar={() => ctx.fechaFolha()}>
+      {x.url
+        ? <img class="v3-ex-foto" src={x.url} alt={'Aparelho: ' + x.nome} />
+        : <Apoio>{x.tem ? 'A foto desta máquina ainda não chegou a este aparelho.' : 'Nenhuma foto desta máquina ainda.'}</Apoio>}
+      {x.cue && <p class="v3-pare-t v3-cue">{x.cue}</p>}
+      <Acoes>
+        <label class="v3-btn p cheio v3-arquivo" data-a="foto-tira">
+          {x.tem ? 'Trocar a foto' : 'Fotografar o aparelho'}
+          <input type="file" accept="image/*" capture="environment" hidden onChange={e => ctx.tiraFoto(e.currentTarget)} />
+        </label>
+      </Acoes>
+      {x.tem && <Saida data-a="foto-apaga" onClick={ctx.apagaFoto}>Apagar a foto</Saida>}
+    </Folha>
+  );
+}

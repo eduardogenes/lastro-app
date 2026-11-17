@@ -4,7 +4,7 @@
 // prototipos/hoje.html ("Semana"). Dados: `ctx.semanaV3`.
 
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Bloco, Botao, Folha, Linha, Saida, Secao } from '../base.jsx';
+import { Acoes, Apoio, Bloco, Botao, Cabecalho, Folha, Linha, Quadros, Saida, Secao, Vazio } from '../base.jsx';
 
 export function SemanaV3({ ctx }) {
   const s = ctx.semanaV3();
@@ -46,6 +46,10 @@ export function SemanaV3({ ctx }) {
         </div>
         <Apoio>"Ainda vêm" são as séries dos treinos que faltam nesta semana, pela rotação e pelos dias de treino.</Apoio>
       </Secao>
+      <Secao>
+        <Linha titulo="Retrospectiva do bloco" apoio="o que evoluiu e o que ficou parado desde o começo do bloco"
+               data-a="semana-retro" aoTocar={ctx.abreRetro} />
+      </Secao>
       <div class="v3-fim-da-tela" />
     </div>
   );
@@ -69,5 +73,47 @@ export function FolhaMusculos({ ctx, f }) {
       </div>
       <Acoes><Botao onClick={() => ctx.fechaFolha()}>Fechar</Botao></Acoes>
     </Folha>
+  );
+}
+
+/** Uma linha da retrospectiva: o exercício, de onde saiu e aonde chegou. */
+function LinhaDoBloco({ x }) {
+  const meta = Array.isArray(x.meta) ? x.meta.join(' · ') : x.meta;
+  return <Linha quieta titulo={x.nome} apoio={x.series.filter(Boolean).join(' · ') + (meta ? ' · ' + meta : '')} valor={x.delta} />;
+}
+
+/**
+ * A RETROSPECTIVA DO BLOCO: olha para trás sem pedir nada. "Parados" não é
+ * acusação: carga igual do começo ao fim pode ser o certo (estabilização,
+ * deload, exercício novo). Dados: `ctx.retrospectiva`.
+ */
+export function RetrospectivaV3({ ctx }) {
+  const d = ctx.retrospectiva();
+  return (
+    <>
+      <Cabecalho titulo="O bloco" nota={d.meta} aoVoltar={ctx.fechaRetro} />
+      <div class="v3-pad">
+        <h2 class="v3-pergunta-t">{d.titulo}</h2>
+        <Quadros colunas={3} itens={d.stats.map(s => ({ k: s.k, valor: s.valor, rotulo: s.rotulo }))} />
+      </div>
+      {d.evol.length > 0 && (
+        <Secao titulo="O que evoluiu"><div>{d.evol.map((x, i) => <LinhaDoBloco key={i} x={x} />)}</div></Secao>
+      )}
+      {d.parados.length > 0 && (
+        <Secao titulo="Os parados no bloco">
+          <div>{d.parados.map((x, i) => <LinhaDoBloco key={i} x={x} />)}</div>
+          <Apoio>Mesma carga do começo ao fim, com 3 ou mais sessões. Não quer dizer que esteja errado; quer dizer que vale olhar.</Apoio>
+        </Secao>
+      )}
+      {d.evol.length === 0 && d.parados.length === 0 && (
+        <div class="v3-pad"><Vazio titulo="Ainda cedo para comparar"><p>A retrospectiva fica útil a partir de três sessões por exercício no bloco.</p></Vazio></div>
+      )}
+      {d.dores && (
+        <Secao titulo="A dor no bloco"><p class="v3-atencao"><b>{d.dores}.</b> Vale olhar se está concentrada em algum exercício antes de começar o próximo bloco.</p></Secao>
+      )}
+      {d.deloads && <Secao><Apoio>{d.deloads}</Apoio></Secao>}
+      <div class="v3-pad"><Acoes><Botao tipo="contorno" cheio data-a="retro-fecha" onClick={ctx.fechaRetro}>Fechar</Botao></Acoes></div>
+      <div class="v3-fim-curto" />
+    </>
   );
 }

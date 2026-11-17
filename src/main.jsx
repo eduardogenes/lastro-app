@@ -11752,12 +11752,40 @@ CTX.acoesAulas = {
 };
 
 CTX.acoesAdd = {
-  abre: function () { abrirAddEx(); },
+  // no visual novo o catálogo é uma folha (`catalogo`), no programa e na aula
+  abre: function () { if (visualNovo()) CTX.abreCatalogoV3(); else abrirAddEx(); },
   fecha: function () { fecharAddEx(); },
   busca: function (v) { buscaEx(v); },
   adiciona: function (k) { addExercicio(k); },
   abreNovo: function () { abrirNovoEx(); },
   cria: function () { criarExercicio(); }
+};
+
+// ---------- o CATÁLOGO no visual novo (folha `catalogo`) ----------
+// As mesmas portas do catálogo antigo (`catalogoDeAdicao`, `addExercicio`,
+// `criarExercicioCom`). No programa a adição é permanente; no treino de hoje
+// (a aula), é só do dia — quem decide é `addExercicio`, pelo `view.prog`.
+CTX.abreCatalogoV3 = function () {
+  view.addEx = true; view.addQ = ''; view.novoEx = false;
+  CTX.abreFolha({ k: 'catalogo' });
+};
+CTX.catalogoV3 = function () {
+  const permanente = !!(view.prog && view.prog.day);
+  const d = permanente ? view.prog.day : view.day;
+  return Object.assign(catalogoDeAdicao(d), { permanente: permanente });
+};
+CTX.buscaCatalogoV3 = function (q) { setBuscaDeExercicio(q); };
+CTX.novoNoCatalogoV3 = function (sim) { view.novoEx = sim !== false; render(); };
+CTX.fechaCatalogoV3 = function () { view.addEx = false; view.addQ = ''; view.novoEx = false; CTX.fechaFolha(); };
+function saiDoCatalogoV3() {
+  const p = pilha();
+  if (p.length && p[p.length - 1].k === 'catalogo') CTX.fechaFolha();
+}
+CTX.adicionaDoCatalogoV3 = async function (k) { await addExercicio(k); saiDoCatalogoV3(); };
+CTX.criaNoCatalogoV3 = async function (c) {
+  await criarExercicioCom(c);
+  // sem nome ou com nome repetido, o verbo avisa e o catálogo fica aberto
+  if (!view.addEx) saiDoCatalogoV3();
 };
 
 // ---------- tela cheia: o programa ----------
@@ -14693,6 +14721,18 @@ CTX.aulaV3 = function () {
  */
 CTX.abreSessaoDoHistorico = function (t) { if (t != null) abrirSessao(t); };
 
+/**
+ * A foto do aparelho (visual novo): a mesma folha `foto` da pilha, aberta pelo
+ * id do exercício, de onde quer que ele esteja (histórico, treino em foco).
+ * `tiraFoto` e `apagaFoto` acham o exercício pela folha aberta (`fotoAberta`).
+ */
+CTX.abreFotoDoAparelhoV3 = function (id) {
+  if (!id) return;
+  pilha().push({ k: 'foto', id: id });
+  render();
+  carregaFotos([id]);
+};
+
 // ---------- a SÉRIE PASSADA no visual novo (folha `seriePassada`) ----------
 // As mesmas portas da tela antiga (`abreSerieDaPassada`, `gravaNaPassada`,
 // `lancaSerieDaPassada`, `apagaSerieDaPassada`); muda só o desenho: as duas
@@ -14861,7 +14901,7 @@ CTX.mudarExV3 = function (i) {
   const P = treino(d);
   if (!P || !P.ex[i]) return null;
   const vm = vmExercicio(d, i, P.ex[i]);
-  return { i: i, nome: vm.nome, nomeOriginal: vm.nomeOriginal, pulado: vm.pulado, podeMaisSerie: vm.podeMaisSerie,
+  return { i: i, id: P.ex[i].id, nome: vm.nome, nomeOriginal: vm.nomeOriginal, pulado: vm.pulado, podeMaisSerie: vm.podeMaisSerie,
            proximo: vm.proximo, troca: vm.troca, temTroca: vm.temTroca, dores: vm.dores, dorBloqueia: vm.dorBloqueia };
 };
 /** A lista do treino: cada exercício com o que foi feito, e a primeira série que falta dele. */

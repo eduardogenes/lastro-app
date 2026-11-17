@@ -127,13 +127,17 @@ conferido porta a porta: o que uma tela nova chama e cai numa tela antiga).
 | 6 | Sessão passada (`sessao`): começo e fim, corrigir o tempo, cada série corrigível, lousa, apagar | o dia aberto; Hoje, "Corrigir" a duração; histórico do exercício (tocar na sessão abre por cima dele) | **feito** (`SessaoPassadaV3`; a série abre na folha `seriePassada`, com as réguas da série de hoje e um "Guardar") |
 | 7 | Registrar treino passado (`add`): que treino foi, hora, séries, ou fora da prescrição | Hoje, "Já treinei e não anotei"; o dia aberto | **feito** (`RegistrarPassadoV3`) |
 | 8 | Comida: editar refeição, escolher alimento (`seletor`), editar alimento | Plano e Hoje ("Trocar ou ajustar", "+ Refeição", alimentos) | **feito** (`comida.jsx`) |
-| 9 | Catálogo de adicionar exercício, com criar um novo | Programa e aula | a fazer |
-| 10 | Foto do aparelho (`foto`) | some no visual novo; volta pelo exercício | a fazer |
-| 11 | Retrospectiva do bloco (`retro`) | some no visual novo; volta pela Semana | a fazer |
+| 9 | Catálogo de adicionar exercício, com criar um novo | Programa e aula (na aula, o "+ Movimento" não mostrava nada) | **feito** (folha `catalogo`, `catalogo.jsx`) |
+| 10 | Foto do aparelho (`foto`) | o histórico do exercício e "O aparelho" no treino em foco | **feito** (`FolhaFotoV3`, `progressao.jsx`) |
+| 11 | Retrospectiva do bloco (`retro`) | a Semana, "Retrospectiva do bloco" | **feito** (`RetrospectivaV3`, `semana.jsx`) |
 
 Não precisam de versão nova, porque o visual novo já cobre o que faziam: a
 folha de peso e o peso no descanso (`peso`, `pesoRapido`: a régua do Corpo) e
 `decidir` (a revisão das mudanças, no Programa).
+
+A guarda `tests/dominio/cobertura-v3.test.ts` reprova camada ou folha do app
+sem versão no visual novo (fora as três dispensadas acima), para que isto não
+volte a abrir até a Fase 5.
 
 Depois disso, a **Fase 5** (apagar o visual antigo e o interruptor) espera o
 dono usar o visual novo, como está no plano.
