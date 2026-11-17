@@ -46,7 +46,7 @@ export function DiasV3({ ctx }) {
       {c && (
         <Secao titulo={c.rotulo.split(':')[0]} nota={c.hoje ? 'hoje' : null}>
           <p class="v3-dia-txt">{c.rotulo.indexOf(':') >= 0 ? c.rotulo.split(': ')[1] : 'nada registrado'}</p>
-          {!c.hoje && !resposta && c.comida !== 'com' && (
+          {ctx.moduloLigado('comida') && !c.hoje && !resposta && c.comida !== 'com' && (
             <Pergunta pergunta="A comida deste dia foi como o plano?" respostas={RESPOSTAS} valor={null}
                       aoResponder={k => ctx.respondeODia(c.iso, k)} />
           )}
@@ -54,9 +54,11 @@ export function DiasV3({ ctx }) {
           <Acoes><Botao tipo="contorno" cheio data-a="dia-abre" onClick={() => ctx.abreDia(c.abre)}>Abrir o dia {ic.seta}</Botao></Acoes>
         </Secao>
       )}
-      <Secao>
-        <Acoes><Botao data-a="responder-dias" onClick={ctx.abreResponderDias}>Responder os dias em branco</Botao></Acoes>
-      </Secao>
+      {ctx.moduloLigado('comida') && (
+        <Secao>
+          <Acoes><Botao data-a="responder-dias" onClick={ctx.abreResponderDias}>Responder os dias em branco</Botao></Acoes>
+        </Secao>
+      )}
       <div class="v3-fim-da-tela" />
     </div>
   );

@@ -161,6 +161,8 @@ test('o que aparece funde como documento: vence o lado onde mudou por último', 
 
 test('sem escolha nenhuma, aparece o que já aparecia', () => {
   assert.ok(ligado(null, 'agua') && ligado(null, 'peso') && ligado(null, 'cardio') && ligado(null, 'fotos'));
+  assert.ok(ligado(null, 'comida'), 'a comida nasce ligada: quem atualizou continua vendo o plano');
+  assert.deepStrictEqual(normalizaModulos({ comida: 0 }), { comida: 0 }, 'e desligar a comida é guardado');
   assert.ok(!ligado(null, 'dobras'), 'as dobras já nasciam escondidas');
   assert.ok(!ligado(null, 'noite') && !ligado(null, 'vesperaFotos'), 'lembrete que ninguém pediu é cobrança');
 });

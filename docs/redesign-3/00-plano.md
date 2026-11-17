@@ -90,7 +90,7 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 |---|---|
 | Treino em foco, uma série por tela (carga e repetição pela régua, "da última vez", dor seguida) | **feito** (`src/ui/v3/telas/treino.jsx`, `ctx.focoV3`, `ctx.fazSerieV3`; `tests/fluxo/v3-treino.test.js`). A série grava por `anotaSerie`, a mesma porta do modo antigo, e a sessão nasce na projeção da primeira série |
 | Descanso em tela cheia que enche de cor, ±15 s, "sobraram quantas?" gravando o RIR da série que acabou (`poeRir`) | **feito** |
-| Sugestão "subir para X?" | **feito**: `proximaCarga` em `src/dominio/progressao.ts` (1,25 kg por lado, halter +2, placa +2,5), **regra de partida a revisar com o dono** |
+| Sugestão "subir para X?" | **feito**: `proximaCarga` em `src/dominio/progressao.ts` (1,25 kg por lado, halter +2, placa +2,5), aprovada pelo dono em 17/11/2026 |
 | Lista do treino (com deload), mudar este exercício (trocar, mais uma série, fazer o próximo antes, pular, dor), opções da sessão | **feito** (folhas `listaTreino`, `mudarEx`, `menuSessao`) |
 | Pôr em dia ("Já fiz mais do que anotei") e aviso de intervalo longo | **feito**: `ctx.poeEmDia` grava pela mesma `anotaSerie`, com os números da última vez, marca `Log.dp` (a projeção e a hidratação carregam a marca) e não começa descanso; o aviso sai de `intervaloLongo` em `src/dominio/sessao.ts` (três vezes o descanso, mínimo de 6 min). "Já treinei e não anotei" (depois do treino) fica com o Hoje, na Fase 4 |
 | Progressão (prontos para subir, ganhando repetição, parados) e um exercício (próximo passo, sessão a sessão, trocar o nome) | **feito** (`estadoDaProgressao` em `src/dominio/progressao.ts`, com teste; `src/ui/v3/telas/progressao.jsx`). Corrigir uma sessão passada ainda abre a tela antiga do histórico, a recriar até a Fase 5 |
@@ -106,9 +106,9 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Semana: o veredito da comida com o que a regra olha, e as séries por região separando feitas de ainda vêm | **feito** (`treinosQueVem` e `somaPorGrupo` em `src/dominio/volume.ts`, com teste; `src/ui/v3/telas/semana.jsx`) |
 | Plano: o que espera decisão, os treinos, os dias de treino, a comida com a quantidade pela régua, alimentos e compras | **feito** (`src/ui/v3/telas/plano.jsx`, `ctx.planoV3`; `tests/fluxo/v3-plano.test.js`). Nova refeição, trocar alimentos e editar um alimento ainda abrem as folhas antigas |
 | Ajustes: conta e sincronia, o que aparece, cópia de segurança (guardar e restaurar por arquivo), o interruptor do visual, voltar ao programa e ao plano, apagar | **feito** (`src/ui/v3/telas/ajustes.jsx`). Colar a cópia como texto ficou só no visual antigo |
-| Primeira vez (aparelho vazio, no Hoje): começar com o que já está no app, colar o texto do treinador, restaurar uma cópia, escolher o que aparece | **feito**. **Para o dono decidir**: importar o plano alimentar por texto (não existe importador) e uma parte "não acompanho comida" |
+| Primeira vez (aparelho vazio, no Hoje): começar com o que já está no app, colar o texto do treinador, restaurar uma cópia, escolher o que aparece | **feito**. Decisões do dono em 17/11/2026: a comida se desliga em "O que aparece" (feito; o Hoje fica só com o treino, o Plano oferece ligar de volta, nada pergunta da comida); importar o plano alimentar por texto fica para as melhorias futuras |
 | Estados: as faixas fixas de "não guardado" e "sem rede" | **feito** (`src/ui/v3/estados.jsx`); o painel de detalhe da falha continua o de sempre. `tests/fluxo/v3-ajustes.test.js` |
-| Lembretes (pergunta da noite, véspera das fotos) | **para o dono decidir**: no iPhone exigem o app instalado e permissão de notificação |
+| Lembretes (pergunta da noite, véspera das fotos) | **feito dentro do app** (decisão do dono, 17/11/2026): o lembrete das fotos no Hoje, na véspera e no dia, com a chave em Ajustes; a pergunta da noite já aparece sozinha. O aviso no celular (app instalado, permissão, servidor de envio) fica para as melhorias futuras |
 
 **Fase 4 fechada** (17/11/2026). Os cinco lugares têm tela nova.
 
@@ -319,3 +319,13 @@ Estas regras valem para os dois modelos, em qualquer fase:
    captura fica com o Fable, com liberdade total (Fase 1).
 3. **Nomes das abas:** Hoje e Plano.
 4. **Série registrada depois:** conta igual para a sugestão de subir carga.
+
+## Melhorias futuras
+
+Decididas pelo dono em 17/11/2026 como "depois", não como "não":
+
+- **Aviso no celular** para os lembretes (a pergunta da noite, o dia das
+  fotos). No iPhone exige o app adicionado à tela de início, a permissão de
+  notificação e um servidor que mande o aviso.
+- **Importar o plano alimentar por texto**, como já existe para o texto do
+  treinador.

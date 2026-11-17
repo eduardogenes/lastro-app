@@ -3,12 +3,12 @@
 // docs/redesign-3/prototipos/resto.html ("Ajustes"). Dados e ações de sempre:
 // `ctx.nuvem`, `ctx.dadosDoApp`, `ctx.exportar`, `ctx.importaArquivo`.
 //
-// Lembretes (a pergunta da noite, a véspera das fotos) ficam de fora até o
-// dono decidir: no iPhone, aviso exige o app instalado e permissão.
+// Lembretes: dentro do app, no Hoje (decisão do dono, 17/11/2026). O aviso no
+// celular, que no iPhone exige o app instalado e permissão, fica para depois.
 
 import { Acoes, Apoio, Botao, Cabecalho, Chave, Linha, Saida, Secao } from '../base.jsx';
 
-const PARTES = [['agua', 'Água', 'contar copos no Hoje'], ['peso', 'Peso', 'a pesagem da manhã'], ['cardio', 'Cardio', 'as duas sessões da semana'],
+const PARTES = [['comida', 'Comida', 'o plano e as refeições do dia'], ['agua', 'Água', 'contar copos no Hoje'], ['peso', 'Peso', 'a pesagem da manhã'], ['cardio', 'Cardio', 'as duas sessões da semana'],
                 ['dobras', 'Dobras', 'adipômetro, no Corpo'], ['fotos', 'Fotos do corpo', 'sessão a cada 14 dias']];
 
 export function AjustesV3({ ctx }) {
@@ -38,10 +38,15 @@ export function AjustesV3({ ctx }) {
           </>
         )}
       </Secao>
-      <Secao titulo="O que aparece" nota="treino e comida ficam sempre">
+      <Secao titulo="O que aparece" nota="o treino fica sempre">
         <div>
           {PARTES.map(p => <Chave key={p[0]} titulo={p[1]} apoio={p[2]} ligada={ctx.moduloLigado(p[0])} data-a={'ajustes-' + p[0]} aoMudar={on => ctx.ligaModulo(p[0], on)} />)}
         </div>
+      </Secao>
+      <Secao titulo="Lembretes" nota="dentro do app, quando você abre">
+        <Chave titulo="Dia das fotos" apoio="no Hoje, na véspera e no dia da sessão" ligada={ctx.moduloLigado('vesperaFotos')}
+               data-a="ajustes-lembrete-fotos" aoMudar={on => ctx.ligaModulo('vesperaFotos', on)} />
+        <Apoio>A pergunta da noite já aparece sozinha no Hoje quando alguma refeição fica sem resposta.</Apoio>
       </Secao>
       <Secao titulo="Cópia de segurança" nota={d.backupTxt}>
         <div>

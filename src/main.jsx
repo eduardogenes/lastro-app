@@ -13865,7 +13865,9 @@ CTX.hojeV3 = function () {
   const d = H.comidaDoDia;
   const cat = H.catalogo;
   const cartao = cartaoDeCima(CTX.fatosDoDia());
-  const linha = H.refs.map(function (r) {
+  // sem a comida (desligada em "O que aparece"), o dia é só o treino
+  const comOn = ligado(S.modulos, 'comida');
+  const linha = H.refs.filter(function (r) { return comOn || ehLinhaDeTreino(r); }).map(function (r) {
     const treinoL = ehLinhaDeTreino(r);
     const m = minutosDe(r.t);
     const feita = treinoL ? !!(H.sessao.registrada || H.sessao.fechada) : !!d.done[r.id];
@@ -13896,11 +13898,11 @@ CTX.hojeV3 = function () {
               quando: falta == null ? 'hoje' : falta > 0 ? 'daqui a ' + falta + ' min' : 'agora',
               titulo: cartao.k === 'aula' ? 'Aula' : H.sessao.nome || 'Treino ' + cartao.dia,
               apoio: cartao.palpite ? 'Previsto pelo padrão da semana.' : (cartao.k === 'aula' ? 'O que o box programar.' : H.sessao.resumo) };
-  } else if (agoraMin >= HORA_DA_PERGUNTA && passaram && !respondido) {
+  } else if (comOn && agoraMin >= HORA_DA_PERGUNTA && passaram && !respondido) {
     // de noite, a pergunta do dia vem antes da próxima refeição (o protótipo)
     bloco = { k: 'noite', cor: 'lilas', quando: passaram + (passaram === 1 ? ' refeição ficou' : ' refeições ficaram') + ' sem resposta',
               titulo: 'A comida de hoje foi como o plano?' };
-  } else if (cartao && cartao.k === 'refeicao') {
+  } else if (comOn && cartao && cartao.k === 'refeicao') {
     const r = H.refs.filter(function (x) { return x.id === cartao.id; })[0];
     const falta = minutosDe(r.t) - agoraMin;
     bloco = { k: 'refeicao', cor: 'tanja', vivo: true, id: r.id,
@@ -13922,11 +13924,11 @@ CTX.hojeV3 = function () {
     const hist = (S.comidaHist || []).filter(function (h) { return h.d === data; })[0];
     const ader = hist ? hist.aderencia : (i === 0 ? null : null);
     ritmo.push({ data: data, letra: DIAS_CURTOS[new Date(t).getDay()].charAt(0).toUpperCase(), treino: m ? m.day : null, hoje: i === 0,
-                 comida: r === 'sim' || ader === 'plano' ? 'cheia' : r === 'quase' || ader === 'fora' ? 'meia' : 'vazia' });
+                 comida: !comOn ? null : r === 'sim' || ader === 'plano' ? 'cheia' : r === 'quase' || ader === 'fora' ? 'meia' : 'vazia' });
   }
   const ontem = hojeISO(agora - 86400000);
   const hOntem = (S.comidaHist || []).filter(function (h) { return h.d === ontem; })[0];
-  const ontemEmBranco = !!hOntem && !CTX.respostaDoDia(ontem) && !Object.keys(hOntem.done || {}).length;
+  const ontemEmBranco = comOn && !!hOntem && !CTX.respostaDoDia(ontem) && !Object.keys(hOntem.done || {}).length;
   const ag = CTX.agua();
   const pesoHoje = (S.body.peso || []).filter(function (x) { return sameDay(x.t, agora); }).slice(-1)[0];
   const semana = weekStart(agora);
@@ -13944,9 +13946,32 @@ CTX.hojeV3 = function () {
       cardio: ligado(S.modulos, 'cardio') ? { n: cardioSemana, meta: 2 } : null
     },
     ritmo: ritmo,
-    ontem: ontemEmBranco ? ontem : null
+    ontem: ontemEmBranco ? ontem : null,
+    comida: comOn,
+    lembrete: lembreteDasFotos(agora)
   };
 };
+
+/**
+ * O LEMBRETE DAS FOTOS, dentro do app (decisão do dono, 17/11/2026: o aviso no
+ * celular fica para as melhorias futuras). Aparece no Hoje na véspera, no dia
+ * e depois de passar, com as fotos e o lembrete ligados. Antes da primeira
+ * sessão não há data para lembrar. "Agora não" some até o app abrir de novo.
+ */
+function lembreteDasFotos(agora) {
+  if (!ligado(S.modulos, 'fotos') || !ligado(S.modulos, 'vesperaFotos')) return null;
+  if (view.lembreteDispensado === hojeISO(agora)) return null;
+  const sessoes = (S.protocolo.sessoes || []).filter(function (s) { return Object.keys(s.fotos || {}).length; });
+  const desde = diasDesdeAFoto(sessoes, agora);
+  if (desde == null) return null;
+  const faltam = CADENCIA_DIAS - desde;
+  if (faltam > 1) return null;
+  return {
+    t: faltam === 1 ? 'Amanhã é dia das fotos' : faltam === 0 ? 'Hoje é dia das fotos' : 'As fotos passaram ' + (-faltam) + (faltam === -1 ? ' dia' : ' dias'),
+    apoio: faltam === 1 ? 'Combine com quem vai fotografar. De noite, com a mesma luz de sempre.' : 'A sessão entra com a data em que for feita; nada vence.'
+  };
+}
+CTX.dispensaLembrete = function () { view.lembreteDispensado = hojeISO(); render(); };
 
 CTX.faixaDaSessao = function () {
   const s = S.sessao;

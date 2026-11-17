@@ -624,7 +624,7 @@ function folhaRef(id) { const r = REF.find(x => x.id === id), f = D.feitas.has(i
   folha(`<h2>${r.n}</h2><p class="sub n">${fh(r.h)} · ${r.k} kcal</p><div class="itens">${r.it.map(i => `<div><span>${i[0]}</span><span class="n">${i[1]}</span></div>`).join('')}</div>
     <div class="acoes"><button class="vai" data-a="come" data-id="${id}">${f ? 'Desmarcar' : ic.ok + ' Comi'}</button>${f ? '' : `<button class="alt" data-a="come" data-id="${id}">Parte</button>`}</div>`); }
 function folhaPainel() { const m = [['agua','Água','contar copos'],['peso','Peso','a pesagem da manhã'],['cardio','Cardio','as duas sessões da semana'],['medidas','Medidas','fita e adipômetro'],['fotos','Fotos do corpo','sessão a cada 14 dias']];
-  folha(`<h2>O que aparece</h2><p class="sub">Treino e comida ficam sempre. O resto é seu: ligue só o que for usar. Desligar não apaga nada.</p><div style="margin-top:14px">
+  folha(`<h2>O que aparece</h2><p class="sub">O treino fica sempre. O resto é seu: ligue só o que for usar. Desligar não apaga nada.</p><div style="margin-top:14px">
     ${m.map(x => `<button class="liga" data-a="mod" data-m="${x[0]}" aria-pressed="${!!E.mod[x[0]]}"><div><b>${x[1]}</b><span>${x[2]}</span></div><span class="chave"></span></button>`).join('')}</div>`); }
 function folhaFila() { let acc = 0;
   folha(`<h2>Treino B</h2><p class="sub">${T.p} de ${FILA.length} séries. Toque para pular para um exercício.</p><div class="fila" style="margin-top:14px">${EX.map((e, i) => { const ini = acc; acc += e.s; const fe = Math.max(0, Math.min(e.s, T.p - ini));

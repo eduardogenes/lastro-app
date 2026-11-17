@@ -1,7 +1,7 @@
 // O QUE APARECE: as partes do app que a pessoa liga e desliga.
 //
-// Princípio 3 do PRODUCT.md: treino e comida são o centro; o resto se liga e
-// desliga, e o app completo não assusta porque só aparece o que foi ligado.
+// Princípio 3 do PRODUCT.md: o treino é o centro; a comida e o resto se ligam
+// e desligam (a comida desde 17/11/2026, decisão do dono), e o app completo não assusta porque só aparece o que foi ligado.
 // **Desligar esconde, nunca apaga**: nenhuma função daqui toca em registro.
 //
 // Mora no estado sincronizado (`S.modulos`), e não no aparelho: é preferência
@@ -15,9 +15,11 @@
 import type { QualMarca } from './tipos';
 
 /** As partes que se ligam e desligam como um todo. */
-export type Modulo = 'agua' | 'peso' | 'cardio' | 'fotos' | 'dobras' | 'noite' | 'vesperaFotos';
+export type Modulo = 'comida' | 'agua' | 'peso' | 'cardio' | 'fotos' | 'dobras' | 'noite' | 'vesperaFotos';
 
 export interface Modulos {
+  /** o plano alimentar e as refeições (quem só treina desliga) */
+  comida?: 0 | 1;
   /** liga (1) ou desliga (0) uma parte; ausente = o padrão dela */
   agua?: 0 | 1;
   peso?: 0 | 1;
@@ -27,7 +29,7 @@ export interface Modulos {
   dobras?: 0 | 1;
   /** a pergunta da noite: "a comida de hoje foi como o plano?" */
   noite?: 0 | 1;
-  /** o aviso na véspera da sessão de fotos */
+  /** o lembrete das fotos, no Hoje, na véspera e no dia da sessão (dentro do app) */
   vesperaFotos?: 0 | 1;
   /** cada medida com fita, uma por uma; ausente = o padrão daquela medida */
   fita?: Partial<Record<QualMarca, 0 | 1>>;
@@ -42,7 +44,7 @@ export interface Modulos {
  * desligados: aviso que ninguém pediu é cobrança.
  */
 export const PADRAO: Readonly<Record<Modulo, 0 | 1>> = {
-  agua: 1, peso: 1, cardio: 1, fotos: 1, dobras: 0, noite: 0, vesperaFotos: 0
+  comida: 1, agua: 1, peso: 1, cardio: 1, fotos: 1, dobras: 0, noite: 0, vesperaFotos: 0
 };
 
 const MODULOS = Object.keys(PADRAO) as Modulo[];

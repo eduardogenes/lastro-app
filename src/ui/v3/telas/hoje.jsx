@@ -133,11 +133,20 @@ export function HojeV3({ ctx }) {
       <Secao titulo="Seu ritmo" nota="últimos 7 dias">
         <div class="v3-ritmo">
           {h.ritmo.map(d => (
-            <button key={d.data} onClick={() => ctx.vaiPara('dias')} aria-label={d.data + (d.treino ? ', treino ' + d.treino : '') + ', comida ' + d.comida}>
-              <span class={'bola ' + d.comida + (d.hoje ? ' hoje' : '')}>{d.treino || ''}</span>{d.letra}
+            <button key={d.data} onClick={() => ctx.vaiPara('dias')} aria-label={d.data + (d.treino ? ', treino ' + d.treino : '') + (d.comida ? ', comida ' + d.comida : '')}>
+              <span class={'bola ' + (d.comida || '') + (d.hoje ? ' hoje' : '')}>{d.treino || ''}</span>{d.letra}
             </button>
           ))}
         </div>
+        {h.lembrete && (
+          <div class="v3-lembrete" role="note" data-a="hoje-lembrete">
+            <b>{h.lembrete.t}</b><span>{h.lembrete.apoio}</span>
+            <div class="v3-saidas">
+              <Saida data-a="lembrete-abre" onClick={ctx.abreCentroDasFotos}>Abrir as fotos</Saida>
+              <Saida data-a="lembrete-dispensa" onClick={ctx.dispensaLembrete}>Agora não</Saida>
+            </div>
+          </div>
+        )}
         {h.ontem && (
           <Pergunta pergunta="Ontem ficou em branco. Foi como o plano?" respostas={RESPOSTAS} valor={null}
                     aoResponder={k => ctx.respondeODia(h.ontem, k)} />
@@ -208,10 +217,10 @@ export function FolhaRegistrar({ ctx }) {
 
 /** O que aparece: treino e comida sempre; o resto, quem decide é a pessoa. */
 export function FolhaOQueAparece({ ctx }) {
-  const M = [['agua', 'Água', 'contar copos'], ['peso', 'Peso', 'a pesagem da manhã'], ['cardio', 'Cardio', 'as duas sessões da semana'],
+  const M = [['comida', 'Comida', 'o plano e as refeições do dia'], ['agua', 'Água', 'contar copos'], ['peso', 'Peso', 'a pesagem da manhã'], ['cardio', 'Cardio', 'as duas sessões da semana'],
              ['dobras', 'Dobras', 'adipômetro, no Corpo'], ['fotos', 'Fotos do corpo', 'sessão a cada 14 dias']];
   return (
-    <Folha titulo="O que aparece" sub="Treino e comida ficam sempre. O resto é seu: ligue só o que for usar. Desligar não apaga nada." aoFechar={() => ctx.fechaFolha()}>
+    <Folha titulo="O que aparece" sub="O treino fica sempre. O resto é seu: ligue só o que for usar. Desligar não apaga nada." aoFechar={() => ctx.fechaFolha()}>
       <div class="v3-ligar">
         {M.map(m => <Chave key={m[0]} titulo={m[1]} apoio={m[2]} ligada={ctx.moduloLigado(m[0])} data-a={'aparece-' + m[0]} aoMudar={on => ctx.ligaModulo(m[0], on)} />)}
       </div>

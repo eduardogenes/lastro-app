@@ -80,7 +80,7 @@ export function setsFor(ex: { s: number }, deload: boolean): number {
  * "subir para X?" na série). O menor passo que a academia oferece em cada
  * tipo de carga: 1,25 kg por lado (2,5 no total) na anilha e na barra, o
  * halter seguinte (2 kg), e 2,5 kg na placa e no resto. Peso do corpo não
- * sobe por carga. Regra de partida, a revisar com o dono.
+ * sobe por carga. Aprovada pelo dono em 17/11/2026.
  */
 export function proximaCarga(carga: number | null | undefined, tipo: string): number | null {
   if (typeof carga !== 'number' || !isFinite(carga) || carga <= 0) return null;

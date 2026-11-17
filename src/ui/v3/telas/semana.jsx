@@ -10,8 +10,17 @@ export function SemanaV3({ ctx }) {
   const s = ctx.semanaV3();
   const v = s.veredito;
   const precisaDias = (v.portoes || []).some(g => g.k === 'adesao' && !g.ok);
+  const comida = ctx.moduloLigado('comida');
+  const feitas = s.regioes.reduce((n, r) => n + r.feitas, 0);
+  const vem = s.regioes.reduce((n, r) => n + r.vem, 0);
   return (
     <div class="v3">
+      {!comida && (
+        <Bloco cor="ceu" chave="semana-treino" linha0={<><span>Semana</span><span>o treino</span></>}
+               titulo={feitas + (feitas === 1 ? ' série feita' : ' séries feitas')}
+               apoio={vem ? 'E ' + vem + ' ainda vêm até domingo, pelos treinos que faltam.' : 'Nada mais previsto até domingo.'} />
+      )}
+      {comida && <>
       <Bloco cor="ceu" chave={'semana-' + v.t} linha0={<><span>Semana</span><span>o que fazer com a comida</span></>}
              titulo={v.t} medio={v.t.length > 14} apoio={v.p}>
         <Acoes>
@@ -35,6 +44,7 @@ export function SemanaV3({ ctx }) {
         </Secao>
       )}
       {v.estado && <Secao><Apoio>{v.estado}</Apoio></Secao>}
+      </>}
       <Secao titulo="Séries da semana" nota={'dia ' + s.dia + ' de 7' + (s.vemDias.length ? ' · ainda vêm: ' + s.vemDias.join(', ') : '')}>
         <div>
           {s.regioes.map(r => (

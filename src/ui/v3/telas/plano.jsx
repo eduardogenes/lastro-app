@@ -59,6 +59,12 @@ export function PlanoV3({ ctx }) {
         </div>
         <Apoio>Diz só em que dias você costuma treinar, e serve para prever a semana e as compras. Qual treino vem é sempre a rotação.</Apoio>
       </Secao>
+      {!ctx.moduloLigado('comida') ? (
+        <Secao titulo="Comida" nota="desligada">
+          <Apoio>A comida está desligada: o app mostra só o treino. O plano continua guardado.</Apoio>
+          <Acoes><Botao tipo="contorno" data-a="plano-liga-comida" onClick={() => ctx.ligaModulo('comida', true)}>Ligar a comida</Botao></Acoes>
+        </Secao>
+      ) : (
       <Secao titulo="Comida" nota="do nutricionista">
         <Seletor rotulo="Tipo de dia" valor={tipo} aoMudar={setTipo} opcoes={[{ k: 'treino', t: 'Dia de treino' }, { k: 'descanso', t: 'Dia de descanso' }]} />
         <div class="v3-gigante v3-n v3-gigante-m">{total.kcal}<small>kcal · {total.macros}</small></div>
@@ -75,6 +81,7 @@ export function PlanoV3({ ctx }) {
         </Acoes>
         <Saida onClick={ctx.novaRefeicao}>{'+'} Refeição</Saida>
       </Secao>
+      )}
       <div class="v3-fim-da-tela" />
     </div>
   );

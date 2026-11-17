@@ -88,7 +88,7 @@ export function DiaAbertoV3({ ctx }) {
         )}
       </div>
 
-      {d.comida && (
+      {d.comida && ctx.moduloLigado('comida') && (
         <Secao titulo="A comida do dia" nota={d.comida.resumo}>
           <div>
             {d.comida.momentos.map(x => <Linha key={x.id} quieta titulo={x.nome} apoio={x.hora} valor={MARCA[x.marca] || x.marca} />)}

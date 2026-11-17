@@ -59,8 +59,9 @@ resolve depois, de uma vez: o treino inteiro como da última vez, a comida de
    ação, com um botão.
 2. **Registro por exceção.** O caminho comum (fez como o plano, como da última
    vez) custa um toque. Só a exceção pede detalhe.
-3. **Nada é obrigatório.** Treino e comida são o centro; água, peso, cardio,
-   medidas e fotos se ligam e desligam. O app completo não assusta porque só
+3. **Nada é obrigatório.** O treino é o centro; comida, água, peso, cardio,
+   medidas e fotos se ligam e desligam (a comida desde 17/11/2026: quem só
+   treina desliga). O app completo não assusta porque só
    aparece o que a pessoa ligou.
 4. **Dia em branco não é falta.** Fica fora da conta, não vira zero, e o app
    não cobra.
