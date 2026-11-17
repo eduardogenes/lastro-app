@@ -36,7 +36,7 @@ Atualizado a cada peça entregue. É por aqui que uma sessão nova retoma.
 | 3. Componentes base | **feito** (`src/ui/v3/`, estilos em `src/v3/componentes.css`); galeria em `/v3.html` com `npm run dev` |
 | 4. Dado novo, fusão, cópia de segurança e espelho | **feito**, sem migração (ver abaixo) |
 | 5. Estratégia de testes (classificar os 61 de fluxo e o `estilo.test`) | **feito**: [01-testes.md](01-testes.md); guarda do visual novo em `tests/dominio/estilo-v3.test.ts` |
-| 6. Especificação de cada lote | a fazer · Fable |
+| 6. Especificação de cada lote | **feito**: [03-lotes.md](03-lotes.md) |
 | 7. O que a captura de fotos automatiza | **decidido**: [02-captura.md](02-captura.md); mostrar ao dono antes de fechar a Fase 1 |
 
 ### O dado novo (item 4), para quem constrói as telas
@@ -65,7 +65,7 @@ Como o visual novo entra no app: com o interruptor ligado, a navegação vira a
 doca e cada lugar usa a tela registrada em `src/ui/v3/telas.js`; enquanto um
 lugar não está lá, aparece a tela antiga dele. A folha do visual novo
 (`Folha`, em `src/ui/v3/base.jsx`) é só aparência: ligá-la à pilha de camadas
-do app (`view.pilha`) é a primeira tarefa do item 6.
+do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md), "Camadas").
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
