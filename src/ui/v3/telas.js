@@ -17,10 +17,20 @@ export const TELAS_V3 = {};
 import { FolhaAviso } from './base.jsx';
 import { SessaoDeFotos, PassosDasFotos, FolhaPreparo } from './telas/sessaofotos.jsx';
 import { CameraV3 } from './telas/camera.jsx';
+import {
+  AjustarV3, CentroDasFotos, Comparar, FolhaFotoComparada, GaleriaFotoV3, GaleriaV3, LixeiraV3, NoTempo
+} from './telas/consultafotos.jsx';
 export const DESTINOS_V3 = {
   // Fase 1, fotos
   protocolo: SessaoDeFotos,
   passos: PassosDasFotos,
-  camera: CameraV3
+  camera: CameraV3,
+  fotos: CentroDasFotos,
+  comparar: Comparar,
+  noTempo: NoTempo,
+  galeria: GaleriaV3,
+  galeriaFoto: GaleriaFotoV3,
+  lixeira: LixeiraV3,
+  ajuste: AjustarV3
 };
-export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo };
+export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada };

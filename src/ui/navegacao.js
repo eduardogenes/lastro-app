@@ -76,6 +76,9 @@ export function camadasAbertas(view) {
   if (view.hist) c.push('hist');
   // A Evolução ABAIXO da comparação: comparar abre de dentro dela.
   if (view.evolucao) c.push('evolucao');
+  // O CENTRO DAS FOTOS (visual novo), abaixo de tudo que abre dele: a galeria,
+  // a comparação, o "no tempo" e a sessão.
+  if (view.fotos) c.push('fotos');
   // O detalhe de uma medida, e o formulário de medidas, que abre de dentro dele.
   if (view.medida) c.push('medida');
   if (view.medidas) c.push('medidas');
@@ -87,6 +90,8 @@ export function camadasAbertas(view) {
     if (view.galeria.foto) c.push('galeriaFoto');
   }
   if (view.comparar) c.push('comparar');
+  // O "no tempo" (visual novo) abre do centro das fotos.
+  if (view.noTempo) c.push('noTempo');
   // A revisão do treinador abre da Prescrição, acima de qualquer lugar.
   if (view.revisao) c.push('revisao');
   if (view.protocolo) c.push('protocolo');

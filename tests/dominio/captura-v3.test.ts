@@ -7,7 +7,7 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { apagadas, foraNoDisparo, liberado, luzes, nomesDoFora } from '../../src/dominio/captura';
 import {
-  mudancasDaSessao, ressalvaDaSessao, seloDaSessao, textoDaMudanca, tituloDoFim
+  mudancasDaSessao, pontaParaTrocar, ressalvaDaSessao, seloDaSessao, textoDaMudanca, tituloDoFim
 } from '../../src/dominio/protocolo';
 import type { SessaoFoto } from '../../src/dominio/tipos';
 
@@ -76,6 +76,18 @@ test('o fim e o selo dizem a ressalva; a foto fora pesa mais que a mudança', ()
   assert.strictEqual(seloDaSessao(soMuda), 'outra luz, outra roupa');
   assert.strictEqual(tituloDoFim(11, 11, ressalvaDaSessao(null)), '11 de 11, todas no padrão');
   assert.strictEqual(seloDaSessao(ressalvaDaSessao(null)), 'no padrão');
+});
+
+test('na linha das sessões, o toque troca a ponta do par mais perto, e tocar numa ponta não troca nada', () => {
+  const d = ['a', 'b', 'c', 'd', 'e'];
+  assert.strictEqual(pontaParaTrocar(d, 'b', 'e', 'a'), 'de', 'antes do par, a de cá');
+  assert.strictEqual(pontaParaTrocar(d, 'a', 'c', 'e'), 'ate', 'depois do par, a de lá');
+  assert.strictEqual(pontaParaTrocar(d, 'a', 'e', 'b'), 'de');
+  assert.strictEqual(pontaParaTrocar(d, 'a', 'e', 'd'), 'ate');
+  assert.strictEqual(pontaParaTrocar(d, 'a', 'e', 'c'), 'de', 'empate fica com a mais antiga');
+  assert.strictEqual(pontaParaTrocar(d, 'a', 'e', 'e'), null);
+  assert.strictEqual(pontaParaTrocar(d, 'e', 'a', 'b'), 'ate', 'com o par invertido, o nome segue a data');
+  assert.strictEqual(pontaParaTrocar(d, 'a', 'e', 'x'), null);
 });
 
 test('o que mudou é lido limpo: sem valor estranho, sem repetição, na ordem fixa', () => {

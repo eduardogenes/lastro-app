@@ -70,6 +70,13 @@ Decidido na construção, onde o código difere do protótipo de propósito:
   câmera, para fechar a câmera voltar à sessão, e não aos passos.
 - Sem câmera do app (permissão negada, aparelho sem `getUserMedia`), a sessão
   pela metade oferece a câmera do sistema na pose escolhida, como antes.
+- **O centro das fotos é a camada `fotos`**, abaixo de tudo que abre dele
+  (galeria, comparar, no tempo, sessão); **no tempo é a camada `noTempo`**.
+- **Na comparação, tocar numa foto** do lado a lado abre uma folha com
+  "Ajustar enquadramento" e "Apagar esta foto" (a segunda porta para apagar
+  uma foto antiga, pedida pelo dono em 03/11).
+- **A lixeira devolve com "Devolver"** e apaga de vez só por "Esvaziar a
+  lixeira", que continua pedindo confirmação.
 
 Testes a reescrever: `protocolo` (o maior da suíte, 137 casos). Mostrar ao dono
 as decisões de captura antes de fechar a fase.

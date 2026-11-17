@@ -190,3 +190,78 @@
 .v3-cam .v3-saida { margin: 4px auto 0; text-align: center; }
 
 .v3-cam-erro { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+
+/* ---- Consulta: comparar, no tempo, galeria, ajustar -------------------- */
+.v3-pad { padding: 10px var(--margem) 0; }
+.v3-poses { display: flex; gap: 6px; overflow-x: auto; padding: 8px var(--margem) 2px; scrollbar-width: none; }
+.v3-poses::-webkit-scrollbar { display: none; }
+.v3-poses.v3-poses-dentro { padding: 0; margin: 0 calc(-1 * var(--margem)); padding-inline: var(--margem); }
+.v3 .v3-poses button {
+  flex: 0 0 auto; min-height: 40px; padding: 0 14px; border-radius: var(--r-pilula);
+  box-shadow: inset 0 0 0 1.5px var(--fio); font-size: 14px; font-weight: 600; white-space: nowrap;
+}
+.v3 .v3-poses button[aria-pressed="true"] { background: var(--lilas); box-shadow: inset 0 0 0 2px var(--tinta); }
+
+.v3-fita { display: flex; gap: 5px; }
+.v3-fita .v3-foto { flex: 1; border-radius: 9px; }
+.v3-fita-s { margin-top: 8px; }
+
+.v3-par { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px var(--margem) 0; }
+.v3 .v3-par-f { display: block; border-radius: 18px; }
+
+.v3-cortina, .v3-sobre { position: relative; border-radius: 18px; overflow: hidden; }
+.v3-cortina { touch-action: pan-y; }
+.v3-cortina .v3-foto, .v3-sobre .v3-foto { border-radius: 0; }
+.v3-cortina-cima, .v3-sobre-cima { position: absolute; inset: 0; }
+.v3-cortina-pega { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: var(--tinta); pointer-events: none; }
+.v3-cortina-pega::after {
+  content: ""; position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin: -22px;
+  border-radius: 50%; background: var(--lima); box-shadow: inset 0 0 0 2.5px var(--tinta);
+}
+.v3-cortina-et { position: absolute; bottom: 10px; padding: 3px 9px; border-radius: var(--r-pilula); background: var(--papel); font: 700 12px var(--f-titulo); }
+.v3-cortina-et.e { left: 10px; }
+.v3-cortina-et.d { right: 10px; }
+
+/* a faixa de arrastar: trilho de fio e pega lima */
+.v3 .v3-faixa-r { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 44px; margin: 4px 0 0; background: none; }
+.v3-faixa-r::-webkit-slider-runnable-track { height: 6px; border-radius: 9px; background: var(--fio); }
+.v3-faixa-r::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; margin-top: -13px; border-radius: 50%; background: var(--lima); box-shadow: inset 0 0 0 2.5px var(--tinta); }
+.v3-faixa-r::-moz-range-track { height: 6px; border-radius: 9px; background: var(--fio); }
+.v3-faixa-r::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: var(--lima); border: 2.5px solid var(--tinta); }
+
+.v3-datas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px var(--margem) 0; }
+.v3-datas > div { border-radius: 18px; background: var(--branco); box-shadow: inset 0 0 0 1.5px var(--fio); padding: 9px 12px; font-size: 12px; font-weight: 600; color: var(--tinta-2); display: grid; gap: 4px; justify-items: start; }
+.v3-datas b { font: 800 18px/1.1 var(--f-titulo); color: var(--tinta); letter-spacing: -.02em; }
+
+/* a linha das sessões: as pontas do par grandes, a ressalva em tangerina */
+.v3-trilha { position: relative; display: flex; justify-content: space-between; margin: 12px var(--margem) 0; min-height: 52px; }
+.v3-trilha::before { content: ""; position: absolute; left: 14px; right: 14px; top: 21px; height: 2px; background: var(--fio); }
+.v3 .v3-trilha button { position: relative; flex: 0 0 auto; min-width: 28px; min-height: 48px; display: flex; flex-direction: column; align-items: center; gap: 6px; font: 600 12px var(--f-titulo); color: var(--tinta-3); }
+.v3-trilha i { width: 14px; height: 14px; margin-top: 14px; border-radius: 50%; background: var(--papel); box-shadow: inset 0 0 0 2px var(--tinta-3); transition: scale .2s var(--mola); }
+.v3-trilha i.r { box-shadow: inset 0 0 0 3px var(--tanja); }
+.v3 .v3-trilha .de, .v3 .v3-trilha .ate { color: var(--tinta); }
+.v3-trilha .de i { scale: 1.8; background: var(--tinta); box-shadow: none; }
+.v3-trilha .ate i { scale: 1.8; background: var(--lilas); box-shadow: inset 0 0 0 2.5px var(--tinta); }
+
+.v3-tempo-f { padding: 10px 56px 0; }
+.v3-ver { padding: 6px 44px 0; }
+.v3-ver-n { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px 0; }
+.v3 .v3-ver-n button { min-width: 48px; min-height: 48px; display: flex; align-items: center; justify-content: center; }
+.v3-ver-n button:disabled { color: var(--tinta-28); }
+.v3-ver-n svg { width: 24px; height: 24px; }
+.v3-ver-n b { display: block; font: 700 18px var(--f-titulo); text-align: center; }
+.v3-ver-n span { display: block; font: 500 13px var(--f-texto); color: var(--tinta-2); text-align: center; }
+
+.v3-lixo { display: flex; align-items: center; gap: 12px; min-height: 76px; border-top: 1.5px solid var(--fio); }
+.v3-lixo:first-child { border-top: 0; }
+.v3-lixo .v3-foto { flex: 0 0 48px; border-radius: 10px; }
+.v3 .v3-lixo-b { flex: 0 0 auto; min-height: var(--alvo); padding: 0 14px; border-radius: var(--r-pilula); box-shadow: inset 0 0 0 2px var(--tinta); font: 700 14px var(--f-titulo); }
+
+/* o quadro do ajuste: o mesmo 3:4 e as mesmas linhas da câmera */
+.v3-quadro-aj { position: relative; margin: 8px 44px 0; border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 0 2px var(--tinta); touch-action: none; cursor: grab; }
+.v3-quadro-aj > .v3-foto { border-radius: 0; }
+.v3-quadro-aj-f { position: absolute; inset: 0; opacity: .45; pointer-events: none; }
+.v3-quadro-aj-f .v3-foto { border-radius: 0; background: none; }
+.v3-ctl { padding: 10px var(--margem) 0; }
+.v3-ctl label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--tinta-2); }
+.v3-ctl label b { font: 800 16px var(--f-titulo); color: var(--tinta); }

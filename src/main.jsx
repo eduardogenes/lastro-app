@@ -100,11 +100,12 @@ import { exifDoArquivo } from './infra/exif';
 import {
   CADENCIA_DIAS, CONFERE_SEMPRE, FALA_DO_AJUSTE, FALA_DO_FIM, PASSOS_DO_AJUSTE,
   comAPose, completude, montagem as montagemDe, mudancasDaSessao, ressalvaDaSessao, textoDaMudanca, tituloDoFim,
+  pontaParaTrocar, seloDaSessao,
   diasDesde as diasDesdeAFoto, instanteDaData, mediaDaSemana, parPadrao,
   poseDe, poses as posesDo, posesDaData, proximaPose, quaseTodoPreto, referencia, sessaoDe,
   ultima as ultimaSessaoFoto, vizinhaComAPose
 } from './dominio/protocolo';
-import { LUZES, apagadas, liberado, luzes } from './dominio/captura';
+import { LUZES, apagadas, liberado, luzes, nomesDoFora } from './dominio/captura';
 import {
   IDENTIDADE, arrasta as arrastaRecorte, ehIdentidade,
   normaliza as normalizaEnq, zoomMinimo
@@ -2791,7 +2792,7 @@ const CTX = {
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.galeria || view.diaAberto || view.ajuste || view.camera ||
-              view.ajustes || view.modoSessao || view.revisao);
+              view.ajustes || view.modoSessao || view.revisao || view.fotos || view.noTempo);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -8316,6 +8317,8 @@ const FECHA_CAMADA = {
   ajuste:    function () { CTX.fechaAjuste(); },
   protocolo: function () { CTX.fechaProtocolo(); },
   passos:    function () { CTX.fechaPassosDasFotos(); },
+  fotos:     function () { CTX.fechaCentroDasFotos(); },
+  noTempo:   function () { CTX.fechaNoTempo(); },
   comparar:  function () { CTX.fechaComparar(); },
   revisao:   function () { CTX.fechaRevisao(); },
   evolucao:  function () { CTX.fechaEvolucao(); },
@@ -12585,6 +12588,161 @@ CTX.comparacao = function () {
     corte: c.corte == null ? 50 : c.corte,
     intervalo: intervalo,
     notas: notas
+  };
+};
+
+// ---------- as fotos no visual novo: o que as telas de consulta leem ----------
+
+/** A ressalva de uma sessão pela data, pronta para o selo. */
+function seloDaData(d) {
+  const r = ressalvaDaSessao(d ? sessaoDe(S.protocolo.sessoes, d) : null);
+  return { noPadrao: r.noPadrao, txt: seloDaSessao(r) };
+}
+
+/** A comparação, com a ressalva de cada data ao lado (o selo por data do lote 1). */
+CTX.comparacaoV3 = function () {
+  const c = view.comparar;
+  if (!c) return null;
+  const base = CTX.comparacao();
+  const dias = base.par ? Math.abs(Math.round((instanteDaData(c.ate) - instanteDaData(c.de)) / 86400000)) : null;
+  return Object.assign(base, {
+    dias: dias,
+    modo: base.cortina ? 'cortina' : base.sobrepor ? 'sobre' : 'lado',
+    seloDe: seloDaData(c.de), seloAte: seloDaData(c.ate),
+    datas: base.datas.map(function (x) { return Object.assign({}, x, { noPadrao: seloDaData(x.d).noPadrao }); })
+  });
+};
+CTX.setModoDaComparacao = function (m) {
+  const c = view.comparar; if (!c) return;
+  c.cortina = m === 'cortina'; c.sobrepor = m === 'sobre';
+  render();
+};
+/** O toque numa sessão da linha: troca a ponta do par mais perto dela. */
+CTX.tocaSessaoComparada = function (d) {
+  const c = view.comparar; if (!c) return;
+  const datas = comAPose(S.protocolo.sessoes, c.pose).map(function (s) { return s.d; });
+  const ponta = pontaParaTrocar(datas, c.de, c.ate, d);
+  if (ponta) CTX.setDataComparada(ponta, d);
+};
+
+/**
+ * NO TEMPO: as sessões de uma pose, em ordem, como um filme. Mesmo lugar e
+ * mesma distância, o corpo fica parado e só a mudança aparece.
+ */
+CTX.abreNoTempo = function (pose) {
+  const ordem = ordemDePoses();
+  const p = typeof pose === 'string' && poseDe(pose) ? pose
+    : ordem.filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0] || ordem[0];
+  const n = comAPose(S.protocolo.sessoes, p).length;
+  view.noTempo = { pose: p, i: Math.max(0, n - 1) };
+  entraNoDestino('noTempo'); render(); rola(0);
+  garanteBytesDoCorpo(comAPose(S.protocolo.sessoes, p).map(function (s) { return s.d; }));
+};
+CTX.fechaNoTempo = function () { view.noTempo = null; render(); saiDoDestino('noTempo'); };
+CTX.setPoseNoTempo = function (id) {
+  const t = view.noTempo; if (!t || !poseDe(id)) return;
+  const ses = comAPose(S.protocolo.sessoes, id);
+  t.pose = id; t.i = Math.max(0, ses.length - 1);
+  garanteBytesDoCorpo(ses.map(function (s) { return s.d; }));
+  render();
+};
+CTX.setIndiceNoTempo = function (i) {
+  const t = view.noTempo; if (!t) return;
+  const n = comAPose(S.protocolo.sessoes, t.pose).length;
+  t.i = Math.max(0, Math.min(n - 1, Math.round(Number(i) || 0)));
+  render();
+};
+CTX.noTempoV3 = function () {
+  const t = view.noTempo; if (!t) return null;
+  const sessoes = comAPose(S.protocolo.sessoes, t.pose).map(function (s) {
+    const f = s.fotos[t.pose];
+    const peso = mediaDaSemana(S.body.peso, s.d);
+    const sel = seloDaData(s.d);
+    return { d: s.d, txt: fmtDate(instanteDaData(s.d)), url: CORPO.urlDaFoto(s.d, t.pose, f), enq: (f && f.enq) || null,
+             peso: peso == null ? null : fmtDec(peso) + ' kg', noPadrao: sel.noPadrao, selo: sel.txt };
+  });
+  return {
+    poses: posesDo(S.protocolo.poses).map(function (p) { return { k: p.id, t: p.n }; }),
+    pose: t.pose, i: Math.min(t.i, Math.max(0, sessoes.length - 1)), sessoes: sessoes
+  };
+};
+
+/** A galeria, com o selo de cada sessão e o ajuste de cada foto. */
+CTX.galeriaV3 = function () {
+  const g = CTX.galeria();
+  if (!g) return null;
+  const enq = function (d, pose) {
+    const s = sessaoDe(S.protocolo.sessoes, d);
+    const f = s && s.fotos[pose];
+    return (f && f.enq) || null;
+  };
+  g.sessoes = g.sessoes.map(function (s) {
+    return Object.assign(s, { selo: seloDaData(s.d), fotos: s.fotos.map(function (f) { return Object.assign(f, { enq: enq(f.d, f.pose) }); }) });
+  });
+  if (g.foto) {
+    const ses = g.sessoes.filter(function (s) { return s.d === g.foto.d; })[0];
+    const i = ses ? ses.fotos.findIndex(function (f) { return f.pose === g.foto.pose; }) : -1;
+    const sessao = sessaoDe(S.protocolo.sessoes, g.foto.d);
+    const ref = sessao && sessao.fotos[g.foto.pose];
+    const r = ressalvaDaSessao(sessao);
+    const fora = ref && ref.cap && Array.isArray(ref.cap.fora) ? ref.cap.fora : [];
+    const peso = mediaDaSemana(S.body.peso, g.foto.d);
+    Object.assign(g.foto, {
+      enq: enq(g.foto.d, g.foto.pose),
+      indice: i + 1, total: ses ? ses.fotos.length : 0,
+      anterior: ses && i > 0 ? ses.fotos[i - 1].pose : null,
+      proxima: ses && i >= 0 && i < ses.fotos.length - 1 ? ses.fotos[i + 1].pose : null,
+      peso: peso == null ? null : fmtDec(peso) + ' kg na semana',
+      ressalva: fora.length ? 'Esta foto saiu fora do padrão: ' + nomesDoFora(fora) + '.'
+        : r.muda.length ? 'Sessão com ressalva: ' + textoDaMudanca(r.muda) + '.'
+        : r.noPadrao ? 'No padrão.' : 'A foto no padrão; outra da sessão saiu fora.'
+    });
+  }
+  return g;
+};
+
+/**
+ * O CENTRO DAS FOTOS: a próxima sessão, a última e as três entradas
+ * (comparar, no tempo, galeria). Destino a partir de Corpo.
+ */
+CTX.abreCentroDasFotos = function () {
+  view.fotos = true; entraNoDestino('fotos'); render(); rola(0);
+  const u = ultimaSessaoFoto(S.protocolo.sessoes);
+  if (u) garanteBytesDoCorpo([u.d]);
+};
+CTX.fechaCentroDasFotos = function () { view.fotos = null; render(); saiDoDestino('fotos'); };
+CTX.centroDasFotosV3 = function () {
+  if (!view.fotos) return null;
+  const sessoes = (S.protocolo.sessoes || []).filter(function (s) { return Object.keys(s.fotos || {}).length; });
+  const u = ultimaSessaoFoto(sessoes);
+  const desde = diasDesdeAFoto(sessoes, Date.now());
+  const faltam = desde == null ? null : CADENCIA_DIAS - desde;
+  const prox = u ? new Date(instanteDaData(u.d) + CADENCIA_DIAS * 86400000) : null;
+  const lista = posesDo(S.protocolo.poses);
+  const fotos = sessoes.reduce(function (n, s) { return n + Object.keys(s.fotos).length; }, 0);
+  const ressalva = u ? ressalvaDaSessao(u) : null;
+  const hoje = sessaoDe(S.protocolo.sessoes, hojeISO());
+  const pares = ordemDePoses().filter(function (id) { return comAPose(sessoes, id).length >= 2; }).length;
+  return {
+    nenhuma: !u,
+    hojePelaMetade: !!(hoje && completude(hoje, S.protocolo.poses).faltando.length && Object.keys(hoje.fotos).length),
+    titulo: !u ? 'A primeira sessão' : faltam > 1 ? 'Próxima em ' + faltam + ' dias' : faltam === 1 ? 'Próxima amanhã' : faltam === 0 ? 'Hoje é dia' : 'Passou ' + (-faltam) + (faltam === -1 ? ' dia' : ' dias'),
+    quando: u ? 'a cada ' + CADENCIA_DIAS + ' dias · a última foi ' + (desde === 0 ? 'hoje' : desde === 1 ? 'ontem' : 'há ' + desde) : 'a cada ' + CADENCIA_DIAS + ' dias',
+    apoio: !u ? 'São ' + lista.length + ' fotos, uns 4 minutos. Daqui a duas semanas nasce a primeira comparação.'
+      : (faltam > 0 ? DIAS_LONGOS[prox.getDay()] + ', ' + fmtDate(prox.getTime()) + '. Dá para fazer antes, se quiser: a comparação usa a data de cada sessão.'
+        : 'Nada aqui vence: a sessão entra com a data em que for feita.'),
+    ultima: u ? {
+      txt: fmtDate(instanteDaData(u.d)),
+      selo: seloDaSessao(ressalva), noPadrao: ressalva.noPadrao,
+      fotos: lista.filter(function (p) { return u.fotos[p.id]; }).slice(0, 6).map(function (p) {
+        const f = u.fotos[p.id];
+        return { id: p.id, n: p.n, url: CORPO.urlDaFoto(u.d, p.id, f), enq: (f && f.enq) || null };
+      })
+    } : null,
+    comparar: pares ? 'duas datas da mesma pose, de três jeitos' : null,
+    noTempo: sessoes.length >= 2 ? 'as ' + sessoes.length + ' sessões de uma pose, em sequência' : null,
+    galeria: fotos + (fotos === 1 ? ' foto' : ' fotos') + ' em ' + sessoes.length + (sessoes.length === 1 ? ' sessão' : ' sessões') +
+      ' · lixeira ' + (lixeiraDeFotos().length ? 'com ' + lixeiraDeFotos().length : 'vazia')
   };
 };
 

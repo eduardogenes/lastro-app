@@ -79,6 +79,22 @@ export function tituloDoFim(feitas: number, total: number, r: Ressalva): string 
   return n + 'todas no padrão';
 }
 
+/**
+ * Na linha das sessões da comparação, o toque numa data troca a ponta do par
+ * mais perto dela: antes do par, a de cá; depois, a de lá; no meio, a mais
+ * próxima (empate fica com a mais antiga). Tocar numa ponta não troca nada.
+ */
+export function pontaParaTrocar(datas: string[], de: string, ate: string, d: string): 'de' | 'ate' | null {
+  const i = datas.indexOf(d);
+  const a = datas.indexOf(de), b = datas.indexOf(ate);
+  if (i < 0 || i === a || i === b) return null;
+  // `de` é sempre a mais antiga das duas, e o resto vale com os nomes trocados
+  const [lo, hi, nLo, nHi] = a <= b ? [a, b, 'de', 'ate'] as const : [b, a, 'ate', 'de'] as const;
+  if (i < lo) return nLo;
+  if (i > hi) return nHi;
+  return i - lo <= hi - i ? nLo : nHi;
+}
+
 /** O intervalo do protocolo. Duas semanas: menos que isso é ruído de água e sono. */
 export const CADENCIA_DIAS = 14;
 

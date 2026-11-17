@@ -71,7 +71,9 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 |---|---|
 | Camadas: destino e folha do visual novo pela pilha do Voltar | **feito** (`DESTINOS_V3`, `FOLHAS_V3` em `src/ui/v3/telas.js`; folha de confirmação `aviso`; `tests/fluxo/v3-camadas.test.js`) |
 | Sessão de fotos: nova sessão (quem segura, "tudo como da última vez?", o preparo), os três passos, a câmera com as três luzes e "tirar mesmo assim", a sessão pela metade e o fim com a ressalva | **feito** (`src/ui/v3/telas/sessaofotos.jsx` e `camera.jsx`; regras em `src/dominio/captura.ts` e `ressalvaDaSessao` em `protocolo.ts`; `tests/dominio/captura-v3.test.ts`, `tests/fluxo/v3-fotos.test.js`). Altura e distância ainda são conferidas a olho: é o caminho de reserva, até a detecção entrar |
-| Centro das fotos, comparar, no tempo, galeria e ajustar | a fazer (ver [03-lotes.md](03-lotes.md)) |
+| Centro das fotos, comparar (lado a lado, cortina, sobrepor, linha das sessões com a ressalva), no tempo, galeria com o selo por sessão, foto aberta, lixeira e ajustar | **feito** (`src/ui/v3/telas/consultafotos.jsx`; dados em `ctx.comparacaoV3`, `noTempoV3`, `galeriaV3`, `centroDasFotosV3`; `tests/fluxo/v3-consulta-fotos.test.js`). A entrada do centro é o Corpo novo (Fase 2); até lá, as telas abrem pelas portas antigas |
+| "Mandar para os agentes" na comparação | a fazer: dado novo (o par marcado) e o formato no espelho |
+| Alinhamento automático do enquadramento | a fazer, junto com a detecção do corpo |
 | Detecção do corpo na câmera | a fazer (ver [02-captura.md](02-captura.md)) |
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
