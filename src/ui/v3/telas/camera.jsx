@@ -25,7 +25,21 @@ const LUZ = [
 const NOME = { nivel: 'nível', altura: 'altura', distancia: 'distância' };
 
 /** O que acertar agora, numa frase. `sozinho` muda o sujeito: o apoio, e não as mãos. */
-function oQueAcertar(k, d, sozinho, medida) {
+function oQueAcertar(k, d, sozinho, medida, x) {
+  // com a detecção medindo, a frase diz o lado certo para mexer
+  if (medida && k !== 'nivel' && x.pessoa === false) {
+    return ['Ninguém inteiro no quadro.', 'a cabeça e os pés precisam aparecer'];
+  }
+  if (medida && k === 'altura' && x.dicaAltura && x.dicaAltura !== 'ok') {
+    const sobe = x.dicaAltura === 'subir';
+    return [sozinho ? (sobe ? 'Suba o apoio do celular.' : 'Desça o apoio do celular.') : (sobe ? 'Suba as mãos.' : 'Desça as mãos.'),
+            sobe ? 'sobra mais espaço embaixo dos pés' : 'sobra mais espaço em cima da cabeça'];
+  }
+  if (medida && k === 'distancia' && x.dicaDistancia && x.dicaDistancia !== 'ok') {
+    const perto = x.dicaDistancia === 'frente';
+    return [sozinho ? (perto ? 'Chegue o apoio para a frente.' : 'Afaste o apoio.') : (perto ? 'Chegue a cadeira para a frente.' : 'Afaste a cadeira.'),
+            perto ? 'o corpo está pequeno entre as linhas' : 'a cabeça ou os pés passam das linhas'];
+  }
   if (k === 'nivel') {
     return medida && d.nivel
       ? ['Endireite o celular: ele está inclinado.', 'de lado ' + d.nivel.lado + ' · frente ' + d.nivel.frente]
@@ -95,8 +109,9 @@ export function CameraV3({ ctx }) {
   else if (d.torta) aviso = null;
   else if (x.completa && !correndo) aviso = { ok: true, icone: ic.ok, t: 'As ' + d.total + ' estão guardadas.', s: d.miniatura ? 'dá para refazer a última no canto' : null };
   else if (x.forcado && falta) aviso = { icone: ic.x, t: 'Fora do padrão: ' + x.apagadas.map(k => NOME[k]).join(', ') + ' sem acertar.', s: 'fica anotado em cada foto' };
-  else if (falta) { const m = oQueAcertar(falta, d, sozinho, l.medida[falta]); aviso = { icone: LUZ.filter(z => z.k === falta)[0].icone, t: m[0], s: m[1] }; }
-  else if (x.ajuste) aviso = { ok: true, icone: ic.ok, t: 'Tudo certo. Agora não saia do lugar até o fim.' };
+  else if (x.esperando && d.contagem == null) aviso = { ok: !falta, icone: ic.um, t: falta ? oQueAcertar(falta, d, true, l.medida[falta], x)[0] : 'Pare na marca.', s: 'a contagem começa com você parado' };
+  else if (falta) { const m = oQueAcertar(falta, d, sozinho, l.medida[falta], x); aviso = { icone: LUZ.filter(z => z.k === falta)[0].icone, t: m[0], s: m[1] }; }
+  else if (x.ajuste) aviso = { ok: true, icone: ic.ok, t: 'Tudo certo. Agora não saia do lugar até o fim.', s: x.dicaLado !== 'centro' ? 'o corpo está um pouco à ' + x.dicaLado + ' do meio' : null };
   else if (d.giroTxt) aviso = { ok: true, icone: ic.gira, t: d.giroTxt };
 
   // o botão do meio
@@ -202,6 +217,9 @@ export function CameraV3({ ctx }) {
         })}
       </div>
 
+      {(x.ajuste || (sozinho && !correndo)) && x.deteccao === 'reserva' && (
+        <p class="v3-apoio" data-a="cam-reserva">A detecção do corpo não está disponível agora: confira altura e distância pelas linhas e toque nas luzes.</p>
+      )}
       {!x.ajuste && !sozinho && !d.torta && (
         <div class="v3-cam-fala">
           <p>“{x.fala}”{x.confira && <small>confira: {x.confira}</small>}</p>

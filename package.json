@@ -27,6 +27,7 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "1.2.2",
     "preact": "^10.29.8"
   }
 }

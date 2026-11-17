@@ -35,6 +35,14 @@ const LOCAIS = __LOCAIS__;
 const FOTOS = ['lastro-fotos', 'lastro-corpo', 'lastro-lousa', 'treino-fotos'];
 
 /**
+ * O MOTOR DA DETECÇÃO DO CORPO (`pose/`: o modelo e o MediaPipe, uns 20 MB).
+ * Fica fora da instalação e do cache do build: baixa na primeira vez que a
+ * câmera abre e mora aqui, com o nome da versão. Publicar o app não o baixa de
+ * novo; trocar a versão do motor troca o nome, e o antigo sai na ativação.
+ */
+const MOTOR = 'lastro-pose-1.2.2';
+
+/**
  * Busca em fila, não todas de uma vez.
  *
  * `Promise.all` sobre a lista inteira dispara uma requisição por arquivo no
@@ -75,7 +83,7 @@ self.addEventListener('activate', function (e) {
       // build. O nome do cache do build muda a cada publicação, e apagar tudo
       // que não é o atual levaria junto fotos que não têm como ser refeitas.
       .then(ks => Promise.all(
-        ks.filter(k => k !== CACHE && FOTOS.indexOf(k) < 0).map(k => caches.delete(k))))
+        ks.filter(k => k !== CACHE && k !== MOTOR && FOTOS.indexOf(k) < 0).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -92,6 +100,16 @@ self.addEventListener('fetch', function (e) {
   // o da nuvem — o app fundiria contra o passado e reescreveria por cima do
   // presente. O que é dado vivo passa direto; o que é asset é que se cacheia.
   if (!mesmaOrigem && !fonte) return;
+
+  // O motor da detecção: do cache dele, e da rede só na primeira vez
+  if (mesmaOrigem && url.pathname.indexOf('/pose/') >= 0) {
+    e.respondWith(caches.open(MOTOR).then(function (c) {
+      return c.match(req).then(function (tem) {
+        return tem || fetch(req).then(function (r) { if (r && r.ok) c.put(req, r.clone()); return r; });
+      });
+    }));
+    return;
+  }
 
   // Navegação sempre resolve para o index em cache: garante abrir offline
   if (req.mode === 'navigate') {

@@ -344,6 +344,12 @@ export interface Enquadramento {
   cy: number;
   /** quando o ajuste mudou. É o que a fusão compara quando `v` empata. */
   m: number;
+  /**
+   * Feito pelo app, com os pontos do corpo da foto (`alinhamentoAutomatico`,
+   * em dominio/deteccao.ts), e não à mão. Ajustar à mão grava sem a marca;
+   * "Original" desfaz como qualquer ajuste.
+   */
+  auto?: 1;
 }
 
 /** A referência de uma foto: quando foi tirada e em que formato ela ficou. */
@@ -432,6 +438,14 @@ export interface Captura {
    * fotos dela está.
    */
   fora?: Array<'nivel' | 'altura' | 'distancia' | 'tremida'>;
+  /**
+   * A DETECÇÃO DO CORPO no disparo (visual novo): se ela estava ativa, medindo
+   * altura e distância sozinha, e a quantos quadros por segundo. `ativa: false`
+   * é o caminho de reserva (as linhas conferidas a olho). Ausente = foto de
+   * antes da detecção, ou da câmera do sistema. É o dado que diz, sem ninguém
+   * testar à mão, se a detecção funciona no aparelho.
+   */
+  det?: { ativa: boolean; qps: number };
 }
 
 /**

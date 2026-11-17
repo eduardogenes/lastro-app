@@ -92,8 +92,40 @@ funciona, e nunca uma dependência:
   (`Captura.det`, campo novo da Fase 1). A pasta dos agentes mostra.
 - O modelo e os arquivos do motor ficam **dentro do app**, servidos e
   guardados como as fontes. A versão do pacote fica fixa e com pelo menos
-  duas semanas de publicada no momento da instalação (a 1.2.3 saiu em
-  11/11/2026).
+  duas semanas de publicada no momento da instalação: instalada a **1.2.2**
+  (03/11/2026), porque a 1.2.3 (11/11) ainda não tinha duas semanas.
+
+## Como ficou no código (17/11/2026)
+
+- **Regra** em `src/dominio/deteccao.ts` (`leCorpo`, `parado`,
+  `alinhamentoAutomatico`), com as tolerâncias todas em `REGUA`; as três luzes
+  em `src/dominio/captura.ts`. Testes em `tests/dominio/deteccao.test.ts` e
+  `tests/fluxo/v3-deteccao.test.js` (com um dublê do motor).
+- **Motor** em `src/infra/pose.ts`, carregado só quando a câmera do visual
+  novo abre. Os arquivos (`pose/`: o modelo de `public/pose/` e o MediaPipe,
+  copiado do pacote no build) não entram na instalação do app: baixam na
+  primeira câmera e moram no cache `lastro-pose-<versão>` do service worker,
+  que publicar o app não apaga. O detector lê o mesmo quadro 3:4 que vira a
+  foto, no máximo 15 vezes por segundo.
+- **Caiu para as linhas** quando o motor não carrega, falha, ou fica abaixo de
+  8 leituras por segundo depois de 2,5 s. A tela diz, e as luzes de altura e
+  distância voltam a ser tocadas por quem confere.
+- **Conferido em navegador de verdade** (Chromium e WebKit, nesta máquina): o
+  motor carrega pelo caminho do build e roda. A velocidade no iPhone continua
+  sem medida; `Captura.det` vai dizer.
+
+Decidido na construção:
+
+- **Sozinho, o toque no play pede só o nível**: quem toca está ao lado do
+  celular, fora do quadro. Com a detecção ativa, o app espera as três luzes
+  com a pessoa na marca e o corpo parado por 1 s, e conta 3. Sem a detecção,
+  ou depois de 20 s esperando, a contagem fixa de antes.
+- **A frase de ajuste falada** ("um passo para trás") só no modo sozinho,
+  enquanto o app espera a pessoa: acompanhado, quem segura lê a tela, e mandar
+  a pessoa fotografada andar tiraria ela da marca no chão.
+- **O alinhamento automático só aproxima e centraliza**, sem girar: corpo
+  grande demais no quadro não tem conserto (afastar não existe), e o giro já
+  vem medido pelo nível no disparo.
 
 ## O que fica de fora, de propósito
 

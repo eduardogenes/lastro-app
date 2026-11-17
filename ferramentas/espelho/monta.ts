@@ -773,6 +773,8 @@ function ajusteDaFoto(f: FotoRef): string {
   if (Math.abs(e.r || 0) >= 0.05) p.push('giro ' + br(e.r, 1) + '°');
   if (Math.abs((e.z || 1) - 1) >= 0.005) p.push('zoom ' + br(e.z, 2) + '×');
   if (Math.abs((e.cx ?? 0.5) - 0.5) >= 0.005 || Math.abs((e.cy ?? 0.5) - 0.5) >= 0.005) p.push('recorte deslocado');
+  // feito pelo app com os pontos do corpo, e não à mão
+  if (e.auto === 1) p.push('alinhado pelo app');
   return p.join(', ');
 }
 
@@ -796,6 +798,12 @@ function cameraDaFoto(f: FotoRef): string {
   // do instante do toque (ver infra/nivel.ts)
   if (c.mov && numero(c.mov.seg) != null) p.push(c.mov.seg < APOIADO ? 'apoiado' : 'na mão');
   if (c.mov && numero(c.mov.toque) != null && c.mov.toque > TREMOR) p.push('pode ter tremido (' + br(c.mov.toque, 1) + '°/s)');
+  // a detecção do corpo no disparo (Captura.det): altura e distância medidas
+  // pelo app, ou conferidas a olho quando ela não estava ativa
+  if (c.det && typeof c.det.ativa === 'boolean') {
+    p.push(c.det.ativa ? 'altura e distância medidas pelo app' + (numero(c.det.qps) ? ' (' + Math.round(c.det.qps) + ' quadros/s)' : '')
+                       : 'altura e distância conferidas a olho');
+  }
   return p.filter(Boolean).join(' · ');
 }
 

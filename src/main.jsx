@@ -96,6 +96,8 @@ import * as CORPO from './infra/corpo';
 import * as LOUSA from './infra/lousa';
 import * as CAM from './infra/camera';
 import * as NIVEL from './infra/nivel';
+import * as POSE from './infra/pose';
+import { alinhamentoAutomatico, leCorpo, parado, rastroDe } from './dominio/deteccao';
 import { exifDoArquivo } from './infra/exif';
 import {
   CADENCIA_DIAS, CONFERE_SEMPRE, FALA_DO_AJUSTE, FALA_DO_FIM, PASSOS_DO_AJUSTE,
@@ -11772,6 +11774,8 @@ async function guardaFotoDaPose(d, pose, reduzida) {
   if (reduzida.via && reduzida.fonte) {
     ses.fotos[pose].cap = registroDaCaptura(reduzida);
   }
+  // o alinhamento automático, pelos pontos do corpo no disparo (visual novo)
+  if (reduzida.enqAuto) ses.fotos[pose].enq = reduzida.enqAuto;
   ses.m = Date.now();
   CORPO.solta(d, pose);                // a versão anterior sai da memória
   await CORPO.carrega(d, pose, ses.fotos[pose]);
@@ -11825,6 +11829,7 @@ function registroDaCaptura(r) {
     const fora = r.fora.filter(function (x, i, a) { return ok.indexOf(x) >= 0 && a.indexOf(x) === i; });
     if (fora.length) cap.fora = fora;
   }
+  if (r.det && typeof r.det.ativa === 'boolean') cap.det = { ativa: r.det.ativa, qps: Math.round(Number(r.det.qps) || 0) };
   return cap;
 }
 const FOTO_DEITADA = 'A foto saiu cortada pelo navegador e não foi guardada. Tire de novo.';
@@ -14273,7 +14278,93 @@ function fantasmaDaPose(pose, d, quem) {
 
 CTX.streamDaCamera = function () { return streamCamera; };
 /** Pinta a tela da câmera com o mesmo quadro que vira a foto (ver `desenhaQuadro`). */
-CTX.pintaTelaDaCamera = function (tela, video) { return CAM.pintaTela(tela, video); };
+CTX.pintaTelaDaCamera = function (tela, video) {
+  const r = CAM.pintaTela(tela, video);
+  detectaNoQuadro(tela);
+  return r;
+};
+
+// ---------- a detecção do corpo (visual novo) ----------
+// A cada quadro pintado, no máximo `RITMO_DA_DETECCAO` vezes por segundo, o
+// detector lê o mesmo quadro que vira a foto (o canvas, já em 3:4). Abaixo de
+// `QPS_MINIMO`, ou se o motor não carregar, a detecção sai e as luzes de altura
+// e distância voltam a ser conferidas a olho (docs/redesign-3/02-captura.md).
+const RITMO_DA_DETECCAO = 66, QPS_MINIMO = 8, AQUECIMENTO = 2500;
+let detector = null, pedidoDoDetector = false;
+function detectaNoQuadro(tela) {
+  const c = view.camera;
+  if (!c || !c.v3 || !c.pronta || c.detParou) return;
+  if (!detector) {
+    if (!pedidoDoDetector) {
+      pedidoDoDetector = true;
+      POSE.carrega().then(function (d) {
+        pedidoDoDetector = false;
+        detector = d;
+        if (!d && view.camera === c) { c.detParou = 'não carregou'; render(); }
+      });
+    }
+    return;
+  }
+  const agora = agoraMs();
+  const d = c.det || (c.det = { desde: agora, vezes: [], leitura: null, rastros: [], ativa: true, qps: 0 });
+  if (d.vezes.length && agora - d.vezes[d.vezes.length - 1] < RITMO_DA_DETECCAO) return;
+  let pts = null;
+  try { pts = detector.detecta(tela, agora); }
+  catch (e) { c.detParou = 'falhou'; c.det.ativa = false; render(); return; }
+  d.vezes = d.vezes.filter(function (t) { return agora - t < 2000; }).concat([agora]);
+  d.qps = d.vezes.length / 2;
+  if (agora - d.desde > AQUECIMENTO && d.qps < QPS_MINIMO) { c.detParou = 'lenta'; d.ativa = false; render(); return; }
+  const antes = d.leitura;
+  d.leitura = leCorpo(pts, antes);
+  const r = rastroDe(pts, agora);
+  d.rastros = d.rastros.filter(function (x) { return agora - x.t < 1500; }).concat(r ? [r] : []);
+  const chave = function (l) { return l ? [l.pessoa, l.altura, l.distancia, l.dicaAltura, l.dicaDistancia, l.lado].join() : ''; };
+  if (chave(antes) !== chave(d.leitura)) {
+    falaDoAjuste(c, antes, d.leitura);
+    render();
+  }
+}
+/**
+ * O que o toque no botão exige. Sozinho e com a detecção ativa, quem toca está
+ * ao lado do celular, fora do quadro: o toque pede só o nível, e o app espera
+ * as três luzes com a pessoa na marca antes de contar (`esperaParadoEDispara`).
+ */
+function liberadoNoToque(c) {
+  const l = luzesDaCamera(c);
+  if (c.quem === 'sozinho' && deteccaoAtiva(c)) return !!(c.forcado || l.nivel);
+  return liberado(l, c.forcado);
+}
+/** Detecção ligada e medindo: é ela quem acende altura e distância. */
+function deteccaoAtiva(c) { return !!(c && c.det && c.det.ativa && !c.detParou && c.det.leitura); }
+
+/**
+ * Sozinho, a pessoa está longe da tela: quando a distância apaga enquanto o
+ * app espera por ela, a voz diz o que fazer, uma vez por mudança.
+ */
+const FALA_DA_DISTANCIA = { frente: 'Um passo para a frente.', tras: 'Um passo para trás.' };
+function falaDoAjuste(c, antes, agora) {
+  if (c.quem !== 'sozinho' || !c.esperando || !agora || !agora.pessoa) return;
+  const d = agora.dicaDistancia;
+  if (d !== 'ok' && (!antes || antes.dicaDistancia !== d) && FALA_DA_DISTANCIA[d]) falaTexto(FALA_DA_DISTANCIA[d]);
+}
+
+/**
+ * O DISPARO SOZINHO, com a detecção ativa: em vez da contagem fixa, o app
+ * espera as três luzes verdes e o corpo parado por um segundo, e então conta
+ * três. Sem a detecção (ou depois de 20 s esperando), a contagem fixa de antes.
+ */
+const ESPERA_MAXIMA = 20000;
+function esperaParadoEDispara(c, contagemFixa) {
+  const vez = sequencia, t0 = agoraMs();
+  c.esperando = true;
+  const confere = function () {
+    if (view.camera !== c || !c.seguido || vez !== sequencia || c.contagem != null) { c.esperando = false; return; }
+    if (!deteccaoAtiva(c) || agoraMs() - t0 > ESPERA_MAXIMA) { c.esperando = false; contaEDispara(contagemFixa); return; }
+    if (liberado(luzesDaCamera(c), c.forcado) && parado(c.det.rastros, agoraMs())) { c.esperando = false; contaEDispara(3); return; }
+    setTimeout(confere, 200);
+  };
+  confere();
+}
 
 /** Desliga a câmera e cancela a contagem. Toda saída passa por aqui. */
 function encerraCamera() {
@@ -14322,6 +14413,7 @@ function seguirDepoisDaFala(giro) {
   const vez = sequencia;
   return function () {
     if (view.camera !== c || !c.seguido || vez !== sequencia || c.contagem != null) return;
+    if (deteccaoAtiva(c)) { esperaParadoEDispara(c, giro ? PAUSA_DO_GIRO : PAUSA_DA_POSE); return; }
     contaEDispara(giro ? PAUSA_DO_GIRO : PAUSA_DA_POSE);
   };
 }
@@ -14382,7 +14474,7 @@ CTX.abreCamera = async function () {
 CTX.ajustado = function () {
   const c = view.camera, v = view.protocolo;
   if (!c || !v || !c.ajuste) return;
-  if (c.v3 && !liberado(luzesDaCamera(c), c.forcado)) return;
+  if (c.v3 && !liberadoNoToque(c)) return;
   preparaAudio();
   c.ajuste = false;
   render();
@@ -14580,7 +14672,7 @@ CTX.disparaCamera = function (origem) {
   else if (agoraMs() - toqueEm < 1000) return;
   preparaAudio();                      // o gesto de toque é o que libera o áudio
   // no visual novo, o botão só vale com as três luzes verdes (ou "mesmo assim")
-  if (c.v3 && !liberado(luzesDaCamera(c), c.forcado)) return;
+  if (c.v3 && !liberadoNoToque(c)) return;
   // Com alguém tirando, um toque é UMA foto, e nada sai sozinho (pedido do
   // dono, 04/11): quem fotografa vê a pessoa e decide a hora.
   if (c.quem === 'alguem') {
@@ -14593,6 +14685,7 @@ CTX.disparaCamera = function (origem) {
   // sozinhas. E um toque novo vale mais que a continuação que esperava a voz.
   sequencia++;
   c.seguido = true;
+  if (deteccaoAtiva(c)) { esperaParadoEDispara(c, c.timer || PAUSA_DA_POSE); return; }
   if (!c.timer) { capturaAgora(); return; }
   contaEDispara(c.timer);
 };
@@ -14841,13 +14934,20 @@ function dadosDaCamera(c) {
   const m = movimento.resumo(Date.now());
   if (m) r.mov = m;
   // o que não estava verde no disparo (a tremida entra depois, em `pixelsDaCamera`)
-  if (c.v3) r.fora = apagadas(luzesDaCamera(c));
+  if (c.v3) {
+    r.fora = apagadas(luzesDaCamera(c));
+    const ativa = deteccaoAtiva(c);
+    r.det = { ativa: ativa, qps: ativa ? c.det.qps : 0 };
+    const enq = ativa ? alinhamentoAutomatico(c.det.leitura, Date.now()) : null;
+    if (enq) r.enqAuto = enq;
+  }
   return r;
 }
 
 /** As três luzes de agora: o nível pelo sensor, altura e distância conferidas. */
 function luzesDaCamera(c) {
-  return luzes({ nivel: c.nivel ? !!c.nivelOk : null, det: null, conferi: c.conferi });
+  const det = deteccaoAtiva(c) ? { altura: c.det.leitura.altura, distancia: c.det.leitura.distancia } : null;
+  return luzes({ nivel: c.nivel ? !!c.nivelOk : null, det: det, conferi: c.conferi });
 }
 /** Quem fotografa conferiu a olho uma luz que o app não mede (o caminho de reserva). */
 CTX.confereLuz = function (k, on) {
@@ -14881,7 +14981,14 @@ CTX.cameraV3 = function () {
   return {
     luzes: l,
     apagadas: apagadas(l),
-    liberado: liberado(l, c.forcado),
+    liberado: liberadoNoToque(c),
+    // a detecção: medindo, carregando, ou o motivo de ter saído
+    deteccao: c.detParou ? 'reserva' : deteccaoAtiva(c) ? 'ativa' : 'carregando',
+    dicaLado: deteccaoAtiva(c) && c.det.leitura.pessoa ? c.det.leitura.lado : 'centro',
+    pessoa: deteccaoAtiva(c) ? !!c.det.leitura.pessoa : null,
+    dicaAltura: deteccaoAtiva(c) ? c.det.leitura.dicaAltura : null,
+    dicaDistancia: deteccaoAtiva(c) ? c.det.leitura.dicaDistancia : null,
+    esperando: !!c.esperando,
     forcado: !!c.forcado,
     ajuste: !!(c.quem === 'alguem' && c.ajuste),
     grupos: grupos,

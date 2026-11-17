@@ -29,7 +29,9 @@ function servicWorkerVersionado() {
       const locais = ['./', './index.html', './manifest.webmanifest',
         './icone.svg', './icone-32.png', './icone-180.png', './icone-192.png',
         './icone-512.png', './icone-192-mascara.png', './icone-512-mascara.png']
-        .concat(emitidos.filter(f => !f.endsWith('.map') && !f.endsWith('.html')));
+        // o motor da detecção do corpo (`pose/`, 20 MB) fica de fora: ele só
+        // baixa quando a câmera abre, e mora num cache próprio (ver src/sw.js)
+        .concat(emitidos.filter(f => !f.endsWith('.map') && !f.endsWith('.html') && f.indexOf('./pose/') !== 0));
 
       // Alimenta o hash asset a asset, em vez de concatenar tudo numa string.
       // `source` de um asset binário é um Uint8Array, e juntar isso com
@@ -65,6 +67,35 @@ function servicWorkerVersionado() {
         source: readFileSync('src/sw.js', 'utf8')
           .replace("const CACHE = '__CACHE__';", "const CACHE = 'lastro-" + hash + "';")
           .replace('const LOCAIS = __LOCAIS__;', 'const LOCAIS = ' + JSON.stringify(locais, null, 2) + ';')
+      });
+    }
+  };
+}
+
+// O MOTOR DA DETECÇÃO DO CORPO (docs/redesign-3/02-captura.md): o carregador e
+// o binário do MediaPipe vêm do pacote instalado, com a versão fixa do
+// package.json, e saem em `pose/`, ao lado do modelo (`public/pose/`). No
+// desenvolvimento, o mesmo caminho é servido direto de node_modules.
+// O bundle de JS também vai para `pose/` e é importado por endereço (ver
+// src/infra/pose.ts): um `import()` do pacote viraria um pedaço do build com o
+// auxiliar de pré-carga do Vite, que usa `import.meta` e quebra o bundle onde
+// ele roda como script clássico (o harness dos testes de fluxo).
+const PACOTE_DO_MOTOR = 'node_modules/@mediapipe/tasks-vision/';
+const MOTOR = { 'vision_bundle.mjs': '', 'vision_wasm_internal.js': 'wasm/', 'vision_wasm_internal.wasm': 'wasm/' };
+const origemDoMotor = f => PACOTE_DO_MOTOR + MOTOR[f] + f;
+function motorDaDeteccao() {
+  return {
+    name: 'motor-da-deteccao',
+    generateBundle() {
+      if (this.meta.watchMode) return;
+      Object.keys(MOTOR).forEach(f => this.emitFile({ type: 'asset', fileName: 'pose/' + f, source: readFileSync(origemDoMotor(f)) }));
+    },
+    configureServer(server) {
+      server.middlewares.use(function (req, res, next) {
+        const f = Object.keys(MOTOR).find(m => req.url && req.url.split('?')[0].endsWith('/pose/' + m));
+        if (!f) return next();
+        res.setHeader('Content-Type', f.endsWith('.wasm') ? 'application/wasm' : 'text/javascript');
+        res.end(readFileSync(origemDoMotor(f)));
       });
     }
   };
@@ -111,7 +142,8 @@ export default defineConfig({
     }
   },
 
-  plugins: [servicWorkerVersionado()],
+  // o motor antes do service worker: o sw-versionado lê o bundle já com ele
+  plugins: [motorDaDeteccao(), servicWorkerVersionado()],
 
   server: {
     port: 5173,
