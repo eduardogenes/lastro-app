@@ -8,16 +8,20 @@ Estado em 16/11/2026. Os protótipos são **só visual**: mostram como cada tela
 Cada `.html` abre sozinho no navegador. No celular ocupa a tela; no
 computador aparece dentro de um aparelho, com um texto ao lado.
 
-| Arquivo | Lote | Página publicada |
-|---|---|---|
-| `hoje.html` | base: Hoje, Treino em foco, Corpo, Dias, Semana, Plano, botão "+" | https://claude.ai/artifact/WVcNEX3ifCh2JctGG3qYY6 |
-| `fotos.html` | 1 · Fotos | https://claude.ai/artifact/KNvYxCWcXwiNNfGtUP5uB3 |
-| `corpo.html` | 2 · Corpo e evolução | https://claude.ai/artifact/WSvR1zqfZFxRo7wdHwMWgh |
-| `treino.html` | 3 · Treino | https://claude.ai/artifact/HvGNaVtdWwEmnNa2JPspXt |
-| `resto.html` | 4 · Dias, Semana, Comida, Compras, Ajustes, primeira vez, estados | https://claude.ai/artifact/TPo8peQPGzrdR2QtL4Ccvn |
+As páginas existem nas duas contas do claude.ai que o dono usa. Cada link
+abre só na conta em que foi publicado.
 
-As páginas estão na conta do claude.ai que estava ativa até a noite de 16/11.
-Os arquivos daqui são a mesma versão final de cada uma.
+| Arquivo | Lote | Conta principal (a de 16/11) | Conta secundária (republicada em 17/11) |
+|---|---|---|---|
+| `hoje.html` | base: Hoje, Treino em foco, Corpo, Dias, Semana, Plano, botão "+" | https://claude.ai/artifact/QZcnUuZmEsB24AoUB2gAEN | https://claude.ai/artifact/WVcNEX3ifCh2JctGG3qYY6 |
+| `fotos.html` | 1 · Fotos | https://claude.ai/artifact/GxmcE6dq1uoU1qBf5oVNJp | https://claude.ai/artifact/KNvYxCWcXwiNNfGtUP5uB3 |
+| `corpo.html` | 2 · Corpo e evolução | https://claude.ai/artifact/AKWdEXpZmQ9eiaHgu67iQG | https://claude.ai/artifact/WSvR1zqfZFxRo7wdHwMWgh |
+| `treino.html` | 3 · Treino | https://claude.ai/artifact/LxK55rabgpPZNM8d6H9kDU | https://claude.ai/artifact/HvGNaVtdWwEmnNa2JPspXt |
+| `resto.html` | 4 · Dias, Semana, Comida, Compras, Ajustes, primeira vez, estados | https://claude.ai/artifact/RfzhQHzoKHaQyaEZiZ5798 | https://claude.ai/artifact/TPo8peQPGzrdR2QtL4Ccvn |
+| decisões da câmera (fase 1) | página de perguntas ao dono | https://claude.ai/artifact/EntxrWGb8esXjWYsXc5YwL | https://claude.ai/artifact/GDLK3U4pqYHQRcWhFjGTTU |
+
+Os arquivos daqui são a fonte das duas: se um link não abrir, a conta ativa é
+a outra.
 
 Os roteiros `ver*.mjs` (guardados em `~/Lastro-prototipos/testes/`, fora do
 repositório) são os que percorreram cada protótipo num
