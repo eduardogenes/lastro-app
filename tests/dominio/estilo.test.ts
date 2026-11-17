@@ -90,6 +90,12 @@ const FOLHAS = ['tokens.css', 'base.css', 'componentes.css', 'treino.css', 'prot
 // inegociáveis de propósito e tem os casos dela no fim deste arquivo. Entrar
 // nas FOLHAS do app faria a régua do app medir a licença dela.
 const FOLHA_BANCADA = 'palco.css';
+// O VISUAL NOVO (direção 3) vive em `src/v3/` e tem regras próprias (DESIGN.md).
+// As guardas deste arquivo medem o visual ANTIGO e não se aplicam a ele; a
+// lista existe para a folha nova não passar sem ser declarada. As guardas do
+// visual novo entram com a estratégia de testes do plano
+// (docs/redesign-3/00-plano.md).
+const FOLHAS_V3 = ['v3/v3.css', 'v3/tokens.css', 'v3/fontes.css', 'v3/base.css', 'v3/componentes.css'];
 
 const css = () => juntos(FOLHAS.map(f => 'src/' + f));
 
@@ -1263,7 +1269,8 @@ test('todo botão tem estilo de base, e não só o reset mais um modificador', (
   // um `repbtn`. Então a pergunta é de princípio, sem lista: alguma classe do
   // botão aparece no CSS como seletor de BASE — no começo de um seletor ou
   // depois de um combinador?
-  const seletores = (css().replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}]+(?=\{)/g) || []).join(' ');
+  // As telas do visual novo (src/ui/v3) têm as classes de base nas folhas dele.
+  const seletores = ((css() + juntos(FOLHAS_V3.map(f => 'src/' + f))).replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}]+(?=\{)/g) || []).join(' ');
   const deBase = (c: string) =>
     new RegExp('(^|[\\s,>+~(])\\.' + c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\w-])').test(seletores);
 
@@ -1631,7 +1638,7 @@ test('a lista de folhas é a do disco, nos dois sentidos', () => {
   const noDisco = (fs.readdirSync(path.join(RAIZ, 'src'), { recursive: true }) as string[])
     .map(f => String(f).split(path.sep).join('/'))
     .filter(f => f.endsWith('.css')).sort();
-  const declaradas = FOLHAS.concat(FOLHA_BANCADA).sort();
+  const declaradas = FOLHAS.concat(FOLHA_BANCADA, FOLHAS_V3).sort();
   assert.deepStrictEqual(noDisco.filter(f => !declaradas.includes(f)), [],
     'folha em src/ que nenhuma guarda lê: declare-a em FOLHAS (ou, se for da bancada, ' +
     'ao lado de FOLHA_BANCADA)');

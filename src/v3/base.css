@@ -1,0 +1,40 @@
+/* A base do visual novo. */
+
+/* Com o visual novo ligado, o fundo da página é o papel, mesmo nas telas que
+   ainda são as antigas, e a reserva do rodapé é a da doca. */
+html[data-visual="3"] body { background: var(--papel); }
+html[data-visual="3"] { --ins-barra-de-abas: calc(var(--doca-h) + 22px); }
+
+.v3 {
+  color: var(--tinta);
+  font: 400 15px/1.4 var(--f-texto);
+  -webkit-font-smoothing: antialiased;
+  /* a camada de toque das telas antigas não vale aqui */
+  --ins-toque: transparent;
+}
+.v3 *, .v3 *::before, .v3 *::after { box-sizing: border-box; }
+:where(.v3) h1, :where(.v3) h2, :where(.v3) h3, :where(.v3) p { margin: 0; }
+/* `:where` deixa esta base sem peso: ela vence a base das telas antigas só por
+   vir depois, e qualquer classe de componente vence as duas. */
+:where(.v3) button {
+  font: inherit; color: inherit; background: none; border: 0; padding: 0;
+  border-radius: 0; text-align: inherit; cursor: pointer;
+}
+:where(.v3) button:disabled { opacity: 1; cursor: default; }
+.v3 button:focus-visible, .v3 [tabindex]:focus-visible, .v3 input:focus-visible {
+  outline: 2.5px solid var(--tinta); outline-offset: 3px;
+}
+.v3 ::selection { background: var(--lima); }
+.v3 .v3-n { font-family: var(--f-titulo); font-variant-numeric: tabular-nums; }
+.v3 svg { display: block; }
+
+@keyframes v3-entra { from { opacity: 0; translate: 0 10px; } }
+@keyframes v3-bate { 50% { scale: .55; opacity: .5; } }
+@keyframes v3-pop { 40% { scale: 1.18; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .v3 *, .v3 *::before, .v3 *::after {
+    animation: none !important;
+    transition-duration: .01ms !important;
+  }
+}

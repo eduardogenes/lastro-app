@@ -25,6 +25,31 @@ Para o Fable gastar pouco na revisão, cada lote do Opus termina com um resumo
 curto: o que mudou, onde, o que ficou de fora e qual teste cobre o quê. O
 Fable revisa o diff do lote, não o app inteiro.
 
+## Andamento
+
+Atualizado a cada peça entregue. É por aqui que uma sessão nova retoma.
+
+| Fase 0 | Estado |
+|---|---|
+| 1. Interruptor "visual novo" em Ajustes, por aparelho | **feito** (`src/infra/visual.ts`, `src/ui/app.jsx`) |
+| 2. Tokens e fontes dentro do app | **feito** (`src/v3/tokens.css`, `src/v3/fontes.css`) |
+| 3. Componentes base | **feito** (`src/ui/v3/`, estilos em `src/v3/componentes.css`); galeria em `/v3.html` com `npm run dev` |
+| 4. Dado novo, migração 13, fusão e espelho | a fazer · Fable |
+| 5. Estratégia de testes (classificar os 61 de fluxo e o `estilo.test`) | a fazer · Fable |
+| 6. Especificação de cada lote | a fazer · Fable |
+| 7. O que a captura de fotos automatiza | a fazer · Fable (Fase 1) |
+
+Como o visual novo entra no app: com o interruptor ligado, a navegação vira a
+doca e cada lugar usa a tela registrada em `src/ui/v3/telas.js`; enquanto um
+lugar não está lá, aparece a tela antiga dele. A folha do visual novo
+(`Folha`, em `src/ui/v3/base.jsx`) é só aparência: ligá-la à pilha de camadas
+do app (`view.pilha`) é a primeira tarefa do item 6.
+
+Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
+verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
+máquina e passam sozinhos. Antes de tratar como regressão, rodar o arquivo
+isolado.
+
 ## O que o código tem hoje e pesa no plano
 
 - `src/main.jsx` tem 14,5 mil linhas: estado, regras de tela e montagem dos

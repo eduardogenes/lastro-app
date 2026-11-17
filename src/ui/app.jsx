@@ -19,6 +19,9 @@ import { Prescricao } from './telas/prescricao.jsx';
 import { useAgora } from './instrumento/primitivos.jsx';
 import { fmtHoraDita } from '../dominio/formato';
 import { Pare, Falhou, NaoGuardado } from './instrumento/pare.jsx';
+import { visualNovo } from '../infra/visual';
+import { Doca } from './v3/doca.jsx';
+import { TELAS_V3 } from './v3/telas.js';
 
 /** A hora de parede no cabeçalho do Agora, andando com o relógio. */
 function HoraDoCabecalho() {
@@ -49,7 +52,12 @@ export function App({ ctx }) {
   if (ctx.emTelaCheia()) return <>{ctx.telaCheia()}{ctx.folhas()}{pare}</>;
 
   const aba = ctx.abaAtual();
-  const Tela = TELAS[aba] || Agora;
+  // O VISUAL NOVO (direção 3), atrás do interruptor de Ajustes. Com ele ligado
+  // a navegação é a doca, e cada lugar usa a tela nova se ela já existir;
+  // senão, a antiga. Sai daqui na Fase 5 (docs/redesign-3/00-plano.md).
+  const v3 = visualNovo();
+  const TelaV3 = v3 ? TELAS_V3[aba] : null;
+  const Tela = TelaV3 || TELAS[aba] || Agora;
   const h = ctx.cabecalhoDeHoje();
 
   return (
@@ -62,7 +70,7 @@ export function App({ ctx }) {
           pontilhado do palpite; o que ele disse e a sessão registrada, não.
           Os AJUSTES são o botão do canto, e não um lugar: a decisão é da §1.6 —
           conta, sincronia e backup não respondem nenhuma das cinco perguntas. */}
-      {aba === 'agora' && (
+      {aba === 'agora' && !TelaV3 && (
         <header class="ins-cab ag-cab">
           <div class="ag-cab-r1">
             {/* alvo de foco sem tabulação: para onde o foco volta quando um
@@ -103,7 +111,9 @@ export function App({ ctx }) {
         onEncerra={ctx.encerraSessaoEsquecida}
       />
 
-      <TabBar ativa={aba} onMuda={ctx.vaiPara} />
+      {v3
+        ? <Doca ativa={aba} onMuda={ctx.vaiPara} aoRegistrar={ctx.abreRegistrar} />
+        : <TabBar ativa={aba} onMuda={ctx.vaiPara} />}
       {pare}
     </>
   );

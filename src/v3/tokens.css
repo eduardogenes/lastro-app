@@ -1,0 +1,42 @@
+/* Os valores da direção 3. Cor e medida nascem aqui; fora daqui, só `var()`. */
+:root {
+  --papel: #F6F3EC;
+  --branco: #FFFDF8;
+  --areia: #EBE6DA;
+  --fio: #DFDACE;
+  --tinta: #0F0F0D;
+  --tinta-2: #56554E;
+  --tinta-3: #77766D;
+  --lima: #D2F23A;
+  --tanja: #FF9A4D;
+  --lilas: #D3C6FF;
+  --ceu: #BBDDFB;
+  --menta: #BEEBD2;
+  /* tinta translúcida sobre bloco de cor: contorno quieto e trilho */
+  --tinta-18: rgba(15, 15, 13, .18);
+  --tinta-28: rgba(15, 15, 13, .28);
+  --veu: rgba(15, 15, 13, .38);
+  /* o cinza claro do ícone inativo sobre a doca escura */
+  --sobre-tinta-2: #A9A79C;
+
+  --f-titulo: 'Bricolage Grotesque Variable', 'Instrument Sans Variable', system-ui, sans-serif;
+  --f-texto: 'Instrument Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --r-pilula: 999px;
+  --r-bloco: 24px;
+  --r-bloco-g: 34px;
+  --r-folha: 36px;
+
+  --margem: 20px;
+  --alvo: 44px;
+  --botao: 58px;
+  --botao-g: 68px;
+
+  --mola: cubic-bezier(.2, .9, .25, 1);
+  --t-toque: 120ms;
+  --t-entra: 340ms;
+  --t-cor: 450ms;
+
+  --sombra-flutua: 0 12px 30px -12px rgba(15, 15, 13, .55);
+  --doca-h: 64px;
+}

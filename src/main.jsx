@@ -29,6 +29,7 @@ import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
 import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
+import { visualNovo, poeVisual, aplicaVisual } from './infra/visual';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { FolhaFoto } from './ui/folhas/foto.jsx';
@@ -8230,6 +8231,7 @@ function desenhaPendente() { if (desenhoPendente) desenhaAgora(); }
 function desenhaAgora() {
   desenhoPendente = false;
   if (desligado) return;
+  aplicaVisual();
   const antes = camadasDesenhadas;
   const focado = typeof document !== 'undefined' ? document.activeElement : null;
   montaNoApp(<App ctx={CTX} />);
@@ -13186,6 +13188,10 @@ CTX.abreModoDeSessao = function () { if (abreModo()) render(); };
  * como camada, então o Voltar do sistema e o Esc fecham por ele como por
  * qualquer outra.
  */
+// O interruptor do visual novo (direção 3), por aparelho. Sai na Fase 5.
+CTX.visualNovo = function () { return visualNovo(); };
+CTX.alternaVisual = function () { poeVisual(!visualNovo()); render(); };
+
 CTX.abreAjustes = function () {
   if (view.ajustes) return;
   view.ajustes = true;

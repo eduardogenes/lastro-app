@@ -133,6 +133,19 @@ export function Ajustes({ ctx }) {
         </Procedencia>
       </Secao>
 
+      {/* O VISUAL NOVO (direção 3), em construção: por aparelho, e some quando
+          ele virar o único (docs/redesign-3/00-plano.md, Fase 5). */}
+      <Secao rotulo="O visual novo" nota="em construção · só neste aparelho">
+        <button class="ins-btn-secondary" data-a="visual-novo" aria-pressed={ctx.visualNovo() ? 'true' : 'false'}
+                onClick={ctx.alternaVisual}>
+          {ctx.visualNovo() ? 'Voltar ao visual de sempre' : 'Ligar o visual novo'}
+        </button>
+        <Procedencia>
+          muda só a aparência, e só aqui. O registro é o mesmo nos dois, e as
+          telas que ainda não foram refeitas continuam como estão.
+        </Procedencia>
+      </Secao>
+
       <Secao rotulo="onde ficam seus dados">
         <div class="ins-lista">
           <div class="ins-linha">

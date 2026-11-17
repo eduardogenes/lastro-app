@@ -99,7 +99,8 @@ sozinho.
 ## Os componentes
 
 Vivem em `src/ui/v3/`. Tela nova se monta com eles; se faltar um, ele nasce lá
-e entra nesta lista.
+e entra nesta lista. Para ver todos funcionando com dados de exemplo:
+`npm run dev` e abrir `/v3.html`.
 
 | Componente | O que é |
 |---|---|
