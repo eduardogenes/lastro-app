@@ -187,3 +187,43 @@ test('a fusão do dia ABERTO também soma os dois aparelhos', async () => {
   assert.strictEqual(r.agua, 9);
   a.fechar();
 });
+
+// ---------- a resposta do dia (direção 3) ----------
+// "A comida foi como o plano?" grava no MESMO registro do dia, e não num
+// paralelo: é isso que deixa a regra dos 11 de 14 contar o dia sem mudar.
+
+test('responder o dia de hoje completa as marcas sem apagar a refeição já marcada', async () => {
+  const a = await noHoje();
+  a.v('ctx.marcaRefeicao', 'pos');
+  const pos = a.S().dia.done.pos;
+  const r = JSON.parse(JSON.stringify(a.E(`CTX.respondeODia(hojeISO(), 'sim')`)));
+  assert.deepStrictEqual(r, { ok: true, resposta: 'sim' });
+  const d = a.S().dia;
+  assert.strictEqual(d.pordia, 1);
+  assert.strictEqual(d.aderencia, undefined, '"sim" é o padrão, e o padrão não se grava');
+  assert.strictEqual(d.done.pos, pos, 'a marca que existia fica com a hora dela');
+  assert.ok(Object.keys(d.done).length > 1, 'e as outras refeições ganham marca');
+  assert.strictEqual(a.E(`CTX.respostaDoDia(hojeISO())`), 'sim');
+  a.fechar();
+});
+
+test('responder um dia passado põe o dia no histórico; "não lembro" o tira da conta', async () => {
+  const a = await noHoje();
+  const ontem = a.E(`hojeISO(Date.now() - 86400000)`);
+  assert.ok(a.E(`CTX.respondeODia('${ontem}', 'quase')`).ok);
+  let h = a.S().comidaHist.filter(x => x.d === ontem)[0];
+  assert.ok(h, 'o dia vira linha');
+  assert.strictEqual(h.aderencia, 'fora');
+  assert.strictEqual(h.pordia, 1);
+  assert.ok(Object.keys(h.done).length > 0);
+  assert.strictEqual(a.E(`CTX.respostaDoDia('${ontem}')`), 'quase');
+
+  assert.ok(a.E(`CTX.respondeODia('${ontem}', 'naosei')`).ok);
+  h = a.S().comidaHist.filter(x => x.d === ontem)[0];
+  assert.strictEqual(h.aderencia, 'perdido', 'fica fora da conta, e não vira zero');
+  assert.ok(Object.keys(h.done).length > 0, 'e as marcas continuam guardadas');
+
+  assert.strictEqual(a.E(`CTX.respondeODia(hojeISO(Date.now() + 86400000), 'sim')`).ok, false, 'amanhã não se responde');
+  assert.strictEqual(a.E(`CTX.respondeODia(hojeISO(), 'talvez')`).ok, false, 'nem com resposta que não existe');
+  a.fechar();
+});

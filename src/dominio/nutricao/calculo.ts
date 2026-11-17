@@ -471,8 +471,71 @@ export function fechaDia(
   if (dia.alta) h.alta = 1;
   if (dia.turno) h.turno = dia.turno;
   if (dia.aderencia) h.aderencia = dia.aderencia;
+  if (dia.pordia) h.pordia = 1;
   if (ajuste) h.aj = ajuste;
   return h;
+}
+
+// ---------- a resposta do dia: "a comida foi como o plano?" ----------
+
+/**
+ * As três respostas da pergunta do dia (direção 3, registro por exceção).
+ *
+ * Não são um registro novo: cada uma é um dos três estados que o dia já tinha
+ * (`DiaComida.aderencia`), e é por isso que a regra dos 11 dias de 14, a
+ * adesão por semana e a pasta dos agentes as entendem sem mudar:
+ *
+ * - `sim` → `plano`: comeu o prescrito. As refeições sem marca ganham marca.
+ * - `quase` → `fora`: saiu do plano, mas sabe mais ou menos o que comeu. As
+ *   refeições sem marca ganham marca: o dia continua interpretável, e é o que
+ *   `fora` sempre quis dizer.
+ * - `naosei` → `perdido`: não lembra. Nenhuma marca é posta, e o dia fica fora
+ *   da conta (`diaInterpretavel`). Não vira zero.
+ */
+export type RespostaDoDia = 'sim' | 'quase' | 'naosei';
+
+export const ADERENCIA_DA_RESPOSTA: Readonly<Record<RespostaDoDia, 'plano' | 'fora' | 'perdido'>> = {
+  sim: 'plano', quase: 'fora', naosei: 'perdido'
+};
+
+/** A resposta que um dia já tem, lida de volta do registro; `null` se não tem. */
+export function respostaDoDia(h: { aderencia?: 'plano' | 'fora' | 'perdido'; pordia?: 1 } | null | undefined): RespostaDoDia | null {
+  if (!h || !h.pordia) return null;
+  return h.aderencia === 'fora' ? 'quase' : h.aderencia === 'perdido' ? 'naosei' : 'sim';
+}
+
+/**
+ * O que a resposta escreve no dia, para quem chama aplicar no dia corrente ou
+ * passar a `poeComidaNoDia` num dia passado.
+ *
+ * `refs` são as refeições do plano NAQUELE dia (`refeicoesDeHoje` com a
+ * cadência, a alta e o turno dele), e `jaMarcadas` as marcas que o dia já tem.
+ *
+ * **Completa, nunca reescreve.** Refeição já marcada fica como está, com a
+ * hora dela e o "como" dela: o almoço marcado como "não comi" às 13h continua
+ * "não comi" mesmo depois de "Foi, sim" à noite, porque a marca da refeição é
+ * informação mais fina que a resposta do dia.
+ *
+ * **"Não lembro" não apaga marca.** Ela só declara o dia como perdido; as
+ * marcas que existiam continuam no registro (perdido derruba o dia da conta de
+ * qualquer jeito), e voltar a responder "sim" não perde nada.
+ */
+export function comidaDaResposta(
+  resposta: RespostaDoDia,
+  refs: Refeicao[],
+  jaMarcadas: Record<string, number> | null | undefined,
+  agora: number
+): ComidaDoDia {
+  const out: ComidaDoDia = { aderencia: ADERENCIA_DA_RESPOSTA[resposta], pordia: 1 };
+  if (resposta === 'naosei') return out;
+  const done: Record<string, number> = {};
+  (refs || []).forEach(function (r) {
+    if (!r || !r.id) return;
+    if (jaMarcadas && jaMarcadas[r.id] != null) return;
+    done[r.id] = agora;
+  });
+  if (Object.keys(done).length) out.done = done;
+  return out;
 }
 
 // ---------- pôr comida num dia de data arbitrária ----------
@@ -500,6 +563,8 @@ export interface ComidaDoDia {
   alta?: 1;
   turno?: Turno;
   aderencia?: 'plano' | 'fora' | 'perdido';
+  /** o dia foi respondido pela pergunta; ver `DiaComida.pordia` */
+  pordia?: 1;
 }
 
 export interface PostoNoDia {
@@ -589,6 +654,8 @@ export function poeComidaNoDia(
   if (turno) dia.turno = turno;
   const aderencia = c.aderencia !== undefined ? c.aderencia : (antes ? antes.aderencia : undefined);
   if (aderencia) dia.aderencia = aderencia;
+  const pordia = c.pordia !== undefined ? c.pordia : (antes ? antes.pordia : undefined);
+  if (pordia) dia.pordia = 1;
   const semConta = c.aguaNaoContada !== undefined
     ? c.aguaNaoContada : (antes ? antes.aguaNaoContada : undefined);
   if (semConta) dia.aguaNaoContada = 1;

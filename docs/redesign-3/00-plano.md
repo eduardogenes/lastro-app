@@ -34,10 +34,32 @@ Atualizado a cada peça entregue. É por aqui que uma sessão nova retoma.
 | 1. Interruptor "visual novo" em Ajustes, por aparelho | **feito** (`src/infra/visual.ts`, `src/ui/app.jsx`) |
 | 2. Tokens e fontes dentro do app | **feito** (`src/v3/tokens.css`, `src/v3/fontes.css`) |
 | 3. Componentes base | **feito** (`src/ui/v3/`, estilos em `src/v3/componentes.css`); galeria em `/v3.html` com `npm run dev` |
-| 4. Dado novo, migração 13, fusão e espelho | a fazer · Fable |
+| 4. Dado novo, fusão, cópia de segurança e espelho | **feito**, sem migração (ver abaixo) |
 | 5. Estratégia de testes (classificar os 61 de fluxo e o `estilo.test`) | a fazer · Fable |
 | 6. Especificação de cada lote | a fazer · Fable |
 | 7. O que a captura de fotos automatiza | a fazer · Fable (Fase 1) |
+
+### O dado novo (item 4), para quem constrói as telas
+
+Nenhuma migração: todos os campos são opcionais e têm padrão na leitura, e
+subir `PLANO_ATUAL` mudaria a regra da fusão entre aparelhos de versões
+diferentes sem ganho nenhum. Os testes estão em
+`tests/dominio/registro-v3.test.ts` (cada um conferido contra o defeito que
+guarda) e nos casos novos de `tests/fluxo/diario.test.js` e `dados.test.js`.
+
+| Para | Use | Onde |
+|---|---|---|
+| "A comida foi como o plano?" (sim, quase, não lembro) | `ctx.respondeODia(dataISO, 'sim' \| 'quase' \| 'naosei')` e `ctx.respostaDoDia(dataISO)` | grava no dia aberto ou no histórico; completa, nunca apaga marca |
+| O que aparece | `ctx.moduloLigado(k)`, `ctx.ligaModulo(k, on)`, `ctx.fitaLigada(k)`, `ctx.ligaFita(k, on)` | `src/dominio/modulos.ts` |
+| Medida com fita, "guardar só esta" | `Marca.n` (leituras); o formulário antigo já grava | `gravaMarca(…, leituras)` |
+| Série posta em dia ("Já fiz mais do que anotei") | `Log.dp = 1` | **a gravar na Fase 3**, pelo registro da série |
+| "Tudo como da última vez?" na sessão de fotos | `SessaoFoto.muda` (`luz`, `roupa`, `lugar`) | **a gravar na Fase 1**, ao criar a sessão |
+| Foto tirada fora do padrão | `Captura.fora` (`nivel`, `altura`, `distancia`, `tremida`), passado a `registroDaCaptura` como `r.fora` | **a gravar na Fase 1**, pela câmera |
+
+A pasta dos agentes (`npm run espelho`) já mostra os seis: `registrado_depois`
+em `series.csv`, `respondido_pelo_dia` em `dias.csv`, `leituras` em
+`medidas.csv`, e a coluna "Padrão" e a linha "Mudou em relação à sessão
+anterior" em `fotos.md`.
 
 Como o visual novo entra no app: com o interruptor ligado, a navegação vira a
 doca e cada lugar usa a tela registrada em `src/ui/v3/telas.js`; enquanto um
@@ -49,6 +71,23 @@ Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
 máquina e passam sozinhos. Antes de tratar como regressão, rodar o arquivo
 isolado.
+
+## Troca de modelo (17/11/2026)
+
+O Fable 5.2 deixou de estar disponível no plano do dono no meio da Fase 0. O
+**Opus 5.5 assume também as tarefas marcadas como do Fable** neste documento.
+O que a divisão protegia continua valendo, e o Opus compensa com:
+
+- **Teste antes de dar como feito**, em domínio, para todo dado novo e toda
+  regra que possa perder registro; e **conferência de mutação**: desfazer a
+  correção e ver o teste ficar vermelho, para não confiar num teste que passa
+  de qualquer jeito.
+- **Uma peça por vez**, inteira, com a suíte completa no fim de cada uma.
+- **Nas decisões de produto que eram do Fable com liberdade total** (o que a
+  captura de fotos automatiza), decidir, escrever o porquê no fim do lote e
+  mostrar ao dono antes de fechar a fase.
+- Revisão de lote: em vez da revisão do Fable, uma passada com `/code-review`
+  no diff do lote antes do commit.
 
 ## O que o código tem hoje e pesa no plano
 

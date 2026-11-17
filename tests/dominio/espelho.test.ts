@@ -143,8 +143,9 @@ describe('espelho — arquivos', () => {
       presentes: new Set(['corpo/fotos/2026-10-20/frente-relaxado.webp']),
       faltando: new Set(['corpo/fotos/2026-10-20/perfil-direito.jpeg'])
     })['corpo/fotos.md'];
-    expect(f).toContain('| Frente relaxado | 21:14 | do app |  | [frente-relaxado.webp](fotos/2026-10-20/frente-relaxado.webp) |');
-    expect(f).toContain('| Perfil direito | 21:16 |  |  | ainda não subiu para a nuvem | giro 2°, zoom 1,1× |');
+    // colunas: pose, hora, câmera, nível, padrão, arquivo, ajuste
+    expect(f).toContain('| Frente relaxado | 21:14 | do app |  |  | [frente-relaxado.webp](fotos/2026-10-20/frente-relaxado.webp) |');
+    expect(f).toContain('| Perfil direito | 21:16 |  |  |  | ainda não subiu para a nuvem | giro 2°, zoom 1,1× |');
     expect(f).toMatch(/## \w{3}, 20\/10\/2026 — 2 de \d+ poses/);
   });
 

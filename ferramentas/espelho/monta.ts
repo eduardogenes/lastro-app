@@ -489,6 +489,7 @@ function linhasDaSessao(b: Base, x: SessaoMontada): string[] {
     L.push('- ' + nome + ' — ' + (feitas.length ? feitas.map(function (s) { return serieTexto(s, l.u, l.q); }).join(' · ') : 'sem série completa'));
     if (l.rir && !feitas.some(function (s) { return typeof s[2] === 'number'; })) L.push('  - RIR da última série: ' + l.rir);
     if (l.aq) L.push('  - feito com aproximação');
+    if (l.dp) L.push('  - registrado depois do treino, com os números da última vez (podem ter sido corrigidos); não foi anotado série a série');
     if (lista<string>(l.dor).length) L.push('  - dor: ' + lista<string>(l.dor).map(dor).join(', '));
     if (l.obs) L.push('  - nota: ' + cel(l.obs));
   });
@@ -551,13 +552,13 @@ function seriesCsv(b: Base): string {
           s[0], l.u ? 'kg' : CARGAS[tipoCarga(b, rg.key)].rot,
           s[1], l.u === 'm' || l.u === 'cal' || l.u === 'seg' ? 'segundos' : 'reps',
           l.u ? (l.q != null ? l.q : '') : '', l.u || '',
-          typeof s[2] === 'number' ? s[2] : '', m.dl || l.dl ? 1 : 0, l.obs || ''
+          typeof s[2] === 'number' ? s[2] : '', m.dl || l.dl ? 1 : 0, l.obs || '', l.dp ? 1 : 0
         ]);
       });
     });
   });
   return csv(['data', 'hora', 'sessao', 'treino', 'nome_do_treino', 'exercicio_id', 'exercicio', 'grupo', 'serie',
-    'carga', 'carga_unidade', 'resultado', 'resultado_unidade', 'alvo', 'alvo_unidade', 'rir', 'deload', 'nota'], linhas);
+    'carga', 'carga_unidade', 'resultado', 'resultado_unidade', 'alvo', 'alvo_unidade', 'rir', 'deload', 'nota', 'registrado_depois'], linhas);
 }
 
 function cardioCsv(b: Base): string {
@@ -687,7 +688,7 @@ function diasCsv(b: Base): string {
   const S = b.S;
   const nomes: Record<string, string> = {};
   b.plano.forEach(function (r) { nomes[r.id] = r.n; });
-  const refeicoes = function (h: { done: Record<string, number>; como?: Record<string, string>; escala?: Record<string, number> }): string {
+  const refeicoes = function (h: { done: Record<string, number>; como?: Record<string, string>; escala?: Record<string, number>; pordia?: 1 }): string {
     const done = obj<number>(h.done);
     return Object.keys(done).sort(function (a, c) { return (done[a] || 0) - (done[c] || 0); }).map(function (id) {
       const notas: string[] = [];
@@ -695,7 +696,9 @@ function diasCsv(b: Base): string {
       if (como && COMO[como]) notas.push(COMO[como]);
       const e = obj<number>(h.escala)[id];
       if (typeof e === 'number' && e !== 1 && como !== 'nao') notas.push('porção ' + Math.round(e * 100) + '%');
-      const hora = numero(done[id]) && done[id] > 1 ? ' ' + fmtHora(done[id]) : '';
+      // dia respondido pela pergunta: as marcas têm a hora da resposta, não a
+      // da refeição, e por isso a hora não é escrita
+      const hora = !h.pordia && numero(done[id]) && done[id] > 1 ? ' ' + fmtHora(done[id]) : '';
       return (nomes[id] || id) + hora + (notas.length ? ' (' + notas.join(', ') + ')' : '');
     }).join(' | ');
   };
@@ -707,7 +710,7 @@ function diasCsv(b: Base): string {
     const [tipo, origem] = tipoDoDia(b, h.d, h.cadencia);
     const t = h.tot || { kcal: 0, p: 0, c: 0, g: 0 };
     linhas.push([h.d, DIAS_CURTOS[new Date(instanteDaData(h.d)).getDay()], 'fechado', tipo, origem, h.alta ? 1 : 0, h.turno || 'manha',
-      h.aderencia || 'plano', refeicoes(h), h.aguaNaoContada ? '' : h.agua, Math.round(t.kcal), Math.round(t.p), Math.round(t.c), Math.round(t.g), numero(h.aj) || 0]);
+      h.aderencia || 'plano', refeicoes(h), h.aguaNaoContada ? '' : h.agua, Math.round(t.kcal), Math.round(t.p), Math.round(t.c), Math.round(t.g), numero(h.aj) || 0, h.pordia ? 1 : 0]);
   });
 
   // O dia em curso ainda não tem total congelado: calcula do jeito que o app
@@ -717,11 +720,11 @@ function diasCsv(b: Base): string {
     const [tipo, origem] = tipoDoDia(b, dia.data, dia.cadencia);
     const t = totalRegistrado(b.plano, b.alimentos, Object.assign({ done: {}, escala: {} }, dia), tipo === 'treino', !!dia.alta);
     linhas.push([dia.data, DIAS_CURTOS[new Date(instanteDaData(dia.data)).getDay()], 'em andamento', tipo, origem, dia.alta ? 1 : 0, dia.turno || 'manha',
-      dia.aderencia || 'plano', refeicoes(dia), dia.aguaNaoContada ? '' : dia.agua, Math.round(t.kcal), Math.round(t.p), Math.round(t.c), Math.round(t.g), numero(S.ajuste) || 0]);
+      dia.aderencia || 'plano', refeicoes(dia), dia.aguaNaoContada ? '' : dia.agua, Math.round(t.kcal), Math.round(t.p), Math.round(t.c), Math.round(t.g), numero(S.ajuste) || 0, dia.pordia ? 1 : 0]);
   }
 
   return csv(['data', 'dia_da_semana', 'situacao', 'tipo_de_dia', 'tipo_de_dia_veio_de', 'alta_demanda', 'turno_do_treino',
-    'como_foi_o_dia', 'refeicoes_marcadas', 'agua_copos', 'kcal', 'proteina_g', 'carbo_g', 'gordura_g', 'passos_de_ajuste'], linhas);
+    'como_foi_o_dia', 'refeicoes_marcadas', 'agua_copos', 'kcal', 'proteina_g', 'carbo_g', 'gordura_g', 'passos_de_ajuste', 'respondido_pelo_dia'], linhas);
 }
 
 function ajustes(b: Base, ctx: Contexto): string {
@@ -756,11 +759,11 @@ function medidasCsv(b: Base): string {
     const m = MEDIDAS_DO_CORPO.filter(function (x) { return x.k === k; })[0];
     lista<Marca>(body[k]).forEach(function (x) {
       if (!x || numero(x.t) == null || numero(x.v) == null) return;
-      linhas.push({ t: x.t, ordem: ordem, l: [dataLocal(x.t), x.semHora ? '' : fmtHora(x.t), k, m ? m.n : k, x.v, m ? m.u : '', m && m.bio ? 'bioimpedância' : (m && m.dobra ? 'adipômetro' : (m && m.fita ? 'fita' : 'balança')), x.onde || ''] });
+      linhas.push({ t: x.t, ordem: ordem, l: [dataLocal(x.t), x.semHora ? '' : fmtHora(x.t), k, m ? m.n : k, x.v, m ? m.u : '', m && m.bio ? 'bioimpedância' : (m && m.dobra ? 'adipômetro' : (m && m.fita ? 'fita' : 'balança')), x.onde || '', numero(x.n) != null ? x.n! : ''] });
     });
   });
   linhas.sort(function (a, c) { return a.t - c.t || a.ordem - c.ordem; });
-  return csv(['data', 'hora', 'medida', 'nome', 'valor', 'unidade', 'aparelho', 'onde_mediu'], linhas.map(function (x) { return x.l; }));
+  return csv(['data', 'hora', 'medida', 'nome', 'valor', 'unidade', 'aparelho', 'onde_mediu', 'leituras'], linhas.map(function (x) { return x.l; }));
 }
 
 function ajusteDaFoto(f: FotoRef): string {
@@ -808,6 +811,13 @@ function nivelDaFoto(f: FotoRef): string {
   return noNivel(n) ? txt : txt + ' (fora do nível)';
 }
 
+/** O que estava fora do padrão quando a foto foi tirada (`Captura.fora`). */
+function padraoDaFoto(f: FotoRef): string {
+  const NOME: Record<string, string> = { nivel: 'nível', altura: 'altura', distancia: 'distância', tremida: 'pode ter tremido' };
+  const fora = lista<string>(f.cap && f.cap.fora).map(function (x) { return NOME[x] || x; });
+  return fora.length ? 'fora do padrão: ' + fora.join(', ') : '';
+}
+
 function fotosDoCorpo(b: Base, ctx: Contexto): string {
   const S = b.S;
   const proto = obj<unknown>(S.protocolo);
@@ -841,14 +851,17 @@ function fotosDoCorpo(b: Base, ctx: Contexto): string {
     const feitas = ids.filter(function (id) { return fotos[id]; });
     L.push('## ' + dataIsoBR(s.d) + ' — ' + feitas.length + ' de ' + daData.length + ' poses', '');
     if (s.obs) L.push('Nota: ' + cel(s.obs), '');
-    L.push('| Pose | Hora | Câmera | Nível | Arquivo | Ajuste no app |', '|---|---|---|---|---|---|');
+    const MUDA: Record<string, string> = { luz: 'a luz', roupa: 'a roupa', lugar: 'o lugar' };
+    const muda = lista<string>(s.muda).map(function (x) { return MUDA[x] || x; });
+    if (muda.length) L.push('Mudou em relação à sessão anterior: ' + muda.join(', ') + '. Leve isso em conta ao comparar.', '');
+    L.push('| Pose | Hora | Câmera | Nível | Padrão | Arquivo | Ajuste no app |', '|---|---|---|---|---|---|---|');
     ids.forEach(function (id) {
       const p = PROTOCOLO.filter(function (x) { return x.id === id; })[0];
       const f = fotos[id];
-      if (!f) { L.push('| ' + cel(p ? p.n : id) + ' | — | | | não tirada | |'); return; }
+      if (!f) { L.push('| ' + cel(p ? p.n : id) + ' | — | | | | não tirada | |'); return; }
       const caminho = 'fotos/' + s.d + '/' + segmento(id) + '.' + segmento(f.ext);
       const sit = situacaoDaFoto('corpo/' + caminho, ctx);
-      L.push('| ' + [cel(p ? p.n : id), numero(f.v) ? fmtHora(f.v) : '', cel(cameraDaFoto(f)), nivelDaFoto(f),
+      L.push('| ' + [cel(p ? p.n : id), numero(f.v) ? fmtHora(f.v) : '', cel(cameraDaFoto(f)), nivelDaFoto(f), padraoDaFoto(f),
         sit ? cel(sit) : '[' + segmento(id) + '.' + segmento(f.ext) + '](' + caminho + ')', ajusteDaFoto(f)].join(' | ') + ' |');
     });
     L.push('');
@@ -949,9 +962,13 @@ function leiaMe(b: Base, ctx: Contexto, existentes: Set<string>): string {
   L.push('- **Movimentos medidos por distância ou caloria** (remo, corrida, sled): o resultado é o TEMPO, e menos é melhor. Por repetição ou tempo (wall ball, prancha): o resultado é QUANTO saiu, e mais é melhor.');
   L.push('- **Hora do treino** só aparece quando é confiável (sessão lançada depois sem hora informada fica sem).');
   L.push('- **Totais de comida** de dias fechados foram congelados no fechamento, contra o plano daquela data: mudar o plano depois não reescreve o passado. Refeição marcada "fora do plano" ou "não sabe" entra com os números do plano; "não comeu" não entra.');
+  L.push('- **Registro por exceção.** Desde novembro de 2026 o app deixa responder o dia inteiro de uma vez ("a comida foi como o plano?": sim, quase, não lembro). Esses dias têm `respondido_pelo_dia` = 1 em `dias.csv`: as refeições aparecem sem hora, porque a hora da marca é a da resposta. "Quase" é `como_foi_o_dia` = fora; "não lembro" é perdido, e o dia não conta para a regra.');
+  L.push('- **Séries registradas depois** (`registrado_depois` = 1 em `series.csv`): a pessoa treinou, não anotou na hora e marcou depois, com a carga e as repetições da última vez (podem ter sido corrigidas). Contam como as outras.');
+  L.push('- **Fotos fora do padrão** (coluna "Padrão" em `fotos.md`): a pessoa tirou mesmo sem acertar o que está escrito ali. A linha "Mudou em relação à sessão anterior" diz se a luz, a roupa ou o lugar mudaram.');
   L.push('- **Água** em copos; vazio quando ele marcou que não contou (é diferente de zero).');
   L.push('- **Medidas com fita** (`medidas.csv`): quando a medida é de um lado só, é sempre o direito. `onde_mediu` é o ponto onde a fita passou; o app preenche com o ponto padrão de cada medida, e a pessoa pode trocar.');
   L.push('- **Dobras** (`dobraAbdominal`, `dobraSuprailiaca`, `dobraCoxa`): adipômetro, lado direito, em mm. O valor é a leitura do meio de três. Nunca convertidas para percentual de gordura.');
+  L.push('- **`leituras`** em `medidas.csv`: quantas passadas da fita deram o valor (a média delas). 1 quer dizer que a segunda leitura foi pedida e não foi feita: a medida é menos confiável. Vazio nas medidas de antes de novembro de 2026.');
   L.push('- **Hora vazia** em `medidas.csv` quer dizer que a hora não foi informada (leitura lançada depois, só com a data).');
   L.push('- **Peso** (`peso`) é a pesagem da manhã na balança comum; `bioPeso` é o da balança de bioimpedância. São aparelhos e horários diferentes, e nenhum corrige o outro.');
   L.push('');

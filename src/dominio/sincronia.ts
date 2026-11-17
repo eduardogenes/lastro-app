@@ -361,11 +361,17 @@ function uneSessoesDeFoto(
       if (!s || !s.d) return;
       const meu = por[s.d];
       if (!meu) {
+        // Campo a campo, de propósito: a sessão é remontada aqui, e campo de
+        // sessão que não estiver nesta linha some na primeira sincronização.
         por[s.d] = { d: s.d, t: s.t, fotos: {}, obs: s.obs, m: s.m };
+        if (Array.isArray(s.muda) && s.muda.length) por[s.d].muda = s.muda.slice();
       } else {
         // o instante é o da PRIMEIRA foto: o menor dos dois é o verdadeiro
         if (typeof s.t === 'number' && (typeof meu.t !== 'number' || s.t < meu.t)) meu.t = s.t;
-        if (carimbo(s) > carimbo(meu)) { meu.obs = s.obs; meu.m = s.m; }
+        if (carimbo(s) > carimbo(meu)) {
+          meu.obs = s.obs; meu.m = s.m;
+          if (Array.isArray(s.muda) && s.muda.length) meu.muda = s.muda.slice(); else delete meu.muda;
+        }
       }
       const alvo = por[s.d];
       Object.keys(s.fotos || {}).forEach(function (pose) {
@@ -509,6 +515,8 @@ function uneDiasDeComida(
       // do lado local sempre, mesmo quando o outro aparelho o tinha respondido
       // depois. É decisão tomada uma vez, como a cadência e o turno
       meu.aderencia = x.aderencia;
+      // `pordia` anda junto da `aderencia`: os dois são a mesma resposta
+      if (x.pordia) meu.pordia = 1; else delete meu.pordia;
       meu.m = x.m;
     }
   });
@@ -587,6 +595,9 @@ export const DOCUMENTOS = [
   'prog', 'rot', 'progTreinador', 'comida', 'cadencia', 'compras',
   'ajuste', 'ajusteHist', 'perfManual',
   'sessao', 'draft', 'mods', 'deload', 'dia', 'poses',
+  // O que aparece (dominio/modulos.ts): preferência da pessoa, editada à mão
+  // e raramente, e decidida inteira de uma vez, como a cadência.
+  'modulos',
   // O tipo de carga corrigido por exercício: um mapa pequeno, editado à mão e
   // raramente. Unido chave a chave, voltar ao padrão (que apaga a chave) era
   // desfeito pelo outro aparelho, que ainda a tinha.
@@ -744,7 +755,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
                // reconstruído abaixo não a devolvia: fundir dois aparelhos no
                // mesmo dia APAGAVA o enquadramento ("saí do plano", "dia
                // perdido") sem dizer nada
-               aderencia: d.aderencia,
+               aderencia: d.aderencia, pordia: d.pordia,
                cadencia: d.cadencia, alta: d.alta, turno: d.turno,
                tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 0,
                m: (d as DiaComida & { m?: number }).m || mtime };
@@ -763,6 +774,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
       if (typeof j.aguaM === 'number') base.dia.aguaM = j.aguaM;
       if (j.como) base.dia.como = j.como;
       if (j.aderencia) base.dia.aderencia = j.aderencia;
+      if (j.pordia) base.dia.pordia = 1;
     }
   }
 

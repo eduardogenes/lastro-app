@@ -9,6 +9,7 @@
 import type { Cadencia } from './dia';
 import type { Ajuste, LeituraDeGordura } from './corpo';
 import type { Alimento, DiaComida, DiaComidaHist, Refeicao } from './nutricao/tipos';
+import type { Modulos } from './modulos';
 
 /** Os seis tipos de carregamento. O app rotula, nunca converte. */
 export type TipoCarga = 'pino' | 'lado' | 'barra' | 'halter' | 'halter1' | 'corpo' | 'assist';
@@ -193,6 +194,17 @@ export interface Log {
   rir?: string;
   /** feito em deload */
   dl?: 0 | 1;
+  /**
+   * REGISTRADO DEPOIS: a pessoa treinou, não anotou na hora e pôs em dia
+   * depois ("Já fiz mais do que anotei", "Já treinei e não anotei"). As séries
+   * entraram com a carga e as repetições da última vez, corrigidas ou não.
+   *
+   * Conta como qualquer outra série, inclusive para a sugestão de subir carga
+   * (decisão do dono, 16/11/2026). A marca existe para quem lê o histórico,
+   * os agentes inclusive, saber que aqueles números são declarados depois e
+   * não anotados série a série.
+   */
+  dp?: 1;
   /** feito com aproximação */
   aq?: 0 | 1;
 }
@@ -408,6 +420,16 @@ export interface Captura {
    * número, e não como rótulo, para o corte poder mudar depois.
    */
   mov?: { toque: number; seg: number };
+  /**
+   * FORA DO PADRÃO: o que não estava certo quando esta foto foi tirada, porque
+   * quem fotografou escolheu "Tirar mesmo assim" ou "Guardar assim". Ausente =
+   * a foto saiu no padrão (ou é de antes desta marca existir).
+   *
+   * É por foto, e não por sessão, porque o ajuste é por foto: a primeira pode
+   * sair torta e a segunda não. A sessão está fora do padrão quando alguma das
+   * fotos dela está.
+   */
+  fora?: Array<'nivel' | 'altura' | 'distancia' | 'tremida'>;
 }
 
 /**
@@ -464,6 +486,16 @@ export interface SessaoFoto {
   fotos: Record<PoseId, FotoRef>;
   /** a nota que explica, três meses depois, o mês fora da curva */
   obs?: string;
+  /**
+   * O que mudou em relação à sessão anterior, dito por quem fotografou antes
+   * da primeira foto ("tudo como da última vez?"). Ausente = nada mudou, ou
+   * sessão de antes desta pergunta existir.
+   *
+   * A sessão continua valendo: a ressalva é procedência, e aparece onde ela é
+   * comparada. A lente não está aqui porque não pode mudar: a câmera do app
+   * trava na 1× (`docs/fotos/01-captura.md`).
+   */
+  muda?: Array<'luz' | 'roupa' | 'lugar'>;
   /** quando foi alterada pela última vez; a fusão a usa para decidir */
   m?: number;
 }
@@ -507,6 +539,13 @@ export interface Marca {
    * lista branca da restauração — que é exatamente o defeito F251.
    */
   onde?: string;
+  /**
+   * Quantas leituras da fita deram este valor (a média delas). `1` é "guardar
+   * só esta": a segunda leitura foi pedida e a pessoa escolheu não fazer, e a
+   * medida fica marcada como menos confiável. Ausente nas medidas de antes de
+   * a segunda leitura ser obrigatória, e nas que não são de fita.
+   */
+  n?: number;
   /**
    * A hora não foi informada (leitura de um dia passado sem hora): o instante
    * é o meio-dia daquele dia só para ordenar, e nenhuma tela nem o espelho
@@ -871,4 +910,9 @@ export interface Estado {
    * registro ainda existe no outro, e a união o traz de volta.
    */
   apagados: Record<string, number>;
+  /**
+   * O que aparece: as partes que a pessoa ligou ou desligou. Ausente = tudo no
+   * padrão. Ver `src/dominio/modulos.ts`.
+   */
+  modulos?: Modulos | null;
 }

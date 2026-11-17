@@ -90,6 +90,9 @@ test('exportar carrega todos os campos do estado', async () => {
      'descanso', 'fotos', 'promoPendente',
      // a lixeira das fotos do corpo: o que foi apagado volta por 30 dias
      'lixeira',
+     // o que aparece (direção 3): as partes que a pessoa ligou ou desligou;
+     // sem ele, trocar de celular voltaria a mostrar o que ela escondeu
+     'modulos',
      // os modelos de aula de box: coleção com chave natural, some se ficar de fora
      'aulas',
      // os dias de comida já fechados — o histórico que a virada da data
@@ -374,6 +377,8 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   a.E(`S.gordura = [{ d: '2026-09-28', v: 'nao' }]`);
   a.E(`S.protocolo = { poses: ['frente-relaxado'], sessoes: [{ d: '2026-09-28', t: 1, m: 1, fotos: {} }] }`);
   a.E(`S.quadro = { day: 'F', texto: '5 RNDS · 20 WB', t: 1 }`);
+  // o que aparece (direção 3): preferência da pessoa, campo de topo novo
+  a.E(`S.modulos = { agua: 0, fita: { coxa: 1 } }`);
 
   // As cinco chaves da bioimpedância, que a migração 9→10 abriu. Entram aqui
   // com conteúdo porque sem conteúdo a perda seria MUDA: `normalizaEstado()`
@@ -425,6 +430,7 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   assert.strictEqual(a.S().gordura.length, 1, 'as leituras de gordura visual');
   assert.strictEqual(a.S().protocolo.sessoes.length, 1, 'as sessões de foto');
   assert.strictEqual((a.S().quadro || { texto: null }).texto, '5 RNDS · 20 WB', 'o quadro do dia');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(a.S().modulos)), { agua: 0, fita: { coxa: 1 } }, 'o que aparece');
 
   // e, nominalmente, o que entrou na migração 9→10: a lista branca da
   // importação é por CHAVE dentro de `body`, então uma grandeza nova que não

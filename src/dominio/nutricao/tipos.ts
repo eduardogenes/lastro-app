@@ -231,6 +231,20 @@ export interface DiaComida {
    */
   aderencia?: 'plano' | 'fora' | 'perdido';
   /**
+   * O dia foi respondido PELA PERGUNTA ("a comida foi como o plano?"), e não
+   * refeição por refeição.
+   *
+   * É o registro por exceção da direção 3: um toque responde o dia. As marcas
+   * que a resposta pôs em `done` têm o instante da RESPOSTA, não o da refeição,
+   * e é por isso que este campo existe: sem ele, a pasta dos agentes e a tela
+   * mostrariam "jantar 21h00" para um jantar cuja hora ninguém informou. Com
+   * ele, quem lê sabe que as horas das marcas não descrevem quando se comeu.
+   *
+   * Marca já existente antes da resposta (o almoço marcado na hora) continua
+   * com a hora dela: a resposta completa o dia, não o reescreve.
+   */
+  pordia?: 1;
+  /**
    * O turno do treino de hoje. Ausente = `manha`, o plano como está escrito.
    *
    * Mora aqui, junto de `escala` e `alta`, e não no plano: **editar é
@@ -280,6 +294,8 @@ export interface DiaComidaHist {
   turno?: Turno;
   /** como o dia foi; ver `DiaComida.aderencia` */
   aderencia?: 'plano' | 'fora' | 'perdido';
+  /** respondido pela pergunta do dia; ver `DiaComida.pordia` */
+  pordia?: 1;
   /**
    * Os quatro totais, CONGELADOS.
    *

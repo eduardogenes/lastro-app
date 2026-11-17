@@ -30,6 +30,7 @@ import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
 import { visualNovo, poeVisual, aplicaVisual } from './infra/visual';
+import { ligado, fitaLigada, comModulo, comFita, normalizaModulos } from './dominio/modulos';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { FolhaFoto } from './ui/folhas/foto.jsx';
@@ -67,7 +68,7 @@ import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos
 import {
   aplicaAjusteNoArroz, tiraMarcaDeArroz, listaDeCompras, totalDaRefeicao, totalDoDia,
   refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao, minutosDe,
-  fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis, diaInterpretavel,
+  fechaDia, aderenciaDoDia, padraoPorRefeicao, comidaDaResposta, respostaDoDia, janelaDoHistorico, diasInterpretaveis, diaInterpretavel,
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste,
   poeComidaNoDia, resumoDaRefeicao, FOLGA_POS
 } from './dominio/nutricao/calculo';
@@ -413,6 +414,8 @@ function normalizaEstado() {
   if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
   if (!Array.isArray(S.gordura)) S.gordura = [];
   if (S.perfManual !== true && S.perfManual !== false) S.perfManual = null;
+  // o que aparece (dominio/modulos.ts): só chaves conhecidas; ausente = padrão
+  S.modulos = normalizaModulos(S.modulos);
   if (!S.dia || typeof S.dia !== 'object') S.dia = null;
 
   if (!S.logs || typeof S.logs !== 'object') S.logs = {};
@@ -4809,7 +4812,11 @@ function valorDoCorpo(k) {
  *
  * @returns {number} quantas medidas daquele dia foram substituídas
  */
-function gravaMarca(k, v, quando, onde, semHora) {
+/**
+ * `leituras`: quantas leituras da fita deram `v` (a média delas). Só para
+ * medida com fita; `1` marca "guardar só esta" (`Marca.n`).
+ */
+function gravaMarca(k, v, quando, onde, semHora, leituras) {
   if (!Array.isArray(S.body[k])) S.body[k] = [];
   const arr = S.body[k];
   const noDia = arr.filter(x => sameDay(x.t, quando));
@@ -4825,6 +4832,7 @@ function gravaMarca(k, v, quando, onde, semHora) {
   const nova = { t: quando, v, m: depoisDe(morte) };
   if (onde) nova.onde = onde;
   if (semHora) nova.semHora = 1;
+  if (typeof leituras === 'number' && leituras >= 1) nova.n = Math.round(leituras);
   arr.push(nova);
   arr.sort((a,b) => a.t - b.t);
   if (arr.length > TETO.body) S.body[k] = arr.slice(-TETO.body);
@@ -5202,6 +5210,8 @@ async function importText(txt) {
         ajuste: (typeof d.ajuste === 'number' && isFinite(d.ajuste)) ? d.ajuste : 0,
         perfManual: (d.perfManual === true || d.perfManual === false) ? d.perfManual : null,
         compras: (d.compras && typeof d.compras === 'object') ? d.compras : null,
+        // o que aparece: preferência da pessoa, limpa em `normalizaEstado()`
+        modulos: (d.modulos && typeof d.modulos === 'object') ? d.modulos : null,
         // a sincronização: sem estes, importar um backup zeraria o carimbo do
         // estado e as lápides — e um aparelho ressuscitaria o que o outro apagou
         mtime: typeof d.mtime === 'number' ? d.mtime : 0,
@@ -7148,7 +7158,7 @@ async function wipe() {
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
         cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura, quadro:S.quadro, lousa:S.lousa,
-        perfManual:S.perfManual, compras:S.compras,
+        perfManual:S.perfManual, compras:S.compras, modulos:S.modulos || null,
         // BIBLIOTECA e CATÁLOGO, pela mesma razão de `S.ex` acima — decisão do
         // dono, 08/10. `aulas` são os modelos de aula que ELE salvou, e `fotos`
         // são as fotos dos aparelhos, uma por exercício, para reconhecer a
@@ -9608,7 +9618,11 @@ CTX.salvaMedidas = async function () {
         txt: fmtDec(antes.v) + ' → ' + fmtDec(x.v) + ' ' + x.m.u + ' (' + (d > 0 ? '+' : '−') + fmtDec(Math.abs(d)) + ' desde ' + fmtDate(antes.t) + ')' });
     }
     const typed = view.bodyOnde && typeof view.bodyOnde[k] === 'string' ? view.bodyOnde[k].trim() : '';
-    gravaMarca(k, x.v, t, typed || ondeMediu(S.body[k]) || x.m.onde || null);
+    // quantas leituras da fita deram o valor: o visual novo pede sempre a
+    // segunda e marca a medida feita com uma só (`Marca.n`)
+    const leituras = x.m.dobra ? null
+      : (v.leituras[k] || []).map(numeroDaLeitura).filter(function (n) { return typeof n === 'number' && !isNaN(n); }).length;
+    gravaMarca(k, x.v, t, typed || ondeMediu(S.body[k]) || x.m.onde || null, false, leituras);
   });
   declaraGravacao(vai.length === 1 ? 'a medida' : 'as ' + vai.length + ' medidas', fmtDate(t));
   await save();
@@ -11710,6 +11724,13 @@ function registroDaCaptura(r) {
   if (r.nivel) cap.nivel = { lado: r.nivel.lado, frente: r.nivel.frente };
   if (r.modo === 'alguem' || r.modo === 'sozinho') cap.modo = r.modo;
   if (r.mov) cap.mov = { toque: r.mov.toque, seg: r.mov.seg };
+  // fora do padrão: o que não estava certo e quem fotografou tirou mesmo assim
+  // (`Captura.fora`). Quem decide a lista é a câmera.
+  if (Array.isArray(r.fora) && r.fora.length) {
+    const ok = ['nivel', 'altura', 'distancia', 'tremida'];
+    const fora = r.fora.filter(function (x, i, a) { return ok.indexOf(x) >= 0 && a.indexOf(x) === i; });
+    if (fora.length) cap.fora = fora;
+  }
   return cap;
 }
 const FOTO_DEITADA = 'A foto saiu cortada pelo navegador e não foi guardada. Tire de novo.';
@@ -12690,6 +12711,76 @@ CTX.diasDeComidaFechados = function () {
   return dias;
 };
 
+/**
+ * As refeições do plano numa data passada. Dia sem linha: o tipo vem da mesma
+ * autoridade do fecho — com sessão registrada naquele dia, é treino, e entram o
+ * pré-treino e o intra. Uma regra só para o "pôr o dia em dia" e para a
+ * resposta do dia.
+ */
+function refeicoesDaData(data, linha) {
+  const cadencia = linha && linha.cadencia ? linha.cadencia : tipoDoDiaDeComida(data, null);
+  return refeicoesDeHoje(planoDeComida(), cadencia === 'treino',
+                         !!(linha && linha.alta), linha && linha.turno,
+                         duracaoDoTreino());
+}
+
+/**
+ * A RESPOSTA DO DIA: "a comida foi como o plano?" (direção 3).
+ *
+ * `resposta` é `sim`, `quase` ou `naosei` (`comidaDaResposta`,
+ * dominio/nutricao/calculo.ts). Hoje escreve no dia aberto; uma data passada
+ * passa por `poeComidaNoDia`, o mesmo caminho do "pôr o dia em dia", que
+ * completa o dia sem apagar o que já estava. Data futura não aceita.
+ *
+ * Devolve `{ ok, resposta }` e não desenha: quem chama decide o que mostrar.
+ */
+CTX.respondeODia = function (data, resposta) {
+  if (resposta !== 'sim' && resposta !== 'quase' && resposta !== 'naosei') return { ok: false };
+  if (typeof data !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return { ok: false };
+  const hoje = hojeISO();
+  if (data > hoje) return { ok: false };
+  const agora = Date.now();
+  if (data === hoje) {
+    const d = diaDeComida();
+    const h = diaResolvido();
+    const refs = refeicoesDeHoje(planoDeComida(), h.cadencia === 'treino', !!d.alta, d.turno, duracaoDoTreino());
+    const c = comidaDaResposta(resposta, refs, d.done, agora);
+    d.done = Object.assign({}, d.done || {}, c.done || {});
+    if (c.aderencia === 'plano') delete d.aderencia; else d.aderencia = c.aderencia;
+    d.pordia = 1;
+    queueSave();
+    return { ok: true, resposta: resposta };
+  }
+  const hist = Array.isArray(S.comidaHist) ? S.comidaHist : [];
+  const linha = hist.filter(function (x) { return x && x.d === data; })[0] || null;
+  const c = comidaDaResposta(resposta, refeicoesDaData(data, linha), linha && linha.done, agora);
+  const r = poeComidaNoDia(hist, data, c, planoDeComida(), catalogoAlimentos(), hoje,
+                           versaoDoPlano(), null, agora);
+  if (r.recusa) return { ok: false, recusa: r.recusa };
+  S.comidaHist = r.hist;
+  queueSave();
+  return { ok: true, resposta: resposta };
+};
+
+/** A resposta que uma data já tem (`sim`, `quase`, `naosei`), ou `null`. */
+CTX.respostaDoDia = function (data) {
+  if (data === hojeISO()) return respostaDoDia(S.dia && S.dia.data === data ? S.dia : null);
+  const linha = (Array.isArray(S.comidaHist) ? S.comidaHist : []).filter(function (x) { return x && x.d === data; })[0];
+  return respostaDoDia(linha);
+};
+
+/**
+ * O QUE APARECE (dominio/modulos.ts). Desligar esconde, nunca apaga. Grava no
+ * estado sincronizado: é preferência da pessoa, a mesma em todo aparelho.
+ */
+CTX.moduloLigado = function (k) { return ligado(S.modulos, k); };
+CTX.ligaModulo = function (k, on) { S.modulos = normalizaModulos(comModulo(S.modulos, k, !!on)); queueSave(); };
+CTX.fitaLigada = function (k) {
+  const m = MEDIDAS_DE_FITA.filter(function (x) { return x.k === k; })[0];
+  return fitaLigada(S.modulos, k, !!(m && m.fita === 'ligada'), !!(S.body[k] && S.body[k].length));
+};
+CTX.ligaFita = function (k, on) { S.modulos = normalizaModulos(comFita(S.modulos, k, !!on)); queueSave(); };
+
 CTX.abrePoeODia = function (data) { CTX.abreFolha({ k: 'poeODia', data: data }); };
 
 CTX.poeODiaEmDia = function (data) {
@@ -12699,13 +12790,7 @@ CTX.poeODiaEmDia = function (data) {
 
   const linha = (Array.isArray(S.comidaHist) ? S.comidaHist : [])
     .filter(function (h) { return h && h.d === data; })[0] || null;
-  // Dia sem linha: o tipo vem da mesma autoridade do fecho — com sessão
-  // registrada naquele dia, é treino, e a folha mostra o pré-treino e o intra.
-  const cadencia = linha && linha.cadencia ? linha.cadencia : tipoDoDiaDeComida(data, null);
-  const plano = planoDeComida();
-  const refs = refeicoesDeHoje(plano, cadencia === 'treino',
-                               !!(linha && linha.alta), linha && linha.turno,
-                               duracaoDoTreino());
+  const refs = refeicoesDaData(data, linha);
   const cat = catalogoAlimentos();
 
   return {
