@@ -98,6 +98,12 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Programa (treinos com a ordem, diferenças, histórico de mudanças, criar treino), editor (subir e descer, séries, trocar e tirar, faixa de séries por músculo contra o treinador) e revisão do treinador | **feito** (`src/ui/v3/telas/programa.jsx`, `ctx.faixaDoTreinoV3`; `tests/fluxo/v3-programa.test.js`). Adicionar exercício ainda abre o catálogo da tela antiga, na mesma camada. A revisão aplica os treinos inteiros, como o fluxo de sempre (o protótipo escolhia mudança por mudança) |
 | Aula do box | **feito**: repetir a última aula, modelos, texto colado, foto da lousa, lista rápida (pela mesma `anotaSerieRapida`, o valor em todas as passadas) e "série por série" no treino em foco. **Fase 3 fechada** (`tests/fluxo/v3-aula.test.js`) |
 
+| Fase 4 | Estado |
+|---|---|
+| Hoje: o bloco do momento (pela regra `cartaoDeCima`, com a pergunta da noite antes da refeição seguinte), a linha do dia, "se quiser" pelo que está ligado, o ritmo dos 7 dias e a pergunta de ontem | **feito** (`src/ui/v3/telas/hoje.jsx`, `ctx.hojeV3`; `tests/fluxo/v3-hoje.test.js`) |
+| O "+" com o texto livre ("almocei e tomei 2 copos", "pesei 77,6") | **feito**: a regra mora em `src/dominio/textolivre.ts` (o lote pedia `captura.ts`, que já é das luzes da câmera), com teste; só o que tem certeza vira registro |
+| Dias e responder os dias, Semana, Plano (comida, alimentos, compras), Ajustes, primeira vez, estados | a fazer |
+
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
 máquina e passam sozinhos. Antes de tratar como regressão, rodar o arquivo
