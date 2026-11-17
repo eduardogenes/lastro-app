@@ -35,7 +35,7 @@ Atualizado a cada peça entregue. É por aqui que uma sessão nova retoma.
 | 2. Tokens e fontes dentro do app | **feito** (`src/v3/tokens.css`, `src/v3/fontes.css`) |
 | 3. Componentes base | **feito** (`src/ui/v3/`, estilos em `src/v3/componentes.css`); galeria em `/v3.html` com `npm run dev` |
 | 4. Dado novo, fusão, cópia de segurança e espelho | **feito**, sem migração (ver abaixo) |
-| 5. Estratégia de testes (classificar os 61 de fluxo e o `estilo.test`) | a fazer · Fable |
+| 5. Estratégia de testes (classificar os 61 de fluxo e o `estilo.test`) | **feito**: [01-testes.md](01-testes.md); guarda do visual novo em `tests/dominio/estilo-v3.test.ts` |
 | 6. Especificação de cada lote | a fazer · Fable |
 | 7. O que a captura de fotos automatiza | a fazer · Fable (Fase 1) |
 
