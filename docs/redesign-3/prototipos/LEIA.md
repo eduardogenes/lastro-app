@@ -10,11 +10,11 @@ computador aparece dentro de um aparelho, com um texto ao lado.
 
 | Arquivo | Lote | Página publicada |
 |---|---|---|
-| `hoje.html` | base: Hoje, Treino em foco, Corpo, Dias, Semana, Plano, botão "+" | https://claude.ai/artifact/QZcnUuZmEsB24AoUB2gAEN |
-| `fotos.html` | 1 · Fotos | https://claude.ai/artifact/GxmcE6dq1uoU1qBf5oVNJp |
-| `corpo.html` | 2 · Corpo e evolução | https://claude.ai/artifact/AKWdEXpZmQ9eiaHgu67iQG |
-| `treino.html` | 3 · Treino | https://claude.ai/artifact/LxK55rabgpPZNM8d6H9kDU |
-| `resto.html` | 4 · Dias, Semana, Comida, Compras, Ajustes, primeira vez, estados | https://claude.ai/artifact/RfzhQHzoKHaQyaEZiZ5798 |
+| `hoje.html` | base: Hoje, Treino em foco, Corpo, Dias, Semana, Plano, botão "+" | https://claude.ai/artifact/WVcNEX3ifCh2JctGG3qYY6 |
+| `fotos.html` | 1 · Fotos | https://claude.ai/artifact/KNvYxCWcXwiNNfGtUP5uB3 |
+| `corpo.html` | 2 · Corpo e evolução | https://claude.ai/artifact/WSvR1zqfZFxRo7wdHwMWgh |
+| `treino.html` | 3 · Treino | https://claude.ai/artifact/HvGNaVtdWwEmnNa2JPspXt |
+| `resto.html` | 4 · Dias, Semana, Comida, Compras, Ajustes, primeira vez, estados | https://claude.ai/artifact/TPo8peQPGzrdR2QtL4Ccvn |
 
 As páginas estão na conta do claude.ai que estava ativa até a noite de 16/11.
 Os arquivos daqui são a mesma versão final de cada uma.
