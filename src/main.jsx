@@ -72,7 +72,7 @@ import {
   refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao, minutosDe,
   fechaDia, aderenciaDoDia, padraoPorRefeicao, comidaDaResposta, respostaDoDia, janelaDoHistorico, diasInterpretaveis, diaInterpretavel,
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste,
-  poeComidaNoDia, resumoDaRefeicao, FOLGA_POS
+  poeComidaNoDia, resumoDaRefeicao, FOLGA_POS, fmtKg
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
@@ -8484,6 +8484,44 @@ CTX.enderecoVazio = function () {
   };
 };
 CTX.comecaAqui = function () { view.comecouAqui = true; render(); };
+
+/**
+ * O PLANO no visual novo (Fase 4): os treinos, a semana de treino, a comida
+ * do nutricionista e o que espera decisão ("vira regra?"). Lê o que o Plano
+ * antigo lê.
+ */
+CTX.planoV3 = function () {
+  const hoje = diaResolvido().treino;
+  const cad = cadenciaDaSemana();
+  return {
+    treinos: rot().filter(function (d) { return !!treino(d); }).map(function (d) {
+      const P = treino(d);
+      return { d: d, nome: P.name, hoje: d === hoje, aberto: diaAberto(d),
+               series: P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0), n: P.ex.length };
+    }),
+    cadencia: DIAS_CURTOS.map(function (rotulo, i) { return { i: i, rotulo: rotulo, treino: cad[i] === 'treino' }; }),
+    refeicoes: CTX.planoCompleto(),
+    resumo: CTX.resumoDoPlano(),
+    esperam: CTX.mudancasQueEsperam()
+  };
+};
+/** Uma refeição do plano: os itens com a quantidade, para mudar pela régua. */
+CTX.refeicaoDoPlanoV3 = function (id) {
+  const r = achaRefeicao(id);
+  if (!r) return null;
+  const cat = catalogoAlimentos();
+  return { id: r.id, n: r.n, t: r.t, quando: r.quando, kcal: Math.round(totalDaRefeicao(r, cat, true).kcal),
+    itens: (r.itens || []).map(function (it, i) {
+      const a = cat[it.f];
+      return { i: i, n: a ? a.n : it.f, q: it.q, u: a ? a.u : 'g', alta: !!it.alta,
+               kcal: a ? Math.round(a.kcal * it.q / 100) : null };
+    }) };
+};
+/** A lista de compras, já com as quantidades escritas. */
+CTX.comprasV3 = function () {
+  const c = CTX.compras();
+  return Object.assign({}, c, { linhas: c.linhas.map(function (l) { return Object.assign({}, l, { txt: fmtKg(l.comprar, l.u) }); }) });
+};
 
 CTX.alimentosFiltrados = function (q) {
   const cat = catalogoAlimentos();

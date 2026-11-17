@@ -151,6 +151,8 @@ const TEXTO: Record<string, string> = {
     'renomear o exercício no histórico — é texto, e é sentado',
   'src/ui/v3/telas/hoje.jsx · registrar-texto':
     'o texto livre do "+" ("almocei e tomei 2 copos") — é frase, e o teclado é o das letras',
+  'src/ui/v3/telas/plano.jsx · alimentos-busca':
+    'busca de alimento no visual novo — busca é do sistema, sempre, como a de exercício',
   'src/ui/v3/telas/progressao.jsx · renomeia-ex':
     'renomear o exercício no visual novo — o mesmo caso do de cima: texto, e sentado',
   'src/ui/telas/retroativo.jsx · add-nome':

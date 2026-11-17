@@ -104,7 +104,8 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | O "+" com o texto livre ("almocei e tomei 2 copos", "pesei 77,6") | **feito**: a regra mora em `src/dominio/textolivre.ts` (o lote pedia `captura.ts`, que já é das luzes da câmera), com teste; só o que tem certeza vira registro |
 | Dias (o mês em grade com a letra do treino e a marca da comida, o dia escolhido com a pergunta) e responder os dias (um por tela, voltar um, "os que faltam") | **feito** (`src/ui/v3/telas/dias.jsx`; `tests/fluxo/v3-dias.test.js`). Abrir o dia ainda usa a tela antiga do dia |
 | Semana: o veredito da comida com o que a regra olha, e as séries por região separando feitas de ainda vêm | **feito** (`treinosQueVem` e `somaPorGrupo` em `src/dominio/volume.ts`, com teste; `src/ui/v3/telas/semana.jsx`) |
-| Plano (comida, alimentos, compras), Ajustes, primeira vez, estados | a fazer |
+| Plano: o que espera decisão, os treinos, os dias de treino, a comida com a quantidade pela régua, alimentos e compras | **feito** (`src/ui/v3/telas/plano.jsx`, `ctx.planoV3`; `tests/fluxo/v3-plano.test.js`). Nova refeição, trocar alimentos e editar um alimento ainda abrem as folhas antigas |
+| Ajustes, primeira vez, estados | a fazer |
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
