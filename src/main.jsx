@@ -99,11 +99,12 @@ import * as NIVEL from './infra/nivel';
 import { exifDoArquivo } from './infra/exif';
 import {
   CADENCIA_DIAS, CONFERE_SEMPRE, FALA_DO_AJUSTE, FALA_DO_FIM, PASSOS_DO_AJUSTE,
-  comAPose, completude, montagem as montagemDe,
+  comAPose, completude, montagem as montagemDe, mudancasDaSessao, ressalvaDaSessao, textoDaMudanca, tituloDoFim,
   diasDesde as diasDesdeAFoto, instanteDaData, mediaDaSemana, parPadrao,
   poseDe, poses as posesDo, posesDaData, proximaPose, quaseTodoPreto, referencia, sessaoDe,
   ultima as ultimaSessaoFoto, vizinhaComAPose
 } from './dominio/protocolo';
+import { LUZES, apagadas, liberado, luzes } from './dominio/captura';
 import {
   IDENTIDADE, arrasta as arrastaRecorte, ehIdentidade,
   normaliza as normalizaEnq, zoomMinimo
@@ -8314,6 +8315,7 @@ const FECHA_CAMADA = {
   ajustes:   function () { CTX.fechaAjustes(); },
   ajuste:    function () { CTX.fechaAjuste(); },
   protocolo: function () { CTX.fechaProtocolo(); },
+  passos:    function () { CTX.fechaPassosDasFotos(); },
   comparar:  function () { CTX.fechaComparar(); },
   revisao:   function () { CTX.fechaRevisao(); },
   evolucao:  function () { CTX.fechaEvolucao(); },
@@ -11550,6 +11552,9 @@ function sessaoFotoOuCria(d) {
   let ses = sessaoDe(S.protocolo.sessoes, d);
   if (ses) return ses;
   ses = { d: d, t: Date.now(), fotos: {}, m: Date.now() };
+  // o que mudou desde a sessão anterior, dito no preparo (visual novo)
+  const muda = view.protocolo && view.protocolo.d === d ? mudancasDaSessao(view.protocolo.muda) : [];
+  if (muda.length) ses.muda = muda;
   S.protocolo.sessoes = S.protocolo.sessoes.concat([ses]).sort(function (a, b) {
     return a.d < b.d ? -1 : a.d > b.d ? 1 : 0;
   });
@@ -11580,6 +11585,82 @@ CTX.abreProtocolo = function () {
   };
   entraNoDestino('protocolo'); render();
   garanteBytesDoCorpo(datasNecessarias(d));
+};
+
+/**
+ * "Tudo como da última vez?" (visual novo): o que mudou desde a sessão
+ * anterior. Fica no preparo e entra na sessão quando ela nasce, na primeira
+ * foto; se a sessão do dia já existe, é atualizada na hora.
+ */
+CTX.setMudaDaSessao = function (lista) {
+  const v = view.protocolo; if (!v) return;
+  v.muda = mudancasDaSessao(lista);
+  const ses = sessaoDe(S.protocolo.sessoes, v.d);
+  if (ses) {
+    if (v.muda.length) ses.muda = v.muda.slice(); else delete ses.muda;
+    ses.m = Date.now();
+    queueSave();
+  }
+  render();
+};
+CTX.mudaDaSessao = function () {
+  const v = view.protocolo; if (!v) return [];
+  const ses = sessaoDe(S.protocolo.sessoes, v.d);
+  return mudancasDaSessao(ses ? ses.muda : v.muda);
+};
+
+/**
+ * QUEM SEGURA O CELULAR (visual novo): três cenários, dois modos de câmera.
+ * "A pessoa de sempre" e "alguém que nunca fez" são o mesmo `alguem`; o
+ * segundo só ganha os três passos escritos para ela antes da câmera. Por isso
+ * o "novo" fica na sessão aberta, e não guardado: a próxima pode ser outra
+ * pessoa.
+ */
+CTX.setQuemSegura = function (k) {
+  const v = view.protocolo; if (!v) return;
+  if (k !== 'sempre' && k !== 'novo' && k !== 'sozinho') return;
+  v.novo = k === 'novo';
+  CTX.setQuemTira(k === 'sozinho' ? 'sozinho' : 'alguem');
+  render();
+};
+CTX.quemSegura = function () {
+  const v = view.protocolo;
+  if (quemTira === 'sozinho') return 'sozinho';
+  return v && v.novo ? 'novo' : 'sempre';
+};
+/** Os três passos para quem nunca fotografou: uma camada, que o Voltar desfaz. */
+CTX.abrePassosDasFotos = function () {
+  const v = view.protocolo; if (!v) return;
+  v.passos = true; entraNoDestino('passos'); render();
+};
+CTX.fechaPassosDasFotos = function () {
+  const v = view.protocolo; if (!v || !v.passos) return;
+  v.passos = false; render(); saiDoDestino('passos');
+};
+/**
+ * Da "Nova sessão" (ou dos três passos) direto para a câmera. Tem de rodar
+ * dentro do toque: a câmera pede a permissão do sensor antes de qualquer
+ * espera (ver `abreCamera`).
+ */
+CTX.vaiParaACamera = function () {
+  const v = view.protocolo; if (!v) return;
+  if (v.passos) { v.passos = false; esqueceDestino('passos'); }
+  preparaAudio();
+  v.montagem = false;
+  CTX.abreCamera();
+};
+/** O que a "Nova sessão" mostra. */
+CTX.novaSessaoV3 = function () {
+  const v = view.protocolo; if (!v) return null;
+  const anteriores = (S.protocolo.sessoes || []).filter(function (s) { return s.d < v.d && Object.keys(s.fotos || {}).length; });
+  return {
+    quem: CTX.quemSegura(),
+    muda: CTX.mudaDaSessao(),
+    // sem sessão anterior, não há "da última vez" para conferir
+    temAnterior: anteriores.length > 0,
+    total: posesDo(S.protocolo.poses).length,
+    passos: !!v.passos
+  };
 };
 
 CTX.fechaProtocolo = function () { view.protocolo = null; render(); saiDoDestino('protocolo'); };
@@ -12130,6 +12211,45 @@ function fimDaSessaoDeFotos(ses) {
     medir: 'Medir fita agora'
   };
 }
+
+/**
+ * O FIM DA SESSÃO no visual novo: o título com a ressalva, o que mudou, as
+ * fotos (com a marca das que saíram fora do padrão) e a comparação longa.
+ * O resto (tempo, subida, peso, próxima) é o mesmo do fim antigo.
+ */
+CTX.fimDaSessaoV3 = function () {
+  const v = view.protocolo;
+  if (!v) return null;
+  const ses = sessaoDe(S.protocolo.sessoes, v.d);
+  const lista = posesDo(S.protocolo.poses);
+  if (!ses || completude(ses, S.protocolo.poses).faltando.length) return null;
+  const base = fimDaSessaoDeFotos(ses);
+  const r = ressalvaDaSessao(ses);
+  const pose = ordemDePoses().filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0];
+  const par = pose ? parPadrao(S.protocolo.sessoes, pose) : null;
+  return {
+    titulo: tituloDoFim(lista.length, lista.length, r),
+    noPadrao: r.noPadrao,
+    fora: r.fora.length,
+    muda: r.muda.length ? 'Anotado nesta sessão: ' + textoDaMudanca(r.muda) + '. Aparece ao comparar.' : null,
+    tempo: base.tempo,
+    subida: base.subida,
+    peso: base.peso,
+    proxima: base.proxima,
+    comparar: par && par.ate.d === ses.d ? 'Comparar com ' + fmtDate(instanteDaData(par.de.d)) : null,
+    fotos: lista.map(function (p) {
+      const f = ses.fotos[p.id];
+      return { id: p.id, n: p.n, url: CORPO.urlDaFoto(ses.d, p.id, f), enq: (f && f.enq) || null,
+               fora: r.fora.indexOf(p.id) >= 0 };
+    })
+  };
+};
+/** Do fim da sessão para a foto de uma pose: a câmera volta nela, para refazer. */
+CTX.refazPoseDaSessao = function (id) {
+  const v = view.protocolo; if (!v || !poseDe(id)) return;
+  v.pose = id; v.montagem = false;
+  CTX.abreCamera();
+};
 
 CTX.sessaoDeFotos = function () {
   const v = view.protocolo;
@@ -14068,7 +14188,11 @@ CTX.abreCamera = async function () {
     // distância uma vez, na primeira pose, e ninguém sai do lugar até o fim.
     // Câmera reaberta no meio da sessão não repete: as fotos já têm o lugar.
     ajuste: quemTira === 'alguem' && !(hoje && Object.keys(hoje.fotos).length),
-    torta: null, miniatura: null, guardando: false, anunciada: null
+    torta: null, miniatura: null, guardando: false, anunciada: null,
+    // As três luzes do disparo (visual novo; docs/redesign-3/02-captura.md):
+    // o que quem fotografa conferiu a olho, e se escolheu tirar mesmo assim.
+    // No visual antigo nada disso trava nem é gravado.
+    v3: visualNovo(), conferi: {}, forcado: false
   };
   movimento = NIVEL.criaMovimento();
   entraNoDestino('camera'); render();
@@ -14100,6 +14224,7 @@ CTX.abreCamera = async function () {
 CTX.ajustado = function () {
   const c = view.camera, v = view.protocolo;
   if (!c || !v || !c.ajuste) return;
+  if (c.v3 && !liberado(luzesDaCamera(c), c.forcado)) return;
   preparaAudio();
   c.ajuste = false;
   render();
@@ -14296,6 +14421,8 @@ CTX.disparaCamera = function (origem) {
   if (origem === 'toque') toqueEm = agoraMs();
   else if (agoraMs() - toqueEm < 1000) return;
   preparaAudio();                      // o gesto de toque é o que libera o áudio
+  // no visual novo, o botão só vale com as três luzes verdes (ou "mesmo assim")
+  if (c.v3 && !liberado(luzesDaCamera(c), c.forcado)) return;
   // Com alguém tirando, um toque é UMA foto, e nada sai sozinho (pedido do
   // dono, 04/11): quem fotografa vê a pessoa e decide a hora.
   if (c.quem === 'alguem') {
@@ -14316,7 +14443,7 @@ async function capturaAgora() {
   const c = view.camera, v = view.protocolo;
   if (!c || !v || c.guardando) return;
   c.clarao = null;
-  const el = document.querySelector('.cam-video');
+  const el = document.querySelector('.cam-video, .v3-cam-video');
   if (!CAM.pronto(el)) { c.contagem = null; toast('A câmera ainda não está pronta.'); render(); return; }
   // O nível e o giro do INSTANTE do toque, lidos antes de montar o quadro
   // (F8): a redução leva alguns milissegundos, e o empurrão do dedo entraria
@@ -14411,6 +14538,10 @@ async function pixelsDaCamera(el, dados) {
     }
     if (NUVEM.sessao()) out.original = { blob: original, ext: CORPO.extDoTipo(original.type), l: r.fonte.l, a: r.fonte.a };
   }
+  // a tremida entra no fora do padrão com o tremor final, o da foto inteira
+  if (Array.isArray(out.fora) && out.mov && out.mov.toque > NIVEL.TREMOR && out.fora.indexOf('tremida') < 0) {
+    out.fora = out.fora.concat(['tremida']);
+  }
   return out;
 }
 
@@ -14456,6 +14587,8 @@ async function guardaESegue(c, v, reduzida, jaClicou) {
     c.seguido = false;
     falaTexto(FALA_DO_FIM);
   }
+  // a última foto saiu nesta câmera: o visual novo troca o disparo por "Ver a sessão"
+  c.fim = !prox;
   render();
   if (!prox) toast('Sessão completa. As ' + posesDo(S.protocolo.poses).length + ' poses estão registradas.');
 }
@@ -14488,6 +14621,7 @@ function mostraMiniatura(c, d, pose, reduzida) {
 function voltaParaPose(c, v, pose) {
   const giro = c.anunciada && c.anunciada !== pose ? giroEntre(c.anunciada, pose) : 0;
   c.anunciada = null;
+  c.fim = false;
   v.pose = pose;
   c.giro = null;
   c.fantasmaD = fantasmaDaPose(pose, v.d, c.quem);
@@ -14527,6 +14661,8 @@ CTX.registraTorta = async function () {
   const t = c.torta;
   c.torta = null;
   c.guardando = true;
+  // guardada torta de propósito: fica marcada fora do padrão no nível
+  t.reduzida.fora = (Array.isArray(t.reduzida.fora) ? t.reduzida.fora : []).concat(['nivel']);
   render();
   try {
     v.pose = t.pose;
@@ -14546,8 +14682,60 @@ function dadosDaCamera(c) {
   if (c.nivel) r.nivel = c.nivel;
   const m = movimento.resumo(Date.now());
   if (m) r.mov = m;
+  // o que não estava verde no disparo (a tremida entra depois, em `pixelsDaCamera`)
+  if (c.v3) r.fora = apagadas(luzesDaCamera(c));
   return r;
 }
+
+/** As três luzes de agora: o nível pelo sensor, altura e distância conferidas. */
+function luzesDaCamera(c) {
+  return luzes({ nivel: c.nivel ? !!c.nivelOk : null, det: null, conferi: c.conferi });
+}
+/** Quem fotografa conferiu a olho uma luz que o app não mede (o caminho de reserva). */
+CTX.confereLuz = function (k, on) {
+  const c = view.camera;
+  if (!c || LUZES.indexOf(k) < 0 || luzesDaCamera(c).medida[k]) return;
+  c.conferi = Object.assign({}, c.conferi, { [k]: !!on });
+  render();
+};
+/**
+ * "Tirar mesmo assim": o botão destrava, e cada foto guarda o que não estava
+ * verde. Com alguém tirando, encerra também o ajuste.
+ */
+CTX.tiraMesmoAssim = function () {
+  const c = view.camera;
+  if (!c) return;
+  c.forcado = true;
+  if (c.ajuste) CTX.ajustado(); else render();
+};
+/** O que a câmera do visual novo mostra além de `cameraViva`. */
+CTX.cameraV3 = function () {
+  const c = view.camera, v = view.protocolo;
+  if (!c || !v) return null;
+  const lista = posesDo(S.protocolo.poses);
+  const i = Math.max(0, lista.findIndex(function (p) { return p.id === v.pose; }));
+  const l = luzesDaCamera(c);
+  // as posições: um grupo novo a cada giro do corpo
+  const grupos = [];
+  lista.forEach(function (p, k) { if (k === 0 || p.giro !== lista[k - 1].giro) grupos.push(k); });
+  const ses = sessaoDe(S.protocolo.sessoes, v.d);
+  const feitas = lista.filter(function (p) { return ses && ses.fotos[p.id]; }).length;
+  return {
+    luzes: l,
+    apagadas: apagadas(l),
+    liberado: liberado(l, c.forcado),
+    forcado: !!c.forcado,
+    ajuste: !!(c.quem === 'alguem' && c.ajuste),
+    grupos: grupos,
+    posicao: grupos.filter(function (g) { return g <= i; }).length,
+    posicoes: grupos.length,
+    feitas: feitas,
+    // tudo tirado NESTA câmera; reaberta para refazer uma pose, o disparo continua
+    completa: !!c.fim && feitas === lista.length,
+    fala: lista[i].voz || (Array.isArray(lista[i].como) && lista[i].como[0]) || '',
+    confira: lista[i].confira || ''
+  };
+};
 
 /** "A pose 6, perfil esquerdo, não foi guardada" — o que a tela diz quando a sessão parou. */
 function avisoDaPoseNaoGuardada(lista) {

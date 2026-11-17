@@ -422,8 +422,10 @@ export interface Captura {
   mov?: { toque: number; seg: number };
   /**
    * FORA DO PADRÃO: o que não estava certo quando esta foto foi tirada, porque
-   * quem fotografou escolheu "Tirar mesmo assim" ou "Guardar assim". Ausente =
-   * a foto saiu no padrão (ou é de antes desta marca existir).
+   * quem fotografou escolheu "Tirar mesmo assim" ou "Guardar assim", e
+   * `tremida` quando o giroscópio viu o celular girando no toque (as regras
+   * em `src/dominio/captura.ts`). Ausente = a foto saiu no padrão (ou é de
+   * antes desta marca existir).
    *
    * É por foto, e não por sessão, porque o ajuste é por foto: a primeira pode
    * sair torta e a segunda não. A sessão está fora do padrão quando alguma das

@@ -53,8 +53,8 @@ guarda) e nos casos novos de `tests/fluxo/diario.test.js` e `dados.test.js`.
 | O que aparece | `ctx.moduloLigado(k)`, `ctx.ligaModulo(k, on)`, `ctx.fitaLigada(k)`, `ctx.ligaFita(k, on)` | `src/dominio/modulos.ts` |
 | Medida com fita, "guardar só esta" | `Marca.n` (leituras); o formulário antigo já grava | `gravaMarca(…, leituras)` |
 | Série posta em dia ("Já fiz mais do que anotei") | `Log.dp = 1` | **a gravar na Fase 3**, pelo registro da série |
-| "Tudo como da última vez?" na sessão de fotos | `SessaoFoto.muda` (`luz`, `roupa`, `lugar`) | **a gravar na Fase 1**, ao criar a sessão |
-| Foto tirada fora do padrão | `Captura.fora` (`nivel`, `altura`, `distancia`, `tremida`), passado a `registroDaCaptura` como `r.fora` | **a gravar na Fase 1**, pela câmera |
+| "Tudo como da última vez?" na sessão de fotos | `SessaoFoto.muda` (`luz`, `roupa`, `lugar`), por `ctx.setMudaDaSessao` | gravado ao criar a sessão (Fase 1) |
+| Foto tirada fora do padrão | `Captura.fora` (`nivel`, `altura`, `distancia`, `tremida`) | gravado pela câmera do visual novo (o que não estava verde no disparo, e a tremida pelo giroscópio); nos dois visuais, a foto torta guardada assim leva `nivel` |
 
 A pasta dos agentes (`npm run espelho`) já mostra os seis: `registrado_depois`
 em `series.csv`, `respondido_pelo_dia` em `dias.csv`, `leituras` em
@@ -70,7 +70,8 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Fase 1 | Estado |
 |---|---|
 | Camadas: destino e folha do visual novo pela pilha do Voltar | **feito** (`DESTINOS_V3`, `FOLHAS_V3` em `src/ui/v3/telas.js`; folha de confirmação `aviso`; `tests/fluxo/v3-camadas.test.js`) |
-| Telas do lote de Fotos | a fazer (ver [03-lotes.md](03-lotes.md)) |
+| Sessão de fotos: nova sessão (quem segura, "tudo como da última vez?", o preparo), os três passos, a câmera com as três luzes e "tirar mesmo assim", a sessão pela metade e o fim com a ressalva | **feito** (`src/ui/v3/telas/sessaofotos.jsx` e `camera.jsx`; regras em `src/dominio/captura.ts` e `ressalvaDaSessao` em `protocolo.ts`; `tests/dominio/captura-v3.test.ts`, `tests/fluxo/v3-fotos.test.js`). Altura e distância ainda são conferidas a olho: é o caminho de reserva, até a detecção entrar |
+| Centro das fotos, comparar, no tempo, galeria e ajustar | a fazer (ver [03-lotes.md](03-lotes.md)) |
 | Detecção do corpo na câmera | a fazer (ver [02-captura.md](02-captura.md)) |
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de

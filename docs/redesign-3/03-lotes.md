@@ -56,6 +56,21 @@ captura: [02-captura.md](02-captura.md).
 | **Galeria, foto aberta, lixeira** | `ctx.galeria()`, `ctx.galeriaFoto()` | `ctx.abreFotoDaGaleria`, `ctx.apagaDaGaleria`, `ctx.abreLixeira`, `ctx.restauraDaLixeira`, `ctx.esvaziaLixeira` | o selo "no padrão" ou a ressalva por sessão |
 | **Ajustar enquadramento** | `ctx.ajusteEmEdicao()` | `ctx.setGiroDoAjuste`, `ctx.setZoomDoAjuste`, `ctx.arrastaAjuste`, `ctx.salvaAjuste`, `ctx.zeraAjuste` | o **alinhamento automático** (02-captura.md §5), marcado como automático em `Enquadramento` |
 
+Decidido na construção, onde o código difere do protótipo de propósito:
+
+- **Sem a pílula "lente 1×"** em "tudo como da última vez?": a câmera do app
+  trava a 1×, e a lente não é coisa que mude. A frase de apoio diz isso.
+- **No fim, o principal é "Medir agora"** e "Comparar" vem ao lado: as
+  medidas são feitas na mesma noite das fotos (o fim antigo já era assim).
+- **A câmera, com tudo tirado, troca o disparo por "Ver a sessão"**, e a
+  miniatura com Refazer continua no canto: ir direto para o fim tirava o
+  Refazer da última foto.
+- **Os três passos são uma camada** (`passos`, em `camadasAbertas`): o Voltar
+  do sistema devolve a nova sessão. "Entendi" a tira da pilha antes de abrir a
+  câmera, para fechar a câmera voltar à sessão, e não aos passos.
+- Sem câmera do app (permissão negada, aparelho sem `getUserMedia`), a sessão
+  pela metade oferece a câmera do sistema na pose escolhida, como antes.
+
 Testes a reescrever: `protocolo` (o maior da suíte, 137 casos). Mostrar ao dono
 as decisões de captura antes de fechar a fase.
 

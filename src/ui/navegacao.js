@@ -90,6 +90,8 @@ export function camadasAbertas(view) {
   // A revisão do treinador abre da Prescrição, acima de qualquer lugar.
   if (view.revisao) c.push('revisao');
   if (view.protocolo) c.push('protocolo');
+  // Os três passos para quem nunca fotografou (visual novo), de dentro da sessão.
+  if (view.protocolo && view.protocolo.passos) c.push('passos');
   if (view.ajuste) c.push('ajuste');
   if (view.camera) c.push('camera');
   // Ajustes é destino e não lugar: um botão no canto do Agora.

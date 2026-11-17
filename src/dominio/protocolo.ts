@@ -20,6 +20,65 @@
 import { weekStart } from './formato';
 import type { Marca, Pose, PoseId, QuemTira, SessaoFoto } from './tipos';
 
+/**
+ * O que pode ter mudado desde a sessão anterior ("tudo como da última vez?").
+ * A lente não está aqui porque não muda: a câmera do app trava na 1×.
+ */
+export const MUDANCAS_DA_SESSAO = ['luz', 'roupa', 'lugar'] as const;
+export type MudancaDaSessao = typeof MUDANCAS_DA_SESSAO[number];
+
+/** A lista guardada, limpa: só valores conhecidos, sem repetição, na ordem fixa. */
+export function mudancasDaSessao(x: unknown): MudancaDaSessao[] {
+  if (!Array.isArray(x)) return [];
+  return MUDANCAS_DA_SESSAO.filter(function (m) { return x.indexOf(m) >= 0; });
+}
+
+const NOME_DA_MUDANCA: Record<MudancaDaSessao, string> = { luz: 'outra luz', roupa: 'outra roupa', lugar: 'outro lugar' };
+
+/**
+ * A RESSALVA de uma sessão: o que mudou desde a anterior (`muda`) e as fotos
+ * que saíram fora do padrão (`Captura.fora`). Uma sessão sem nenhuma das duas
+ * está no padrão. A ressalva não tira a sessão da comparação: ela aparece ao
+ * lado dela, onde quer que a sessão seja comparada.
+ */
+export interface Ressalva {
+  muda: MudancaDaSessao[];
+  /** as poses com foto fora do padrão, na ordem em que aparecem na sessão */
+  fora: PoseId[];
+  noPadrao: boolean;
+}
+export function ressalvaDaSessao(ses: SessaoFoto | null | undefined): Ressalva {
+  const muda = mudancasDaSessao(ses && ses.muda);
+  const fora = ses ? Object.keys(ses.fotos).filter(function (id) {
+    const f = ses.fotos[id];
+    return !!(f && f.cap && Array.isArray(f.cap.fora) && f.cap.fora.length);
+  }) : [];
+  return { muda: muda, fora: fora, noPadrao: !muda.length && !fora.length };
+}
+
+/** "outra luz, outra roupa": o que mudou, escrito para a tela. */
+export function textoDaMudanca(muda: MudancaDaSessao[]): string {
+  return muda.map(function (m) { return NOME_DA_MUDANCA[m]; }).join(', ');
+}
+
+/** O selo curto da sessão: "no padrão", "outra luz", "2 fora do padrão". */
+export function seloDaSessao(r: Ressalva): string {
+  if (r.noPadrao) return 'no padrão';
+  if (r.muda.length) return textoDaMudanca(r.muda);
+  return r.fora.length === 1 ? 'uma fora do padrão' : r.fora.length + ' fora do padrão';
+}
+
+/**
+ * O título do fim da sessão: "11 de 11, todas no padrão". A foto fora do
+ * padrão pesa mais que a mudança, porque é ela que entorta a comparação.
+ */
+export function tituloDoFim(feitas: number, total: number, r: Ressalva): string {
+  const n = feitas + ' de ' + total + ', ';
+  if (r.fora.length) return n + (r.fora.length === 1 ? 'uma fora do padrão' : r.fora.length + ' fora do padrão');
+  if (r.muda.length) return n + (r.muda.length === 1 ? 'com uma ressalva' : 'com ressalvas');
+  return n + 'todas no padrão';
+}
+
 /** O intervalo do protocolo. Duas semanas: menos que isso é ruído de água e sono. */
 export const CADENCIA_DIAS = 14;
 

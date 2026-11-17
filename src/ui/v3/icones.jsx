@@ -26,5 +26,16 @@ export const ic = {
   prato: I(<><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3.5" /></>),
   camera: I(<><path d="M4 8.5h3l1.5-2.5h7L17 8.5h3v10H4z" /><circle cx="12" cy="13.2" r="3.2" /></>),
   duvida: I(<path d="M9 9.2a3 3 0 115 2.3c-1 .8-2 1.3-2 2.500M12 17.500v.2" />, 2.4),
-  lixo: I(<path d="M5 7h14M9.500 7V4.500h5V7M7 7l.8 12.500h8.400L17 7" />)
+  lixo: I(<path d="M5 7h14M9.500 7V4.500h5V7M7 7l.8 12.500h8.400L17 7" />),
+  // a sessão de fotos: quem segura, as três luzes, a voz e o giro
+  um: I(<><circle cx="12" cy="7" r="3.2" /><path d="M5.5 20c.6-3.8 3.2-6 6.5-6s5.9 2.2 6.5 6" /></>),
+  dois: I(<><circle cx="8.5" cy="8" r="2.8" /><circle cx="16.5" cy="9" r="2.3" /><path d="M3 19.5c.5-3.2 2.7-5 5.5-5s5 1.8 5.5 5M14.5 14.8c2.9-.6 5.4 1 6 4.2" /></>),
+  tripe: I(<><rect x="8.5" y="3.5" width="7" height="10" rx="1.8" /><path d="M12 13.5v3M12 16.5l-4.5 4M12 16.5l4.5 4" /></>),
+  som: I(<path d="M4 10v4h3.5L12 18V6L7.5 10zM15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11" />),
+  nivel: I(<><rect x="3.5" y="9" width="17" height="6" rx="3" /><circle cx="12" cy="12" r="1.6" /></>),
+  altura: I(<path d="M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4" />),
+  distancia: I(<path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4" />),
+  gira: I(<><path d="M19.5 12a7.5 7.5 0 11-2.6-5.7" /><path d="M19.5 4v4.5H15" /></>, 2.2),
+  play: I(<path d="M8 5.5l10 6.5-10 6.5z" />, 2.2),
+  pausa: I(<path d="M8.5 5.5v13M15.5 5.5v13" />, 2.6)
 };

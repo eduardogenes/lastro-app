@@ -15,5 +15,12 @@ export const TELAS_V3 = {};
 // `telaCheia()` e `folhaDe()`, em `src/main.jsx`. Componente recebe `{ ctx }`
 // (destino) ou `{ ctx, f }` (folha, com o item da pilha).
 import { FolhaAviso } from './base.jsx';
-export const DESTINOS_V3 = {};
-export const FOLHAS_V3 = { aviso: FolhaAviso };
+import { SessaoDeFotos, PassosDasFotos, FolhaPreparo } from './telas/sessaofotos.jsx';
+import { CameraV3 } from './telas/camera.jsx';
+export const DESTINOS_V3 = {
+  // Fase 1, fotos
+  protocolo: SessaoDeFotos,
+  passos: PassosDasFotos,
+  camera: CameraV3
+};
+export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo };

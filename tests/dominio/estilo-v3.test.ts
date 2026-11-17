@@ -12,7 +12,11 @@ const ler = (rel: string) => fs.readFileSync(path.join(RAIZ, rel), 'utf8');
 const semComentarios = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
 const FOLHAS_V3 = fs.readdirSync(path.join(RAIZ, 'src', 'v3')).filter(f => f.endsWith('.css')).map(f => 'src/v3/' + f);
-const JSX_V3 = fs.readdirSync(path.join(RAIZ, 'src', 'ui', 'v3')).filter(f => /\.(jsx|js)$/.test(f)).map(f => 'src/ui/v3/' + f);
+// as telas ficam em `src/ui/v3/telas/`: a guarda olha a pasta inteira
+const JSX_V3 = (function anda(dir: string): string[] {
+  return fs.readdirSync(path.join(RAIZ, dir), { withFileTypes: true }).flatMap(e =>
+    e.isDirectory() ? anda(dir + '/' + e.name) : /\.(jsx|js)$/.test(e.name) ? [dir + '/' + e.name] : []);
+})('src/ui/v3');
 
 test('cor só nos tokens: fora de src/v3/tokens.css, nenhum hexadecimal, rgb ou hsl solto', () => {
   const soltas: string[] = [];
