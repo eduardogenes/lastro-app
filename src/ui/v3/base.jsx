@@ -2,7 +2,12 @@
 // a lista e o papel de cada um estão no DESIGN.md. Todos são só apresentação:
 // recebem dados e funções prontos, e não leem o estado do app.
 
+import { useContext, useEffect, useRef } from 'preact/hooks';
 import { ic } from './icones.jsx';
+// O comportamento de camada é o mesmo do visual antigo, e por isso vem de lá:
+// a trava de rolagem é um contador só, e o isolamento acha a camada de cima
+// entre as folhas dos dois visuais.
+import { trava, destrava, abreCamada, LugarNaPilha } from '../instrumento/folha.jsx';
 
 const cls = (...p) => p.filter(Boolean).join(' ');
 
@@ -186,18 +191,51 @@ export function Faixa({ falha, acao, aoAgir, children }) {
 }
 
 /**
- * A FOLHA, só a aparência: o véu e o painel que sobe. Quem a abre e fecha é a
- * pilha de camadas do app (`view.pilha`); `aoFechar` é o toque no véu.
+ * A FOLHA do visual novo. Quem a abre e fecha é a pilha de camadas do app
+ * (`view.pilha`): ela nasce de `CTX.abreFolha({ k, … })` e o Voltar, o Esc e
+ * o véu fecham por `aoFechar`.
+ *
+ * Ao montar: trava a rolagem do corpo, isola o que está atrás (`inert`) e leva
+ * o foco para o título. Ao sair: devolve tudo e o foco volta a quem a abriu.
+ * É o contrato de UX, §1 e §12, com o mesmo código do visual antigo.
  */
 export function Folha({ titulo, sub, aoFechar, children }) {
+  const caixa = useRef(null);
+  const lugar = useContext(LugarNaPilha);
+  useEffect(() => { trava(); return destrava; }, []);
+  useEffect(() => abreCamada(caixa.current && caixa.current.parentElement, caixa.current), []);
   return (
-    <div class="v3">
+    <div class="v3 v3-folha-w" style={`position:relative;z-index:${60 + (lugar || 0) * 2}`}>
       <div class="v3-veu" onClick={aoFechar} />
-      <section class="v3-folha" role="dialog" aria-modal="true" aria-label={titulo}>
-        <h2 tabindex="-1">{titulo}</h2>
+      <section class="v3-folha" role="dialog" aria-modal="true" aria-label={titulo} ref={caixa} tabindex="-1">
+        <h2>{titulo}</h2>
         {sub && <p class="v3-folha-s">{sub}</p>}
         {children}
       </section>
     </div>
+  );
+}
+
+/**
+ * A folha de CONFIRMAÇÃO: uma pergunta, o que acontece, um botão principal e
+ * uma saída. Serve a todo "tem certeza?" do visual novo ("Tirar mesmo assim?",
+ * "Encerrar o treino?", "Restaurar de uma cópia?").
+ *
+ * Abre com `CTX.abreFolha({ k: 'aviso', titulo, texto, sim, nao, aoSim })`.
+ * `aoSim` roda e a folha fecha; `nao` (ou o véu, o Esc, o Voltar) só fecha.
+ * O principal é o caminho seguro quando `seguro` é verdadeiro: aí ele vem
+ * primeiro e a ação arriscada vira a saída discreta, como o protótipo de fotos.
+ */
+export function FolhaAviso({ f, ctx }) {
+  const fecha = () => ctx.fechaFolha();
+  const sim = () => { ctx.fechaFolha(); if (typeof f.aoSim === 'function') f.aoSim(); };
+  return (
+    <Folha titulo={f.titulo} sub={f.texto} aoFechar={fecha}>
+      {f.seguro
+        ? <><Acoes><Botao onClick={fecha} data-a="aviso-nao">{f.nao || 'Voltar'}</Botao></Acoes>
+            <Saida onClick={sim} data-a="aviso-sim">{f.sim}</Saida></>
+        : <><Acoes><Botao onClick={sim} data-a="aviso-sim">{f.sim}</Botao></Acoes>
+            <Saida onClick={fecha} data-a="aviso-nao">{f.nao || 'Cancelar'}</Saida></>}
+    </Folha>
   );
 }

@@ -67,6 +67,12 @@ lugar não está lá, aparece a tela antiga dele. A folha do visual novo
 (`Folha`, em `src/ui/v3/base.jsx`) é só aparência: ligá-la à pilha de camadas
 do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md), "Camadas").
 
+| Fase 1 | Estado |
+|---|---|
+| Camadas: destino e folha do visual novo pela pilha do Voltar | **feito** (`DESTINOS_V3`, `FOLHAS_V3` em `src/ui/v3/telas.js`; folha de confirmação `aviso`; `tests/fluxo/v3-camadas.test.js`) |
+| Telas do lote de Fotos | a fazer (ver [03-lotes.md](03-lotes.md)) |
+| Detecção do corpo na câmera | a fazer (ver [02-captura.md](02-captura.md)) |
+
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
 máquina e passam sozinhos. Antes de tratar como regressão, rodar o arquivo

@@ -85,14 +85,15 @@ export function miraSobODedo(ev) {
 let travas = 0;
 let yGravado = 0;
 
-function trava() {
+/** Exportadas para a folha do visual novo (`src/ui/v3/base.jsx`) usar a MESMA trava: um contador só. */
+export function trava() {
   if (travas++ > 0) return;
   yGravado = window.scrollY;
   document.body.style.top = `-${yGravado}px`;
   document.body.classList.add('ins-travado');
 }
 
-function destrava() {
+export function destrava() {
   if (--travas > 0) return;
   travas = 0;
   document.body.classList.remove('ins-travado');
@@ -130,7 +131,8 @@ function destrava() {
  * O véu de cada camada fica dentro do invólucro dela: tocar nele para fechar
  * continua funcionando. O que já era inerte por outro motivo não é tocado.
  */
-const CAMADAS = ['.pare-w:not(.falhou-w)', '.falhou-w', '.ins-folha-w'];
+// `.v3-folha-w` é a folha do visual novo (direção 3): mesma camada, mesmo isolamento.
+const CAMADAS = ['.pare-w:not(.falhou-w)', '.falhou-w', '.ins-folha-w, .v3-folha-w'];
 /**
  * O que mora fora do `#app` e é alcançável pelo Tab: o cronômetro do descanso
  * (−15, +15, parar). O toast e a série dita são regiões vivas, sem nada que se

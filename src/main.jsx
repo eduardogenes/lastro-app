@@ -29,6 +29,7 @@ import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
 import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
+import { DESTINOS_V3, FOLHAS_V3 } from './ui/v3/telas.js';
 import { visualNovo, poeVisual, aplicaVisual } from './infra/visual';
 import { ligado, fitaLigada, comModulo, comFita, normalizaModulos } from './dominio/modulos';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
@@ -3097,6 +3098,13 @@ const CTX = {
 // Não são abas — em cada uma o assunto é uma coisa só, e a tab bar convidaria
 // a sair no meio. O voltar é o único caminho de saída.
 function telaCheia() {
+  // O visual novo desenha o destino de cima quando tem a versão dele. A camada
+  // de cima é a mesma que o Voltar desfaz (`camadasAbertas`), sem as folhas.
+  if (visualNovo()) {
+    const destinos = camadasAbertas(view).filter(function (c) { return c.indexOf('folha:') !== 0 && c !== 'pare' && c !== 'falhou'; });
+    const D = DESTINOS_V3[destinos[destinos.length - 1]];
+    if (D) return <div class="v3"><D ctx={CTX} /></div>;
+  }
   if (view.ajustes) return <Ajustes ctx={CTX} />;
   if (view.camera) return <Camera ctx={CTX} />;
   if (view.ajuste) return <AjusteFoto ctx={CTX} />;
@@ -8020,6 +8028,8 @@ function folhaAberta() {
   });
 }
 function folhaDe(f, i) {
+  // o visual novo desenha a sua versão da folha, quando ela existe
+  if (visualNovo() && FOLHAS_V3[f.k]) { const F = FOLHAS_V3[f.k]; return <F key={i} ctx={CTX} f={f} />; }
   if (f.k === 'refeicao') return <FolhaRefeicao key={i} ctx={CTX} id={f.id} />;
   if (f.k === 'dia') return <FolhaDia key={i} ctx={CTX} />;
   if (f.k === 'decidir') return <FolhaDecidir key={i} ctx={CTX} />;

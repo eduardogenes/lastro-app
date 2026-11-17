@@ -7,10 +7,20 @@
 
 const CHAVE = 'lastro-visual';
 
+/**
+ * Lido do armazenamento UMA vez e guardado aqui: a pergunta é feita a cada
+ * desenho (a casca, as folhas, os destinos), e o desenho é o caminho mais
+ * quente do app. Só `poeVisual` muda o valor.
+ */
+let cache: boolean | null = null;
+
 /** O visual novo está ligado neste aparelho? */
 export function visualNovo(): boolean {
-  try { return typeof localStorage !== 'undefined' && localStorage.getItem(CHAVE) === '3'; }
-  catch (e) { return false; }
+  if (cache === null) {
+    try { cache = typeof localStorage !== 'undefined' && localStorage.getItem(CHAVE) === '3'; }
+    catch (e) { cache = false; }
+  }
+  return cache;
 }
 
 /**
@@ -34,6 +44,7 @@ export function poeVisual(novo: boolean): void {
   try {
     if (novo) localStorage.setItem(CHAVE, '3');
     else localStorage.removeItem(CHAVE);
-  } catch (e) { /* sem armazenamento, fica o visual de sempre */ }
+  } catch (e) { /* sem armazenamento, vale só até fechar o app */ }
+  cache = novo;
   aplicaVisual();
 }

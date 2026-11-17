@@ -8,3 +8,12 @@
 // Cada tela nova embrulha o próprio conteúdo em `<div class="v3">`: é essa
 // classe que liga os estilos do visual novo, e o `<main>` do app fica como é.
 export const TELAS_V3 = {};
+
+// Destinos (tela cheia) e folhas do visual novo. A chave do destino é a da
+// camada em `camadasAbertas()` (`src/ui/navegacao.js`: `galeria`, `comparar`,
+// `protocolo`…); a da folha é o `k` do item de `view.pilha`. Quem desenha é
+// `telaCheia()` e `folhaDe()`, em `src/main.jsx`. Componente recebe `{ ctx }`
+// (destino) ou `{ ctx, f }` (folha, com o item da pilha).
+import { FolhaAviso } from './base.jsx';
+export const DESTINOS_V3 = {};
+export const FOLHAS_V3 = { aviso: FolhaAviso };
