@@ -110,6 +110,22 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Estados: as faixas fixas de "não guardado" e "sem rede" | **feito** (`src/ui/v3/estados.jsx`); o painel de detalhe da falha continua o de sempre. `tests/fluxo/v3-ajustes.test.js` |
 | Lembretes (pergunta da noite, véspera das fotos) | **para o dono decidir**: no iPhone exigem o app instalado e permissão de notificação |
 
+**Fase 4 fechada** (17/11/2026). Os cinco lugares têm tela nova.
+
+### Antes da Fase 5: o que ainda abre a tela antiga dentro do visual novo
+
+Apagar o visual antigo exige recriar isto primeiro (levantado em 17/11/2026):
+
+- **Destinos**: o dia aberto (`dia`), o detalhe de uma sessão passada
+  (`sessao`), registrar treino passado e "já treinei e não anotei" (`add`), a
+  retrospectiva (`retro`), o painel de detalhe da falha ao guardar
+  (`falhou`) e a confirmação de ação destrutiva (`pare`).
+- **Folhas**: `decidir`, o seletor do tipo do dia (`dia`, `seletor`),
+  `editaAlimento`, `editaRefeicao`, a foto do aparelho (`foto`), `peso`,
+  `pesoRapido`, `poeODia`, e o cardio rápido.
+- **Dentro de telas novas**: corrigir uma sessão passada no histórico de um
+  exercício e o catálogo de adicionar exercício (programa e aula).
+
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta
 máquina e passam sozinhos. Antes de tratar como regressão, rodar o arquivo
