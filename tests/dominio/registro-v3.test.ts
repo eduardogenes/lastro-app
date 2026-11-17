@@ -225,3 +225,35 @@ test('a pasta dos agentes diz o que foi respondido pelo dia, registrado depois, 
   assert.ok(fotos.includes('Mudou em relação à sessão anterior: a luz'));
   assert.ok(fotos.includes('fora do padrão: altura, distância'));
 });
+
+// ---------- "mandar para os agentes" ----------
+
+test('os pedidos de avaliação dos dois aparelhos se somam, e o mesmo par mandado de novo só renova a data', () => {
+  const p = (pose: string, de: string, t: number) => ({ pose: pose as never, de: de, ate: '2026-11-12', t: t });
+  const r = funde(estado({ mtime: T0, paraAvaliar: [p('frente-relaxado', '2026-10-01', T0), p('todas', '2026-10-15', T0)] }),
+                  estado({ mtime: T0 + 1, paraAvaliar: [p('perfil-direito', '2026-10-01', T0 + 1), p('todas', '2026-10-15', T0 + 5)] }), T0 + 6).estado;
+  assert.strictEqual(r.paraAvaliar!.length, 3, 'nenhum pedido some porque o outro aparelho mandou outro');
+  assert.strictEqual(r.paraAvaliar!.filter(x => x.pose === 'todas')[0].t, T0 + 5, 'o repetido fica com a data mais nova');
+  const nada = funde(estado({ mtime: T0 }), estado({ mtime: T0 + 1 }), T0 + 2).estado;
+  assert.strictEqual(nada.paraAvaliar, undefined, 'sem pedido de nenhum lado, o campo não nasce');
+});
+
+test('a pasta dos agentes mostra cada pedido com o par, o peso da semana e a ressalva de cada sessão', () => {
+  const S = estado({
+    body: { peso: [{ t: new Date(2026, 9, 1, 7).getTime(), v: 76.3 }, { t: new Date(2026, 10, 12, 7).getTime(), v: 77.9 }], cintura: [] } as never,
+    protocolo: { poses: null, sessoes: [
+      { d: '2026-10-01', t: T0, fotos: { 'frente-relaxado': { v: T0, ext: 'webp' } } },
+      { d: '2026-11-12', t: T0, muda: ['luz'], fotos: { 'frente-relaxado': { v: T0 + 1, ext: 'webp' } } }
+    ] },
+    paraAvaliar: [{ pose: 'frente-relaxado', de: '2026-10-01', ate: '2026-11-12', t: T0 }]
+  });
+  const arq = montaArquivos(S, { agora: T0 + DIA });
+  const md = arq['corpo/para-avaliar.md'] as string;
+  assert.ok(md, 'o arquivo existe com pedido');
+  assert.ok(/## \S+ 01\/10\/2026 → \S+ 12\/11\/2026 · Frente relaxado/.test(md), md.slice(0, 900));
+  assert.ok(md.includes('42 dias entre as duas'));
+  assert.ok(md.includes('76,3 kg') && md.includes('77,9 kg'), 'o peso da semana de cada sessão');
+  assert.ok(md.includes('outra luz') && md.includes('no padrão'), 'e a ressalva de cada uma');
+  assert.ok(md.includes('(fotos/2026-11-12/frente-relaxado.webp)'), 'com o arquivo');
+  assert.strictEqual(montaArquivos(estado(), { agora: T0 })['corpo/para-avaliar.md'], undefined, 'sem pedido, não existe');
+});

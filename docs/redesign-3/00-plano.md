@@ -54,6 +54,7 @@ guarda) e nos casos novos de `tests/fluxo/diario.test.js` e `dados.test.js`.
 | Medida com fita, "guardar só esta" | `Marca.n` (leituras); o formulário antigo já grava | `gravaMarca(…, leituras)` |
 | Série posta em dia ("Já fiz mais do que anotei") | `Log.dp = 1` | **a gravar na Fase 3**, pelo registro da série |
 | "Tudo como da última vez?" na sessão de fotos | `SessaoFoto.muda` (`luz`, `roupa`, `lugar`), por `ctx.setMudaDaSessao` | gravado ao criar a sessão (Fase 1) |
+| Par de fotos mandado para os agentes | `S.paraAvaliar` (`pose` ou `todas`, `de`, `ate`, `t`), por `ctx.mandaParaOsAgentes` | fundido item a item (`chaveDePedido`); a pasta dos agentes lê em `corpo/para-avaliar.md` |
 | Foto tirada fora do padrão | `Captura.fora` (`nivel`, `altura`, `distancia`, `tremida`) | gravado pela câmera do visual novo (o que não estava verde no disparo, e a tremida pelo giroscópio); nos dois visuais, a foto torta guardada assim leva `nivel` |
 
 A pasta dos agentes (`npm run espelho`) já mostra os seis: `registrado_depois`
@@ -72,7 +73,7 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Camadas: destino e folha do visual novo pela pilha do Voltar | **feito** (`DESTINOS_V3`, `FOLHAS_V3` em `src/ui/v3/telas.js`; folha de confirmação `aviso`; `tests/fluxo/v3-camadas.test.js`) |
 | Sessão de fotos: nova sessão (quem segura, "tudo como da última vez?", o preparo), os três passos, a câmera com as três luzes e "tirar mesmo assim", a sessão pela metade e o fim com a ressalva | **feito** (`src/ui/v3/telas/sessaofotos.jsx` e `camera.jsx`; regras em `src/dominio/captura.ts` e `ressalvaDaSessao` em `protocolo.ts`; `tests/dominio/captura-v3.test.ts`, `tests/fluxo/v3-fotos.test.js`). Conferir altura e distância a olho ficou como o caminho de reserva da detecção |
 | Centro das fotos, comparar (lado a lado, cortina, sobrepor, linha das sessões com a ressalva), no tempo, galeria com o selo por sessão, foto aberta, lixeira e ajustar | **feito** (`src/ui/v3/telas/consultafotos.jsx`; dados em `ctx.comparacaoV3`, `noTempoV3`, `galeriaV3`, `centroDasFotosV3`; `tests/fluxo/v3-consulta-fotos.test.js`). A entrada do centro é o Corpo novo (Fase 2); até lá, as telas abrem pelas portas antigas |
-| "Mandar para os agentes" na comparação | a fazer: dado novo (o par marcado) e o formato no espelho |
+| "Mandar para os agentes" na comparação | **feito**: `S.paraAvaliar` (fundido item a item entre aparelhos, na cópia de segurança) e o arquivo `corpo/para-avaliar.md` na pasta dos agentes, com o par, o peso e a cintura da semana e a ressalva de cada sessão |
 | Alinhamento automático do enquadramento | **feito** (`Enquadramento.auto`, gravado no disparo com a detecção ativa; a pasta dos agentes diz "alinhado pelo app") |
 | Mostrar ao dono as decisões da captura | a fazer, antes de fechar a fase |
 | Detecção do corpo na câmera | **feito**: luzes de altura e distância sozinhas, frase do que mexer, disparo sozinho com a pessoa parada, `Captura.det`, queda para as linhas (ver [02-captura.md](02-captura.md), "Como ficou no código") |

@@ -931,4 +931,24 @@ export interface Estado {
    * padrão. Ver `src/dominio/modulos.ts`.
    */
   modulos?: Modulos | null;
+  /**
+   * O que a pessoa mandou os agentes olharem, pela comparação de fotos ("Mandar
+   * para os agentes"). A pasta deles (`corpo/para-avaliar.md`) mostra cada
+   * pedido com o par, o peso da semana e o que mudou em cada sessão. Ausente =
+   * nenhum pedido.
+   */
+  paraAvaliar?: PedidoDeAvaliacao[];
+}
+
+/**
+ * Um pedido de avaliação: duas datas de sessão e uma pose (ou as onze). A
+ * chave é o par com a pose; mandar o mesmo de novo só renova o `t`.
+ */
+export interface PedidoDeAvaliacao {
+  pose: PoseId | 'todas';
+  /** a sessão mais antiga e a mais nova, 'AAAA-MM-DD' */
+  de: string;
+  ate: string;
+  /** quando foi mandado */
+  t: number;
 }

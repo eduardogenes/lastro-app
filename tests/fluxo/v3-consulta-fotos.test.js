@@ -168,3 +168,30 @@ test('ajustar pela foto aberta: girar sobe o zoom junto, e salvar grava o recort
   assert.ok(a.vista().galeria.foto, 'e volta para a foto aberta');
   a.fechar();
 });
+
+test('mandar para os agentes: escolhe a pose ou as onze, grava o pedido, e mandar de novo não repete', async () => {
+  const a = await comTresSessoes();
+  a.v('ctx.abreComparar', POSE);
+  await a.esperar();
+  a.clicar('[data-a="mandar"]');
+  await a.esperar(40);
+  assert.strictEqual(a.$('[data-a="mandar-pose"]').getAttribute('aria-pressed'), 'true', 'o padrão é só esta pose');
+  a.clicar('[data-a="mandar-todas"]');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="mandar-todas"]').getAttribute('aria-pressed'), 'true');
+  a.clicar('[data-a="mandar-ok"]');
+  await a.esperar(40);
+  assert.ok(!a.$('.v3-folha'), 'a folha fechou');
+  const p = a.S().paraAvaliar;
+  assert.strictEqual(p.length, 1);
+  assert.deepStrictEqual([p[0].pose, p[0].de, p[0].ate], ['todas', atras(28), atras(2)]);
+  assert.ok(/Mandado em .*com as onze poses/.test(a.texto('.v3-sec')), a.texto('.v3-sec'));
+
+  a.clicar('[data-a="mandar"]');
+  await a.esperar(40);
+  a.clicar('[data-a="mandar-todas"]');
+  a.clicar('[data-a="mandar-ok"]');
+  await a.esperar(40);
+  assert.strictEqual(a.S().paraAvaliar.length, 1, 'o mesmo par só renova a data');
+  a.fechar();
+});

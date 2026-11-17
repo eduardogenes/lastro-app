@@ -18,7 +18,7 @@ import { FolhaAviso } from './base.jsx';
 import { SessaoDeFotos, PassosDasFotos, FolhaPreparo } from './telas/sessaofotos.jsx';
 import { CameraV3 } from './telas/camera.jsx';
 import {
-  AjustarV3, CentroDasFotos, Comparar, FolhaFotoComparada, GaleriaFotoV3, GaleriaV3, LixeiraV3, NoTempo
+  AjustarV3, CentroDasFotos, Comparar, FolhaFotoComparada, FolhaMandar, GaleriaFotoV3, GaleriaV3, LixeiraV3, NoTempo
 } from './telas/consultafotos.jsx';
 export const DESTINOS_V3 = {
   // Fase 1, fotos
@@ -33,4 +33,4 @@ export const DESTINOS_V3 = {
   lixeira: LixeiraV3,
   ajuste: AjustarV3
 };
-export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada };
+export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada, mandar: FolhaMandar };

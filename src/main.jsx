@@ -88,7 +88,7 @@ import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
   chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde,
-  lapidesDoApagamento, uneLapides, DOCUMENTOS, valorDoDocumento, TETO, chaveDeCatalogo
+  lapidesDoApagamento, uneLapides, DOCUMENTOS, valorDoDocumento, TETO, TETO_PEDIDOS, chaveDeCatalogo
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -421,6 +421,14 @@ function normalizaEstado() {
   if (S.perfManual !== true && S.perfManual !== false) S.perfManual = null;
   // o que aparece (dominio/modulos.ts): só chaves conhecidas; ausente = padrão
   S.modulos = normalizaModulos(S.modulos);
+  // os pedidos de avaliação (visual novo): só os bem formados; sem nenhum, some
+  if (S.paraAvaliar !== undefined) {
+    const ok = Array.isArray(S.paraAvaliar) ? S.paraAvaliar.filter(function (p) {
+      return p && typeof p.t === 'number' && /^\d{4}-\d{2}-\d{2}$/.test(String(p.de)) && /^\d{4}-\d{2}-\d{2}$/.test(String(p.ate)) &&
+             (p.pose === 'todas' || !!poseDe(p.pose));
+    }) : [];
+    if (ok.length) S.paraAvaliar = ok; else delete S.paraAvaliar;
+  }
   if (!S.dia || typeof S.dia !== 'object') S.dia = null;
 
   if (!S.logs || typeof S.logs !== 'object') S.logs = {};
@@ -5224,6 +5232,8 @@ async function importText(txt) {
         compras: (d.compras && typeof d.compras === 'object') ? d.compras : null,
         // o que aparece: preferência da pessoa, limpa em `normalizaEstado()`
         modulos: (d.modulos && typeof d.modulos === 'object') ? d.modulos : null,
+        // o que ele mandou os agentes olharem; limpo em `normalizaEstado()`
+        paraAvaliar: Array.isArray(d.paraAvaliar) ? d.paraAvaliar : undefined,
         // a sincronização: sem estes, importar um backup zeraria o carimbo do
         // estado e as lápides — e um aparelho ressuscitaria o que o outro apagou
         mtime: typeof d.mtime === 'number' ? d.mtime : 0,
@@ -9778,6 +9788,8 @@ function pilha() { return view.pilha || (view.pilha = []); }
 const TROCADAS = new WeakSet();
 
 CTX.abreFolha = function (f) { pilha().push(f); render(); };
+/** Muda campos da folha de cima (uma escolha dentro dela, no visual novo) e redesenha. */
+CTX.mudaFolha = function (campos) { const p = pilha(); if (!p.length) return; Object.assign(p[p.length - 1], campos); render(); };
 /**
  * Troca a folha do topo em vez de empilhar.
  *
@@ -12616,6 +12628,29 @@ CTX.comparacaoV3 = function () {
     seloDe: seloDaData(c.de), seloAte: seloDaData(c.ate),
     datas: base.datas.map(function (x) { return Object.assign({}, x, { noPadrao: seloDaData(x.d).noPadrao }); })
   });
+};
+/**
+ * "MANDAR PARA OS AGENTES": o par em tela vai para a pasta deles
+ * (`corpo/para-avaliar.md`), só esta pose ou as onze. Mandar de novo o mesmo
+ * par só renova a data do pedido.
+ */
+CTX.mandaParaOsAgentes = function (qual) {
+  const c = view.comparar;
+  if (!c || !c.de || !c.ate) return;
+  const de = c.de < c.ate ? c.de : c.ate, ate = c.de < c.ate ? c.ate : c.de;
+  const pedido = { pose: qual === 'todas' ? 'todas' : c.pose, de: de, ate: ate, t: Date.now() };
+  const k = function (p) { return p.pose + '|' + p.de + '|' + p.ate; };
+  S.paraAvaliar = (S.paraAvaliar || []).filter(function (p) { return k(p) !== k(pedido); }).concat([pedido]).slice(-TETO_PEDIDOS);
+  queueSave(); render();
+  toast(qual === 'todas' ? 'As onze poses das duas sessões vão para os agentes.' : 'O par vai para os agentes.');
+};
+/** O pedido já feito deste par, para a tela dizer quando foi mandado. */
+CTX.pedidoDoPar = function () {
+  const c = view.comparar;
+  if (!c || !c.de || !c.ate) return null;
+  const de = c.de < c.ate ? c.de : c.ate, ate = c.de < c.ate ? c.ate : c.de;
+  const p = (S.paraAvaliar || []).filter(function (x) { return x.de === de && x.ate === ate && (x.pose === c.pose || x.pose === 'todas'); }).pop();
+  return p ? { quando: fmtDate(p.t), todas: p.pose === 'todas' } : null;
 };
 CTX.setModoDaComparacao = function (m) {
   const c = view.comparar; if (!c) return;

@@ -28,7 +28,11 @@ import {
 } from '../../src/dominio/programa';
 import { ARQUIVO } from '../../src/dominio/migracoes';
 import { MEDIDAS_DO_CORPO } from '../../src/dominio/corpo';
-import { CADENCIA_DIAS, DESDE_11_POSES, PROTOCOLO, dataLocal, instanteDaData, poses, posesDaData } from '../../src/dominio/protocolo';
+import {
+  CADENCIA_DIAS, DESDE_11_POSES, PROTOCOLO, dataLocal, instanteDaData, mediaDaSemana, poses, posesDaData,
+  ressalvaDaSessao, seloDaSessao
+} from '../../src/dominio/protocolo';
+import type { PedidoDeAvaliacao } from '../../src/dominio/tipos';
 import { ALIMENTOS_BASE, PLANO_BASE } from '../../src/dominio/nutricao/alimentos';
 import {
   ajusteNoItem, quantidadePrescrita, totalDaRefeicao, totalDoDia, totalRegistrado
@@ -888,6 +892,50 @@ function fotosDoCorpo(b: Base, ctx: Contexto): string {
   return L.join('\n');
 }
 
+/**
+ * O QUE ELE MANDOU OLHAR ("Mandar para os agentes", na comparação de fotos):
+ * cada pedido com o par, o intervalo, o peso e a cintura da semana de cada
+ * sessão, a ressalva de cada uma e os arquivos. Sempre no mesmo formato, para
+ * a leitura de um pedido ser comparável com a do outro. Sem pedido, não existe.
+ */
+function paraAvaliar(b: Base, ctx: Contexto): string | null {
+  const S = b.S;
+  const pedidos = lista<PedidoDeAvaliacao>((S as { paraAvaliar?: unknown }).paraAvaliar)
+    .filter(function (p) { return p && DATA_ISO.test(String(p.de)) && DATA_ISO.test(String(p.ate)); })
+    .slice().sort(function (a, c) { return (c.t || 0) - (a.t || 0); });
+  if (!pedidos.length) return null;
+  const proto = obj<unknown>(S.protocolo);
+  const sessoes = lista<SessaoFoto>(proto.sessoes);
+  const body = obj<Marca[]>(S.body);
+  const L = cabeca('Pedidos de avaliação das fotos', [
+    'O que ele mandou os agentes olharem, pela comparação de fotos do app. O mais recente primeiro.',
+    'Cada pedido é um par de sessões: a mesma pose (ou as ' + PROTOCOLO.length + ') em duas datas. O peso e a cintura são a média da semana de cada sessão.',
+    'A ressalva diz o que mudou entre uma sessão e a anterior (luz, roupa, lugar) e as fotos que saíram fora do padrão: elas valem, mas a comparação deve levar isso em conta. O detalhe de cada foto está em fotos.md.'
+  ]);
+  pedidos.forEach(function (p) {
+    const dias = Math.round((instanteDaData(p.ate) - instanteDaData(p.de)) / 86400000);
+    const pose = p.pose === 'todas' ? null : PROTOCOLO.filter(function (x) { return x.id === p.pose; })[0];
+    L.push('## ' + dataIsoBR(p.de) + ' → ' + dataIsoBR(p.ate) + ' · ' + (pose ? pose.n : 'as ' + PROTOCOLO.length + ' poses'), '');
+    L.push('Mandado em ' + (numero(p.t) ? momento(p.t) : '—') + '. ' + qtd(dias, 'dia', 'dias') + ' entre as duas.', '');
+    L.push('| Sessão | Peso (semana) | Cintura (semana) | Ressalva | Arquivos |', '|---|---|---|---|---|');
+    [p.de, p.ate].forEach(function (d) {
+      const s = sessoes.filter(function (x) { return x && x.d === d; })[0];
+      const peso = mediaDaSemana(body.peso, d), cint = mediaDaSemana(body.cintura, d);
+      const fotos = s ? obj<FotoRef>(s.fotos) : {};
+      const ids = pose ? [pose.id] : Object.keys(fotos);
+      const arquivos = ids.filter(function (id) { return fotos[id]; }).map(function (id) {
+        const caminho = 'fotos/' + d + '/' + segmento(id) + '.' + segmento(fotos[id].ext);
+        const sit = situacaoDaFoto('corpo/' + caminho, ctx);
+        return sit ? segmento(id) + ' (' + sit + ')' : '[' + segmento(id) + '](' + caminho + ')';
+      });
+      L.push('| ' + [dataIsoBR(d), peso == null ? 'sem medida' : br(peso, 1) + ' kg', cint == null ? 'sem medida' : br(cint, 1) + ' cm',
+        s ? seloDaSessao(ressalvaDaSessao(s)) : 'sessão não existe mais', arquivos.length ? arquivos.join(', ') : 'sem foto'].join(' | ') + ' |');
+    });
+    L.push('');
+  });
+  return L.join('\n');
+}
+
 // ---------------------------------------------------------------------------
 // O índice
 
@@ -934,6 +982,7 @@ const MAPA: Array<[string, string]> = [
   ['corpo/medidas.csv', 'Peso, bioimpedância, medidas com fita e dobras com adipômetro, uma medida por linha.'],
   ['corpo/fotos.md', 'O protocolo de fotos (11 poses desde 06/11/2026; antes, 9), cada sessão com a hora de cada foto, e as respostas sobre gordura visual.'],
   ['corpo/fotos/AAAA-MM-DD/', 'As fotos de cada sessão, uma por pose.'],
+  ['corpo/para-avaliar.md', 'Os pares de fotos que ele mandou os agentes olharem, com peso, cintura e ressalva de cada sessão (só existe se houver algum).'],
   ['bruto/estado.json', 'O estado inteiro do app, sem tratamento. Para o que não coube nos arquivos acima.']
 ];
 
@@ -1022,6 +1071,8 @@ export function montaArquivos(estado: unknown, ctx: Contexto): Arquivos {
     'corpo/fotos.md': fotosDoCorpo(b, ctx),
     'bruto/estado.json': JSON.stringify(S, null, 2) + '\n'
   });
+  const pa = paraAvaliar(b, ctx);
+  if (pa) corpo['corpo/para-avaliar.md'] = pa;
 
   const existentes = new Set(Object.keys(corpo).concat(fotosDoEstado(S).map(function (f) { return f.caminho; })));
   const r: Arquivos = { 'LEIA-ME.md': leiaMe(b, ctx, existentes) };

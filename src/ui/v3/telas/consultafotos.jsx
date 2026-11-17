@@ -156,6 +156,10 @@ export function Comparar({ ctx }) {
               : <Apoio>{c.intervalo}. Toque numa sessão da linha para trocar a data mais perto dela.</Apoio>}
             {c.recuou && <Apoio><b>{c.recuou.titulo}.</b> {c.recuou.texto}</Apoio>}
             {c.notas.map(n => <Apoio key={n}>Nota: {n}</Apoio>)}
+            <Acoes>
+              <Botao tipo="contorno" cheio data-a="mandar" onClick={() => ctx.abreFolha({ k: 'mandar' })}>Mandar para os agentes</Botao>
+            </Acoes>
+            {ctx.pedidoDoPar() && <Apoio>Mandado em {ctx.pedidoDoPar().quando}{ctx.pedidoDoPar().todas ? ', com as onze poses' : ''}.</Apoio>}
           </Secao>
           {c.pergunta && (
             <Secao>
@@ -176,6 +180,30 @@ export function FolhaFotoComparada({ ctx, f }) {
     <Folha titulo={f.data} sub="Ajustar não mexe na foto original. Apagar manda para a lixeira por 30 dias." aoFechar={() => ctx.fechaFolha()}>
       <Acoes><Botao tipo="contorno" cheio data-a="comparada-ajustar" disabled={!f.tem} onClick={ajusta}>Ajustar enquadramento</Botao></Acoes>
       <Saida data-a="comparada-apagar" onClick={() => { ctx.fechaFolha(); ctx.apagaFotoComparada(f.d); }}>Apagar esta foto</Saida>
+    </Folha>
+  );
+}
+
+/** A folha de mandar o par para os agentes: só esta pose, ou as onze das duas sessões. */
+export function FolhaMandar({ ctx, f }) {
+  const c = ctx.comparacaoV3();
+  if (!c || !c.par) return null;
+  const qual = f.qual || 'pose';
+  const nome = (c.poses.filter(p => p.k === c.pose)[0] || {}).t || '';
+  const escolhe = k => ctx.mudaFolha({ qual: k });
+  const op = [
+    { k: 'pose', icone: ic.ok, t: 'Só esta pose', a: nome + ', ' + c.de.data + ' e ' + c.ate.data },
+    { k: 'todas', icone: ic.camera, t: 'As ' + c.poses.length + ' poses', a: 'o par inteiro das duas sessões' }
+  ];
+  return (
+    <Folha titulo="Mandar para os agentes" aoFechar={() => ctx.fechaFolha()}
+           sub="Vai o par, com data, hora, peso da semana e o que mudou em cada sessão. Sempre no mesmo formato, para a leitura ser comparável.">
+      {op.map(o => (
+        <button key={o.k} class="v3-esc" aria-pressed={qual === o.k ? 'true' : 'false'} data-a={'mandar-' + o.k} onClick={() => escolhe(o.k)}>
+          <span class="v3-esc-o">{o.icone}</span><span class="v3-esc-t"><b>{o.t}</b><span>{o.a}</span></span>
+        </button>
+      ))}
+      <Acoes><Botao data-a="mandar-ok" onClick={() => { ctx.fechaFolha(); ctx.mandaParaOsAgentes(qual); }}>Mandar</Botao></Acoes>
     </Folha>
   );
 }

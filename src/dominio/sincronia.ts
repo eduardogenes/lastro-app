@@ -29,7 +29,7 @@
 
 import type {
   Cardio, Corpo, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId,
-  ItemDaLixeira, PromoPendente, QualMarca, Sessao, SessaoFoto
+  ItemDaLixeira, PedidoDeAvaliacao, PromoPendente, QualMarca, Sessao, SessaoFoto
 } from './tipos';
 import type { ComoFoiARefeicao, DiaComida, DiaComidaHist } from './nutricao/tipos';
 import { MARCAS_DO_CORPO } from './corpo';
@@ -138,6 +138,10 @@ export function chaveDePromo(p: Pick<PromoPendente, 'sid' | 't'>): string {
 export function chaveDeAula(a: Pick<ModeloDeAula, 'id'>): string { return 'aula:' + a.id; }
 export function chaveDeDescanso(dataISO: string): string { return 'descanso:' + dataISO; }
 export function chaveDeLeitura(l: { d: string }): string { return 'gordura:' + l.d; }
+/** O pedido de avaliação: o par com a pose. */
+export function chaveDePedido(p: { pose: string; de: string; ate: string }): string { return 'avaliar:' + p.pose + ':' + p.de + ':' + p.ate; }
+/** Os pedidos que a fusão guarda: os mais recentes bastam para os agentes. */
+export const TETO_PEDIDOS = 40;
 export function chaveDeFoto(idEx: IdEx): string { return 'foto:' + idEx; }
 
 /**
@@ -190,6 +194,7 @@ function chavesDoEstado(S: Partial<Estado> | null | undefined): Record<string, 1
   lista<ModeloDeAula>(S.aulas).forEach(function (x) { if (x) k[chaveDeAula(x)] = 1; });
   lista<PromoPendente>(S.promoPendente).forEach(function (x) { if (x) k[chaveDePromo(x)] = 1; });
   lista<LeituraDeGordura>(S.gordura).forEach(function (x) { if (x) k[chaveDeLeitura(x)] = 1; });
+  lista<PedidoDeAvaliacao>(S.paraAvaliar).forEach(function (x) { if (x) k[chaveDePedido(x)] = 1; });
 
   // o dia de comida e, DENTRO dele, cada refeição marcada: a fusão tem lápide
   // para as duas, e desmarcar uma refeição nunca foi apagar o dia
@@ -827,6 +832,19 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   go.itens.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
   base.gordura = go.itens.slice(-TETO.protocolo);
   resumo.apagados += go.apagados;
+
+  // ---- os pedidos de avaliação ("Mandar para os agentes") ----
+  // Coleção: o pedido feito no computador não some porque o iPhone mandou
+  // outro depois. Só aparece no estado quando um dos lados tem pedido.
+  if (Array.isArray(local.paraAvaliar) || Array.isArray(remoto.paraAvaliar)) {
+    const pa = uneLista<PedidoDeAvaliacao>(
+      local.paraAvaliar || [], remoto.paraAvaliar || [], chaveDePedido,
+      function (x) { return typeof x.t === 'number' ? x.t : 0; }, mortos
+    );
+    pa.itens.sort(function (a, b) { return a.t - b.t; });
+    base.paraAvaliar = pa.itens.slice(-TETO_PEDIDOS);
+    resumo.apagados += pa.apagados;
+  }
 
   // ---- as medidas do corpo ----
   // Enumera `MARCAS_DO_CORPO` e não uma lista escrita aqui: foram duas listas —
