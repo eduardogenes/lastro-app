@@ -76,7 +76,7 @@ import {
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
-import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGRA_DA_FITA, REGRA_DA_DOBRA, MEDIDAS_DE_DOBRA, ORDEM_DE_MEDIR, CONFERIR_ACIMA, doMeio, mediaDaFita, pedeTerceira, passoDaLeitura, pesoDaSemana, medidaDoCorpo, ondeMediu,
+import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGRA_DA_FITA, REGRA_DA_DOBRA, MEDIDAS_DE_DOBRA, ORDEM_DE_MEDIR, CONFERIR_ACIMA, doMeio, mediaDaFita, pedeTerceira, passoDaLeitura, naMesmaData, pesoDaSemana, medidaDoCorpo, ondeMediu,
          mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
@@ -2802,7 +2802,7 @@ const CTX = {
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.galeria || view.diaAberto || view.ajuste || view.camera ||
-              view.ajustes || view.modoSessao || view.revisao || view.fotos || view.noTempo);
+              view.ajustes || view.modoSessao || view.revisao || view.fotos || view.noTempo || view.naMesmaData);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -8331,6 +8331,7 @@ const FECHA_CAMADA = {
   passos:    function () { CTX.fechaPassosDasFotos(); },
   fotos:     function () { CTX.fechaCentroDasFotos(); },
   noTempo:   function () { CTX.fechaNoTempo(); },
+  naMesmaData: function () { CTX.fechaNaMesmaData(); },
   comparar:  function () { CTX.fechaComparar(); },
   revisao:   function () { CTX.fechaRevisao(); },
   evolucao:  function () { CTX.fechaEvolucao(); },
@@ -9933,6 +9934,115 @@ CTX.seguirMedida = async function () {
   if (!feitas.length) { CTX.fechaMedidas(); return; }
   const r = await CTX.salvaMedidas();
   if (r && r.ok && view.medidas) { view.medidas.v3.feitas = feitas; render(); rola(0); }
+};
+
+/**
+ * PESO (destino `evolucao` no visual novo): a média da semana em linha, as
+ * pesagens em pontos, a faixa do alvo e as taxas por semana. "4 semanas" ou
+ * "tudo" (desde a primeira pesagem).
+ */
+CTX.setFaixaDoPeso = function (f) { view.faixaDoPeso = f === '4' ? '4' : 'tudo'; render(); };
+CTX.pesoV3 = function () {
+  const agora = Date.now();
+  const todos = (S.body.peso || []).slice().sort(function (a, b) { return a.t - b.t; });
+  const faixa = view.faixaDoPeso === '4' ? '4' : 'tudo';
+  const de = faixa === '4' ? weekStart(agora) - 4 * 7 * 86400000 : (todos.length ? weekStart(todos[0].t) : agora);
+  const pontos = todos.filter(function (x) { return x.t >= de; });
+  const semanas = mediasSemanais(todos).filter(function (w) { return w.w >= de - 7 * 86400000; })
+    .map(function (w) { return { t: w.w + 3.5 * 86400000, v: Math.round(w.v * 10) / 10 }; });
+  const ev = CTX.evolucao();
+  const ult = todos[todos.length - 1];
+  const s9 = serieSemanal(todos, 9);
+  const d = variacaoDaSerie(s9);
+  return {
+    vazio: !todos.length,
+    atual: ult ? fmtDec(ult.v) : '—',
+    variacao: d == null ? null : fmtSig(d) + ' em 8 semanas',
+    faixa: faixa, de: de, ate: agora,
+    semanas: semanas, pontos: pontos.map(function (x) { return { t: x.t, v: x.v }; }),
+    // o alvo do nutricionista, a partir da primeira média da faixa
+    alvo: semanas.length ? { t: semanas[0].t, v: semanas[0].v, min: ALVO_MIN, max: ALVO_MAX } : null,
+    meta: ev.meta,
+    taxas: ev.taxas,
+    frase: ev.frase,
+    pesagens: ev.pesagens
+  };
+};
+
+/** Corrige uma marca no mesmo instante (o número digitado errado), mantendo o resto dela. */
+CTX.corrigeMarca = async function (k, t, v) {
+  const n = Math.round(Number(v) * 10) / 10;
+  const x = (S.body[k] || []).filter(function (y) { return y.t === t; })[0];
+  if (!x || !isFinite(n) || n <= 0) return false;
+  gravaMarca(k, n, t, x.onde || null, !!x.semHora, typeof x.n === 'number' ? x.n : null);
+  await save(); render();
+  toast('Corrigido: ' + fmtDec(n) + ' ' + ((medidaDoCorpo(k) || {}).u || '') + ' em ' + fmtDate(t) + '.');
+  return true;
+};
+
+/** UMA MEDIDA no visual novo: o detalhe de sempre, com o que o gráfico precisa. */
+CTX.medidaV3 = function () {
+  const d = CTX.detalheDaMedida();
+  if (!d) return null;
+  return Object.assign(d, {
+    fotosNoTempo: datasDasFotos(),
+    serie: (d.pontos || []).map(function (p) { return { t: p.t, v: p.v }; })
+  });
+};
+
+/**
+ * TUDO NA MESMA DATA: um dia escolhido no tempo, e o corpo inteiro naquele
+ * ponto, cada número com a data dele (`naMesmaData`, em dominio/corpo.ts).
+ */
+const CHAVES_DA_MESMA_DATA = ['peso', 'cintura', 'braco', 'coxa', 'panturrilha', 'peito', 'quadril',
+  'dobraAbdominal', 'dobraSuprailiaca', 'dobraCoxa', 'bioGorduraPct', 'bioMusculo', 'bioGordura', 'bioAgua'];
+CTX.abreNaMesmaData = function () { view.naMesmaData = { t: Date.now() }; entraNoDestino('naMesmaData'); render(); rola(0); };
+CTX.fechaNaMesmaData = function () { view.naMesmaData = null; render(); saiDoDestino('naMesmaData'); };
+CTX.setDiaNaMesmaData = function (t) {
+  if (!view.naMesmaData) return;
+  view.naMesmaData.t = Number(t);
+  const r = naMesmaData(S.body, S.protocolo.sessoes || [], view.naMesmaData.t, CHAVES_DA_MESMA_DATA);
+  if (r.sessao) garanteBytesDoCorpo([r.sessao]);
+  render();
+};
+CTX.naMesmaDataV3 = function () {
+  const v = view.naMesmaData; if (!v) return null;
+  const agora = Date.now();
+  const primeiras = CHAVES_DA_MESMA_DATA.map(function (k) { const s = S.body[k] || []; return s.length ? s.reduce(function (a, b) { return b.t < a.t ? b : a; }).t : agora; });
+  (S.protocolo.sessoes || []).forEach(function (s) { primeiras.push(instanteDaData(s.d)); });
+  const inicio = new Date(Math.min.apply(null, primeiras.concat([agora]))); inicio.setHours(12, 0, 0, 0);
+  const r = naMesmaData(S.body, S.protocolo.sessoes || [], v.t, CHAVES_DA_MESMA_DATA);
+  const ses = r.sessao ? sessaoDe(S.protocolo.sessoes, r.sessao) : null;
+  return {
+    t: v.t, inicio: inicio.getTime(), fim: agora,
+    data: DIAS_LONGOS[new Date(v.t).getDay()] + ', ' + fmtDate(v.t),
+    medidas: r.medidas.map(function (x) {
+      const m = medidaDoCorpo(x.k);
+      const dias = Math.round((new Date(v.t).setHours(12, 0, 0, 0) - new Date(x.t).setHours(12, 0, 0, 0)) / 86400000);
+      return { k: x.k, n: (CAMPO_DA_BIO[x.k] ? CAMPO_DA_BIO[x.k].rotulo : m.n.charAt(0).toUpperCase() + m.n.slice(1)),
+               valor: fmtDec(x.v), u: m.u, quando: dias === 0 ? 'no dia' : fmtDate(x.t) + ' · ' + dias + (dias === 1 ? ' dia antes' : ' dias antes') };
+    }),
+    sessao: ses ? {
+      d: ses.d, txt: fmtDate(instanteDaData(ses.d)),
+      fotos: ordemDePoses().filter(function (id) { return ses.fotos[id]; }).slice(0, 3).map(function (id) {
+        const f = ses.fotos[id];
+        return { id: id, url: CORPO.urlDaFoto(ses.d, id, f), enq: (f && f.enq) || null };
+      })
+    } : null
+  };
+};
+
+/** A leitura nova da bioimpedância, um número por passo: de onde cada régua parte. */
+CTX.camposDaBioV3 = function () {
+  const PARTIDA = { bioPeso: null, bioMusculo: 35, bioGordura: 12, bioGorduraPct: 15, bioAgua: 45 };
+  return MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).map(function (m) {
+    const s = S.body[m.k] || [];
+    const peso = (S.body.peso || []).slice(-1)[0];
+    const partida = s.length ? s[s.length - 1].v : (PARTIDA[m.k] != null ? PARTIDA[m.k] : (peso ? peso.v : 75));
+    return { k: m.k, rotulo: (CAMPO_DA_BIO[m.k] || { rotulo: m.n }).rotulo, u: m.u === 'L' ? 'L' : m.u,
+             dica: (CAMPO_DA_BIO[m.k] || {}).dica || '', opcional: !m.obrigatorio, partida: partida,
+             ultima: s.length ? fmtDec(s[s.length - 1].v) + ' ' + m.u + ' em ' + fmtDate(s[s.length - 1].t) : null };
+  });
 };
 
 CTX.apagaMedida = function (k, t) { delBody(k, t); };

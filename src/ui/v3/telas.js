@@ -8,6 +8,7 @@
 // Cada tela nova embrulha o próprio conteúdo em `<div class="v3">`: é essa
 // classe que liga os estilos do visual novo, e o `<main>` do app fica como é.
 import { CorpoV3, FolhaComoMedir, FolhaLigarMedidas, MedirAgora } from './telas/corpo.jsx';
+import { FolhaBioV3, FolhaCorrigeMarca, MedidaV3, NaMesmaData, PesoV3 } from './telas/corpoconsulta.jsx';
 export const TELAS_V3 = {
   // Fase 2
   corpo: CorpoV3
@@ -37,7 +38,10 @@ export const DESTINOS_V3 = {
   lixeira: LixeiraV3,
   ajuste: AjustarV3,
   // Fase 2, corpo
-  medidas: MedirAgora
+  medidas: MedirAgora,
+  evolucao: PesoV3,
+  medida: MedidaV3,
+  naMesmaData: NaMesmaData
 };
 export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada, mandar: FolhaMandar,
-  ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir };
+  ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir, corrigeMarca: FolhaCorrigeMarca, bio: FolhaBioV3 };

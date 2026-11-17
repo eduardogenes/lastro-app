@@ -55,6 +55,7 @@ export function CorpoV3({ ctx }) {
             </button>
           ))}
         </div>
+        <Acoes><Botao tipo="contorno" cheio data-a="corpo-mesma-data" onClick={ctx.abreNaMesmaData}>Ver tudo na mesma data {ic.seta}</Botao></Acoes>
       </Secao>
 
       <Secao titulo="Medidas" nota={c.ultimaMedida}>

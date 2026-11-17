@@ -104,6 +104,11 @@ Decidido na construção:
   abre o fluxo de uma por tela, inclusive vindo do fim da sessão de fotos.
 - **Pesar pela régua grava na hora**; pesar de novo no mesmo dia corrige a
   pesagem do dia, como sempre foi (uma por dia).
+- **Corrigir um número é pela régua**, numa folha, no mesmo instante da
+  medida (o dia e a hora ficam); apagar é a saída dela e continua pedindo
+  confirmação.
+- **Na mesma data, a sessão de fotos é a mais perto do dia**, antes ou
+  depois, e cada número mostra quantos dias antes do dia foi medido.
 - **A régua posiciona a fita de forma síncrona** (`useLayoutEffect`): com o
   efeito no quadro seguinte, um toque rápido no "+" era desfeito.
 

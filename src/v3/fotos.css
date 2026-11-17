@@ -289,3 +289,27 @@
 .v3-leituras span { min-height: 30px; padding: 0 11px; display: inline-flex; align-items: center; border-radius: var(--r-pilula); background: var(--branco); font: 700 13px var(--f-titulo); }
 .v3-leituras span.m { background: var(--tinta); color: var(--papel); }
 .v3-vazio-alvo { min-width: var(--alvo); }
+.v3-gigante.v3-gigante-m { font-size: 64px; margin: 4px 0 10px; }
+.v3-gigante-m small { font-size: 15px; font-weight: 600; letter-spacing: 0; }
+.v3-fim-curto { height: 40px; }
+.v3-data-g { font: 800 26px/1.1 var(--f-titulo); letter-spacing: -.02em; margin-top: 4px; }
+.v3-bio-n { font: 800 24px/1.1 var(--f-titulo); letter-spacing: -.02em; margin-top: 14px; }
+.v3-taxa { display: flex; align-items: center; gap: 12px; min-height: 60px; border-top: 1.5px solid var(--fio); }
+.v3-taxa:first-child { border-top: 0; }
+.v3-taxa-v { font: 800 19px var(--f-titulo); letter-spacing: -.02em; }
+
+/* ---- Gráfico ---------------------------------------------------------- */
+.v3-graf { display: block; width: 100%; height: auto; margin-top: 10px; overflow: visible; }
+.v3-graf-linha { fill: none; stroke: var(--tinta); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.v3-graf-ponto { fill: var(--tinta-28); }
+.v3-graf-bola { fill: var(--papel); stroke: var(--tinta); stroke-width: 3; }
+.v3-graf-fim { fill: var(--lilas); stroke: var(--tinta); stroke-width: 3; }
+.v3-graf-alvo { fill: var(--lilas); opacity: .7; }
+.v3-graf-marca { stroke: var(--tinta); stroke-width: 3; stroke-linecap: round; }
+.v3-quadro .v3-graf { margin-top: 6px; }
+.v3-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--tinta-2); }
+.v3-leg span { display: inline-flex; align-items: center; gap: 6px; }
+.v3-leg i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; background: var(--tinta); }
+.v3-leg i.p { width: 8px; height: 8px; border-radius: 50%; background: var(--tinta-28); }
+.v3-leg i.a { background: var(--lilas); height: 10px; }
+.v3-leg i.m { width: 3px; height: 10px; }

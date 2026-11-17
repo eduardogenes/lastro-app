@@ -745,7 +745,10 @@ test('as cinco da bioimpedância seguem sem valor de partida, e a porta delas é
   const chaves = Object.keys(a.m.ctx).filter(function (k) { return /bio/i.test(k); }).sort();
   // Desde 06/11 a bioimpedância é uma folha, com detalhe próprio: abrir a
   // folha, gravar por ela (que fecha ao gravar) e apagar uma leitura inteira.
-  assert.deepStrictEqual(chaves, ['abreBio', 'apagaLeituraBio', 'bioimpedancia', 'registraBio', 'registraBioDaFolha'],
+  // Desde 17/11 (visual novo), `camposDaBioV3` lê de onde parte a régua de
+  // cada número da leitura nova, um por passo; ela não escreve: grava-se pela
+  // mesma `registraBioDaFolha`.
+  assert.deepStrictEqual(chaves, ['abreBio', 'apagaLeituraBio', 'bioimpedancia', 'camposDaBioV3', 'registraBio', 'registraBioDaFolha'],
     'as portas da bioimpedância, e nada mais');
   assert.strictEqual(typeof a.m.ctx.registraBio, 'function', 'a de escrita');
   assert.strictEqual(typeof a.m.ctx.bioimpedancia, 'function', 'e a de leitura');

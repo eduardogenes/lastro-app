@@ -81,6 +81,8 @@ export function camadasAbertas(view) {
   if (view.fotos) c.push('fotos');
   // O detalhe de uma medida, e o formulário de medidas, que abre de dentro dele.
   if (view.medida) c.push('medida');
+  // Tudo na mesma data (visual novo), de dentro do Corpo.
+  if (view.naMesmaData) c.push('naMesmaData');
   if (view.medidas) c.push('medidas');
   // A galeria das fotos do corpo, e as duas camadas dentro dela: a lixeira e a
   // foto aberta em tela cheia.

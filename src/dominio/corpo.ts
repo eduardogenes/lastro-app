@@ -866,3 +866,34 @@ export function passoDaLeitura(dobra: boolean, leituras: number[]): PassoDaLeitu
   if (n === 2) return pedeTerceira(leituras[0], leituras[1]) ? 3 : 'pronta';
   return 'pronta';
 }
+
+/**
+ * TUDO NA MESMA DATA (direção 3): para um dia, o último número de cada medida
+ * até o fim dele, e a sessão de fotos mais perto dele (antes ou depois), cada
+ * um com a própria data. É o que deixa ver o corpo inteiro num ponto do tempo
+ * sem fingir que tudo foi medido no mesmo dia.
+ */
+export interface NoDia { k: string; v: number; t: number }
+export function naMesmaData(
+  body: Record<string, Marca[] | undefined>, sessoes: Array<{ d: string; fotos?: Record<string, unknown> }>,
+  dia: number, chaves: string[]
+): { medidas: NoDia[]; sessao: string | null } {
+  const fim = new Date(dia); fim.setHours(23, 59, 59, 999);
+  const ate = fim.getTime();
+  const medidas: NoDia[] = [];
+  chaves.forEach(function (k) {
+    const antes = (body[k] || []).filter(function (x) { return x && x.t <= ate; });
+    if (!antes.length) return;
+    const u = antes.reduce(function (a, b) { return b.t > a.t ? b : a; });
+    medidas.push({ k: k, v: u.v, t: u.t });
+  });
+  let sessao: string | null = null, dist = Infinity;
+  (sessoes || []).forEach(function (s) {
+    if (!s || !s.fotos || !Object.keys(s.fotos).length) return;
+    const p = s.d.split('-').map(Number);
+    const t = new Date(p[0], p[1] - 1, p[2], 12).getTime();
+    const d = Math.abs(t - dia);
+    if (d < dist) { dist = d; sessao = s.d; }
+  });
+  return { medidas: medidas, sessao: sessao };
+}

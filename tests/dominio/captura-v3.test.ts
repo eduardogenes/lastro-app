@@ -106,3 +106,12 @@ test('medir agora: a fita pede a segunda sempre e a terceira só quando diferem;
   assert.strictEqual(passoDaLeitura(true, [12, 12]), 3, 'a dobra pede três mesmo batendo');
   assert.strictEqual(passoDaLeitura(true, [12, 12, 13]), 'pronta');
 });
+
+test('na mesma data: o último número até o fim do dia de cada medida, e a sessão de fotos mais perto', async () => {
+  const { naMesmaData } = await import('../../src/dominio/corpo');
+  const dia = new Date(2026, 10, 10, 12).getTime(), D = 86400000;
+  const body = { peso: [{ t: dia - 5 * D, v: 75 }, { t: dia + 3 * 3600000 - 1, v: 76 }, { t: dia + D, v: 77 }], cintura: [{ t: dia + 2 * D, v: 85 }] };
+  const r = naMesmaData(body as never, [{ d: '2026-11-01', fotos: { a: 1 } }, { d: '2026-11-12', fotos: { a: 1 } }, { d: '2026-11-09', fotos: {} }], dia, ['peso', 'cintura']);
+  assert.deepStrictEqual(r.medidas.map(m => [m.k, m.v]), [['peso', 76]], 'a do próprio dia conta; a de depois, não; cintura ainda não existia');
+  assert.strictEqual(r.sessao, '2026-11-12', 'a mais perto, mesmo depois; a sessão sem foto não conta');
+});
