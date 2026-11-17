@@ -141,3 +141,43 @@ test('pôr o dia em dia: do dia aberto, o primeiro toque grava o dia', async () 
   assert.ok(/./.test(a.texto('.v3-frase')), 'e a frase diz o que ficou');
   a.fechar();
 });
+
+test('pôr em dia: escolher a porção numa refeição ainda sem marca grava, como "comeu" naquela porção', async () => {
+  const a = await comTreinoPassado();
+  await abreODia(a, ONTEM);
+  a.clicar('[data-a="dia-poe-em-dia"]');
+  await a.esperar(40);
+  const ids = a.$$('.v3-pd-l [data-a$="-tudo"]').map(b => b.getAttribute('data-a').split('-')[1]);
+  // a primeira linha ganha uma marca (o dia passa a existir); a última fica sem
+  a.clicar(`[data-a="marca-${ids[0]}-nao"]`);
+  await a.esperar(80);
+  const ult = ids[ids.length - 1];
+  // o primeiro toque grava o dia sugerido; a última refeição perde a marca (como
+  // uma refeição que entrou no plano depois), e fica `vazia`
+  a.E(`(function () { const h = S.comidaHist.filter(x => x.d === ${JSON.stringify(dataLocal(ONTEM))})[0]; delete h.done[${JSON.stringify(ult)}]; render(); })()`);
+  await a.esperar();
+  assert.strictEqual(a.J(`CTX.poeODiaEmDia(${JSON.stringify(dataLocal(ONTEM))}).linhas.filter(l => l.id === ${JSON.stringify(ult)})[0].marca`), 'vazia');
+  a.clicar(`[data-a="porcao-${ult}"]`);
+  await a.esperar();
+  a.clicar(`[data-a="porcao-${ult}-0.5"]`);
+  await a.esperar(80);
+  const h = a.J(`(S.comidaHist || []).filter(x => x.d === ${JSON.stringify(dataLocal(ONTEM))})[0]`);
+  assert.ok(h.done[ult] != null, 'a porção gravou a refeição: ' + JSON.stringify(h.done));
+  assert.strictEqual(h.escala[ult], 0.5);
+  a.fechar();
+});
+
+test('fechar pelo Voltar do sistema solta o estado da folha (catálogo)', async () => {
+  const a = await comTreinoPassado();
+  a.v('ctx.abrePrograma');
+  await a.esperar();
+  a.clicar('[data-a="prog-dia-A"]');
+  await a.esperar();
+  a.clicar('[data-a="ed-add"]');
+  await a.esperar(40);
+  assert.strictEqual(a.E('view.addEx'), true);
+  a.v('ctx.fechaFolha');           // é a porta que o Voltar e o Esc usam
+  await a.esperar();
+  assert.strictEqual(a.E('view.addEx'), false, 'o catálogo não fica aberto por baixo');
+  a.fechar();
+});

@@ -124,8 +124,7 @@ test('o tipo do dia: "Hoje não vou treinar" vira descanso, e a folha da data vo
   a.clicar('[data-a="dia-e-treino"]');
   await a.esperar(40);
   assert.strictEqual(a.E('diaDeComida().cadencia'), 'treino');
-  a.clicar('[data-a="hoje-tipo"]');
-  await a.esperar(40);
+  assert.ok(a.$('[data-a="turno-noite"]'), 'a folha fica aberta, agora com o turno do treino');
   a.clicar('[data-a="dia-alta"]');
   await a.esperar();
   assert.strictEqual(a.E('diaDeComida().alta'), 1, 'demanda alta');
@@ -135,5 +134,10 @@ test('o tipo do dia: "Hoje não vou treinar" vira descanso, e a folha da data vo
   a.clicar('[data-a="turno-noite"]');
   await a.esperar();
   assert.strictEqual(a.E('diaDeComida().turno'), 'noite');
+  assert.ok(a.$('[data-a="dia-pronto"]'), 'escolher o turno não fecha a folha');
+  assert.strictEqual(a.E('view.pilha.length'), 1, 'uma folha só');
+  a.clicar('[data-a="dia-pronto"]');
+  await a.esperar();
+  assert.strictEqual(a.E('view.pilha.length'), 0);
   a.fechar();
 });

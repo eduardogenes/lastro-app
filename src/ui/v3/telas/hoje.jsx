@@ -6,6 +6,7 @@
 
 import { useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
+import { CamposDoCardio } from '../cardio.jsx';
 import { Acoes, Apoio, Bloco, Botao, Chave, Fichas, Folha, Linha, Pergunta, Saida, Secao } from '../base.jsx';
 
 const RESPOSTAS = [{ k: 'sim', t: 'Foi, sim' }, { k: 'quase', t: 'Quase' }, { k: 'naosei', t: 'Não sei dizer' }];
@@ -30,7 +31,7 @@ function Momento({ ctx, h }) {
     acoes = <><Acoes><Botao data-a="hoje-comeca" onClick={ctx.abreTreinoDeHoje}>{b.k === 'aula' ? 'Fiz a aula' : 'Começar'} {ic.seta}</Botao></Acoes>
       <div class="v3-saidas">
         <Saida data-a="hoje-ja-treinei" onClick={ctx.lancaTreinoDeHoje}>Já treinei e não anotei</Saida>
-        {b.k === 'treino' && <Saida data-a="hoje-nao-treino" onClick={() => ctx.setCadenciaDeHoje('descanso')}>Hoje não vou treinar</Saida>}
+        {b.k === 'treino' && <Saida data-a="hoje-nao-treino" onClick={() => ctx.setCadenciaV3('descanso')}>Hoje não vou treinar</Saida>}
       </div></>;
   } else if (b.k === 'refeicao') {
     acoes = b.pergunta
@@ -228,12 +229,7 @@ export function FolhaCardioV3({ ctx }) {
   const c = ctx.cromoDoTreino().cardio;
   return (
     <Folha titulo="Cardio" sub={c.resumo} aoFechar={() => ctx.fechaFolha()}>
-      <p class="v3-rotulo">Modalidade</p>
-      <Fichas rotulo="Modalidade" opcoes={c.modais} prefixo="cardio-m-" aoTocar={k => ctx.cardioSet('m', k)} />
-      <p class="v3-rotulo">Minutos</p>
-      <Fichas rotulo="Minutos" opcoes={c.minutos} prefixo="cardio-min-" aoTocar={k => ctx.cardioSet('min', k)} />
-      <p class="v3-rotulo">Intensidade</p>
-      <Fichas rotulo="Intensidade" opcoes={c.intensidades} prefixo="cardio-i-" aoTocar={k => ctx.cardioSet('i', k)} />
+      <CamposDoCardio campos={c} prefixo="cardio-" aoTocar={(campo, k) => ctx.cardioSet(campo, k)} />
       {c.aviso && <p class="v3-atencao" role="note">{c.aviso}</p>}
       <Acoes><Botao data-a="cardio-grava" onClick={() => { ctx.fechaFolha(); ctx.addCardio(); }}>{c.acao}</Botao></Acoes>
       <Apoio>Esqueceu de anotar um cardio de outro dia? Ele entra pelo dia, em Dias.</Apoio>
@@ -259,7 +255,7 @@ export function FolhaTipoDoDia({ ctx }) {
             <Linha key={k} data-a={'dia-e-' + k} marca={d.cadencia === k ? ic.ok : ''}
                    titulo={k === 'descanso' ? 'É descanso' : 'Vou treinar hoje'}
                    apoio={k === 'descanso' ? d.efeitoDescanso : d.efeitoTreino}
-                   aoTocar={() => ctx.setCadenciaDeHoje(k)} />
+                   aoTocar={() => ctx.setCadenciaV3(k)} />
           ))}
         </div>
       )}
@@ -274,7 +270,7 @@ export function FolhaTipoDoDia({ ctx }) {
       {d.cadencia === 'treino' && (
         <>
           <p class="v3-rotulo">O turno do treino</p>
-          <Fichas rotulo="O turno do treino" prefixo="turno-" aoTocar={k => ctx.setTurno(k)}
+          <Fichas rotulo="O turno do treino" prefixo="turno-" aoTocar={k => ctx.setTurnoV3(k)}
                   opcoes={d.turnos.map(t => ({ k: t.k, t: t.n + ' · ' + t.hora.replace(':', 'h'), on: t.on }))} />
           <Apoio>Anda o pré-treino e o intra; as outras refeições ficam na hora delas.{turno && turno.pos ? ' O pós-treino passa a ser o ' + turno.pos.toLowerCase() + '.' : ''}</Apoio>
         </>

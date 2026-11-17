@@ -6033,9 +6033,7 @@ function abreFoto(i) {
   const t = treino(view.day);
   const ex = t && t.ex[i];
   if (!ex) return;
-  pilha().push({ k: 'foto', id: ex.id });
-  render();
-  carregaFotos([ex.id]);
+  CTX.abreFotoDoAparelhoV3(ex.id);
 }
 
 /**
@@ -10165,8 +10163,16 @@ CTX.mudaFolha = function (campos) { const p = pilha(); if (!p.length) return; Ob
  * uma camada por cima dela.
  */
 CTX.trocaFolha = function (f) { pilha().pop(); pilha().push(f); TROCADAS.add(f); render(); };
-CTX.fechaFolha = function () { pilha().pop(); render(); };
-CTX.fechaTudo = function () { view.pilha = []; render(); };
+// O estado que uma folha do visual novo segura sai com ela, feche como fechar
+// (o X, o véu, o Voltar do sistema, o Esc): sem isto o catálogo e a série
+// passada ficavam "abertos" no `view` depois de a folha sumir.
+function soltaEstadoDaFolha(f) {
+  if (!f) return;
+  if (f.k === 'catalogo') { view.addEx = false; view.addQ = ''; view.novoEx = false; }
+  if (f.k === 'seriePassada') { view.passada = null; view.teclado = null; }
+}
+CTX.fechaFolha = function () { soltaEstadoDaFolha(pilha().pop()); render(); };
+CTX.fechaTudo = function () { (view.pilha || []).forEach(soltaEstadoDaFolha); view.pilha = []; render(); };
 
 /** Um id de alimento a partir do nome, igual ao dos exercícios. */
 function idAlimento(nome) {
@@ -11776,7 +11782,7 @@ CTX.catalogoV3 = function () {
 };
 CTX.buscaCatalogoV3 = function (q) { setBuscaDeExercicio(q); };
 CTX.novoNoCatalogoV3 = function (sim) { view.novoEx = sim !== false; render(); };
-CTX.fechaCatalogoV3 = function () { view.addEx = false; view.addQ = ''; view.novoEx = false; CTX.fechaFolha(); };
+CTX.fechaCatalogoV3 = function () { CTX.fechaFolha(); };
 function saiDoCatalogoV3() {
   const p = pilha();
   if (p.length && p[p.length - 1].k === 'catalogo') CTX.fechaFolha();
@@ -14581,7 +14587,7 @@ CTX.focoV3 = function () {
           semCarga: tipo === 'corpo', seg: vm.seg, descanso: vm.descansoTxt, proximo: vm.proximo },
     estados: vm.linhas.map(function (l, k) { return { k: k, feita: l.valor[1] != null, antes: l.antes }; }),
     carga: carga, reps: reps,
-    passoCarga: tipo === 'lado' || tipo === 'barra' ? 1.25 : tipo === 'halter' ? 1 : 2.5,
+    passoCarga: passoDaCarga(tipo),
     antes: vm.linhas[f.k] ? vm.linhas[f.k].antes : null,
     jaFeita: agora[1] != null,
     sobe: sobe,
@@ -14648,6 +14654,9 @@ CTX.exercicioV3 = function () {
     passo = { tom: 'rep', t: 'Ganhando repetição', d: 'Mantenha ' + fmtNum(maxLoad(u)).replace('.', ',') + ' ' + un + '. ' +
       e.falta.map(function (x) { return 'Série ' + x[0] + ': mais ' + x[1]; }).join('. ') + (e.falta.length ? '. ' : '') + 'Quando todas chegarem a ' + topo + ', sobe.' };
   }
+  // as sessões por `sid`, montadas uma vez: cada linha de "sessão a sessão" abre a sua
+  const sessaoPorSid = {};
+  S.done.forEach(function (x) { if (x.sid != null && !sessaoPorSid[x.sid]) sessaoPorSid[x.sid] = x; });
   return {
     n: nomeEx(key), id: key, dia: v.day, i: v.i,
     prescricao: ns + ' × ' + (ex.r || '') + (ex.rir ? ' · sobrando ' + ex.rir : ''),
@@ -14657,9 +14666,11 @@ CTX.exercicioV3 = function () {
     passo: passo,
     linha: h.map(function (l) { return { t: l.t, v: maxLoad(l) }; }),
     sessoes: h.slice().reverse().map(function (l) {
-      // a sessão do registro, que abre para corrigir (pelo `sid`; o registro
-      // antigo sem `sid`, pelo dia)
-      const m = S.done.filter(function (x) { return l.sid != null ? x.sid === l.sid : sameDay(x.t, l.t) && !x.livre; })[0];
+      // a sessão do registro, que abre para corrigir: pelo `sid`; o registro
+      // antigo sem `sid`, pela sessão sem `sid` do mesmo dia — é a única em
+      // que `detalheDaSessao` o mostra
+      const m = l.sid != null ? sessaoPorSid[l.sid]
+        : S.done.find(function (x) { return x.sid == null && !x.livre && sameDay(x.t, l.t); });
       return { t: l.t, data: fmtDate(l.t), carga: fmtNum(maxLoad(l)).replace('.', ','), dp: !!l.dp, sessao: m ? m.t : null,
                reps: l.sets.map(function (s) { return s ? { r: s[1], topo: isFinite(topo) && s[1] >= topo } : null; }).filter(Boolean) };
     }),
@@ -14714,7 +14725,6 @@ CTX.aulaV3 = function () {
   return CTX.treino();
 };
 
-/** Corrigir uma sessão passada ainda é da tela antiga do histórico: a mesma camada, desenhada por ela. */
 /**
  * A sessão inteira, aberta do histórico de um exercício (visual novo): é ela
  * que sabe corrigir cada série. Fica por cima do histórico (`camadasAbertas`).
@@ -14726,12 +14736,27 @@ CTX.abreSessaoDoHistorico = function (t) { if (t != null) abrirSessao(t); };
  * id do exercício, de onde quer que ele esteja (histórico, treino em foco).
  * `tiraFoto` e `apagaFoto` acham o exercício pela folha aberta (`fotoAberta`).
  */
+/**
+ * O tipo do dia e o turno, na folha `dia` do visual novo: os mesmos campos de
+ * `setCadenciaDeHoje` e `setTurno`, sem fechar a folha — nela se escolhe mais
+ * de uma coisa (o turno, a demanda alta, como foi o dia) antes do "Pronto".
+ */
+CTX.setCadenciaV3 = function (c) { diaDeComida().cadencia = c; queueSave(); render(); };
+CTX.setTurnoV3 = function (t) {
+  const d = diaDeComida();
+  if (!t || t === 'manha') delete d.turno; else d.turno = t;
+  queueSave(); render();
+};
+
 CTX.abreFotoDoAparelhoV3 = function (id) {
   if (!id) return;
   pilha().push({ k: 'foto', id: id });
   render();
   carregaFotos([id]);
 };
+
+/** O passo da régua de carga, pelo tipo de carga: o mesmo hoje e na série passada. */
+function passoDaCarga(tipo) { return tipo === 'lado' || tipo === 'barra' ? 1.25 : tipo === 'halter' ? 1 : 2.5; }
 
 // ---------- a SÉRIE PASSADA no visual novo (folha `seriePassada`) ----------
 // As mesmas portas da tela antiga (`abreSerieDaPassada`, `gravaNaPassada`,
@@ -14742,7 +14767,7 @@ CTX.abreSeriePassadaV3 = function (idEx, chave, k) {
   abreSerieDaPassada(idEx, chave, k);
   if (view.passada) CTX.abreFolha({ k: 'seriePassada' });
 };
-CTX.fechaSeriePassadaV3 = function () { view.passada = null; view.teclado = null; CTX.fechaFolha(); };
+CTX.fechaSeriePassadaV3 = function () { CTX.fechaFolha(); };
 CTX.seriePassadaV3 = function () {
   const p = view.passada, m = view.sessao;
   if (!p || !m) return null;
@@ -14763,7 +14788,7 @@ CTX.seriePassadaV3 = function () {
     novo: !!p.novo,
     un: CARGAS[tipo].rot,
     semCarga: tipo === 'corpo',
-    passo: tipo === 'lado' || tipo === 'barra' ? 1.25 : tipo === 'halter' ? 1 : 2.5,
+    passo: passoDaCarga(tipo),
     carga: sr ? (+sr[0] || 0) : (+p.carga || 0),
     reps: sr ? (+sr[1] || 0) : (p.ref ? +p.ref[1] || 0 : fx ? fx[0] : 10),
     rir: sr && sr[2] != null ? sr[2] : null,

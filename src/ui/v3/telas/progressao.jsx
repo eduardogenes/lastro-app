@@ -111,8 +111,8 @@ export function FolhaRenomeiaEx({ ctx, f }) {
   );
 }
 
-// assume a camada `hist` só quando aberta pela progressão nova; a tela antiga
-// continua sendo a da correção de sessão passada (`corrigeSessaoNoHistorico`)
+// assume a camada `hist` quando aberta pelo visual novo (`view.hist.v3`); a
+// correção de uma sessão passada abre a sessão por cima (`abreSessaoDoHistorico`)
 ExercicioV3.so = view => !!(view.hist && view.hist.v3);
 
 /**

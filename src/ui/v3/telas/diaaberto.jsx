@@ -13,26 +13,13 @@ import { useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
 import { Acoes, Apoio, Botao, Cabecalho, Fichas, Folha, Linha, Quadros, Saida, Secao, Vazio } from '../base.jsx';
 import { Regua } from '../regua.jsx';
+import { CamposDoCardio } from '../cardio.jsx';
 
 const virgula = n => String(Math.round(n * 100) / 100).replace('.', ',');
 const meioDia = data => new Date(data + 'T12:00:00').getTime();
 
 /** O nome de cada marca da comida, em palavra (a marca não pode ser só forma). */
 const MARCA = { tudo: 'comeu', metade: 'metade', fora: 'fora do plano', nsei: 'não sabe', nao: 'não comeu', sem: 'sem marca' };
-
-/** Os três campos do cardio, cada um em fichas que corrigem no toque. */
-function CamposDoCardio({ campos, prefixo, aoTocar }) {
-  return (
-    <>
-      <p class="v3-rotulo">Modalidade</p>
-      <Fichas rotulo="Modalidade" opcoes={campos.modais} prefixo={prefixo + 'm-'} aoTocar={k => aoTocar('m', k)} />
-      <p class="v3-rotulo">Minutos</p>
-      <Fichas rotulo="Minutos" opcoes={campos.minutos} prefixo={prefixo + 'min-'} aoTocar={k => aoTocar('min', k)} />
-      <p class="v3-rotulo">Intensidade</p>
-      <Fichas rotulo="Intensidade" opcoes={campos.intensidades} prefixo={prefixo + 'i-'} aoTocar={k => aoTocar('i', k)} />
-    </>
-  );
-}
 
 /**
  * O DIA ABERTO: o que foi registrado (cada linha abre), o que se acrescenta
@@ -325,6 +312,12 @@ export function RegistrarPassadoV3({ ctx }) {
 
 const MARCAS = [{ k: 'tudo', t: 'Tudo' }, { k: 'metade', t: 'Metade' }, { k: 'fora', t: 'Fora' }, { k: 'nsei', t: 'Não sei' }, { k: 'nao', t: 'Não comi' }];
 const PORCAO = { 0.5: '½', 0.75: '¾', 1: 'cheia', 1.25: '1¼', 1.5: '1½' };
+/**
+ * A marca que vai com a porção escolhida: dizer a porção é dizer que comeu.
+ * "Metade" e a linha ainda sem marca (`vazia`, que `marcaNoDiaPassado` pula)
+ * viram "tudo" naquela porção; "fora", "não sei" e "não comi" ficam.
+ */
+const marcaDaPorcao = m => (!m || m === 'vazia' || m === 'metade') ? 'tudo' : m;
 
 /**
  * PÔR O DIA EM DIA: a comida de um dia passado, uma linha por refeição. O
@@ -353,7 +346,7 @@ export function FolhaPoeODiaV3({ ctx, f }) {
             {porcao === l.id && (
               <Fichas rotulo={'Porção: ' + l.nome} prefixo={'porcao-' + l.id + '-'}
                       opcoes={d.porcoes.map(p => ({ k: p, t: PORCAO[p] || String(p), on: l.escala === p }))}
-                      aoTocar={p => { setPorcao(null); ctx.marcaNoDiaPassado(f.data, l.id, l.marca === 'metade' ? 'tudo' : l.marca, p); }} />
+                      aoTocar={p => { setPorcao(null); ctx.marcaNoDiaPassado(f.data, l.id, marcaDaPorcao(l.marca), p); }} />
             )}
           </div>
         ))}
