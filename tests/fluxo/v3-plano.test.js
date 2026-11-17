@@ -72,3 +72,62 @@ test('alimentos buscam pelo nome, e compras marcam o que já foi comprado', asyn
   assert.strictEqual(a.E(`!!S.compras.comprado[${JSON.stringify(f)}]`), true, 'marcado como comprado');
   a.fechar();
 });
+
+test('editar a refeição: a folha nova muda a quantidade, troca o alimento pela busca e cadastra um novo', async () => {
+  const a = await noPlano();
+  const id = a.E('planoDeComida()[0].id');
+  a.v('ctx.editaRefeicao', id);
+  await a.esperar(40);
+  assert.ok(a.$('#ref-nome'), 'a folha nova');
+  assert.ok(!a.$('.ed-campo'), 'e não a antiga');
+  a.clicar('[data-a="ed-item-0"]');
+  await a.esperar();
+  assert.ok(a.$('[data-a="ed-item-troca-0"]'), 'o item abre no lugar');
+  a.clicar('[data-a="ed-item-troca-0"]');
+  await a.esperar(40);
+  const busca = a.$('#seletor-busca');
+  busca.value = 'ovo';
+  busca.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  await a.esperar();
+  const alvo = a.$('[data-a^="seletor-"]:not([data-a="seletor-novo"])');
+  assert.ok(alvo, 'a busca acha');
+  const novo = alvo.getAttribute('data-a').slice(8);
+  alvo.click();
+  await a.esperar(40);
+  assert.strictEqual(a.E(`planoDeComida()[0].itens[0].f`), novo, 'trocou');
+
+  a.clicar('[data-a="ref-adiciona"]');
+  await a.esperar(40);
+  a.clicar('[data-a="seletor-novo"]');
+  await a.esperar(40);
+  const nome = a.$('#alimento-nome');
+  nome.value = 'Tapioca da esquina';
+  nome.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  const kcal = a.$('#alimento-kcal');
+  kcal.value = '240';
+  kcal.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  await a.esperar();
+  a.clicar('[data-a="alimento-salva"]');
+  await a.esperar(40);
+  const itens = a.J('planoDeComida()[0].itens.map(i => i.f)');
+  const cat = a.J('catalogoAlimentos()');
+  assert.ok(itens.some(f => cat[f] && cat[f].n === 'Tapioca da esquina' && cat[f].kcal === 240), 'cadastrado e posto na refeição, com o nome e as calorias: ' + JSON.stringify(itens));
+  a.fechar();
+});
+
+test('nova refeição: só cria com nome, e entra no plano', async () => {
+  const a = await noPlano();
+  const antes = a.E('planoDeComida().length');
+  a.v('ctx.novaRefeicao');
+  await a.esperar(40);
+  assert.ok(a.$('[data-a="ref-cria"]').disabled, 'sem nome, não cria');
+  const nome = a.$('#ref-nome');
+  nome.value = 'Ceia';
+  nome.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  await a.esperar();
+  a.clicar('[data-a="ref-cria"]');
+  await a.esperar(40);
+  assert.strictEqual(a.E('planoDeComida().length'), antes + 1);
+  assert.strictEqual(a.E('planoDeComida()[planoDeComida().length - 1].n'), 'Ceia');
+  a.fechar();
+});

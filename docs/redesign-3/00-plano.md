@@ -126,7 +126,7 @@ conferido porta a porta: o que uma tela nova chama e cai numa tela antiga).
 | 5 | Pôr o dia em dia (folha `poeODia`) | o dia aberto | **feito** (`FolhaPoeODiaV3`) |
 | 6 | Sessão passada (`sessao`): começo e fim, corrigir o tempo, cada série corrigível, lousa, apagar | o dia aberto; Hoje, "Corrigir" a duração; histórico do exercício (tocar na sessão abre por cima dele) | **feito** (`SessaoPassadaV3`; a série abre na folha `seriePassada`, com as réguas da série de hoje e um "Guardar") |
 | 7 | Registrar treino passado (`add`): que treino foi, hora, séries, ou fora da prescrição | Hoje, "Já treinei e não anotei"; o dia aberto | **feito** (`RegistrarPassadoV3`) |
-| 8 | Comida: editar refeição, escolher alimento (`seletor`), editar alimento | Plano e Hoje ("Trocar ou ajustar", "+ Refeição", alimentos) | a fazer |
+| 8 | Comida: editar refeição, escolher alimento (`seletor`), editar alimento | Plano e Hoje ("Trocar ou ajustar", "+ Refeição", alimentos) | **feito** (`comida.jsx`) |
 | 9 | Catálogo de adicionar exercício, com criar um novo | Programa e aula | a fazer |
 | 10 | Foto do aparelho (`foto`) | some no visual novo; volta pelo exercício | a fazer |
 | 11 | Retrospectiva do bloco (`retro`) | some no visual novo; volta pela Semana | a fazer |

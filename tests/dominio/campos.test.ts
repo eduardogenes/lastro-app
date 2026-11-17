@@ -155,6 +155,12 @@ const TEXTO: Record<string, string> = {
     'busca de alimento no visual novo — busca é do sistema, sempre, como a de exercício',
   'src/ui/v3/telas/progressao.jsx · renomeia-ex':
     'renomear o exercício no visual novo — o mesmo caso do de cima: texto, e sentado',
+  'src/ui/v3/telas/comida.jsx · ref-nome':
+    'nome da refeição no visual novo — é texto, e é cadastro',
+  'src/ui/v3/telas/comida.jsx · ref-etiqueta':
+    'etiqueta da refeição ("pré-treino") — é texto, e é cadastro',
+  'src/ui/v3/telas/comida.jsx · alimento-nome':
+    'nome do alimento no visual novo — é texto, e é cadastro',
   'src/ui/v3/telas/diaaberto.jsx · lanca-nome':
     'nome do treino avulso no visual novo — o mesmo caso do de baixo: é texto',
   'src/ui/telas/retroativo.jsx · add-nome':
