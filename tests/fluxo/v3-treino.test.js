@@ -124,3 +124,70 @@ test('a lista do treino leva a outro exercício, e pular hoje tira o exercício 
   assert.ok(a.E('S.sessao && S.sessao.pulados.length === 1'), 'e fica anotado na sessão');
   a.fechar();
 });
+
+test('intervalo longo: o aviso pergunta, "pôr em dia" grava as que faltam com os números da última vez, marcadas, sem descanso', async () => {
+  const a = await emFoco();
+  a.clicar('[data-a="serie-feita"]');
+  await a.esperar(40);
+  a.v('ctx.paraDescanso');
+  await a.esperar();
+  assert.ok(!a.$('.v3-serie-int'), 'logo depois, nada a perguntar');
+  a.viajar(20 * 60000);
+  a.v('ctx.setFocoV3', 0, 1);
+  a.E('view.focoV3 = null');
+  await a.esperar();
+  assert.ok(/Faz 20 min desde a última série/.test(a.texto('.v3-serie-int')), a.texto('.v3-serie-int'));
+
+  a.clicar('[data-a="intervalo-em-dia"]');
+  await a.esperar(40);
+  assert.ok(a.$('[data-a="emdia-0-1"]') && a.$('[data-a="emdia-0-2"]'), 'as duas que faltam no primeiro');
+  assert.ok(/60 × 7/.test(a.texto('[data-a="emdia-0-1"]')), 'com o número que vai gravar');
+  a.clicar('[data-a="emdia-ok"]');
+  await a.esperar(60);
+  const h = JSON.parse(historicoDoA0(a));
+  assert.deepStrictEqual(h[1].sets.map(s => s && s.slice(0, 2)), [[60, 8], [60, 7], [60, 6]]);
+  assert.strictEqual(h[1].dp, 1, 'o registro diz que foi posto em dia');
+  assert.strictEqual(a.E('!!timerFim'), false, 'e nenhum descanso começou');
+  a.relogioNormal();
+  a.fechar();
+});
+
+test('pôr em dia: desmarcar tira a série que não foi feita, e a marca sobrevive ao rascunho refeito', async () => {
+  const a = await emFoco();
+  a.v('ctx.abreFolha', { k: 'porEmDia' });
+  await a.esperar(40);
+  a.clicar('[data-a="emdia-0-2"]');
+  await a.esperar();
+  assert.ok(/Pôr em dia 2 séries/.test(a.texto('[data-a="emdia-ok"]')), a.texto('[data-a="emdia-ok"]'));
+  a.clicar('[data-a="emdia-ok"]');
+  await a.esperar(60);
+  let h = JSON.parse(historicoDoA0(a));
+  assert.deepStrictEqual(h[1].sets.map(s => s && s.slice(0, 2)), [[60, 8], [60, 7], null], 'a terceira ficou de fora');
+
+  // o rascunho refeito do histórico (o app reaberto) e uma série ao vivo depois
+  a.E('S.draft = null; hidrataDraft(view.day);');
+  a.v('ctx.setFocoV3', 0, 2);
+  await a.esperar();
+  a.clicar('[data-a="serie-feita"]');
+  await a.esperar(40);
+  h = JSON.parse(historicoDoA0(a));
+  assert.strictEqual(h[1].dp, 1, 'a marca não se perdeu na volta do rascunho');
+  a.fechar();
+});
+
+test('"não, só parei" tira o aviso até a próxima série', async () => {
+  const a = await emFoco();
+  a.clicar('[data-a="serie-feita"]');
+  await a.esperar(40);
+  a.v('ctx.paraDescanso');
+  a.viajar(20 * 60000);
+  a.E('view.focoV3 = null');
+  a.v('ctx.setFocoV3', 0, 1);
+  a.E('view.focoV3 = null');
+  await a.esperar();
+  a.clicar('[data-a="intervalo-parei"]');
+  await a.esperar();
+  assert.ok(!a.$('.v3-serie-int'));
+  a.relogioNormal();
+  a.fechar();
+});

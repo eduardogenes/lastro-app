@@ -20,7 +20,7 @@ import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui
 import { tempo as tempoDoMovimento, trocaDeCamada } from './ui/movimento.js';
 import { ehBancada } from './palco.js';
 import { MIN_PESAGENS as MIN_PESAGENS_CORPO, semanaEmCurso, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, VALIDADE_LEITURA, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
-import { ondeEleEstava, proximoDepois } from './dominio/sessao';
+import { ondeEleEstava, proximoDepois, intervaloLongo } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
@@ -1057,6 +1057,9 @@ function projeta(i) {
   if (obs) entry.obs = obs; else delete entry.obs;
   if (e.dor && e.dor.length) entry.dor = e.dor.slice(); else delete entry.dor;
   if (S.deload) entry.dl = 1; else delete entry.dl;
+  // posta em dia ("Já fiz mais do que anotei"): os números são os da última
+  // vez, e o registro diz isso (`Log.dp`, docs/redesign-3/00-plano.md)
+  if (e.dp) entry.dp = 1; else delete entry.dp;
 
   if (S.logs[key].length > TETO.logs) S.logs[key] = S.logs[key].slice(-TETO.logs);
 }
@@ -1942,7 +1945,8 @@ function hidrataDraft(dia) {
       s: e.sets.map(function (x) { return x ? [x[0], x[1], x[2] != null ? x[2] : null] : [null, null, null]; }),
       obs: e.obs || '',
       dor: (e.dor || []).slice(),
-      aq: !!e.aq
+      aq: !!e.aq,
+      dp: !!e.dp
     };
   });
 }
@@ -14275,8 +14279,73 @@ CTX.focoV3 = function () {
     antes: vm.linhas[f.k] ? vm.linhas[f.k].antes : null,
     jaFeita: agora[1] != null,
     sobe: sobe,
-    dor: vm.dorBloqueia ? { o: vm.dorRep, datas: vm.dorDatas } : null
+    dor: vm.dorBloqueia ? { o: vm.dorRep, datas: vm.dorDatas } : null,
+    // passou tempo demais desde a última série para ser descanso
+    intervalo: S.sessao && !S.sessao.pausadoEm && !timerFim && S.sessao.ultima !== view.intervaloDispensado &&
+      intervaloLongo(S.sessao.ultima, Date.now(), vm.descanso)
+      ? { minutos: Math.round((Date.now() - S.sessao.ultima) / 60000) } : null
   });
+};
+/** "Não, só parei": o aviso some até a próxima série. */
+CTX.dispensaIntervalo = function () { if (S.sessao) { view.intervaloDispensado = S.sessao.ultima; render(); } };
+
+/**
+ * "JÁ FIZ MAIS DO QUE ANOTEI": as séries que faltam no treino de hoje, cada
+ * uma com os números que ela teria (os da mesma série da última vez, ou os da
+ * série anterior de hoje). Série sem número de onde partir não é oferecida:
+ * o app não inventa.
+ */
+function numerosDaSerieEmDia(d, i, k) {
+  const key = logKey(d, i);
+  const ant = lastSet(key, k);
+  if (ant && ant[1] != null) return [ant[0] != null ? ant[0] : 0, ant[1]];
+  const dr = draftPeek(i);
+  for (let j = k - 1; j >= 0; j--) if (dr && serieCheia(dr, j)) return [dr.s[j][0], dr.s[j][1]];
+  return null;
+}
+CTX.porEmDiaV3 = function () {
+  const d = view.day || diaResolvido().treino || proximoTreino(S, ROT_BASE);
+  hidrataDraft(d);
+  const P = treino(d);
+  if (!P) return null;
+  return P.ex.map(function (ex, i) {
+    if (ehPulado(i)) return null;
+    const dr = draftPeek(i);
+    const series = [];
+    for (let k = 0; k < setsFor(ex); k++) {
+      if (serieCheia(dr, k)) continue;
+      const n = numerosDaSerieEmDia(d, i, k);
+      if (n) series.push({ k: k, txt: (n[0] ? fmtNum(n[0]).replace('.', ',') + ' × ' : '') + n[1] });
+    }
+    return series.length ? { i: i, n: ex.n, series: series } : null;
+  }).filter(Boolean);
+};
+/**
+ * Grava as séries marcadas com os números da última vez, PELA MESMA PORTA de
+ * toda série (`anotaSerie`), e marca o registro como posto em dia (`Log.dp`).
+ * O descanso que a última delas dispararia não começa: ninguém está
+ * descansando de uma série feita há meia hora.
+ */
+CTX.poeEmDia = function (marcados) {
+  const d = view.day || diaResolvido().treino || proximoTreino(S, ROT_BASE);
+  if (view.day !== d) view.day = d;
+  hidrataDraft(d);
+  let n = 0;
+  (marcados || []).forEach(function (m) {
+    const i = Number(m.i), k = Number(m.k);
+    const ex = treino(d).ex[i];
+    if (!ex || k >= setsFor(ex) || serieCheia(draftPeek(i), k)) return;
+    const nums = numerosDaSerieEmDia(d, i, k);
+    if (!nums) return;
+    draftOf(i).dp = 1;
+    anotaSerie(i, k, 0, nums[0]);
+    anotaSerie(i, k, 1, nums[1]);
+    n++;
+  });
+  if (n) { stopTimer(); view.focoV3 = null; view.intervaloDispensado = null; }
+  render();
+  if (n) toast(n === 1 ? '1 série posta em dia, com os números da última vez.' : n + ' séries postas em dia, com os números da última vez.');
+  return n;
 };
 /** Pula para uma série (a lista do treino, ou a seta para corrigir uma feita). */
 CTX.setFocoV3 = function (i, k) { view.focoV3 = { i: Number(i), k: Number(k) || 0 }; render(); };

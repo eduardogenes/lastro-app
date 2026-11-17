@@ -339,3 +339,6 @@
 .v3 .v3-desc-aj button { min-height: 46px; padding: 0 18px; border-radius: var(--r-pilula); box-shadow: inset 0 0 0 2px var(--tinta); font: 700 15px var(--f-titulo); }
 .v3-desc-rir { margin-top: 18px; }
 .v3-desc-prox { font: 700 15px var(--f-titulo); margin-top: 14px; }
+.v3-serie-int { margin-top: 12px; padding: 12px 14px; border-radius: 20px; background: var(--branco); box-shadow: inset 0 0 0 2px var(--tinta); font-size: 14px; }
+.v3-emdia { margin-top: 14px; }
+.v3-emdia b { font: 700 16px var(--f-titulo); }

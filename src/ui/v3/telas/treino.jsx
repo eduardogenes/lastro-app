@@ -55,6 +55,15 @@ function Serie({ ctx, f }) {
       <p class="v3-serie-q">série {f.k + 1} de {ex.series}{ex.faixa ? ' · ' + ex.faixa + ' reps' : ''}{ex.rir ? ' · RIR ' + ex.rir : ''}</p>
       <h1 class="v3-serie-n" tabindex="-1">{ex.n}</h1>
       {ex.cue && <p class="v3-serie-c">{ex.cue}</p>}
+      {f.intervalo && (
+        <div class="v3-serie-int" role="status">
+          <b>Faz {f.intervalo.minutos} min desde a última série.</b> Fez mais do que anotou?
+          <div class="v3-acoes">
+            <Botao tipo="contorno" data-a="intervalo-em-dia" onClick={() => ctx.abreFolha({ k: 'porEmDia' })}>Pôr em dia</Botao>
+            <Botao tipo="contorno" data-a="intervalo-parei" onClick={ctx.dispensaIntervalo}>Não, só parei</Botao>
+          </div>
+        </div>
+      )}
       {f.dor && (
         <div class="v3-serie-dor" role="alert">
           <b>Dor seguida: {f.dor.o}</b> ({f.dor.datas}). O treinador pede para não forçar.
@@ -151,9 +160,50 @@ export function FolhaListaTreino({ ctx }) {
                  aoTocar={() => { ctx.fechaFolha(); ctx.setFocoV3(x.i, x.feito ? 0 : x.proxima); }} />
         ))}
       </div>
+      <Linha titulo="Já fiz mais do que anotei" apoio="grava as séries com os números da última vez" data-a="lista-em-dia"
+             aoTocar={() => { ctx.fechaFolha(); ctx.abreFolha({ k: 'porEmDia' }); }} />
       {l.deload && <Chave titulo={l.deload.rotulo} apoio={l.deload.detalhe} ligada={l.deload.ligado} data-a="lista-deload"
                           aoMudar={on => ctx.setDeload(on)} />}
       <Acoes><Botao onClick={() => ctx.fechaFolha()}>Voltar à série</Botao></Acoes>
+    </Folha>
+  );
+}
+
+/**
+ * "Já fiz mais do que anotei": as séries que faltam, já marcadas, cada uma
+ * com o número que vai gravar. Desmarcar é tirar a que não foi feita.
+ */
+export function FolhaPorEmDia({ ctx, f }) {
+  const lista = ctx.porEmDiaV3() || [];
+  const tirados = f.tirados || {};
+  const chave = (i, k) => i + '-' + k;
+  const marcados = [];
+  lista.forEach(x => x.series.forEach(s => { if (!tirados[chave(x.i, s.k)]) marcados.push({ i: x.i, k: s.k }); }));
+  const troca = (i, k) => ctx.mudaFolha({ tirados: Object.assign({}, tirados, { [chave(i, k)]: !tirados[chave(i, k)] }) });
+  return (
+    <Folha titulo="Pôr em dia" sub="As séries que você fez e não anotou entram com os números da última vez, marcadas como postas em dia." aoFechar={() => ctx.fechaFolha()}>
+      {!lista.length && <Apoio>Nada a pôr em dia: as séries que faltam não têm número de onde partir.</Apoio>}
+      {lista.map(x => (
+        <div key={x.i} class="v3-emdia">
+          <b>{x.n}</b>
+          <div class="v3-cond">
+            {x.series.map(s => {
+              const on = !tirados[chave(x.i, s.k)];
+              return (
+                <button key={s.k} aria-pressed={on ? 'false' : 'true'} data-a={'emdia-' + x.i + '-' + s.k} onClick={() => troca(x.i, s.k)}>
+                  {on ? ic.ok : ic.x}{'série ' + (s.k + 1) + ' · ' + s.txt}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <Acoes>
+        <Botao data-a="emdia-ok" disabled={!marcados.length}
+               onClick={() => { ctx.fechaFolha(); ctx.poeEmDia(marcados); }}>
+          {marcados.length === 1 ? 'Pôr em dia 1 série' : 'Pôr em dia ' + marcados.length + ' séries'}
+        </Botao>
+      </Acoes>
     </Folha>
   );
 }

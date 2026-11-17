@@ -55,3 +55,21 @@ export function ondeEleEstava(estados: EstadoEx[]): number | null {
 export function proximoDepois(estados: EstadoEx[], i: number): number | null {
   return primeiro(estados, i + 1, pendente);
 }
+
+/**
+ * O INTERVALO LONGO (direção 3): passou tempo demais desde a última série
+ * para ser descanso. É quando o app pergunta se ele fez séries sem anotar
+ * ("Já fiz mais do que anotei") ou só parou. O limite é três vezes o descanso
+ * do exercício em foco, e nunca menos de seis minutos: a máquina ocupada e a
+ * água no meio não viram pergunta.
+ */
+export const FATOR_DO_INTERVALO = 3;
+export const INTERVALO_MINIMO = 6 * 60 * 1000;
+export function limiteDoIntervalo(descansoSeg: number): number {
+  const d = typeof descansoSeg === 'number' && isFinite(descansoSeg) && descansoSeg > 0 ? descansoSeg * 1000 : 0;
+  return Math.max(INTERVALO_MINIMO, d * FATOR_DO_INTERVALO);
+}
+export function intervaloLongo(ultimaSerie: number | null | undefined, agora: number, descansoSeg: number): boolean {
+  if (typeof ultimaSerie !== 'number' || !isFinite(ultimaSerie)) return false;
+  return agora - ultimaSerie > limiteDoIntervalo(descansoSeg);
+}

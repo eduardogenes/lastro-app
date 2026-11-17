@@ -52,7 +52,7 @@ guarda) e nos casos novos de `tests/fluxo/diario.test.js` e `dados.test.js`.
 | "A comida foi como o plano?" (sim, quase, não lembro) | `ctx.respondeODia(dataISO, 'sim' \| 'quase' \| 'naosei')` e `ctx.respostaDoDia(dataISO)` | grava no dia aberto ou no histórico; completa, nunca apaga marca |
 | O que aparece | `ctx.moduloLigado(k)`, `ctx.ligaModulo(k, on)`, `ctx.fitaLigada(k)`, `ctx.ligaFita(k, on)` | `src/dominio/modulos.ts` |
 | Medida com fita, "guardar só esta" | `Marca.n` (leituras); o formulário antigo já grava | `gravaMarca(…, leituras)` |
-| Série posta em dia ("Já fiz mais do que anotei") | `Log.dp = 1` | **a gravar na Fase 3**, pelo registro da série |
+| Série posta em dia ("Já fiz mais do que anotei") | `Log.dp = 1` | gravada por `ctx.poeEmDia` (Fase 3); a projeção copia do rascunho (`e.dp`) |
 | "Tudo como da última vez?" na sessão de fotos | `SessaoFoto.muda` (`luz`, `roupa`, `lugar`), por `ctx.setMudaDaSessao` | gravado ao criar a sessão (Fase 1) |
 | Par de fotos mandado para os agentes | `S.paraAvaliar` (`pose` ou `todas`, `de`, `ate`, `t`), por `ctx.mandaParaOsAgentes` | fundido item a item (`chaveDePedido`); a pasta dos agentes lê em `corpo/para-avaliar.md` |
 | Foto tirada fora do padrão | `Captura.fora` (`nivel`, `altura`, `distancia`, `tremida`) | gravado pela câmera do visual novo (o que não estava verde no disparo, e a tremida pelo giroscópio); nos dois visuais, a foto torta guardada assim leva `nivel` |
@@ -92,7 +92,7 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Descanso em tela cheia que enche de cor, ±15 s, "sobraram quantas?" gravando o RIR da série que acabou (`poeRir`) | **feito** |
 | Sugestão "subir para X?" | **feito**: `proximaCarga` em `src/dominio/progressao.ts` (1,25 kg por lado, halter +2, placa +2,5), **regra de partida a revisar com o dono** |
 | Lista do treino (com deload), mudar este exercício (trocar, mais uma série, fazer o próximo antes, pular, dor), opções da sessão | **feito** (folhas `listaTreino`, `mudarEx`, `menuSessao`) |
-| Pôr em dia e aviso de intervalo longo | a fazer |
+| Pôr em dia ("Já fiz mais do que anotei") e aviso de intervalo longo | **feito**: `ctx.poeEmDia` grava pela mesma `anotaSerie`, com os números da última vez, marca `Log.dp` (a projeção e a hidratação carregam a marca) e não começa descanso; o aviso sai de `intervaloLongo` em `src/dominio/sessao.ts` (três vezes o descanso, mínimo de 6 min). "Já treinei e não anotei" (depois do treino) fica com o Hoje, na Fase 4 |
 | Fim com "vira regra?", progressão, um exercício, programa, editor, revisão, aula do box | a fazer |
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de

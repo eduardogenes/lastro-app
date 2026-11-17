@@ -126,3 +126,12 @@ test('para quanto subir: o menor passo de cada tipo de carga, e peso do corpo n�
   assert.strictEqual(proximaCarga(10, 'corpo'), null);
   assert.strictEqual(proximaCarga(null, 'pino'), null);
 });
+
+test('intervalo longo: três vezes o descanso, e nunca menos de seis minutos', async () => {
+  const { intervaloLongo, limiteDoIntervalo } = await import('../../src/dominio/sessao');
+  assert.strictEqual(limiteDoIntervalo(180), 9 * 60000);
+  assert.strictEqual(limiteDoIntervalo(60), 6 * 60000, 'descanso curto: o mínimo');
+  assert.strictEqual(intervaloLongo(0, 9 * 60000, 180), false, 'no limite ainda não');
+  assert.strictEqual(intervaloLongo(0, 9 * 60000 + 1, 180), true);
+  assert.strictEqual(intervaloLongo(null, 1e12, 180), false, 'sem série, sem pergunta');
+});
