@@ -75,7 +75,7 @@ do app (`view.pilha`) é a primeira tarefa da Fase 1 ([03-lotes.md](03-lotes.md)
 | Centro das fotos, comparar (lado a lado, cortina, sobrepor, linha das sessões com a ressalva), no tempo, galeria com o selo por sessão, foto aberta, lixeira e ajustar | **feito** (`src/ui/v3/telas/consultafotos.jsx`; dados em `ctx.comparacaoV3`, `noTempoV3`, `galeriaV3`, `centroDasFotosV3`; `tests/fluxo/v3-consulta-fotos.test.js`). A entrada do centro é o Corpo novo (Fase 2); até lá, as telas abrem pelas portas antigas |
 | "Mandar para os agentes" na comparação | **feito**: `S.paraAvaliar` (fundido item a item entre aparelhos, na cópia de segurança) e o arquivo `corpo/para-avaliar.md` na pasta dos agentes, com o par, o peso e a cintura da semana e a ressalva de cada sessão |
 | Alinhamento automático do enquadramento | **feito** (`Enquadramento.auto`, gravado no disparo com a detecção ativa; a pasta dos agentes diz "alinhado pelo app") |
-| Mostrar ao dono as decisões da captura | a fazer, antes de fechar a fase |
+| Mostrar ao dono as decisões da captura | **mostrado** em 17/11/2026 (página com cinco perguntas: voz de ajuste, tremida como ressalva, alinhamento automático, contagem sozinho, botão do fim); a fase fecha com as respostas |
 | Detecção do corpo na câmera | **feito**: luzes de altura e distância sozinhas, frase do que mexer, disparo sozinho com a pessoa parada, `Captura.det`, queda para as linhas (ver [02-captura.md](02-captura.md), "Como ficou no código") |
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
