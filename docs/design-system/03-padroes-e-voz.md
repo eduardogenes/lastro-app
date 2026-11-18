@@ -1,8 +1,8 @@
 # Padrões e voz
 
 Como o app se comporta (padrões) e como fala (voz). Os padrões substituem as
-regras de comportamento do `docs/LASTRO_UX_CONTRACT.md` quando o dono aprovar;
-onde mudam o contrato, está dito.
+regras de comportamento do antigo `docs/LASTRO_UX_CONTRACT.md`, que hoje
+aponta para cá.
 
 ## Padrões
 

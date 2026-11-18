@@ -1,10 +1,9 @@
 # Design system do Lastro
 
 O design system da direção 3, montado a partir dos protótipos em
-`docs/redesign-3/prototipos/`. Enquanto o dono não aprovar, nada daqui muda
-`src/`, `DESIGN.md` ou o contrato de UX. Quando aprovar, `DESIGN.md` e
-`docs/LASTRO_UX_CONTRACT.md` passam a apontar para cá, e a auditoria vira o
-plano da próxima fase.
+`docs/redesign-3/prototipos/`. Aprovado pelo dono; é a referência de toda
+tela. `DESIGN.md` e `docs/LASTRO_UX_CONTRACT.md` apontam para cá, e a
+auditoria é o plano da implementação (o prompt dela está no `06`).
 
 ## O que tem aqui
 
@@ -34,6 +33,21 @@ plano da próxima fase.
 | 4. Telas e fluxos | feita: 84 telas, 174 estados |
 | 5. Auditoria da implementação | feita: 39 achados, 3 de dado (4 de fluidez, acrescentados depois) |
 | 6. Revisão final | feita: Chromium e WebKit a 414 × 896, sem erro, sem rolagem lateral, sem alvo abaixo de 44 nem texto abaixo de 12 |
+
+## Implementação no app
+
+As peças do `06-prompt-implementacao.md`, na ordem. Cada achado feito fica
+marcado em `05-auditoria.md` com o commit.
+
+| Peça | Estado |
+|---|---|
+| 1. Documentos (`DESIGN.md` e o contrato apontam para cá) | feita |
+| 2. O que se perde, e a fluidez | a fazer |
+| 3. Tokens e componentes base | a fazer |
+| 4. Treino | a fazer |
+| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | a fazer |
+| 6. Os três de dado | a fazer |
+| 7. Revisão final | a fazer |
 
 ## As páginas publicadas
 

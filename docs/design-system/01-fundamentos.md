@@ -1,8 +1,8 @@
 # Fundamentos
 
 Os valores moram em [tokens.css](tokens.css). Este documento diz o papel de
-cada um, quando usar e por quê. Onde contradiz o `DESIGN.md` atual, vale este
-(e o `DESIGN.md` é corrigido quando o dono aprovar).
+cada um, quando usar e por quê. O `DESIGN.md` da raiz
+aponta para cá.
 
 ## A ideia, em uma frase
 

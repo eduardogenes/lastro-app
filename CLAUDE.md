@@ -10,15 +10,17 @@ qualquer decisão de tela, UX, design, texto de interface e componente.
 
 | Para saber | Leia |
 |---|---|
-| O que construir, em que ordem e quem faz | [docs/redesign-3/00-plano.md](docs/redesign-3/00-plano.md) |
-| Como cada tela é e se comporta | os protótipos em [docs/redesign-3/prototipos/](docs/redesign-3/prototipos/) (abrem no navegador) e o `LEIA.md` de lá |
-| Cores, tipografia, componentes, movimento | [DESIGN.md](DESIGN.md) |
+| Como cada tela é e se comporta, estado por estado | o design system em [docs/design-system/](docs/design-system/): a página viva `lastro.html` e o `LEIA.md` de lá |
+| Cores, tipografia, componentes, movimento | [docs/design-system/](docs/design-system/) (`tokens.css`, `01` a `03`, `07`); [DESIGN.md](DESIGN.md) é a porta |
+| O que falta implementar, tela por tela | [docs/design-system/05-auditoria.md](docs/design-system/05-auditoria.md) |
+| O que existe e onde | [docs/redesign-3/00-plano.md](docs/redesign-3/00-plano.md) |
+| O que o design system não cobrir | os protótipos em [docs/redesign-3/prototipos/](docs/redesign-3/prototipos/) |
 | Quem usa, para quê, princípios | [PRODUCT.md](PRODUCT.md) |
-| Navegação, camadas, acessibilidade | [docs/LASTRO_UX_CONTRACT.md](docs/LASTRO_UX_CONTRACT.md) |
+| Navegação, camadas, regras de engenharia | [docs/LASTRO_UX_CONTRACT.md](docs/LASTRO_UX_CONTRACT.md) |
 | Nome, voz e ícone | [MARCA.md](MARCA.md) |
 
-Quando o protótipo e um documento discordarem, vale o protótipo, e o documento
-é corrigido na mesma mudança.
+Quando o design system e outro documento discordarem, vale o design system, e
+o documento é corrigido na mesma mudança.
 
 ## O que não vale mais
 

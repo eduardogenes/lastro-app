@@ -1,150 +1,47 @@
 # DESIGN.md — direção 3
 
-O sistema visual do Lastro, aprovado em 16/11/2026. Substitui o **Instrumento**
-(guardado em [docs/historico/DESIGN-instrumento.md](docs/historico/DESIGN-instrumento.md),
-só como registro do código antigo, que sai na Fase 5 do
-[plano](docs/redesign-3/00-plano.md)).
+O sistema visual do Lastro mora em **[docs/design-system/](docs/design-system/)**.
+Este arquivo é só a porta: o resumo abaixo e onde está cada coisa. Onde ele e o
+design system parecerem discordar, vale o design system.
 
-A referência de como cada tela é são os protótipos em
-[docs/redesign-3/prototipos/](docs/redesign-3/prototipos/). Este documento dá
-os valores e as regras que eles compartilham. Os valores moram em
-`src/v3/tokens.css`; cor e medida soltas fora de lá são erro.
+O texto anterior deste arquivo (os valores da aprovação de 16/11/2026, antes
+do design system) está no histórico do git. O visual antigo (Instrumento) está
+em [docs/historico/DESIGN-instrumento.md](docs/historico/DESIGN-instrumento.md),
+só como registro.
 
 ## A ideia
 
 **A tela diz uma coisa por vez, em letra grande, com um botão só.** O que
-importa agora ocupa um bloco de cor no topo. O resto é consulta, e fica
-compacto embaixo.
+importa agora ocupa um bloco de cor no topo; o resto é consulta, compacta,
+embaixo. Compacto onde se consulta, com respiro onde se age. Número se arrasta
+numa régua; teclado só para texto. Dá para ver o que é tocável.
 
-Três consequências:
+Tema claro sempre, sem tema escuro nem como opção. Papel quente, tinta quase
+preta, cores chapadas, que dizem o **assunto** (treino, refeição, corpo,
+semana, feito), não se está bom ou ruim. Sobre cor, só tinta.
 
-1. **Compacto onde se consulta, com respiro onde se age.** Lista, histórico e
-   resumo cabem muito por tela. Registrar uma série, medir, fotografar e
-   descansar tomam a tela inteira, com número gigante.
-2. **Número se arrasta.** Peso, carga, repetição, medida e quantidade ficam
-   numa régua. Teclado só para texto.
-3. **Dá para ver o que é tocável.** Botão é pílula cheia ou de contorno. O que
-   abre tem seta. O que liga tem chave. Texto solto não é botão, com uma
-   exceção: a saída discreta, sublinhada ("Pulei esta", "Tirar mesmo assim").
+O que se repete fica parado, para a mão aprender onde está; o que muda se
+mostra mudando, rápido e com motivo.
 
-## Tema
+## Onde está cada coisa
 
-**Claro, sempre.** Não segue o tema do aparelho. Fundo de papel quente, tinta
-quase preta, cores chapadas. Sem sombra para dar relevo, sem degradê, sem
-vidro. A única sombra é a da doca de navegação e da folha, que flutuam sobre o
-conteúdo.
-
-## Cor
-
-| Token | Valor | Uso |
-|---|---|---|
-| `--papel` | `#F6F3EC` | fundo |
-| `--branco` | `#FFFDF8` | superfície de controle sobre o papel ou sobre cor |
-| `--areia` | `#EBE6DA` | superfície quieta: bloco secundário, trilho, estado vazio |
-| `--fio` | `#DFDACE` | divisória e contorno quieto, 1,5 px |
-| `--tinta` | `#0F0F0D` | texto, botão principal, contorno forte (2 a 2,5 px) |
-| `--tinta-2` | `#56554E` | texto de apoio |
-| `--tinta-3` | `#77766D` | legenda; nunca sobre bloco de cor |
-| `--lima` | `#D2F23A` | treino, a ação de agora, o que está selecionado |
-| `--tanja` | `#FF9A4D` | refeição; e o que pede atenção ou está fora do padrão |
-| `--lilas` | `#D3C6FF` | corpo, medidas, pergunta do dia |
-| `--ceu` | `#BBDDFB` | semana, água, dobras |
-| `--menta` | `#BEEBD2` | feito, guardado, em dia |
-
-**A cor do bloco diz de que assunto é o momento**, não se está bom ou ruim.
-Sobre qualquer bloco de cor, o texto é `--tinta` (nunca cinza) e o botão
-principal é `--tinta` com texto `--papel`.
-
-Atenção e erro usam `--tanja` com contorno de tinta e **sempre uma frase** que
-diz o que houve. Não existe vermelho. Destrutivo se distingue pela palavra e
-pela confirmação, não pela cor.
-
-O ícone do app usa as cores da marca (lima `#D9FF16` sobre preto `#0E1112`),
-que são outra coisa: ver [MARCA.md](MARCA.md).
-
-## Tipografia
-
-Duas famílias, servidas de dentro do app (funcionam sem rede):
-
-- **Bricolage Grotesque** (`--f-titulo`): títulos, números, botões, rótulos
-  curtos. Pesos 700 e 800. Entreletra de −0,01 a −0,05em, mais fechada quanto
-  maior.
-- **Instrument Sans** (`--f-texto`): texto corrido, apoio, legenda. Pesos 400 a
-  700.
-
-Número sempre com algarismos tabulares.
-
-| Papel | Tamanho | Onde |
-|---|---|---|
-| Gigante | 92 a 132 px | o número que se lê de longe: peso, medida, descanso |
-| Valor em foco | 56 a 76 px | carga e repetição da série; o título do bloco do momento |
-| Título de tela | 28 a 38 px | cabeçalho fino; bloco do momento quando o texto é longo |
-| Título de seção | 17 px, 700 | uma linha, caixa de frase, com nota opcional à direita |
-| Nome em lista | 16 a 19 px, 700 | |
-| Texto | 14 a 16 px | |
-| Legenda | 12 a 13 px | **piso: 12 px** para qualquer coisa que se lê |
-
-Sem rótulo pequeno em caixa alta acima de título. O título diz o assunto
-sozinho.
-
-## Forma e espaço
-
-- **Raio:** pílula (`999px`) para botão, chip e trilho; 24 a 34 px para bloco;
-  36 px só nas duas quinas de cima da folha; círculo para marca e passo.
-- **Margem lateral:** 20 px. **Entre seções:** 18 px. **Divisória:** fio de
-  1,5 px entre linhas de lista; sem caixa em volta da lista.
-- **Alvo de toque:** 44 px no mínimo. Botão principal 58 px; no treino e na
-  medição, 66 a 72 px.
-
-## Os componentes
-
-Vivem em `src/ui/v3/`. Tela nova se monta com eles; se faltar um, ele nasce lá
-e entra nesta lista. Para ver todos funcionando com dados de exemplo:
-`npm run dev` e abrir `/v3.html`.
-
-| Componente | O que é |
+| Para saber | Leia |
 |---|---|
-| **Bloco do momento** | o topo de cor: quando, título grande, uma frase, um botão principal, no máximo um de contorno e uma saída discreta. Encolhe para uma faixa quando não há o que fazer. |
-| **Cabeçalho fino** | telas de consulta e destinos: voltar, título de 28 a 34 px, uma nota ou ação à direita. Uma linha. |
-| **Botões** | principal (tinta cheia), contorno (2 px de tinta), saída discreta (sublinhada). Um principal por tela. |
-| **Régua** | número arrastável com passo, marcas e valor grande acima. |
-| **Lista com seta** | linha de 60 px: nome, apoio, valor à direita, seta se abre algo. |
-| **Chave** | liga e desliga, com nome e uma linha do que faz. |
-| **Segmentos** | progresso em traços: séries do treino, poses da sessão, dias respondidos. |
-| **Seletor em pílula** | duas ou três opções lado a lado. |
-| **Quadro** | número com legenda, em grade de 2 a 4, para resumo. |
-| **Pergunta** | bloco de areia com uma pergunta e duas ou três respostas em pílula. |
-| **Folha** | sobe de baixo, com véu; tarefa curta. Fecha no véu, no Esc e no Voltar. |
-| **Doca** | a navegação: pílula escura flutuante com os cinco lugares e, ao lado, o botão "+" de registrar. Encolhe ao rolar para baixo. |
-| **Tela cheia de ação** | treino, descanso, medir, câmera, responder dias: fundo de cor, uma coisa por tela, botão grande embaixo. |
-| **Faixa de aviso** | sem rede (areia, some sozinha) e falha ao guardar (tangerina, fica até resolver). |
-| **Escolha grande** | cartão branco com ícone num círculo, nome e uma linha; o escolhido fica lima com contorno de tinta. Para decidir um cenário antes de começar ("quem vai segurar o celular?"). Classe `v3-esc`. |
-| **Foto** | a foto do corpo em 3:4 com o ajuste aplicado (`src/ui/v3/foto.jsx`), sempre pelo mesmo `transform` do enquadramento; o ponto tangerina marca a foto fora do padrão. |
-| **Sugestão do app** | bloco lilás com o que o app propõe, "Ver como fica" (prévia sem gravar), um principal para aceitar e "Agora não". Para o que o app calcula mas é o dono quem decide (o alinhamento da foto). |
-| **Luzes** | as três do disparo da câmera (nível, altura, distância): tangerina até acertar, lima quando certas; grandes no ajuste, em pílula depois. A que o app não mede é tocável ("toque ao conferir"). |
+| como cada tela é, estado por estado | a página viva [docs/design-system/lastro.html](docs/design-system/lastro.html) (as telas em `ds-telas.js` e `ds-telas2.js`) |
+| cor, letra, espaço, forma, sombra, movimento (os valores) | [docs/design-system/tokens.css](docs/design-system/tokens.css), copiados em `src/v3/tokens.css` |
+| por que cada valor (contraste medido, escala, toque, polegar) | [01-fundamentos.md](docs/design-system/01-fundamentos.md) |
+| os componentes, com estados e acessibilidade | [02-componentes.md](docs/design-system/02-componentes.md) |
+| como o app se comporta e como fala | [03-padroes-e-voz.md](docs/design-system/03-padroes-e-voz.md) |
+| como as telas se movem e o que nunca sai do lugar | [07-fluidez-e-estabilidade.md](docs/design-system/07-fluidez-e-estabilidade.md) |
+| o que o app ainda faz diferente, e a correção | [05-auditoria.md](docs/design-system/05-auditoria.md) |
 
-## Movimento
+## Regras de engenharia do visual
 
-Curva única, `cubic-bezier(.2, .9, .25, 1)`. Durações de 120 ms (toque) a
-450 ms (troca de cor do bloco).
-
-- Folha e tela cheia sobem de baixo.
-- O conteúdo do bloco do momento entra em sequência curta **só quando o
-  momento muda**, não a cada redesenho.
-- Botão encolhe 3% ao toque.
-- O descanso enche a tela de cor, de baixo para cima, no tempo do descanso.
-- A doca encolhe ao rolar para baixo e volta ao rolar para cima.
-
-Com "reduzir movimento" ligado, nada desliza nem escala: troca seca.
-
-## O que não fazer
-
-- Cartão branco com sombra sobre fundo cinza.
-- Cinza sobre bloco de cor.
-- Dois botões principais na mesma tela.
-- Texto que é botão sem parecer botão.
-- Formulário com vários campos numa tela quando cabe uma pergunta por tela.
-- Cobrança: sequência de dias, medalha, "você esqueceu". Dia em branco é dia
-  em branco.
-- Ícone feito de caractere ou emoji. Ícone é desenho, traço de 2 a 2,8 px.
-- Tema escuro.
+- Cor e medida soltas fora de `src/v3/tokens.css` são erro (a guarda está em
+  `tests/dominio/estilo-v3.test.ts`).
+- Toda classe começa com `v3-`. Os componentes moram em `src/ui/v3/base.jsx` e
+  `src/v3/componentes.css`; tela não inventa componente.
+- Texto que se lê nunca abaixo de 12 px; campo de digitar com 16 px.
+- Ícone é desenho (`src/ui/v3/icones.jsx`), nunca emoji nem caractere.
+- Sem `backdrop-filter`, sem degradê, sem sombra fora da doca, da folha e da
+  câmera.
