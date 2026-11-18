@@ -13549,17 +13549,48 @@ function diasParaResponder() {
     d.setDate(d.getDate() - k);
     const iso = hojeISO(d.getTime());
     const h = porData[iso];
+    // o que o dia teve, para a pessoa lembrar: o treino e o turno
+    const ms = sessoesDoDia(d.getTime()).filter(function (m) { return !m.livre; });
+    const per = ms.filter(temHora)[0];
     out.push({ iso: iso, rotulo: maiuscula(DIAS_LONGOS[d.getDay()]) + ', ' + fmtDate(d.getTime()),
+               curto: DIAS_LONGOS[d.getDay()] + ', ' + d.getDate(),
+               teve: ms.length ? 'Dia de ' + (diaAberto(ms[0].day) ? 'aula' : 'Treino ' + ms[0].day) + (per ? ', ' + ({ 'manhã': 'de manhã', tarde: 'de tarde', noite: 'à noite' })[periodoDe(per.t).nome] : '') + '.' : 'Dia sem treino.',
                resposta: CTX.respostaDoDia(iso), marcado: !!(h && Object.keys(h.done || {}).length) });
   }
   return out;
 }
 CTX.abreResponderDias = function () {
-  const falta = diasParaResponder().filter(function (x) { return !x.resposta && !x.marcado; }).map(function (x) { return x.iso; });
+  // do mais recente para trás: o dia de ontem é o que se lembra melhor
+  const falta = diasParaResponder().filter(function (x) { return !x.resposta && !x.marcado; }).map(function (x) { return x.iso; }).reverse();
   view.responderDias = { fila: falta, i: 0 };
   entraNoDestino('responderDias'); render(); rola(0);
 };
 CTX.fechaResponderDias = function () { view.responderDias = null; render(); saiDoDestino('responderDias'); };
+/** Quantos dos últimos dias têm resposta ou marca: a conta da regra do nutricionista. */
+CTX.respondidosV3 = function () {
+  const todos = diasParaResponder();
+  return { n: todos.filter(function (x) { return x.resposta || x.marcado; }).length, de: todos.length };
+};
+/**
+ * O DIA ESCOLHIDO em Dias, em três quadros: o treino (letra, séries e tempo),
+ * o peso e a água daquele dia.
+ */
+CTX.resumoDoDiaV3 = function (iso) {
+  const t = new Date(iso + 'T12:00:00').getTime();
+  const ms = sessoesDoDia(t).filter(function (m) { return !m.livre; });
+  const m = ms[0] || null;
+  let series = 0;
+  if (m) Object.keys(S.logs).forEach(function (k) { (S.logs[k] || []).forEach(function (l) { if (l.sid === m.sid) series += l.sets.filter(Boolean).length; }); });
+  const peso = (S.body.peso || []).filter(function (x) { return sameDay(x.t, t); }).slice(-1)[0];
+  const h = iso === hojeISO() ? (S.dia && S.dia.data === iso ? S.dia : null)
+    : (Array.isArray(S.comidaHist) ? S.comidaHist : []).filter(function (x) { return x && x.d === iso; })[0];
+  return {
+    treino: m ? { titulo: diaAberto(m.day) ? 'Aula' : 'Treino ' + m.day,
+                  apoio: (series ? series + (series === 1 ? ' série' : ' séries') : 'sem série') + (m.dur ? ' · ' + fmtDur(m.dur) : '') } : null,
+    peso: peso ? fmtDec(peso.v) : null,
+    agua: ligado(S.modulos, 'agua') ? (h && !h.aguaNaoContada && h.agua ? h.agua + ' de ' + COPOS_DO_DIA : null) : undefined
+  };
+};
 CTX.responderDiasV3 = function () {
   const v = view.responderDias; if (!v) return null;
   const todos = diasParaResponder();

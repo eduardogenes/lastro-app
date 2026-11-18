@@ -45,7 +45,7 @@ marcado em `05-auditoria.md` com o commit.
 | 2. O que se perde, e a fluidez | feita (`f5df85a`): Ajustes alcançável, a tira do treino aberto, o aviso com "Desfazer", a porta do movimento religada, as âncoras da tela de ação |
 | 3. Tokens e componentes base | feita (`933171b`), depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
 | 4. Treino | feita (`318532f`), depois da revisão: a série com o par e uma régua só, sem rolar; o descanso com o "a seguir" e "Água +1"; o fim; pôr em dia como tela; a aula do box como tela de ação. O principal tem o mesmo retângulo em série, descanso e fim |
-| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | em curso: Hoje feito (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver") |
+| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | em curso: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias, a tela do mês e responder os dias |
 | 6. Os três de dado | a fazer |
 | 7. Revisão final | a fazer |
 
@@ -65,8 +65,8 @@ componente):
 - Corpo: "Guardar 76,7 kg hoje" aparece tracejado mas funciona; a referência
   diz "Arraste a régua para pesar hoje" na espera e, já pesado, um principal
   cheio que desfaz;
-- Dias: depois de responder, a pergunta some; as respostas deviam ficar para
-  corrigir;
+- (feito com Dias) depois de responder, a pergunta fica, com a resposta
+  marcada, para corrigir;
 - Hoje: o cardio enche em céu (a cor da água); na referência, em lima;
 - folha da refeição: "Comi outra coisa", "Não comi" e "Não sei" em menta (a cor
   de feito); a referência usa linhas de opção. No menu da sessão, o treino
@@ -99,6 +99,17 @@ Pendências que a revisão do Hoje deixou:
   `--camada-*`; a ordem entre elas está certa;
 - a 414 × 896, o Hoje rola pouco, e a ação que gruda no topo quase nunca
   aparece (o mesmo na referência); aparece em tela menor.
+
+Pendências que a revisão de Dias deixou (o dia aberto e o que se corrige nele
+vêm em seguida, na mesma peça):
+
+- a conta de "respondidos" é dos 13 dias fechados antes de hoje; a referência
+  fala em 14. O design system precisa dizer se hoje entra na janela (é a regra
+  do nutricionista, e muda nela pedem decidir com o dono);
+- "voltar um" em responder os dias mostra a resposta já dada, mas não a apaga
+  (apagar uma resposta não existe no dado ainda);
+- a hora sem zero à esquerda ("6h08") vem de `horaDeMinutos`, usada em várias
+  telas; o "No mês" já completa, as outras telas entram quando forem feitas.
 
 ## As páginas publicadas
 

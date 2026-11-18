@@ -75,7 +75,7 @@ Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino 
 
 | Tipo | O quê | Hoje | Correção | Onde |
 |---|---|---|---|---|
-| fluxo | **Responder os dias em menta durante a tarefa** | TelaDeAcao cor="menta" do começo ao fim. | Lilás (a pergunta do dia) durante; menta só na tela final ("13 dias respondidos"). | ResponderDias em dias.jsx |
+| fluxo | **Responder os dias em menta durante a tarefa** (feito, peça 5, Dias) | TelaDeAcao cor="menta" do começo ao fim. | Lilás (a pergunta do dia) durante; menta só na tela final ("13 dias respondidos"). | ResponderDias em dias.jsx |
 | estado | **Colar a cópia como texto** | Só restaurar por arquivo. | Folha "Colar a cópia" em Ajustes: campo de texto longo, "Conferir o texto", o resumo do que tem nela, e a confirmação de restaurar. | ajustes.jsx |
 
 ## Ajustes

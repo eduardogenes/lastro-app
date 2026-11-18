@@ -53,7 +53,7 @@ window.AUDITORIA = [
     { t: 'estado', o: 'O que vence hoje não se destaca', h: 'O prazo aparece na linha pequena de cada mudança (g.vence), mas uma que vence hoje tem o mesmo peso das outras; venceHoje não é usado na tela.', c: 'Vencendo hoje, um aviso de atenção acima da mudança ("Vence hoje, no treino B"), e as respostas como fichas ("Só aquele dia" / "Passa a valer").', l: 'plano.jsx; src/main.jsx:10716' }
   ] },
   { g: 'Dias, Corpo, Fotos', a: [
-    { t: 'fluxo', o: 'Responder os dias em menta durante a tarefa', h: 'TelaDeAcao cor="menta" do começo ao fim.', c: 'Lilás (a pergunta do dia) durante; menta só na tela final ("13 dias respondidos").', l: 'ResponderDias em dias.jsx' },
+    { t: 'fluxo', f: 'peça 5, Dias', o: 'Responder os dias em menta durante a tarefa', h: 'TelaDeAcao cor="menta" do começo ao fim.', c: 'Lilás (a pergunta do dia) durante; menta só na tela final ("13 dias respondidos").', l: 'ResponderDias em dias.jsx' },
     { t: 'estado', o: 'Colar a cópia como texto', h: 'Só restaurar por arquivo.', c: 'Folha "Colar a cópia" em Ajustes: campo de texto longo, "Conferir o texto", o resumo do que tem nela, e a confirmação de restaurar.', l: 'ajustes.jsx' }
   ] },
   { g: 'Ajustes', a: [

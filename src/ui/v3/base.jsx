@@ -62,7 +62,7 @@ export function Cabecalho({ titulo, nota, aoVoltar, acao, raiz }) {
 }
 
 /** A fileira de botões. Um `Botao` principal por tela. */
-export function Acoes({ children, ...resto }) { return <div class="v3-acoes" {...resto}>{children}</div>; }
+export function Acoes({ children, class: c, ...resto }) { return <div class={cls('v3-acoes', c)} {...resto}>{children}</div>; }
 
 /**
  * `tipo`: `principal` (tinta cheia) ou `contorno`. `grande` é o tamanho das

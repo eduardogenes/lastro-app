@@ -27,7 +27,12 @@ test('o mês em grade, e o dia escolhido pergunta pela comida', async () => {
   a.clicar('.v3-perg-r button:nth-child(2)');
   await a.esperar(60);
   assert.strictEqual(a.E(`CTX.respostaDoDia(${JSON.stringify(ontem)})`), 'quase');
-  assert.ok(!a.$('.v3-perg'), 'respondida, a pergunta sai');
+  // respondida, a pergunta fica com a resposta marcada: tocar outra corrige
+  assert.ok(/Comida: quase como o plano/.test(a.texto('.v3-perg')), a.texto('.v3-perg'));
+  assert.strictEqual(a.$('.v3-perg-r button:nth-child(2)').getAttribute('aria-checked'), 'true');
+  a.clicar('.v3-perg-r button:nth-child(1)');
+  await a.esperar(60);
+  assert.strictEqual(a.E(`CTX.respostaDoDia(${JSON.stringify(ontem)})`), 'sim', 'corrigida');
   a.fechar();
 });
 
@@ -41,17 +46,18 @@ test('responder os dias: um por tela, voltar um, e "os que faltam" de uma vez', 
   await a.esperar(40);
   r = a.vJ('ctx.responderDiasV3');
   assert.strictEqual(r.i, 1, 'andou');
-  assert.strictEqual(a.E(`CTX.respostaDoDia(${JSON.stringify(iso(13))})`), 'sim', 'o primeiro, o mais antigo, gravado');
+  assert.strictEqual(a.E(`CTX.respostaDoDia(${JSON.stringify(iso(1))})`), 'sim', 'o primeiro, o mais recente (ontem), gravado');
   a.clicar('[data-a="resp-volta"]');
   await a.esperar();
   assert.strictEqual(a.vJ('ctx.responderDiasV3').i, 0, 'voltou um');
+  assert.ok(/Você respondeu “foi, sim”/.test(a.texto('[data-a="resp-ja"]')), 'e mostra a resposta que já deu');
   a.clicar('[data-a="resp-naosei"]');
   await a.esperar(40);
-  assert.strictEqual(a.E(`CTX.respostaDoDia(${JSON.stringify(iso(13))})`), 'naosei', 'corrigido');
+  assert.strictEqual(a.E(`CTX.respostaDoDia(${JSON.stringify(iso(1))})`), 'naosei', 'corrigido');
   a.clicar('[data-a="resp-todos"]');
   await a.esperar(80);
   assert.ok(!a.vJ('ctx.responderDiasV3').atual, 'acabou');
-  assert.strictEqual(a.E(`CTX.respostaDoDia(${JSON.stringify(iso(1))})`), 'sim', 'os que faltavam, como o plano');
-  assert.ok(/13 de 13 dias/.test(a.texto('.v3-medir-f')), a.texto('.v3-medir-f'));
+  assert.strictEqual(a.E(`CTX.respostaDoDia(${JSON.stringify(iso(13))})`), 'sim', 'os que faltavam, como o plano');
+  assert.ok(/13 dias respondidos/.test(a.texto('.v3-acao h1')), a.texto('.v3-acao h1'));
   a.fechar();
 });

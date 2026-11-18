@@ -501,19 +501,21 @@
 .v3-mes-nav button:disabled { color: var(--marca); }
 .v3-mes-nav svg { width: 22px; height: 22px; }
 .v3-mes-nav b { font: 700 16px var(--f-titulo); text-align: center; }
-.v3-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+/* a grade do mês, como a referência: círculos; treino em tinta; riscado só em dia sem treino */
+.v3-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--e-2); }
 .v3-cal-h { margin-bottom: 6px; }
 .v3-cal-h span { text-align: center; font-size: 12px; font-weight: 700; color: var(--texto-legenda); }
-.v3 .v3-dia { position: relative; aspect-ratio: 1; border-radius: 12px; background: var(--superficie-quieta); display: flex; flex-direction: column; align-items: center; justify-content: center; font: 800 15px var(--f-titulo); }
-.v3-cal button small { position: absolute; top: 3px; left: 5px; font: 600 12px var(--f-texto); color: var(--texto-2); }
-.v3 .v3-cal button.t { background: var(--assunto-treino); }
-.v3 .v3-cal button.fut { background: transparent; box-shadow: inset 0 0 0 1px var(--contorno); }
-.v3 .v3-cal button.branco { background: repeating-linear-gradient(135deg, var(--superficie-quieta) 0 5px, var(--fundo) 5px 9px); }
-.v3 .v3-cal button.hoje { box-shadow: inset 0 0 0 2px var(--texto); }
-.v3 .v3-cal button.sel { box-shadow: inset 0 0 0 3px var(--texto); }
-.v3-cal-c { position: absolute; bottom: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--acao); }
+.v3 .v3-cal .v3-dia { position: relative; aspect-ratio: 1; width: 100%; min-height: var(--alvo); border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 var(--fio-fino) var(--contorno); display: flex; flex-direction: column; align-items: center; justify-content: center; font: 700 14px var(--f-titulo); }
+.v3-cal button small { position: absolute; top: 5px; left: 0; right: 0; text-align: center; font: 600 12px/1 var(--f-texto); color: var(--texto-legenda); }
+.v3 .v3-cal button.t { background: var(--acao); color: var(--texto-sobre-acao); box-shadow: none; }
+.v3-cal button.t small { color: var(--texto-sobre-acao-2); }
+.v3 .v3-cal button.fut { opacity: .4; box-shadow: inset 0 0 0 var(--fio-fino) var(--divisoria); }
+.v3 .v3-cal button.branco { box-shadow: none; background: repeating-linear-gradient(135deg, var(--superficie-quieta) 0 4px, transparent 4px 8px); }
+.v3 .v3-cal button.hoje { box-shadow: inset 0 0 0 var(--fio-escolhido) var(--texto); }
+.v3 .v3-cal button.sel { outline: 3px solid var(--atencao); outline-offset: 2px; }
+.v3-cal-c { position: absolute; bottom: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--assunto-feito); box-shadow: 0 0 0 1px var(--texto); }
+.v3-cal button.t .v3-cal-c { background: var(--assunto-treino); box-shadow: none; }
 .v3-dia-txt { font-size: 15px; line-height: 1.4; margin-bottom: 10px; }
-.v3-resp-pe { display: grid; gap: 8px; width: 100%; }
 
 /* ---- Semana (Fase 4) ---------------------------------------------------- */
 .v3-crit { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1.5px solid var(--divisoria); }
@@ -563,3 +565,19 @@
 .v3-itens div { display: flex; justify-content: space-between; gap: var(--e-5); }
 .v3-folha-h { margin-top: var(--e-7); }
 .v3-folha-h h3 { font: var(--t-secao); letter-spacing: -.02em; }
+
+/* Dias: a legenda do mês, e responder os dias */
+.v3-legm { display: flex; flex-wrap: wrap; gap: var(--e-1) var(--e-6); margin-top: var(--e-4); font: 600 12px var(--f-texto); color: var(--texto-2); }
+.v3-legm span { display: inline-flex; align-items: center; gap: var(--e-2); }
+.v3-legm i { width: 14px; height: 8px; border-radius: 9px; }
+.v3-legm i.t { background: var(--acao); }
+.v3-legm i.c { background: var(--assunto-feito); box-shadow: inset 0 0 0 1px var(--texto); }
+.v3-legm i.v { background: repeating-linear-gradient(135deg, var(--superficie-quieta) 0 3px, transparent 3px 6px); box-shadow: inset 0 0 0 1px var(--contorno); }
+.v3-resp-pe { flex: 1; display: grid; gap: var(--e-3); }
+.v3-resp-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); }
+.v3 .v3-topo-saida { font: 600 14px/1.2 var(--f-texto); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1.5px; min-width: var(--alvo); justify-content: flex-end; }
+.v3 .v3-topo-saida:disabled { visibility: hidden; }
+.v3-acao > .v3-segs.g i, .v3-acao-g > .v3-segs i { height: 8px; }
+.v3-resp .v3-acao-links { justify-content: center; }
+.v3-acoes-0 { margin-top: 0; }
+.v3-resp-l { margin-top: var(--e-4); }
