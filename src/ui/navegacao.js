@@ -61,6 +61,8 @@ export function camadasAbertas(view) {
   // fica por cima. Ele não é `view.sessao` — esse é o DETALHE de uma sessão
   // passada, e a frente 1 apontou que confundir os dois era o erro provável.
   if (view.modoSessao) c.push('modoSessao');
+  // Pôr em dia (visual novo), um destino por cima do treino de onde abriu.
+  if (view.porEmDia) c.push('porEmDia');
 
   // O dia aberto, abaixo da sessão e do registro de treino passado, que abrem dele.
   if (view.diaAberto) c.push('dia');

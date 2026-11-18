@@ -132,7 +132,7 @@ tela({ id: 'descanso', n: 'Descanso', g: 'treino', c: 'acao', lugar: 'hoje', glo
   es: [['normal', '1 min 50 s faltando'], ['fim', 'acabando']], vai: ['serie'],
   r: e => `<div class="acao-t pausa"><div class="enche" style="height:${e === 'fim' ? 92 : 38}%"></div>${topoTreino('03:41', 22, 1)}
     <div class="meio-a c"><p class="linha-a" style="text-align:center">descanso</p><div class="contagem n" role="timer" aria-label="faltam ${e === 'fim' ? '12 segundos' : '1 minuto e 50 segundos'}">${e === 'fim' ? '0:12' : '1:50'}</div>
-      <div class="sobrou"><p>Sobraram quantas repetições? Se quiser dizer.</p>${H.resp(['0', '1', '2', '3+'], e === 'fim' ? '1' : null, { nome: 'Repetições que sobraram' })}</div>
+      <div class="sobrou"><p>Sobraram quantas repetições? Se quiser dizer.</p>${H.resp(['0', '1', '2', '3', '4+'], e === 'fim' ? '1' : null, { nome: 'Repetições que sobraram', fundo: 1 })}</div>
       <div class="prox"><div class="tx"><span>a seguir · série 2 de 2</span><b>Agachamento no Smith</b><span class="n">60 × 10</span></div><button class="peq" data-desfazer="Copo somado: 7 de 14.">Água +1</button></div></div>
     <div class="pe-a">${H.vai('Começar já', { g: 1, ir: 'serie--meio' })}</div><div class="saidas c">${H.peq('−15 s', { c: 1 })}${H.peq('+15 s', { c: 1 })}</div></div>` });
 
@@ -166,7 +166,7 @@ tela({ id: 'f-menu-sessao', n: 'Opções do treino', g: 'treino', c: 'folha', ba
     ${H.op(ic.lixo, 'Descartar esta sessão', 'apaga as 8 séries de hoje', { folha: 'f-confirma--descartar' })}</div>`) });
 
 tela({ id: 'por-em-dia', n: 'Pôr em dia', g: 'treino', c: 'destino', lugar: 'hoje',
-  d: 'Treinou e não anotou. Marque o que fez; cada um entra com as repetições da última vez, e a carga se acerta no passo. Fica marcado como "registrado depois" e conta igual para a progressão. É tela, não folha: é lista que rola.',
+  d: 'Treinou e não anotou. Marque o que fez; cada um entra com todas as séries que faltam, as repetições da última vez, e a carga se acerta no passo (mexer na carga já marca). "Fiz tudo como da última vez" grava tudo num toque e volta ao treino. Sem marca, o principal espera ("Marque o que você fez"). Fica marcado como "registrado depois" e conta igual para a progressão. É tela, não folha: é lista que rola.',
   es: [['meio', 'no meio do treino'], ['depois', 'depois: o treino que já fiz']], vai: ['serie', 'fim-treino'],
   r: e => { const lin = D.EX.slice(0, 7).map((x, i) => { const ja = e === 'meio' && i < 2, on = i === 2 || i === 3, u = x.h[x.h.length - 1];
       return `<div class="pd ${ja ? 'ja' : on ? 'on' : ''}"><button class="ck" data-marca aria-checked="${on}" ${ja ? 'aria-disabled="true"' : ''} aria-label="${x.n}: fiz">${ic.ok}</button><span class="nm"><b>${x.n}</b><span class="n">${ja ? 'já anotado' : x.s + (x.s === 1 ? ' série' : ' séries') + ' · ' + u[2].join(' ') + ' rep'}</span></span>${ja ? '' : `<span class="st"><button aria-label="Menos 2,5 kg">−</button><b class="n">${vir(u[1])}</b><button aria-label="Mais 2,5 kg">+</button></span>`}</div>`; }).join('');
@@ -185,9 +185,9 @@ tela({ id: 'fim-treino', n: 'Fim do treino', g: 'treino', c: 'acao', lugar: 'hoj
     : `<div class="acao-t pausa">${topoTreino('58:02', 22, 22)}<div style="padding-top:18px"><p class="linha-a">guardado · 58 min</p><h2 class="heroi m">22 séries. Treino B fechado.</h2>
       <p class="apoio">2 exercícios registrados depois, com as repetições da última vez. Carga nova em cadeira flexora: 47,5 kg.</p></div>
       ${e === 'mudou' ? `<h2 class="h" style="margin-top:18px">O que você mudou hoje <small>vira regra?</small></h2>
-        <div class="decide"><p>Trocou agachamento no Smith por hack machine</p><small>Treino B · mesmas séries e faixa</small>${H.resp(['Só hoje', 'Passa a valer'], 'Só hoje', { nome: 'Trocou agachamento' })}</div>
-        <div class="decide"><p>Mais uma série em cadeira flexora</p><small>4 → 5 séries · muda as séries de posterior na semana</small>${H.resp(['Só hoje', 'Passa a valer'], 'Só hoje', { nome: 'Mais uma série' })}</div>
-        <p class="txt">Sem resposta, fica só hoje. O que passar a valer aparece no Plano como diferença do treinador.</p>` : ''}
+        <div class="decide"><p>Trocou agachamento no Smith por hack machine</p><small>Treino B · mesmas séries e faixa</small>${H.resp(['Só hoje', 'Passa a valer'], null, { nome: 'Trocou agachamento' })}</div>
+        <div class="decide"><p>Mais uma série em cadeira flexora</p><small>4 → 5 séries · muda as séries de posterior na semana</small>${H.resp(['Só hoje', 'Passa a valer'], null, { nome: 'Mais uma série' })}</div>
+        <p class="txt">Sem resposta agora, a pergunta continua no Hoje até o próximo B; aí fica só daquele dia. O que passar a valer aparece no Plano como diferença do treinador.</p>` : ''}
       <div class="pe-a" style="margin-top:auto;padding-top:18px">${H.vai('Fechar', { g: 1, lugar: 'hoje' })}</div><div class="saidas c">${H.saida('Ver as séries', { ir: 'sessao-passada' })}</div></div>` });
 
 tela({ id: 'aula', n: 'Aula do box', g: 'treino', c: 'acao', lugar: 'hoje',

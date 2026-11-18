@@ -114,8 +114,13 @@ faixa (para no limite e não passa) · foco por teclado (setas mudam um passo;
 Page Up/Down, uma marca grande).
 
 **Sempre junto:** os botões "−" e "+" de passo, de 44, nas pontas, para quem
-não arrasta (`aria-label` "menos 2,5 kg"). A régua é um `slider` com
+não arrasta (`aria-label` "menos 2,5 quilos"). A régua é um `slider` com
 `aria-valuenow` e `aria-valuetext` ("60 quilos").
+
+**A exceção é a série do treino:** ali a régua vem sem os passos, para a tela
+caber sem rolar com "Feito" ao alcance do polegar. Quem não arrasta usa a
+própria régua, que é `slider` (setas do teclado, e o gesto de ajustar do
+leitor de tela); o par, logo acima, diz o valor com a unidade por extenso.
 
 **Conteúdo.** Embaixo, a referência: "da última vez: 60 × 9", "primeira vez:
 comece perto de 35 cm".

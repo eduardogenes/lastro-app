@@ -34,7 +34,7 @@
 /* ---- Cabeçalho de lugar e de destino ---------------------------------- */
 .v3-cab {
   display: flex; align-items: center; gap: var(--e-1); min-height: 52px;
-  padding: calc(8px + var(--sa-top, 0px)) 12px 0 8px;
+  padding: calc(8px + var(--sa-top, 0px)) var(--margem) 0 8px;
 }
 .v3-cab.raiz { padding-left: var(--margem); padding-right: var(--margem); min-height: 56px; align-items: baseline; gap: var(--e-5); }
 .v3-cab > button { min-width: var(--alvo); min-height: var(--alvo); display: flex; align-items: center; justify-content: center; }
@@ -59,13 +59,13 @@
 .v3-btn:active { transform: scale(.97); }
 /* DESABILITADO: tracejado em tinta, nunca cinza translúcido (sobre cor ficava
    ilegível, 3,4:1 no lima). O texto fica em tinta. */
-.v3 .v3-btn:disabled, .v3 .v3-btn.espera {
+.v3 .v3-btn:disabled, .v3 .v3-btn[aria-disabled="true"], .v3 .v3-btn.espera {
   background: transparent; color: var(--texto); box-shadow: none;
   outline: var(--fio-forte) dashed var(--texto); outline-offset: calc(-1 * var(--fio-forte));
 }
 .v3 .v3-btn.espera { font-size: 16px; }
-.v3 .v3-btn:disabled { cursor: not-allowed; }
-.v3 .v3-btn:disabled:active { transform: none; }
+.v3 .v3-btn:disabled, .v3 .v3-btn[aria-disabled="true"] { cursor: not-allowed; }
+.v3 .v3-btn:disabled:active, .v3 .v3-btn[aria-disabled="true"]:active { transform: none; }
 /* A SAÍDA DISCRETA: o texto sublinhado não muda; a área de toque tem 44 */
 .v3-saida {
   display: flex; align-items: center; width: fit-content; margin-top: var(--e-1);
@@ -101,6 +101,8 @@
   display: flex; align-items: center; justify-content: center; font: 800 15px var(--f-titulo);
 }
 .v3-lin-o svg { width: 20px; height: 20px; }
+.v3-lin-o.f { background: var(--acao); color: var(--assunto-treino); }
+.v3-lin-o.a { background: var(--assunto-treino); box-shadow: inset 0 0 0 var(--fio-forte) var(--texto); }
 
 /* ---- 20. Chave -------------------------------------------------------- */
 /* desligada: trilho de superfície com contorno e bolinha de contorno (o trilho
@@ -163,6 +165,40 @@ button.v3-quadro { min-height: var(--alvo); }
   background: var(--superficie); font: var(--t-botao-p); transition: background var(--d-estado), color var(--d-estado);
 }
 .v3 .v3-perg-r button[aria-checked="true"] { background: var(--acao); color: var(--texto-sobre-acao); }
+
+/* as respostas sem caixa atrás (o "sobraram quantas?" do descanso) */
+.v3-perg-r.sobre-fundo { justify-content: center; }
+.v3 .v3-perg-r.sobre-fundo button { min-width: 56px; min-height: 52px; box-shadow: inset 0 0 0 var(--fio-fino) var(--contorno); }
+.v3 .v3-perg-r.sobre-fundo button[aria-checked="true"] { box-shadow: none; }
+
+/* ---- 13. Aviso dentro da tela: a caixa com contorno de tinta ------------ */
+.v3-caixa { margin-top: var(--e-5); border-radius: var(--r-caixa); box-shadow: inset 0 0 0 var(--fio-forte) var(--texto); padding: var(--e-5) var(--e-6); background: var(--superficie); }
+.v3-caixa.atencao { background: var(--atencao); }
+.v3-caixa.treino { background: var(--assunto-treino); }
+.v3-caixa p { font: 700 16px/1.25 var(--f-titulo); }
+.v3-caixa p small { display: block; font: 500 13px/1.35 var(--f-texto); margin-top: 3px; }
+.v3-caixa-b { display: flex; gap: var(--e-3); margin-top: var(--e-4); flex-wrap: wrap; }
+
+/* ---- 4. Botão pequeno (44) --------------------------------------------- */
+.v3 .v3-peq {
+  min-height: var(--alvo); padding: 0 var(--e-7); border-radius: var(--r-pilula); background: var(--superficie);
+  font: var(--t-botao-p); display: inline-flex; align-items: center; justify-content: center; gap: var(--e-2);
+  transition: transform var(--d-toque) var(--mola);
+}
+.v3 .v3-peq.f { background: var(--acao); color: var(--texto-sobre-acao); }
+.v3 .v3-peq.c { background: transparent; box-shadow: inset 0 0 0 var(--fio-fino) var(--contorno); }
+.v3-peq:active { transform: scale(.97); }
+
+/* ---- 3. O par (a série): carga × repetição, e uma régua para o escolhido */
+.v3-dupla { display: flex; align-items: flex-end; gap: var(--e-4); margin: var(--e-6) 0 var(--e-5); }
+.v3 .v3-dupla button {
+  flex: 1; min-width: 0; border-radius: 28px; padding: 12px 14px 14px; text-align: left;
+  box-shadow: inset 0 0 0 var(--fio-fino) var(--texto); transition: background var(--d-estado), box-shadow var(--d-estado);
+}
+.v3 .v3-dupla button[aria-pressed="true"] { background: var(--superficie); box-shadow: inset 0 0 0 var(--fio-escolhido) var(--texto); }
+.v3-dupla-r { display: block; font: var(--t-rotulo); }
+.v3-dupla-v { display: block; font: var(--t-valor); letter-spacing: -.045em; margin-top: var(--e-1); }
+.v3-dupla-x { flex: 0 0 auto; font: 700 28px var(--f-titulo); padding-bottom: 22px; }
 
 /* ---- 18. Vazio -------------------------------------------------------- */
 .v3-vazio { border-radius: 28px; background: var(--superficie-quieta); padding: 22px 20px; }

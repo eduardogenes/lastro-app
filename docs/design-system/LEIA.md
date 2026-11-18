@@ -43,8 +43,8 @@ marcado em `05-auditoria.md` com o commit.
 |---|---|
 | 1. Documentos (`DESIGN.md` e o contrato apontam para cá) | feita |
 | 2. O que se perde, e a fluidez | feita (`f5df85a`): Ajustes alcançável, a tira do treino aberto, o aviso com "Desfazer", a porta do movimento religada, as âncoras da tela de ação |
-| 3. Tokens e componentes base | feita, depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
-| 4. Treino | a fazer |
+| 3. Tokens e componentes base | feita (`933171b`), depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
+| 4. Treino | feita, depois da revisão: a série com o par e uma régua só, sem rolar; o descanso com o "a seguir" e "Água +1"; o fim; pôr em dia como tela; a aula do box como tela de ação. O principal tem o mesmo retângulo em série, descanso e fim |
 | 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | a fazer |
 | 6. Os três de dado | a fazer |
 | 7. Revisão final | a fazer |
@@ -57,8 +57,7 @@ Pendências que a revisão da peça 2 deixou para depois, de propósito:
   do Hoje, e não no ícone que abriu a folha;
 - "Encerrar" pela folha da lista do treino: duas trocas no mesmo toque viram
   uma só (`fica`), em vez de `passo`;
-- a série com uma régua só, o "Feito" e o topo do treino como a referência
-  ficam na peça 4 (hoje a série tem 71 px de folga no miolo).
+- (feito na peça 4) a série com uma régua só, o "Feito" e o topo do treino.
 
 Pendências que a revisão da peça 3 deixou para a peça 5 (são de tela, não de
 componente):
@@ -74,6 +73,17 @@ componente):
   atual em atenção;
 - faixas de estado: 8 do topo e 6 entre elas, com ícone, e "Ver" na de falha,
   como a referência.
+
+Pendências que a revisão da peça 4 deixou, de propósito:
+
+- a lista do treino ainda não muda a ORDEM de hoje (as setas de subir e
+  descer da referência): pede uma regra nova de ordem do dia, que hoje só
+  existe como "fazer depois"; entra com a peça do Plano ou como peça própria;
+- a lista rápida da aula ainda tem dois campos digitados por movimento; a
+  referência tem um número por movimento, numa pílula que abre a folha de
+  quantidade (a régua);
+- a série de um exercício trocado hoje ainda não diz "no lugar de …" (o dado
+  do foco não traz o nome original).
 
 ## As páginas publicadas
 

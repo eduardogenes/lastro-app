@@ -54,7 +54,10 @@ const RAIZ = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 
 /** Sem comentário de bloco nem de linha: `<input>` citado em prosa não é campo. */
 function semComentario(src: string): string {
-  return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  // o que está entre aspas fica: `accept="image/*"` não abre comentário (antes,
+  // um campo de foto escondia do registro todo campo que viesse depois dele)
+  return src.replace(/("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g,
+    (m, aspas) => aspas ? aspas : '');
 }
 
 /**

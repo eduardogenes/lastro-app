@@ -29,9 +29,18 @@ async function emFoco(opcoes) {
 }
 // direto do histórico gravado (S.logs), com a sessão em curso
 const historicoDoA0 = a => a.E(`JSON.stringify(S.logs[logKey(view.day, 0)])`);
+// a série tem UMA régua: o par escolhe o que ela muda (1 = carga, 2 = repetição),
+// e a seta do teclado anda um passo nela
 const maisNa = async (a, qual, n = 1) => {
-  for (let i = 0; i < n; i++) { a.clicar(a.$$('.v3-serie-g')[qual - 1].querySelector('.v3-regua-p button:last-child')); await a.esperar(5); }
+  a.clicar(qual === 1 ? '[data-a="par-carga"]' : '[data-a="par-reps"]');
+  await a.esperar(5);
+  for (let i = 0; i < n; i++) {
+    a.E(`document.querySelector('.v3-regua-r').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))`);
+    await a.esperar(5);
+  }
 };
+// o par diz o que "Feito" vai gravar
+const noPar = a => (a.texto('[data-a="par-carga"]') || '') + ' × ' + (a.texto('[data-a="par-reps"]') || '');
 
 test('a série feita entra pelo caminho de sempre: rascunho, histórico e sessão aberta, e o descanso toma a tela', async () => {
   const a = await emFoco();
@@ -70,7 +79,8 @@ test('a régua muda a carga antes de gravar, e corrigir uma série feita não ab
   const a = await emFoco();
   await maisNa(a, 1, 2);                       // 60 → 65 (passo de 2,5)
   await maisNa(a, 2, 1);                       // 8 → 9
-  assert.ok(/Feita: 65 × 9/.test(a.texto('[data-a="serie-feita"]')), a.texto('[data-a="serie-feita"]'));
+  assert.ok(/65 × .*9$/.test(noPar(a)), noPar(a));
+  assert.ok(/^Feito$/.test(a.texto('[data-a="serie-feita"]')), 'o principal é só "Feito": o número está no par');
   a.clicar('[data-a="serie-feita"]');
   await a.esperar(40);
   a.v('ctx.paraDescanso');
@@ -98,10 +108,12 @@ test('todas no topo da faixa da última vez: pergunta se sobe, e subir põe a ca
   const a = await emFoco(comHistorico([[60, t], [60, t], [60, t], [60, t], [60, t]]));
   const f = a.vJ('ctx.focoV3');
   assert.ok(f.sobe > 60, 'há sugestão: ' + f.sobe);
-  assert.ok(/Subir para/.test(a.texto('.v3-perg')));
-  a.clicar('.v3-perg-r button:first-child');
+  // a sugestão é um aviso logo abaixo das séries, com o porquê e Manter / Subir
+  assert.ok(/Subir para/.test(a.texto('[data-a="sugestao-subir"]')), a.texto('[data-a="sugestao-subir"]'));
+  a.clicar('[data-a="sobe-sobe"]');
   await a.esperar();
-  assert.ok(new RegExp('Feita: ' + String(f.sobe).replace('.', ',')).test(a.texto('[data-a="serie-feita"]')), a.texto('[data-a="serie-feita"]'));
+  assert.ok(new RegExp(String(f.sobe).replace('.', ',')).test(a.texto('[data-a="par-carga"]')), noPar(a));
+  assert.ok(!a.$('[data-a="sugestao-subir"]'), 'respondida, sai');
   a.fechar();
 });
 
@@ -130,19 +142,24 @@ test('intervalo longo: o aviso pergunta, "pôr em dia" grava as que faltam com o
   await a.esperar(40);
   a.v('ctx.paraDescanso');
   await a.esperar();
-  assert.ok(!a.$('.v3-serie-int'), 'logo depois, nada a perguntar');
+  assert.ok(!a.$('[data-a="aviso-intervalo"]'), 'logo depois, nada a perguntar');
   a.viajar(20 * 60000);
   a.v('ctx.setFocoV3', 0, 1);
   a.E('view.focoV3 = null');
   await a.esperar();
-  assert.ok(/Faz 20 min desde a última série/.test(a.texto('.v3-serie-int')), a.texto('.v3-serie-int'));
+  assert.ok(/Faz 20 minutos desde a última série/.test(a.texto('[data-a="aviso-intervalo"]')), a.texto('[data-a="aviso-intervalo"]'));
 
+  // pôr em dia é TELA (destino), com uma linha por exercício
   a.clicar('[data-a="intervalo-em-dia"]');
   await a.esperar(40);
-  assert.ok(a.$('[data-a="emdia-0-1"]') && a.$('[data-a="emdia-0-2"]'), 'as duas que faltam no primeiro');
-  assert.ok(/60 × 7/.test(a.texto('[data-a="emdia-0-1"]')), 'com o número que vai gravar');
-  a.clicar('[data-a="emdia-ok"]');
+  assert.ok(a.$('.v3-cab') && /Pôr em dia/.test(a.texto('.v3-cab h1')), 'a tela');
+  const linha0 = a.$('[data-a="emdia-0"]').closest('.v3-emdia-l');
+  assert.ok(/2 séries · 7 6 rep/.test(linha0.textContent), 'as duas que faltam no primeiro, com as repetições que vai gravar: ' + linha0.textContent);
+  assert.ok(/60/.test(linha0.querySelector('.v3-passo-c').textContent), 'e a carga');
+  // "Fiz tudo como da última vez": um toque grava tudo o que falta
+  a.clicar('[data-a="emdia-tudo"]');
   await a.esperar(60);
+  assert.ok(!a.E('!!view.porEmDia'), 'e volta ao treino');
   const h = JSON.parse(historicoDoA0(a));
   assert.deepStrictEqual(h[1].sets.map(s => s && s.slice(0, 2)), [[60, 8], [60, 7], [60, 6]]);
   assert.strictEqual(h[1].dp, 1, 'o registro diz que foi posto em dia');
@@ -151,17 +168,23 @@ test('intervalo longo: o aviso pergunta, "pôr em dia" grava as que faltam com o
   a.fechar();
 });
 
-test('pôr em dia: desmarcar tira a série que não foi feita, e a marca sobrevive ao rascunho refeito', async () => {
+test('pôr em dia: só o marcado entra, com a carga acertada na tela, e a marca sobrevive ao rascunho refeito', async () => {
   const a = await emFoco();
-  a.v('ctx.abreFolha', { k: 'porEmDia' });
+  a.v('ctx.abrePorEmDia');
   await a.esperar(40);
-  a.clicar('[data-a="emdia-0-2"]');
+  assert.ok(/Marque o que você fez/.test(a.texto('[data-a="emdia-ok"]')), 'sem marca, nada a guardar');
+  assert.strictEqual(a.$('[data-a="emdia-ok"]').getAttribute('aria-disabled'), 'true', 'e o principal espera, sem sair do foco');
+  // acertar a carga marca o exercício
+  a.clicar('[data-a="emdia-mais-0"]');
   await a.esperar();
-  assert.ok(/Pôr em dia 2 séries/.test(a.texto('[data-a="emdia-ok"]')), a.texto('[data-a="emdia-ok"]'));
+  assert.strictEqual(a.$('[data-a="emdia-0"]').getAttribute('aria-checked'), 'true', 'mexer na carga marca');
   a.clicar('[data-a="emdia-ok"]');
   await a.esperar(60);
   let h = JSON.parse(historicoDoA0(a));
-  assert.deepStrictEqual(h[1].sets.map(s => s && s.slice(0, 2)), [[60, 8], [60, 7], null], 'a terceira ficou de fora');
+  const passo = a.E('passoDaCarga(cargaTipo(logKey(view.day, 0), treino(view.day).ex[0]))');
+  assert.deepStrictEqual(h[1].sets.map(s => s && s.slice(0, 2)), [[60 + passo, 8], [60 + passo, 7], [60 + passo, 6]],
+    'todas as que faltavam, com as repetições da última vez e a carga acertada');
+  assert.ok(!(a.E('(S.logs[logKey(view.day, 1)] || []).length') > 0), 'o exercício sem marca ficou de fora');
 
   // o rascunho refeito do histórico (o app reaberto) e uma série ao vivo depois
   a.E('S.draft = null; hidrataDraft(view.day);');
@@ -218,5 +241,22 @@ test('"não, só parei" tira o aviso até a próxima série', async () => {
   await a.esperar();
   assert.ok(!a.$('.v3-serie-int'));
   a.relogioNormal();
+  a.fechar();
+});
+
+test('a série que o aparelho recusou fica na tela: sem descanso, com a caixa de atenção, e ninguém ouve "guardei"', async () => {
+  const a = await emFoco();
+  a.encheCota();
+  a.clicar('[data-a="serie-feita"]');
+  await a.esperar(900);                         // a gravação é represada 700 ms
+  assert.ok(a.$('[data-a="serie-falhou"]'), 'a caixa "A série não foi guardada."');
+  assert.strictEqual(a.E('!!timerFim'), false, 'o descanso que ela começou parou');
+  assert.ok(!a.$('.v3-desc'), 'e a tela é a da série');
+  assert.ok(/não foi guardada/.test(a.texto('#serie-dita')), 'o anúncio diz a verdade: ' + a.texto('#serie-dita'));
+  // o aparelho voltou a aceitar: tentar de novo grava, e a caixa sai
+  a.encheCota(false);
+  a.clicar('[data-a="serie-tenta"]');
+  await a.esperar(900);
+  assert.ok(!a.$('[data-a="serie-falhou"]'), 'guardado, a caixa sai');
   a.fechar();
 });

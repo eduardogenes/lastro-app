@@ -394,11 +394,14 @@ test('botão que mostra só um símbolo tem nome acessível', () => {
 test('o menu ··· da sessão diz o corte em NÚMERO antes do toque', async () => {
   const a = await app();
   assert.ok(a.vista().modoSessao, 'pré-condição: dentro do modo');
-  const mais = a.$('[data-a="menu-sessao"]');
-  assert.ok(mais, 'o ··· está no cabeçalho do modo');
-  assert.ok(mais.getAttribute('aria-label'), 'com nome acessível: três pontos não é nome');
-
+  // as opções da sessão moram dentro da lista do treino, o ícone do topo do
+  // modo (design system, "f-lista-treino": "Opções" e "Encerrar o treino")
+  const mais = a.$('[data-a="lista-treino"]');
+  assert.ok(mais, 'a lista está no topo do modo');
+  assert.ok(mais.getAttribute('aria-label'), 'com nome acessível: um ícone não é nome');
   mais.click();
+  await a.esperar(60);
+  a.clicar('[data-a="lista-opcoes"]');
   await a.esperar(60);
 
   const item = a.$('[data-a="deload"]');
@@ -451,7 +454,9 @@ test('tocar no item liga o deload e fecha o menu', async () => {
   const a = await app();
   assert.strictEqual(a.S().deload, false, 'pré-condição: desligado');
 
-  a.clicar('[data-a="menu-sessao"]');
+  a.clicar('[data-a="lista-treino"]');
+  await a.esperar(60);
+  a.clicar('[data-a="lista-opcoes"]');
   await a.esperar(60);
   a.clicar('[data-a="deload"]');
   await a.esperar(60);
@@ -497,7 +502,9 @@ test('nenhuma aba mostra resto de código como texto', async () => {
 test('"Fazer outro treino hoje" no ··· troca o treino mostrado e fecha', async () => {
   const a = await app();
   const outro = a.vJ('ctx.menuDaSessao').troca.dias.filter(function (x) { return !x.on; })[0].k;
-  a.clicar('[data-a="menu-sessao"]');
+  a.clicar('[data-a="lista-treino"]');
+  await a.esperar(60);
+  a.clicar('[data-a="lista-opcoes"]');
   await a.esperar(60);
   a.clicar('[data-a="menu-treino-' + outro + '"]');
   await a.esperar(60);
@@ -509,7 +516,9 @@ test('"Fazer outro treino hoje" no ··· troca o treino mostrado e fecha', asyn
 
 test('"Editar o treino de hoje" no ··· entra na edição, e some de lá', async () => {
   const a = await app();
-  a.clicar('[data-a="menu-sessao"]');
+  a.clicar('[data-a="lista-treino"]');
+  await a.esperar(60);
+  a.clicar('[data-a="lista-opcoes"]');
   await a.esperar(60);
   a.clicar('[data-a="menu-editar"]');
   await a.esperar(60);

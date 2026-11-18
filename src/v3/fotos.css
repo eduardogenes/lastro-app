@@ -315,12 +315,55 @@
 .v3-leg i.m { width: 3px; height: 10px; }
 
 /* ---- Treino em foco (Fase 3) ------------------------------------------ */
-.v3-serie-q { font: 700 14px var(--f-texto); margin-top: 12px; }
-.v3-serie-n { font: 800 38px/.98 var(--f-titulo); letter-spacing: -.035em; margin-top: 4px; text-wrap: balance; }
-.v3-serie-c { font-size: 14px; line-height: 1.4; margin-top: 6px; color: var(--texto-2); }
-.v3-serie-g { margin-top: 10px; }
-.v3-serie-ant { font-size: 14px; font-weight: 600; margin-top: 8px; }
-.v3-serie-dor { margin-top: 12px; padding: 12px 14px; border-radius: 20px; background: var(--atencao); box-shadow: inset 0 0 0 2px var(--texto); font-size: 14px; }
+/* a série (ds-telas.js, "serie"): o nome em 30, a linha da faixa, o par e
+   UMA régua; em cima, a dica do treinador, as séries feitas e um aviso */
+.v3-serie-n { font: var(--t-acao); letter-spacing: var(--e-titulo); text-wrap: balance; }
+.v3-serie-q { font: 600 15px/1.35 var(--f-texto); margin-top: var(--e-2); }
+.v3-serie-ant { font: 600 14px/1.3 var(--f-texto); text-align: center; min-height: 20px; }
+.v3-dica { font: 500 14px/1.4 var(--f-texto); max-width: 36ch; margin-top: var(--e-5); }
+.v3-dica b { font-weight: 700; }
+.v3-feitas { display: flex; gap: var(--e-2); flex-wrap: wrap; margin-top: 10px; }
+.v3-feitas span {
+  min-height: 34px; padding: 0 12px; border-radius: var(--r-pilula); display: flex; align-items: center; gap: var(--e-2);
+  font: 700 14px var(--f-titulo); box-shadow: inset 0 0 0 var(--fio-fino) var(--marca);
+}
+.v3-feitas span svg { width: 15px; height: 15px; }
+.v3-feitas .f { background: var(--acao); color: var(--assunto-treino); box-shadow: none; }
+.v3-feitas .a { background: var(--superficie); color: var(--texto); box-shadow: inset 0 0 0 var(--fio-forte) var(--texto); }
+/* o descanso: o "sobraram quantas?" e o cartão do que vem a seguir */
+.v3-sobrou { margin-top: 18px; align-self: stretch; }
+.v3-sobrou p { font: 600 14px var(--f-texto); }
+.v3-prox {
+  margin-top: 18px; align-self: stretch; text-align: left; display: flex; align-items: center; gap: var(--e-5);
+  padding: 12px 16px; border-radius: 24px; background: var(--superficie); box-shadow: inset 0 0 0 var(--fio-fino) var(--tracejado);
+}
+.v3-prox-t { flex: 1; min-width: 0; }
+.v3-prox-t span { display: block; font: 600 13px var(--f-texto); color: var(--texto-2); }
+.v3-prox-t b { display: block; font: 700 17px/1.15 var(--f-titulo); margin-top: 2px; }
+.v3 .v3-prox .v3-peq { background: var(--assunto-semana); }
+/* pôr em dia (tela): uma linha por exercício, marcar e acertar a carga */
+.v3-emdia { margin-top: var(--e-2); }
+.v3-emdia-l.ja { opacity: .55; }
+.v3-emdia-l { display: flex; align-items: center; gap: var(--e-5); min-height: 72px; border-top: var(--fio-fino) solid var(--divisoria); }
+.v3-emdia-l:first-child { border-top: 0; }
+.v3 .v3-emdia-ck {
+  flex: 0 0 46px; height: 46px; border-radius: 50%; background: var(--superficie); color: transparent;
+  box-shadow: inset 0 0 0 var(--fio-forte) var(--contorno); display: flex; align-items: center; justify-content: center;
+}
+.v3-emdia-ck svg { width: 22px; height: 22px; }
+.v3 .v3-emdia-l.on .v3-emdia-ck { background: var(--acao); color: var(--assunto-treino); box-shadow: none; }
+.v3-emdia-n { flex: 1; min-width: 0; }
+.v3-emdia-n b { display: block; font: var(--t-nome-p); }
+.v3-emdia-n span { font: 600 13px var(--f-texto); color: var(--texto-legenda); }
+.v3-passo-c { display: flex; align-items: center; gap: 2px; padding: 2px; border-radius: var(--r-pilula); background: var(--superficie-quieta); }
+.v3 .v3-passo-c button { width: var(--alvo); height: var(--alvo); border-radius: 50%; background: var(--superficie); font: 800 20px var(--f-titulo); text-align: center; }
+.v3-passo-c b { min-width: 34px; text-align: center; font: 800 18px var(--f-titulo); }
+/* a aula do box */
+.v3-aula-sug { margin-top: 18px; }
+.v3-aula-l { margin-top: var(--e-3); }
+.v3-aula-l .v3-rapida { border-top-color: var(--tracejado); }
+.v3-aula-l .v3-lin-t span { color: var(--texto); }
+.v3-aula-lousa { margin-top: var(--e-5); }
 .v3-acao .v3-perg { margin-top: 12px; }
 .v3-lista-t { margin-top: 8px; }
 .v3-menu-l { margin-top: 8px; }
@@ -333,19 +376,26 @@
 .v3-desc > *:not(.v3-desc-fundo) { position: relative; z-index: 1; }
 .v3-desc .v3-acao-meio { text-align: center; align-items: center; }
 .v3-desc .v3-acao-links { justify-content: center; gap: 8px; }
-.v3 .v3-desc .v3-acao-links button { padding: 0 16px; border-radius: var(--r-pilula); box-shadow: inset 0 0 0 1.5px var(--contorno); font: 700 15px var(--f-titulo); text-decoration: none; }
+.v3 .v3-desc .v3-acao-links .v3-peq { text-decoration: none; min-width: 0; }
+.v3-desc .v3-acao-links { gap: 18px; }
+/* o fim do treino e a aula: a saída ao centro */
+.v3-aula .v3-acao-links { justify-content: center; }
+.v3-aula-t { font: var(--t-heroi); letter-spacing: var(--e-heroi); margin-top: var(--e-2); }
+/* as opções da aula, como a grade da referência: areia, sem contorno; repetir em lima */
+.v3 .v3-aula-sug .v3-reg-b { min-height: 76px; border-radius: var(--r-cartao); background: var(--superficie-quieta); box-shadow: none; padding: 12px 16px; justify-content: center; }
+.v3 .v3-aula-sug .v3-reg-b b { font: 700 18px/1.15 var(--f-titulo); }
+.v3 .v3-aula-sug .v3-reg-b.pri { background: var(--assunto-treino); box-shadow: inset 0 0 0 var(--fio-forte) var(--texto); }
+/* a lista rápida da aula: os campos em superfície com contorno de tinta, a unidade em tinta (sobre cor, só tinta) */
+.v3 .v3-aula .v3-rapida-c input { border-color: var(--texto); }
+.v3-aula .v3-rapida-c small { color: var(--texto); }
+/* o "vira regra?" do fim: cada mudança num bloco de areia, com as respostas */
+.v3-fim .v3-decide { margin-top: var(--e-3); padding: 12px 14px; border: 0; border-radius: var(--r-caixa); background: var(--superficie-quieta); }
 /* o fim do treino e o encerrado */
 .v3-fim .v3-acao-links { justify-content: center; }
 .v3-fim-t { font: 800 36px/.98 var(--f-titulo); letter-spacing: -.04em; margin-top: 6px; text-wrap: balance; }
 .v3-encerrado-m { margin-top: 18px; text-align: left; }
 .v3-desc-t { font: 800 120px/.85 var(--f-titulo); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
 .v3-desc-r { font: 600 15px var(--f-texto); margin-bottom: 8px; }
-.v3-desc-rir { margin-top: 18px; align-self: stretch; }
-.v3-desc .v3-perg-r { justify-content: center; }
-.v3-desc-prox { font: 700 15px var(--f-titulo); margin-top: 14px; }
-.v3-serie-int { margin-top: 12px; padding: 12px 14px; border-radius: 20px; background: var(--superficie); box-shadow: inset 0 0 0 2px var(--texto); font-size: 14px; }
-.v3-emdia { margin-top: 14px; }
-.v3-emdia b { font: 700 16px var(--f-titulo); }
 
 /* ---- Progressão e um exercício ---------------------------------------- */
 .v3-passo { margin: 6px 0 4px; padding: 12px 14px; border-radius: 20px; background: var(--superficie-quieta); }

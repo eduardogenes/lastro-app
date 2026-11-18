@@ -51,17 +51,17 @@ Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino 
 
 | Tipo | O quê | Hoje | Correção | Onde |
 |---|---|---|---|---|
-| hierarquia | **A série mostra duas réguas ao mesmo tempo** | Carga e repetição empilhadas, cada uma com número de 64 e régua própria; a tela rola. | O par carga × repetição lado a lado (66 px), uma régua só embaixo, para o que estiver escolhido (repetição por padrão). Cabe sem rolar, com "Feito" ao alcance do polegar. | Serie em src/ui/v3/telas/treino.jsx |
-| texto | **Sigla RIR na série** | "série 1 de 2 · 6–10 reps · RIR 1–2". | "6–10 repetições, sobrando 1–2". RIR só no histórico, com legenda. | treino.jsx, .v3-serie-q |
-| texto | **Botão principal longo** | "Feita: 60 × 9" (e "Corrigir: …"). | "Feito", com o certo. O número já está no par, grande, logo acima. | treino.jsx |
-| fluxo | **Links da série incompletos** | "Mudar este exercício" e "Lista do treino". "Já fiz mais do que anotei" só aparece pela lista ou pelo aviso. | "Mudar · Já fiz mais do que anotei · Histórico" embaixo de "Feito". A lista fica no ícone do topo. | treino.jsx |
-| hierarquia | **"Subir para X?" como pergunta de areia** | Componente Pergunta, depois do aviso de dor. | Aviso de sugestão (caixa de superfície com contorno de tinta) logo abaixo das séries feitas, com o porquê e "Manter" / "Subir". | treino.jsx |
-| tamanho | **Nome do exercício** | 38 px. | 30 px (--t-acao); a dica do treinador acima, em 14. | .v3-serie-n em src/v3/fotos.css |
+| hierarquia | **A série mostra duas réguas ao mesmo tempo** (feito, peça 4) | Carga e repetição empilhadas, cada uma com número de 64 e régua própria; a tela rola. | O par carga × repetição lado a lado (66 px), uma régua só embaixo, para o que estiver escolhido (repetição por padrão). Cabe sem rolar, com "Feito" ao alcance do polegar. | Serie em src/ui/v3/telas/treino.jsx |
+| texto | **Sigla RIR na série** (feito, peça 4) | "série 1 de 2 · 6–10 reps · RIR 1–2". | "6–10 repetições, sobrando 1–2". RIR só no histórico, com legenda. | treino.jsx, .v3-serie-q |
+| texto | **Botão principal longo** (feito, peça 4) | "Feita: 60 × 9" (e "Corrigir: …"). | "Feito", com o certo. O número já está no par, grande, logo acima. | treino.jsx |
+| fluxo | **Links da série incompletos** (feito, peça 4) | "Mudar este exercício" e "Lista do treino". "Já fiz mais do que anotei" só aparece pela lista ou pelo aviso. | "Mudar · Já fiz mais do que anotei · Histórico" embaixo de "Feito". A lista fica no ícone do topo. | treino.jsx |
+| hierarquia | **"Subir para X?" como pergunta de areia** (feito, peça 4) | Componente Pergunta, depois do aviso de dor. | Aviso de sugestão (caixa de superfície com contorno de tinta) logo abaixo das séries feitas, com o porquê e "Manter" / "Subir". | treino.jsx |
+| tamanho | **Nome do exercício** (feito, peça 4) | 38 px. | 30 px (--t-acao); a dica do treinador acima, em 14. | .v3-serie-n em src/v3/fotos.css |
 | tamanho | **Contagem do descanso** (feito, peça 2) | 112 px. | 120 px. | .v3-desc-t |
-| hierarquia | **Descanso sem a próxima série** | "a seguir: nome, série 2" em texto solto; sem a carga; sem "Água +1". | Cartão "a seguir" com o nome, série e a carga × repetição sugerida, e "Água +1" quando a água está ligada. | Descanso em treino.jsx |
+| hierarquia | **Descanso sem a próxima série** (feito, peça 4) | "a seguir: nome, série 2" em texto solto; sem a carga; sem "Água +1". | Cartão "a seguir" com o nome, série e a carga × repetição sugerida, e "Água +1" quando a água está ligada. | Descanso em treino.jsx |
 | texto | **Descanso: recolher e começar** (feito, peça 2) | Seta para a esquerda ("Voltar") e "Pular o descanso". | Seta para baixo (recolhe, o treino continua aberto) e "Começar já". | treino.jsx |
 | cor | **Segmentos da câmera em tangerina** (feito, peça 3) | .v3-cam .v3-segs i.a com --tanja. | Em curso em tinta a 45%, como em todo lugar. Tangerina é atenção. | src/v3/fotos.css:89 |
-| fluxo | **Pôr em dia como folha** | FolhaPorEmDia. | Tela (destino): é lista com marcação e carga por exercício e rola; "Fiz tudo como da última vez" no topo. | treino.jsx, FOLHAS_V3 |
+| fluxo | **Pôr em dia como folha** (feito, peça 4) | FolhaPorEmDia. | Tela (destino): é lista com marcação e carga por exercício e rola; "Fiz tudo como da última vez" no topo. | treino.jsx, FOLHAS_V3 |
 | cor | **Faixa do editor com a cor trocada** (feito, peça 3) | Menos séries que o treinador em tangerina. | Mais em tangerina (atenção: passou do prescrito), menos em céu. | src/v3/fotos.css:381 |
 
 ## Plano e revisão

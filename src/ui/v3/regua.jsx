@@ -19,16 +19,26 @@ const txt = v => String(v).replace('.', ',');
  * @param {number} [p.largura]  pixels entre duas marcas (14 por padrão)
  * @param {(v: number) => void} p.aoMudar  chamado enquanto arrasta
  * @param {string} p.rotulo     nome acessível ("carga em kg")
+ * @param {boolean} [p.passos]  os botões − e + nas pontas (a série não os tem:
+ *                              cabe sem rolar; o teclado e o leitor de tela andam
+ *                              pela própria régua, que é um `slider`)
  */
-const DITA = { kg: 'quilos', cm: 'centímetros', mm: 'milímetros', g: 'gramas', ml: 'mililitros', min: 'minutos', s: 'segundos' };
+const DITA = { kg: 'quilos', cm: 'centímetros', mm: 'milímetros', g: 'gramas', ml: 'mililitros', min: 'minutos', s: 'segundos',
+               reps: 'repetições', seg: 'segundos', m: 'metros', cal: 'calorias' };
+/** Uma unidade como se fala: "kg" → "quilos", "kg/lado" → "quilos por lado". */
+export function dita(u) {
+  if (!u) return '';
+  const [a, b] = String(u).split('/');
+  return (DITA[a] || a) + (b ? ' por ' + b : '');
+}
 /** A unidade falada: a do rótulo ("carga em kg" → "quilos"), ou o próprio rótulo ("repetições"). */
 function unidadeDita(rotulo) {
   const m = / em (\S+)$/.exec(rotulo || '');
-  if (m) return DITA[m[1]] || m[1];
-  return rotulo || '';
+  if (m) return dita(m[1]);
+  return dita(rotulo || '');
 }
 
-export function Regua({ min, max, passo, valor, cada, largura = 14, aoMudar, rotulo }) {
+export function Regua({ min, max, passo, valor, cada, largura = 14, aoMudar, rotulo, passos = true }) {
   const el = useRef(null);
   const ultimo = useRef(valor);
   const n = Math.round((max - min) / passo);
@@ -82,10 +92,10 @@ export function Regua({ min, max, passo, valor, cada, largura = 14, aoMudar, rot
           <div class="v3-regua-f">{marcas}</div>
         </div>
       </div>
-      <div class="v3-regua-p">
+      {passos && <div class="v3-regua-p">
         <button onClick={() => anda(-1)} aria-label={`Menos ${txt(passo)} ${unidadeDita(rotulo)}`.trim()}>−</button>
         <button onClick={() => anda(1)} aria-label={`Mais ${txt(passo)} ${unidadeDita(rotulo)}`.trim()}>+</button>
-      </div>
+      </div>}
     </div>
   );
 }

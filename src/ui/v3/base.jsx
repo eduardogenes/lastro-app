@@ -2,12 +2,14 @@
 // a lista e o papel de cada um estão no DESIGN.md. Todos são só apresentação:
 // recebem dados e funções prontos, e não leem o estado do app.
 
+import { Fragment } from 'preact';
 import { useContext, useEffect, useRef } from 'preact/hooks';
 import { ic } from './icones.jsx';
 // O comportamento de camada é o mesmo do visual antigo, e por isso vem de lá:
 // a trava de rolagem é um contador só, e o isolamento acha a camada de cima
 // entre as folhas dos dois visuais.
 import { trava, destrava, abreCamada, LugarNaPilha } from './camada.js';
+import { dita } from './regua.jsx';
 
 const cls = (...p) => p.filter(Boolean).join(' ');
 
@@ -92,15 +94,17 @@ export function Secao({ titulo, nota, children }) {
 export function Apoio({ children }) { return <p class="v3-apoio">{children}</p>; }
 
 /**
- * Uma linha de lista. Com `aoTocar` vira botão e ganha a seta; sem ele é só
- * leitura. `marca` é o círculo da esquerda (número, letra ou ícone).
+ * Uma linha de lista. Com `aoTocar` vira botão e ganha a seta (`semSeta` a
+ * tira, quando tocar só leva a um lugar da mesma tela); sem ele é só leitura.
+ * `marca` é o círculo da esquerda (número, letra ou ícone); `marcaTom` `f`
+ * (feito: tinta com o certo em lima) ou `a` (agora: anel lima).
  */
-export function Linha({ titulo, apoio, valor, unidade, marca, quieta, mais, aoTocar, ...resto }) {
+export function Linha({ titulo, apoio, valor, unidade, marca, marcaTom, quieta, mais, semSeta, aoTocar, ...resto }) {
   const dentro = <>
-    {marca != null && <span class="v3-lin-o">{marca}</span>}
+    {marca != null && <span class={cls('v3-lin-o', marcaTom)}>{marca}</span>}
     <span class="v3-lin-t"><b>{titulo}</b>{apoio && <span>{apoio}</span>}</span>
     {valor != null && <span class="v3-lin-v">{valor}{unidade && <small>{unidade}</small>}</span>}
-    {aoTocar && (mais ? ic.mais : ic.dir)}
+    {aoTocar && !semSeta && (mais ? ic.mais : ic.dir)}
   </>;
   const c = cls('v3-lin', quieta && 'quieta');
   return aoTocar ? <button class={c} onClick={aoTocar} {...resto}>{dentro}</button> : <div class={c} {...resto}>{dentro}</div>;
@@ -215,17 +219,69 @@ export function Quadros({ itens, colunas = 2 }) {
 /** Etiqueta de estado. `tom`: nada (feito), `atencao`, `quieto`, `agora`. Sempre com palavra. */
 export function Selo({ tom, children }) { return <span class={cls('v3-selo', tom)}>{children}</span>; }
 
+/**
+ * AS RESPOSTAS: fichas de 48, escolha única (`radiogroup`). `opcoes`:
+ * `[{ k, t }]`. `sobreFundo` dá o contorno, para quando não há caixa atrás
+ * (o "sobraram quantas?" do descanso).
+ */
+export function Respostas({ opcoes, valor, aoResponder, rotulo, sobreFundo }) {
+  const algum = opcoes.some(x => x.k === valor);
+  return (
+    <Radios classe={cls('v3-perg-r', sobreFundo && 'sobre-fundo')} rotulo={rotulo}>
+      {opcoes.map((r, i) => (
+        <button key={r.k} {...radio(r.k === valor, i === 0, algum)} onClick={() => aoResponder(r.k)}>{r.t}</button>
+      ))}
+    </Radios>
+  );
+}
+
+/**
+ * O AVISO DENTRO DA TELA (02-componentes.md, §13): uma caixa com contorno de
+ * tinta, a frase em título, o porquê embaixo e, se houver, os botões pequenos.
+ * `tom`: nada (sugestão, sobre superfície), `atencao` (fora do padrão, falha)
+ * ou `treino`.
+ */
+export function Caixa({ tom, titulo, nota, children, ...resto }) {
+  return (
+    <div class={cls('v3-caixa', tom)} role={tom === 'atencao' ? 'status' : 'note'} {...resto}>
+      <p>{titulo}{nota && <small>{nota}</small>}</p>
+      {children && <div class="v3-caixa-b">{children}</div>}
+    </div>
+  );
+}
+
+/** O BOTÃO PEQUENO, de 44: `cheio` (tinta) ou `contorno`; sem nada, superfície. */
+export function Pequeno({ cheio, contorno, children, ...resto }) {
+  return <button class={cls('v3-peq', cheio && 'f', contorno && 'c')} {...resto}>{children}</button>;
+}
+
+/**
+ * O PAR (a série): dois números grandes lado a lado, e tocar num escolhe o que
+ * a régua de baixo muda. `itens`: `[{ k, rotulo, valor }]`.
+ */
+export function Par({ itens, escolhido, aoEscolher }) {
+  return (
+    <div class="v3-dupla">
+      {itens.map((x, i) => (
+        <Fragment key={x.k}>
+          {i > 0 && <span class="v3-dupla-x" aria-hidden="true">×</span>}
+          <button aria-pressed={x.k === escolhido ? 'true' : 'false'} data-a={'par-' + x.k}
+                  aria-label={x.valor + ' ' + dita(x.rotulo) + '. Toque para mudar na régua'} onClick={() => aoEscolher(x.k)}>
+            <span class="v3-dupla-r">{x.rotulo}</span><span class="v3-dupla-v v3-n">{x.valor}</span>
+          </button>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
 /** Uma pergunta com duas ou três respostas. `respostas`: `[{ k, t }]`. */
 export function Pergunta({ pergunta, nota, respostas, valor, aoResponder }) {
   return (
     <div class="v3-perg">
       <p>{pergunta}</p>
       {nota && <small>{nota}</small>}
-      <Radios classe="v3-perg-r" rotulo={pergunta}>
-        {respostas.map((r, i) => (
-          <button key={r.k} {...radio(r.k === valor, i === 0, respostas.some(x => x.k === valor))} onClick={() => aoResponder(r.k)}>{r.t}</button>
-        ))}
-      </Radios>
+      <Respostas opcoes={respostas} valor={valor} aoResponder={aoResponder} rotulo={pergunta} />
     </div>
   );
 }
@@ -239,7 +295,7 @@ export function Vazio({ titulo, children }) {
  * A TELA DE AÇÃO: uma coisa por tela, fundo de cor, botão grande embaixo.
  *
  * `topo` é a linha de cima (recolher, contexto, lista), `segs` o progresso logo
- * abaixo dele, `pe` o botão principal (um só, de largura toda) e `links` as
+ * abaixo dele, `antes` o que mora em cima (a dica, o feito, um aviso), `pe` o botão principal (um só, de largura toda) e `links` as
  * saídas embaixo dele. `fundo` é o que fica atrás de tudo (o enchimento do
  * descanso). `centro` e `cima` dizem onde o miolo assenta (o padrão é embaixo,
  * perto do polegar).
@@ -252,12 +308,13 @@ export function Vazio({ titulo, children }) {
  * segmentos, o pé e as saídas ganham nome (`src/v3/movimento.css`) e ficam
  * parados enquanto o miolo troca.
  */
-export function TelaDeAcao({ cor = 'treino', topo, segs, pe, links, centro, cima, fundo, classe, children }) {
+export function TelaDeAcao({ cor = 'treino', topo, segs, antes, pe, links, centro, cima, fundo, classe, children }) {
   return (
     <div class={cls('v3 v3-acao', classe)} style={`--v3-cor:${corDe(cor)}`}>
       {fundo}
       {topo && <div class="v3-acao-topo">{topo}</div>}
       {segs}
+      {antes}
       <div class={cls('v3-acao-meio', centro && 'centro', cima && 'cima')}>{children}</div>
       <div class="v3-acao-pe">{pe}</div>
       <div class="v3-acao-links">{links}</div>

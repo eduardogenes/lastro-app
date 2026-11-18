@@ -35,17 +35,17 @@ window.AUDITORIA = [
     { t: 'espaço', o: 'Lembrete das fotos fora do padrão de aviso', h: 'Bloco próprio (.v3-lembrete) com duas saídas sublinhadas.', c: 'Caixa lilás (aviso dentro da tela) com "Abrir as fotos" pequeno cheio e "Agora não" de contorno.', l: 'hoje.jsx, src/v3/registro.css' }
   ] },
   { g: 'Treino', a: [
-    { t: 'hierarquia', o: 'A série mostra duas réguas ao mesmo tempo', h: 'Carga e repetição empilhadas, cada uma com número de 64 e régua própria; a tela rola.', c: 'O par carga × repetição lado a lado (66 px), uma régua só embaixo, para o que estiver escolhido (repetição por padrão). Cabe sem rolar, com "Feito" ao alcance do polegar.', l: 'Serie em src/ui/v3/telas/treino.jsx' },
-    { t: 'texto', o: 'Sigla RIR na série', h: '"série 1 de 2 · 6–10 reps · RIR 1–2".', c: '"6–10 repetições, sobrando 1–2". RIR só no histórico, com legenda.', l: 'treino.jsx, .v3-serie-q' },
-    { t: 'texto', o: 'Botão principal longo', h: '"Feita: 60 × 9" (e "Corrigir: …").', c: '"Feito", com o certo. O número já está no par, grande, logo acima.', l: 'treino.jsx' },
-    { t: 'fluxo', o: 'Links da série incompletos', h: '"Mudar este exercício" e "Lista do treino". "Já fiz mais do que anotei" só aparece pela lista ou pelo aviso.', c: '"Mudar · Já fiz mais do que anotei · Histórico" embaixo de "Feito". A lista fica no ícone do topo.', l: 'treino.jsx' },
-    { t: 'hierarquia', o: '"Subir para X?" como pergunta de areia', h: 'Componente Pergunta, depois do aviso de dor.', c: 'Aviso de sugestão (caixa de superfície com contorno de tinta) logo abaixo das séries feitas, com o porquê e "Manter" / "Subir".', l: 'treino.jsx' },
-    { t: 'tamanho', o: 'Nome do exercício', h: '38 px.', c: '30 px (--t-acao); a dica do treinador acima, em 14.', l: '.v3-serie-n em src/v3/fotos.css' },
+    { t: 'hierarquia', f: 'peça 4', o: 'A série mostra duas réguas ao mesmo tempo', h: 'Carga e repetição empilhadas, cada uma com número de 64 e régua própria; a tela rola.', c: 'O par carga × repetição lado a lado (66 px), uma régua só embaixo, para o que estiver escolhido (repetição por padrão). Cabe sem rolar, com "Feito" ao alcance do polegar.', l: 'Serie em src/ui/v3/telas/treino.jsx' },
+    { t: 'texto', f: 'peça 4', o: 'Sigla RIR na série', h: '"série 1 de 2 · 6–10 reps · RIR 1–2".', c: '"6–10 repetições, sobrando 1–2". RIR só no histórico, com legenda.', l: 'treino.jsx, .v3-serie-q' },
+    { t: 'texto', f: 'peça 4', o: 'Botão principal longo', h: '"Feita: 60 × 9" (e "Corrigir: …").', c: '"Feito", com o certo. O número já está no par, grande, logo acima.', l: 'treino.jsx' },
+    { t: 'fluxo', f: 'peça 4', o: 'Links da série incompletos', h: '"Mudar este exercício" e "Lista do treino". "Já fiz mais do que anotei" só aparece pela lista ou pelo aviso.', c: '"Mudar · Já fiz mais do que anotei · Histórico" embaixo de "Feito". A lista fica no ícone do topo.', l: 'treino.jsx' },
+    { t: 'hierarquia', f: 'peça 4', o: '"Subir para X?" como pergunta de areia', h: 'Componente Pergunta, depois do aviso de dor.', c: 'Aviso de sugestão (caixa de superfície com contorno de tinta) logo abaixo das séries feitas, com o porquê e "Manter" / "Subir".', l: 'treino.jsx' },
+    { t: 'tamanho', f: 'peça 4', o: 'Nome do exercício', h: '38 px.', c: '30 px (--t-acao); a dica do treinador acima, em 14.', l: '.v3-serie-n em src/v3/fotos.css' },
     { t: 'tamanho', f: 'peça 2', o: 'Contagem do descanso', h: '112 px.', c: '120 px.', l: '.v3-desc-t' },
-    { t: 'hierarquia', o: 'Descanso sem a próxima série', h: '"a seguir: nome, série 2" em texto solto; sem a carga; sem "Água +1".', c: 'Cartão "a seguir" com o nome, série e a carga × repetição sugerida, e "Água +1" quando a água está ligada.', l: 'Descanso em treino.jsx' },
+    { t: 'hierarquia', f: 'peça 4', o: 'Descanso sem a próxima série', h: '"a seguir: nome, série 2" em texto solto; sem a carga; sem "Água +1".', c: 'Cartão "a seguir" com o nome, série e a carga × repetição sugerida, e "Água +1" quando a água está ligada.', l: 'Descanso em treino.jsx' },
     { t: 'texto', f: 'peça 2', o: 'Descanso: recolher e começar', h: 'Seta para a esquerda ("Voltar") e "Pular o descanso".', c: 'Seta para baixo (recolhe, o treino continua aberto) e "Começar já".', l: 'treino.jsx' },
     { t: 'cor', f: 'peça 3', o: 'Segmentos da câmera em tangerina', h: '.v3-cam .v3-segs i.a com --tanja.', c: 'Em curso em tinta a 45%, como em todo lugar. Tangerina é atenção.', l: 'src/v3/fotos.css:89' },
-    { t: 'fluxo', o: 'Pôr em dia como folha', h: 'FolhaPorEmDia.', c: 'Tela (destino): é lista com marcação e carga por exercício e rola; "Fiz tudo como da última vez" no topo.', l: 'treino.jsx, FOLHAS_V3' },
+    { t: 'fluxo', f: 'peça 4', o: 'Pôr em dia como folha', h: 'FolhaPorEmDia.', c: 'Tela (destino): é lista com marcação e carga por exercício e rola; "Fiz tudo como da última vez" no topo.', l: 'treino.jsx, FOLHAS_V3' },
     { t: 'cor', f: 'peça 3', o: 'Faixa do editor com a cor trocada', h: 'Menos séries que o treinador em tangerina.', c: 'Mais em tangerina (atenção: passou do prescrito), menos em céu.', l: 'src/v3/fotos.css:381' }
   ] },
   { g: 'Plano e revisão', a: [

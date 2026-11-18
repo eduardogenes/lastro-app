@@ -1810,6 +1810,19 @@ function naoGuardou() {
   // seguinte também falha, e um alerta por série é ruído que ensina a fechar sem
   // ler. A marca, essa sim, acompanha cada uma.
   if (!ja) view.falhou = true;
+  // NO TREINO, a série recusada volta para a tela (design system, "serie",
+  // estado "a série não foi guardada"): o descanso que ela tinha começado para,
+  // a caixa de atenção diz o que houve e oferece tentar de novo, e o anúncio
+  // para leitor de tela, que dizia "Guardei a série", é corrigido. O painel de
+  // falha não abre por cima: a caixa da série faz o papel dele.
+  const u = view.modoSessao && view.ultimaV3;
+  if (u && u.dia === view.day && timerFim) {
+    stopTimer();
+    view.focoV3 = { i: u.i, k: u.k };
+    view.falhou = false;
+    const dita = document.getElementById('serie-dita');
+    if (dita) dita.textContent = 'A série ' + (u.k + 1) + ' não foi guardada. Os números continuam na tela.';
+  }
   render();
 }
 /**
@@ -2779,7 +2792,7 @@ const CTX = {
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.galeria || view.diaAberto || view.ajuste || view.camera ||
-              view.ajustes || view.modoSessao || view.revisao || view.fotos || view.noTempo || view.naMesmaData || view.progressao || view.responderDias);
+              view.ajustes || view.modoSessao || view.porEmDia || view.revisao || view.fotos || view.noTempo || view.naMesmaData || view.progressao || view.responderDias);
   },
 
 
@@ -7957,6 +7970,7 @@ const FECHA_CAMADA = {
   naMesmaData: function () { CTX.fechaNaMesmaData(); },
   progressao: function () { CTX.fechaProgressao(); },
   responderDias: function () { CTX.fechaResponderDias(); },
+  porEmDia:  function () { CTX.fechaPorEmDia(); },
   comparar:  function () { CTX.fechaComparar(); },
   revisao:   function () { CTX.fechaRevisao(); },
   evolucao:  function () { CTX.fechaEvolucao(); },
@@ -13734,12 +13748,17 @@ CTX.focoV3 = function () {
     fim: false, i: f.i, k: f.k,
     ex: { n: ex.n, cue: ex.cue || '', faixa: ex.r || '', rir: ex.rir || '', series: setsFor(ex), unidade: vm.unidade, medida: vm.medida,
           semCarga: tipo === 'corpo', seg: vm.seg, descanso: vm.descansoTxt, proximo: vm.proximo },
-    estados: vm.linhas.map(function (l, k) { return { k: k, feita: l.valor[1] != null, antes: l.antes }; }),
+    estados: vm.linhas.map(function (l, k) {
+      return { k: k, feita: l.valor[1] != null, antes: l.antes,
+               txt: l.valor[1] != null ? (l.valor[0] ? fmtNum(l.valor[0]).replace('.', ',') + ' × ' : '') + l.valor[1] : null };
+    }),
     carga: carga, reps: reps,
     passoCarga: passoDaCarga(tipo),
     antes: vm.linhas[f.k] ? vm.linhas[f.k].antes : null,
     jaFeita: agora[1] != null,
     sobe: sobe,
+    // os números da sugestão: com que carga, até quantas repetições, e para onde o alvo volta
+    sobeNota: sobe ? { carga: ant ? ant[0] : null, topo: fx ? fx[1] : null, comeco: fx ? fx[0] : null } : null,
     dor: vm.dorBloqueia ? { o: vm.dorRep, datas: vm.dorDatas } : null,
     // passou tempo demais desde a última série para ser descanso
     intervalo: S.sessao && !S.sessao.pausadoEm && !timerFim && S.sessao.ultima !== view.intervaloDispensado &&
@@ -13852,13 +13871,15 @@ CTX.encerraTreinoV3 = async function () {
   if (!series) return;                             // descartada: nada a resumir
   const marca = S.done.filter(function (x) { return x.sid === sid; })[0];
   view.fimV3 = { sid: sid, dia: dia, series: series, depois: depois,
-                 t: marca ? marca.t : null, min: marca && marca.dur ? Math.round(marca.dur / 60000) : null };
+                 t: marca ? marca.t : null, min: marca && marca.dur ? Math.round(marca.dur / 60000) : null, dur: marca && marca.dur ? marca.dur : 0 };
   render(); rola(0);
 };
 CTX.fimV3 = function () {
   const f = view.fimV3; if (!f) return null;
   const g = CTX.mudancasQueEsperam().filter(function (x) { return x.sid === f.sid; })[0];
-  return Object.assign({}, f, { nome: (treino(f.dia) || {}).name || 'Treino ' + f.dia,
+  const P = treino(f.dia);
+  return Object.assign({}, f, { nome: 'Treino ' + f.dia,
+    prescritas: P ? P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0) : f.series,
     mudancas: g ? g.mudancas : [], vence: g ? g.vence : null });
 };
 CTX.fechaFimV3 = function () { view.fimV3 = null; CTX.fechaModoDeSessao(); };
@@ -14002,14 +14023,55 @@ CTX.porEmDiaV3 = function () {
   return P.ex.map(function (ex, i) {
     if (ehPulado(i)) return null;
     const dr = draftPeek(i);
+    if (setsFor(ex) > 0 && Array.from({ length: setsFor(ex) }, function (_, k) { return k; }).every(function (k) { return serieCheia(dr, k); })) {
+      return { i: i, n: ex.n, ja: true, series: [] };
+    }
     const series = [];
     for (let k = 0; k < setsFor(ex); k++) {
       if (serieCheia(dr, k)) continue;
       const n = numerosDaSerieEmDia(d, i, k);
-      if (n) series.push({ k: k, txt: (n[0] ? fmtNum(n[0]).replace('.', ',') + ' × ' : '') + n[1] });
+      if (n) series.push({ k: k, carga: n[0], reps: n[1], txt: (n[0] ? fmtNum(n[0]).replace('.', ',') + ' × ' : '') + n[1] });
     }
-    return series.length ? { i: i, n: ex.n, series: series } : null;
+    if (!series.length) return null;
+    const tipo = cargaTipo(logKey(d, i), ex);
+    return { i: i, n: ex.n, series: series, carga: series[0].carga, semCarga: tipo === 'corpo',
+             passo: passoDaCarga(tipo), unidade: vmExercicio(d, i, ex).unidade };
   }).filter(Boolean);
+};
+/** PÔR EM DIA é tela (destino): lista com marcação e carga por exercício, que rola. */
+CTX.abrePorEmDia = function () {
+  if (view.porEmDia) return;
+  view.porEmDia = { marcados: {}, cargas: {} };
+  entraNoDestino('porEmDia'); render(); rola(0);
+};
+CTX.fechaPorEmDia = function () { if (!view.porEmDia) return; view.porEmDia = null; render(); saiDoDestino('porEmDia'); };
+CTX.estadoPorEmDia = function () { return view.porEmDia; };
+CTX.marcaPorEmDia = function (i) {
+  const v = view.porEmDia; if (!v) return;
+  v.marcados[i] = !v.marcados[i]; render();
+};
+CTX.cargaPorEmDia = function (i, carga) {
+  const v = view.porEmDia; if (!v) return;
+  v.cargas[i] = carga; v.marcados[i] = true; render();
+};
+/**
+ * Guarda o que foi marcado (ou tudo, com `tudo`), e volta à série. Cada
+ * exercício marcado entra com TODAS as séries que faltam, com as repetições da
+ * última vez e a carga acertada na tela (a da última vez, se não mexeu).
+ */
+CTX.guardaPorEmDia = function (tudo) {
+  const v = view.porEmDia; if (!v) return 0;
+  const lista = CTX.porEmDiaV3() || [];
+  const marcados = [];
+  lista.forEach(function (x) {
+    if (x.ja || (!tudo && !v.marcados[x.i])) return;
+    x.series.forEach(function (s) { marcados.push({ i: x.i, k: s.k }); });
+  });
+  view.porEmDia = null;
+  // desenha (poeEmDia), depois rola: ver `fechaModoDeSessao`
+  const n = CTX.poeEmDia(marcados, tudo ? {} : v.cargas);
+  saiDoDestino('porEmDia');
+  return n;
 };
 /**
  * Grava as séries marcadas com os números da última vez, PELA MESMA PORTA de
@@ -14017,7 +14079,7 @@ CTX.porEmDiaV3 = function () {
  * O descanso que a última delas dispararia não começa: ninguém está
  * descansando de uma série feita há meia hora.
  */
-CTX.poeEmDia = function (marcados) {
+CTX.poeEmDia = function (marcados, cargas) {
   const d = view.day || diaResolvido().treino || proximoTreino(S, ROT_BASE);
   if (view.day !== d) view.day = d;
   hidrataDraft(d);
@@ -14029,7 +14091,9 @@ CTX.poeEmDia = function (marcados) {
     const nums = numerosDaSerieEmDia(d, i, k);
     if (!nums) return;
     draftOf(i).dp = 1;
-    anotaSerie(i, k, 0, nums[0]);
+    // a carga acertada na tela do pôr em dia vale para todas as séries dele
+    const c = cargas && cargas[i] != null ? Number(cargas[i]) : nums[0];
+    anotaSerie(i, k, 0, c);
     anotaSerie(i, k, 1, nums[1]);
     n++;
   });
@@ -14088,7 +14152,7 @@ CTX.listaV3 = function () {
   const estados = estadosDoDia(d);
   const f = serieEmFoco(d);
   return {
-    nome: P.name, deload: itemDoDeload(d), sessaoAberta: !!S.sessao,
+    nome: 'Treino ' + d, deload: itemDoDeload(d), sessaoAberta: !!S.sessao,
     exercicios: P.ex.map(function (ex, i) {
       const dr = draftPeek(i);
       const ns = setsFor(ex);
