@@ -38,6 +38,32 @@ test('ajustes: a conta, o que aparece e o interruptor do visual', async () => {
   a.fechar();
 });
 
+test('ajustes se alcançam pelo app: pela folha "O que aparece" e pelo fim do Plano', async () => {
+  const a = await comVisual();
+  a.v('ctx.comecaAqui');
+  await a.esperar();
+  // o ícone de ajuste do bloco do Hoje abre a folha; a última linha dela leva aos Ajustes
+  a.clicar('[data-a="hoje-aparece"]');
+  await a.esperar();
+  assert.ok(a.$('[data-a="aparece-ajustes"]'), 'a porta dos Ajustes na folha');
+  a.clicar('[data-a="aparece-ajustes"]');
+  await a.esperar();
+  assert.strictEqual(a.texto('.v3-cab h1'), 'Ajustes', 'pela folha');
+  assert.ok(!a.$('.v3-folha'), 'a folha fechou ao abrir os Ajustes');
+  a.v('ctx.fechaAjustes');
+  await a.esperar();
+  // o fim do Plano
+  a.v('ctx.vaiPara', 'prescricao');
+  await a.esperar();
+  a.clicar('[data-a="plano-ajustes"]');
+  await a.esperar();
+  assert.strictEqual(a.texto('.v3-cab h1'), 'Ajustes', 'pelo Plano');
+  a.v('ctx.fechaAjustes');
+  await a.esperar();
+  assert.ok(a.$('[data-a="plano-ajustes"]'), 'o Voltar devolve o Plano');
+  a.fechar();
+});
+
 test('confirmação: a folha nova, com "Deixar como está" como principal e com o foco nele', async () => {
   const a = await app({ aba: 'agora', agora: agoraEstavel(15), estado: { logs: {}, done: [] }, painelManual: true });
   await a.pronto();

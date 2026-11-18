@@ -325,19 +325,23 @@
 .v3-lista-t { margin-top: 8px; }
 .v3-menu-l { margin-top: 8px; }
 
-/* o descanso: a tela enche de cor de baixo para cima, até a próxima série */
-.v3-desc {
-  position: relative; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; overflow: hidden;
-  padding: calc(6px + var(--sa-top, 0px)) var(--margem) calc(18px + var(--sa-bottom, 0px)); background: var(--papel);
-}
-.v3-desc-fundo { position: absolute; left: 0; right: 0; bottom: 0; height: var(--v3-cheio, 0%); background: var(--lima); transition: height 1s linear; z-index: 0; }
+/* o descanso: a tela enche de cor de baixo para cima, até a próxima série.
+   É uma tela de ação (as âncoras são as da série); o enchimento fica atrás. */
+.v3-acao.v3-desc { position: relative; overflow: clip; }
+/* só transform: a escala de baixo para cima, e não a altura */
+.v3-desc-fundo { position: absolute; inset: 0; background: var(--lima); transform-origin: 50% 100%; transition: transform 1s linear; z-index: 0; }
 .v3-desc > *:not(.v3-desc-fundo) { position: relative; z-index: 1; }
-.v3-desc-meio { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; }
-.v3-desc-t { font: 800 112px/.85 var(--f-titulo); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
-.v3-desc-r { font-size: 14px; font-weight: 600; margin-top: 10px; color: var(--tinta-2); }
-.v3-desc-aj { display: flex; gap: 8px; margin-top: 14px; }
-.v3 .v3-desc-aj button { min-height: 46px; padding: 0 18px; border-radius: var(--r-pilula); box-shadow: inset 0 0 0 2px var(--tinta); font: 700 15px var(--f-titulo); }
-.v3-desc-rir { margin-top: 18px; }
+.v3-desc .v3-acao-meio { text-align: center; align-items: center; }
+.v3-desc .v3-acao-links { justify-content: center; gap: 8px; }
+.v3 .v3-desc .v3-acao-links button { padding: 0 16px; border-radius: var(--r-pilula); box-shadow: inset 0 0 0 1.5px var(--contorno); font: 700 15px var(--f-titulo); text-decoration: none; }
+/* o fim do treino e o encerrado */
+.v3-fim .v3-acao-links { justify-content: center; }
+.v3-fim-t { font: 800 36px/.98 var(--f-titulo); letter-spacing: -.04em; margin-top: 6px; text-wrap: balance; }
+.v3-encerrado-m { margin-top: 18px; text-align: left; }
+.v3-desc-t { font: 800 120px/.85 var(--f-titulo); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+.v3-desc-r { font: 600 15px var(--f-texto); margin-bottom: 8px; }
+.v3-desc-rir { margin-top: 18px; align-self: stretch; }
+.v3-desc .v3-perg-r { justify-content: center; }
 .v3-desc-prox { font: 700 15px var(--f-titulo); margin-top: 14px; }
 .v3-serie-int { margin-top: 12px; padding: 12px 14px; border-radius: 20px; background: var(--branco); box-shadow: inset 0 0 0 2px var(--tinta); font-size: 14px; }
 .v3-emdia { margin-top: 14px; }

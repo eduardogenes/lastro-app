@@ -189,7 +189,8 @@ test('encerrar: o fim fica na tela com o resumo, e o "vira regra?" decide pela f
   assert.ok(a.perguntas().some(q => /pendente/.test(JSON.stringify(q))), 'pergunta pelos pendentes, como sempre: ' + JSON.stringify(a.perguntas()));
   await a.esperar(120);
   assert.strictEqual(a.E('S.sessao'), null, 'encerrado');
-  assert.ok(/1 série\. .* fechado\./.test(a.texto('.v3-bloco-t')), a.texto('.v3-bloco-t'));
+  // o título da tela do fim diz o resumo (é tela de ação desde a peça 2 do design system)
+  assert.ok(/1 série\. .* fechado\./.test(a.texto('.v3-acao h1')), a.texto('.v3-acao h1'));
   assert.ok(a.$('[data-a="regra-sempre-0"]'), 'a mudança do dia pergunta se vira regra');
   assert.ok(a.E(`S.promoPendente.some(g => g.sid === ${sid})`), 'na fila de sempre');
 

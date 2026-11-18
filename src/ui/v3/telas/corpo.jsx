@@ -147,8 +147,8 @@ export function MedirAgora({ ctx }) {
           ? <button data-a="medir-so-esta" onClick={() => ctx.seguirMedida()}>Guardar só esta</button>
           : <button data-a="medir-pula" onClick={() => ctx.pulaMedida()}>Pular esta</button>}
         <button data-a="medir-como" onClick={() => ctx.abreFolha({ k: 'comoMedir', titulo: m.n, onde: m.onde, como: m.como, regra: d.regra })}>Ver como medir</button>
-      </>}>
-      <Segmentos total={d.total} feitos={d.i} rotulo={'medida ' + (d.i + 1) + ' de ' + d.total} />
+      </>}
+      segs={<Segmentos total={d.total} feitos={d.i} rotulo={'medida ' + (d.i + 1) + ' de ' + d.total} />}>
       <p class="v3-medir-onde"><b>{m.onde}</b></p>
       <h2 class="v3-medir-n">{m.n}</h2>
       <div class="v3-gigante v3-n" aria-live="polite">{virgula(d.valor)}<small>{m.u}</small></div>

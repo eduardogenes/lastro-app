@@ -1,0 +1,86 @@
+/* O MOVIMENTO entre telas: as transições de vista do navegador, por sentido.
+
+   A porta do movimento (`src/ui/movimento.js`, `trocaDeCamada`) põe o sentido
+   da troca em `data-nav` no `html` e desenha a tela nova dentro de
+   `document.startViewTransition()`. Aqui mora o que cada sentido faz com as
+   fotos do antes e do depois. A tabela, os motivos e as fontes estão em
+   docs/design-system/07-fluidez-e-estabilidade.md.
+
+   A foto da página é a `root`, do tamanho da janela. Só transform e opacity;
+   deslocamento de 24 px (`--desliza`), nunca a largura da tela. O que entra
+   desacelera (`--mola`), o que sai acelera (`--mola-sai`). Onde não há a API
+   (iOS antes do 18) ou sob "reduzir movimento", a troca é seca. */
+
+@keyframes v3-vt-some { to { opacity: 0; } }
+@keyframes v3-vt-aparece { from { opacity: 0; } }
+@keyframes v3-vt-entra-dir { from { opacity: 0; transform: translateX(var(--desliza)); } }
+@keyframes v3-vt-entra-esq { from { opacity: 0; transform: translateX(calc(-1 * var(--desliza))); } }
+@keyframes v3-vt-sai-esq { to { opacity: 0; transform: translateX(calc(-1 * var(--desliza))); } }
+@keyframes v3-vt-sai-dir { to { opacity: 0; transform: translateX(var(--desliza)); } }
+@keyframes v3-vt-sobe { from { transform: translateY(100%); } }
+@keyframes v3-vt-desce { to { transform: translateY(100%); } }
+
+/* o toque durante a transição vale: a camada das fotos não segura o dedo
+   (a porta ainda pula para o fim no toque, para o Safari) */
+::view-transition { pointer-events: none; }
+::view-transition-group(*) { animation-duration: var(--d-estado); animation-timing-function: var(--mola); }
+::view-transition-old(*), ::view-transition-new(*) { animation-duration: var(--d-passo); }
+/* a foto da página não passa da janela, e o que desliza não cria rolagem lateral */
+::view-transition-group(root) { overflow: clip; }
+
+/* TROCAR DE LUGAR: fade through. Lugares são do mesmo nível, sem ordem
+   espacial: deslizar sugeriria uma ordem que não existe. */
+html[data-nav="lugar"]::view-transition-old(root) { animation: v3-vt-some var(--d-lugar-sai) var(--mola-sai) both; }
+html[data-nav="lugar"]::view-transition-new(root) { animation: v3-vt-aparece var(--d-passo) var(--mola) var(--d-atraso-lugar) both; }
+
+/* ENTRAR NUM DESTINO, e voltar: eixo horizontal curto. A saída curta e o
+   atraso pequeno evitam as duas telas legíveis ao mesmo tempo. */
+html[data-nav="entra"]::view-transition-old(root) { animation: v3-vt-sai-esq var(--d-sai) var(--mola-sai) both; }
+html[data-nav="entra"]::view-transition-new(root) { animation: v3-vt-entra-dir var(--d-navega) var(--mola) var(--d-atraso) both; }
+html[data-nav="sai"]::view-transition-old(root) { animation: v3-vt-sai-dir var(--d-sai) var(--mola-sai) both; }
+html[data-nav="sai"]::view-transition-new(root) { animation: v3-vt-entra-esq var(--d-volta) var(--mola) var(--d-atraso) both; }
+
+/* A TELA DE AÇÃO sobe por cima do que fica; ao recolher, desce e revela o
+   que estava embaixo, mais depressa do que subiu. */
+html[data-nav="sobe"]::view-transition-old(root) { animation: none; }
+html[data-nav="sobe"]::view-transition-new(root) { animation: v3-vt-sobe var(--d-acao) var(--mola) both; }
+html[data-nav="desce"]::view-transition-old(root) { animation: v3-vt-desce var(--d-recolhe) var(--mola-sai) both; z-index: 2; }
+html[data-nav="desce"]::view-transition-new(root) { animation: none; }
+
+/* PASSO DA MESMA TAREFA: as âncoras ficam paradas e só o miolo troca, em
+   crossfade curto. Com o mesmo nome antes e depois, o navegador mantém cada
+   âncora no lugar; um nome por âncora (nome repetido cancela a transição). */
+html[data-nav="passo"]::view-transition-old(root) { animation: v3-vt-some var(--d-passo-sai) var(--mola-sai) both; }
+html[data-nav="passo"]::view-transition-new(root) { animation: v3-vt-aparece var(--d-passo) var(--mola) both; }
+html[data-nav="passo"] .v3-acao-topo { view-transition-name: acao-topo; }
+html[data-nav="passo"] .v3-acao > .v3-segs { view-transition-name: acao-segs; }
+html[data-nav="passo"] .v3-acao-pe { view-transition-name: acao-pe; }
+html[data-nav="passo"] .v3-acao-links { view-transition-name: acao-saidas; }
+::view-transition-old(acao-pe), ::view-transition-new(acao-pe),
+::view-transition-old(acao-topo), ::view-transition-new(acao-topo),
+::view-transition-old(acao-saidas), ::view-transition-new(acao-saidas) { animation-duration: var(--d-passo-sai); }
+
+/* A FOLHA DESCE (`fica`): só ela e o véu dela saem; a página atrás não se
+   move. Quem marca a que sai é `marcaAsFolhasQueSaem`, no casco. */
+html[data-nav="fica"]::view-transition-old(root),
+html[data-nav="fica"]::view-transition-new(root) { animation: none; }
+html[data-nav="fica"] .v3-folha-w[data-sai] > .v3-folha { view-transition-name: folha-sai; }
+html[data-nav="fica"] .v3-folha-w[data-sai] > .v3-veu { view-transition-name: veu-sai; }
+::view-transition-old(folha-sai) { animation: v3-vt-desce var(--d-fecha) var(--mola-sai) both; }
+::view-transition-old(veu-sai) { animation: v3-vt-some var(--d-fecha) var(--mola-sai) both; }
+
+/* A DOCA nunca se move ao trocar de lugar: só o lugar atual muda, no lugar.
+   Ao entrar num destino ou numa tela de ação, ela some depressa. */
+.v3-doca { view-transition-name: doca; }
+::view-transition-old(doca):only-child { animation: v3-vt-some var(--d-lugar-sai) var(--mola-sai) both; }
+::view-transition-new(doca):only-child { animation: v3-vt-aparece var(--d-passo) var(--mola) var(--d-atraso) both; }
+::view-transition-old(doca), ::view-transition-new(doca) { animation-duration: var(--d-passo-sai); }
+/* ao recolher a tela de ação, a doca só volta depois que ela desceu: a tela
+   revela o que estava embaixo, e nada aparece por cima dela no caminho */
+html[data-nav="desce"]::view-transition-new(doca):only-child { animation-delay: var(--d-recolhe); }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}

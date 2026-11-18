@@ -30,8 +30,11 @@
 const PEDE_MOVIMENTO = '(prefers-reduced-motion: no-preference)';
 const PEDE_MENOS = '(prefers-reduced-motion: reduce)';
 
-/** O único token que vale sob "Reduzir movimento": a camada que chega esmaece. */
-const DISSOLVE = '--ins-dur-dissolve';
+/**
+ * Sob "Reduzir movimento" nenhum token de tempo vale: as trocas são secas e a
+ * folha aparece sem subir (07-fluidez-e-estabilidade.md, §6). Os tokens já
+ * zeram no `tokens.css`; a porta responde 0 de qualquer jeito.
+ */
 
 /**
  * A consulta, lida agora. `false` para tudo o que não for um "sim" claro.
@@ -59,9 +62,7 @@ export function podeMover() {
 }
 
 /**
- * Pode esmaecer no lugar de mover? Só sob "Reduzir movimento" — a resposta 2 do
- * dono (16/10): a camada que chega esmaece em `--ins-dur-dissolve` e a que sai
- * vai de uma vez. Sem a preferência, quem vale é `podeMover()`.
+ * A pessoa pediu menos movimento? Lida agora. Sob ela, as trocas são secas.
  * @returns {boolean}
  */
 export function podeDissolver() {
@@ -248,19 +249,22 @@ export function miraDoDedo(e, camada) {
 // nenhum fixo é preso, nenhum `sticky` cai (guarda (d)).
 //
 // O casco (`render()`, em `main.jsx`) pede a troca aqui, num ponto só, com o
-// SENTIDO dela — `entra` (uma tela chega da direita), `sai` (a de cima sai pela
-// direita) ou `fica` (só a folha ou o painel descem). O sentido vai no atributo
-// `data-nav` do `html`, que o CSS lê (`componentes.css`, "A TROCA DE CAMADA"), e
-// fica lá até a próxima troca: fora de uma transição os pseudo-elementos não
-// existem, e sob "Reduzir movimento" é ele que diz qual nó que nasce esmaece.
+// SENTIDO dela, que é a tabela do docs/design-system/07-fluidez-e-estabilidade.md:
 //
-// TROCAR DE ABA passa pela mesma porta (peça 6), e não é camada: é andar de lado
-// no chão. `aba-direita` quando se andou para a direita na barra (a aba de índice
-// maior: a página nova entra pela direita e a velha sai pela esquerda),
-// `aba-esquerda` ao contrário — o carrossel de `componentes.css`, "A TROCA DE
-// ABA". E `seca`: a troca de lugar sem sentido (uma aba que não está na barra,
-// `vaiPara('treino')`), que desenha na hora, sem transição, e deixa no `html`
-// um sentido que nada lê — nada que nasce esmaece e o fio salta.
+//   `lugar`  trocar de lugar pela doca: fade through, sem deslizar
+//   `entra`  entrar num destino: a tela chega 24 px da direita
+//   `sai`    voltar de um destino: o mesmo, ao contrário
+//   `sobe`   abrir uma tela de ação: ela sobe de baixo
+//   `desce`  recolher a tela de ação: ela desce e revela o que estava embaixo
+//   `passo`  passo seguinte da mesma tarefa: âncoras paradas, miolo em crossfade
+//   `fica`   só a folha (ou o painel) desce; o resto não se move
+//   `seca`   sem movimento (um lugar que não está na doca)
+//
+// O sentido vai no atributo `data-nav` do `html`, que o CSS lê
+// (`src/v3/movimento.css`), e fica lá até a próxima troca: fora de uma
+// transição os pseudo-elementos não existem. As âncoras (o principal da tela de
+// ação, a linha das saídas, o topo, os segmentos, a doca) ganham nome de
+// transição pelo próprio CSS, conforme o sentido.
 //
 // O toque no meio dela pula para o fim e vai ao que ficou sob o dedo (acima). A
 // porta sabe que a transição ainda corre por `document.activeViewTransition` ou,
@@ -318,26 +322,17 @@ function aoDescer(e) {
  * relógio do desenho atrasado) o chamam antes do navegador, e o navegador o
  * chama de novo.
  *
- * `rodape` diz se a troca muda a reserva do rodapé — `desce` quando a barra de
- * abas sai (chega uma tela cheia ou o modo), `sobe` quando ela volta —, e vai no
- * `data-pe` do `html`: o cronômetro e o aviso, que ficam sobre a barra, mudam de
- * altura junto com a troca em vez de saltar (`componentes.css`). Sem mudança, o
- * atributo sai.
- *
  * Devolve `true` quando o desenho ficou PENDENTE (há transição), `false` quando
  * já desenhou.
- * @param {'entra' | 'sai' | 'fica' | 'aba-direita' | 'aba-esquerda' | 'seca'} sentido
+ * @param {'lugar' | 'entra' | 'sai' | 'sobe' | 'desce' | 'passo' | 'fica' | 'seca'} sentido
  * @param {() => void} desenha
  * @param {boolean} [anima] `false` quando o navegador já animou (o gesto de borda)
- * @param {'desce' | 'sobe' | null} [rodape]
  * @returns {boolean}
  */
-export function trocaDeCamada(sentido, desenha, anima, rodape) {
+export function trocaDeCamada(sentido, desenha, anima) {
   const doc = /** @type {any} */ (typeof document !== 'undefined' ? document : null);
   if (doc && doc.documentElement) {
     doc.documentElement.setAttribute('data-nav', sentido);
-    if (rodape) doc.documentElement.setAttribute('data-pe', rodape);
-    else doc.documentElement.removeAttribute('data-pe');
   }
   if (anima === false || sentido === 'seca' || !podeMover() || !doc || typeof doc.startViewTransition !== 'function') {
     desenha();
@@ -352,7 +347,7 @@ export function trocaDeCamada(sentido, desenha, anima, rodape) {
       desenha();
       // daqui até o fim do tempo da camada, mais a folga: o relógio de quem não
       // pode perguntar ao documento se a transição ainda corre
-      v.ate = agora() + Math.max(tempo('--ins-dur-entra'), tempo('--ins-dur-sai')) + FOLGA_MS;
+      v.ate = agora() + tempo('--d-acao') + FOLGA_MS;
     });
   } catch (e) {
     desenha();
@@ -375,14 +370,12 @@ export function trocaDeCamada(sentido, desenha, anima, rodape) {
  * Os milissegundos de um token de duração, lidos de `tokens.css` agora — a
  * fonte é uma só, e o número não se repete aqui.
  *
- * `0` quando não pode mover (menos `--ins-dur-dissolve`, que vale justamente
- * sob "Reduzir movimento"), e `0` para valor que não se lê: "não espere nada".
- * @param {string} nome o token, com os dois hífens: `'--ins-dur-entra'`
+ * `0` quando não pode mover, e `0` para valor que não se lê: "não espere nada".
+ * @param {string} nome o token, com os dois hífens: `'--d-navega'`
  * @returns {number}
  */
 export function tempo(nome) {
-  const vale = podeMover() || (nome === DISSOLVE && podeDissolver());
-  if (!vale) return 0;
+  if (!podeMover()) return 0;
   try {
     const raiz = typeof document !== 'undefined' ? document.documentElement : null;
     if (!raiz || typeof getComputedStyle !== 'function') return 0;

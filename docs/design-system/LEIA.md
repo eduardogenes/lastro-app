@@ -42,12 +42,23 @@ marcado em `05-auditoria.md` com o commit.
 | Peça | Estado |
 |---|---|
 | 1. Documentos (`DESIGN.md` e o contrato apontam para cá) | feita |
-| 2. O que se perde, e a fluidez | a fazer |
+| 2. O que se perde, e a fluidez | feita: Ajustes alcançável, a tira do treino aberto, o aviso com "Desfazer", a porta do movimento religada, as âncoras da tela de ação |
 | 3. Tokens e componentes base | a fazer |
 | 4. Treino | a fazer |
 | 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | a fazer |
 | 6. Os três de dado | a fazer |
 | 7. Revisão final | a fazer |
+
+Pendências que a revisão da peça 2 deixou para depois, de propósito:
+
+- com leitor de tela, o aviso com "Desfazer" ainda some em 6 s (o 02 pede que
+  fique até ser dispensado);
+- Ajustes aberto pela folha "O que aparece": ao voltar, o foco cai no título
+  do Hoje, e não no ícone que abriu a folha;
+- "Encerrar" pela folha da lista do treino: duas trocas no mesmo toque viram
+  uma só (`fica`), em vez de `passo`;
+- a série com uma régua só, o "Feito" e o topo do treino como a referência
+  ficam na peça 4 (hoje a série tem 71 px de folga no miolo).
 
 ## As páginas publicadas
 

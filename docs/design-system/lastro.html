@@ -280,8 +280,12 @@ button.q{min-height:var(--alvo)}
 .faixa svg{width:20px;height:20px;flex:0 0 auto}
 .faixa button{min-height:var(--alvo);padding:0 16px;border-radius:var(--r-pilula);background:var(--acao);color:var(--texto-sobre-acao);font:700 13px var(--f-titulo)}
 .faixa.rede{background:var(--superficie-quieta);box-shadow:none;padding-right:16px}
-.desfazer{position:absolute;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:var(--camada-faixa);min-height:56px;border-radius:var(--r-pilula);background:var(--acao);color:var(--texto-sobre-acao);display:flex;align-items:center;gap:10px;padding:0 6px 0 20px;font:600 15px var(--f-texto);animation:entra var(--d-folha) var(--mola) both}
+.desfazer{position:absolute;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:var(--camada-faixa);min-height:56px;border-radius:var(--r-pilula);background:var(--acao);color:var(--texto-sobre-acao);display:flex;align-items:center;gap:10px;padding:0 6px 0 20px;font:600 15px var(--f-texto);animation:entra var(--d-aviso) var(--mola) both}
 .desfazer.sobe{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+.meio:has(.tira) .desfazer.sobe{bottom:calc(152px + env(safe-area-inset-bottom,0px))}
+/* na tela de ação, 10 acima do principal (nunca cobre o "Feito" nem as saídas); com folha aberta, no alto, sobre o véu */
+#tela.acao ~ #desf .desfazer{bottom:calc(var(--botao-acao) + var(--alvo-saida) + 32px + env(safe-area-inset-bottom,0px))}
+.meio:has(#folha.on) .desfazer{top:14px;bottom:auto}
 .desfazer span{flex:1}
 .desfazer button{min-height:var(--alvo);padding:0 18px;border-radius:var(--r-pilula);background:var(--assunto-treino);color:var(--texto);font:var(--t-botao-p)}
 
@@ -698,23 +702,23 @@ input[type=range]::-moz-range-thumb{width:30px;height:30px;border-radius:50%;bac
 @keyframes vt-sobe{from{transform:translateY(100%)}}
 @keyframes vt-desce{to{transform:translateY(100%)}}
 /* lugar: fade through, sem deslizar (lugares não têm ordem espacial) */
-html[data-vt=lugar]::view-transition-old(tela){animation:vt-some 90ms var(--mola-sai) both}
-html[data-vt=lugar]::view-transition-new(tela){animation:vt-aparece var(--d-passo) var(--mola) 60ms both}
+html[data-vt=lugar]::view-transition-old(tela){animation:vt-some var(--d-lugar-sai) var(--mola-sai) both}
+html[data-vt=lugar]::view-transition-new(tela){animation:vt-aparece var(--d-passo) var(--mola) var(--d-atraso-lugar) both}
 /* destino: eixo horizontal curto; voltar é o mesmo ao contrário */
-html[data-vt=entra]::view-transition-old(tela){animation:vt-sai-esq 100ms var(--mola-sai) both}
-html[data-vt=entra]::view-transition-new(tela){animation:vt-entra-dir var(--d-navega) var(--mola) 40ms both}
-html[data-vt=sai]::view-transition-old(tela){animation:vt-sai-dir 100ms var(--mola-sai) both}
-html[data-vt=sai]::view-transition-new(tela){animation:vt-entra-esq 220ms var(--mola) 40ms both}
+html[data-vt=entra]::view-transition-old(tela){animation:vt-sai-esq var(--d-sai) var(--mola-sai) both}
+html[data-vt=entra]::view-transition-new(tela){animation:vt-entra-dir var(--d-navega) var(--mola) var(--d-atraso) both}
+html[data-vt=sai]::view-transition-old(tela){animation:vt-sai-dir var(--d-sai) var(--mola-sai) both}
+html[data-vt=sai]::view-transition-new(tela){animation:vt-entra-esq var(--d-volta) var(--mola) var(--d-atraso) both}
 /* tela de ação: sobe por cima do que fica; ao recolher, desce e revela o que estava embaixo */
 html[data-vt=sobe]::view-transition-old(tela){animation:none}
 html[data-vt=sobe]::view-transition-new(tela){animation:vt-sobe var(--d-acao) var(--mola) both}
-html[data-vt=desce]::view-transition-old(tela){animation:vt-desce 260ms var(--mola-sai) both;z-index:2}
+html[data-vt=desce]::view-transition-old(tela){animation:vt-desce var(--d-recolhe) var(--mola-sai) both;z-index:2}
 html[data-vt=desce]::view-transition-new(tela){animation:none}
 /* passo da mesma tarefa: âncoras paradas, o miolo troca em crossfade curto */
-html[data-vt=passo]::view-transition-old(tela){animation:vt-some 120ms var(--mola-sai) both}
+html[data-vt=passo]::view-transition-old(tela){animation:vt-some var(--d-passo-sai) var(--mola-sai) both}
 html[data-vt=passo]::view-transition-new(tela){animation:vt-aparece var(--d-passo) var(--mola) both}
 /* a doca não se move entre lugares: troca no lugar, sem fantasma */
-::view-transition-old(pe),::view-transition-new(pe){animation-duration:160ms}
+::view-transition-old(pe),::view-transition-new(pe){animation-duration:var(--d-aviso-sai)}
 @media (prefers-reduced-motion:reduce){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
 
 /* âncoras da tela de ação: a linha das saídas é sempre reservada, para o principal não mudar de altura */

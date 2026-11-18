@@ -84,8 +84,9 @@ tela({ id: 'f-comi-outra', n: '"Comi outra coisa", com o tamanho', g: 'hoje', c:
     <div class="acoes">${H.vai('Guardar', { desfazer: 'Almoço: outra coisa, parecido.' })}</div>`) });
 
 tela({ id: 'f-aparece', n: 'O que aparece', g: 'hoje', c: 'folha', base: 'hoje',
-  d: 'O ícone de ajuste no bloco do Hoje. O treino fica sempre; o resto se liga e desliga. Desligar esconde, nunca apaga.',
-  r: () => H.folha('O que aparece', 'O treino fica sempre. O resto é seu: ligue só o que for usar. Desligar não apaga nada.', `<div class="lista" style="margin-top:12px">${H.chave('Comida', 'o plano do nutricionista e a pergunta do dia', 1)}${H.chave('Água', 'contar copos', 1)}${H.chave('Peso', 'a pesagem da manhã', 1)}${H.chave('Cardio', 'as duas sessões da semana', 1)}${H.chave('Medidas', 'fita e adipômetro', 0)}${H.chave('Fotos do corpo', 'sessão a cada 14 dias', 1)}</div>`) });
+  d: 'O ícone de ajuste no bloco do Hoje. O treino fica sempre; o resto se liga e desliga. Desligar esconde, nunca apaga. No fim, a porta dos Ajustes.', vai: ['ajustes'],
+  r: () => H.folha('O que aparece', 'O treino fica sempre. O resto é seu: ligue só o que for usar. Desligar não apaga nada.', `<div class="lista" style="margin-top:12px">${H.chave('Comida', 'o plano do nutricionista e a pergunta do dia', 1)}${H.chave('Água', 'contar copos', 1)}${H.chave('Peso', 'a pesagem da manhã', 1)}${H.chave('Cardio', 'as duas sessões da semana', 1)}${H.chave('Medidas', 'fita e adipômetro', 0)}${H.chave('Fotos do corpo', 'sessão a cada 14 dias', 1)}</div>
+    <div class="lista" style="margin-top:10px">${H.lin({ t: 'Ajustes', a: 'conta, cópia de segurança, lembretes', ir: 'ajustes' })}</div>`) });
 
 tela({ id: 'f-cardio', n: 'Cardio', g: 'hoje', c: 'folha', base: 'hoje',
   d: 'Lacuna do protótipo. Escolha do aparelho em fichas, minutos pela régua, intensidade em seletor. Um "Guardar".',

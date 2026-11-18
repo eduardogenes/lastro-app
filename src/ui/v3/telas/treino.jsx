@@ -12,6 +12,7 @@ import { ic } from '../icones.jsx';
 import { Acoes, Apoio, Bloco, Botao, Chave, Folha, Linha, Pergunta, Saida, Secao, Segmentos, Selo, TelaDeAcao } from '../base.jsx';
 import { Regua } from '../regua.jsx';
 import { useAgora } from '../agora.js';
+import { podeDissolver } from '../../movimento.js';
 
 const virgula = n => String(Math.round(n * 100) / 100).replace('.', ',');
 const relogio = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
@@ -30,14 +31,28 @@ export function TreinoEmFoco({ ctx }) {
   return <Serie key={f.dia + '-' + f.i + '-' + f.k} ctx={ctx} f={f} />;
 }
 
-function Topo({ ctx, f }) {
+/**
+ * O topo de todo passo do treino (série, descanso, fim): recolher, o treino e
+ * o relógio da sessão, a lista. É âncora: fica idêntico entre os passos (a
+ * contagem de séries está nos segmentos, logo abaixo).
+ */
+function Topo({ ctx, f, rotulo }) {
+  useAgora();
+  const nome = rotulo || (f ? 'Treino ' + f.dia : 'Treino');
+  const ms = ctx.relogioDoTreinoV3();
   return (
     <>
-      <button onClick={ctx.fechaModoDeSessao} data-a="sai-do-modo" aria-label="Voltar, deixando o treino aberto">{ic.volta}</button>
-      <span class="v3-n">{f.nome} · {f.feitas} de {f.prescritas}</span>
+      <button onClick={ctx.fechaModoDeSessao} data-a="sai-do-modo" aria-label="Recolher o treino, deixando-o aberto">{ic.baixo}</button>
+      <span>{nome}{ms > 0 && <> · <span class="v3-n">{relogio(ms)}</span></>}</span>
       <button onClick={() => ctx.abreFolha({ k: 'menuSessao' })} data-a="menu-sessao" aria-label="Opções desta sessão">{ic.lista}</button>
     </>
   );
+}
+
+/** Os segmentos do treino inteiro: uma série por traço. */
+function SegsDoTreino({ f }) {
+  if (!f || !f.prescritas) return null;
+  return <Segmentos total={f.prescritas} feitos={Math.min(f.feitas, f.prescritas)} rotulo={f.feitas + ' de ' + f.prescritas + ' séries'} />;
 }
 
 function Serie({ ctx, f }) {
@@ -47,7 +62,7 @@ function Serie({ ctx, f }) {
   const ex = f.ex;
   const aceitaSubir = () => { setCarga(f.sobe); setSobe(true); };
   return (
-    <TelaDeAcao cor="lima" topo={<Topo ctx={ctx} f={f} />}
+    <TelaDeAcao cor="lima" topo={<Topo ctx={ctx} f={f} />} segs={<SegsDoTreino f={f} />}
       pe={<Botao grande data-a="serie-feita" onClick={() => ctx.fazSerieV3(carga, reps)}>
             {ic.ok} {f.jaFeita ? 'Corrigir' : 'Feita'}: {ex.semCarga && !(carga > 0) ? '' : virgula(carga) + ' × '}{reps}
           </Botao>}
@@ -55,7 +70,6 @@ function Serie({ ctx, f }) {
         <button data-a="mudar-ex" onClick={() => ctx.abreFolha({ k: 'mudarEx', i: f.i })}>Mudar este exercício</button>
         <button data-a="lista-treino" onClick={() => ctx.abreFolha({ k: 'listaTreino' })}>Lista do treino</button>
       </>}>
-      <Segmentos total={ex.series} feitos={f.estados.filter(e => e.feita).length} rotulo={'série ' + (f.k + 1) + ' de ' + ex.series} />
       <p class="v3-serie-q">série {f.k + 1} de {ex.series}{ex.faixa ? ' · ' + ex.faixa + ' reps' : ''}{ex.rir ? ' · RIR ' + ex.rir : ''}</p>
       <h1 class="v3-serie-n" tabindex="-1">{ex.n}</h1>
       {ex.cue && <p class="v3-serie-c">{ex.cue}</p>}
@@ -106,59 +120,59 @@ function Descanso({ ctx, des }) {
   const u = ctx.ultimaV3();
   const prox = ctx.focoV3();
   return (
-    <div class="v3 v3-desc" style={`--v3-cheio:${(cheio * 100).toFixed(1)}%`}>
-      <div class="v3-desc-fundo" aria-hidden="true" />
-      <div class="v3-acao-topo">
-        <button onClick={ctx.fechaModoDeSessao} aria-label="Voltar, deixando o treino aberto">{ic.volta}</button>
-        <span>descanso</span><span class="v3-vazio-alvo" />
-      </div>
-      <div class="v3-desc-meio">
-        <div class="v3-desc-t v3-n" role="timer" aria-live="off">{falta > 0 ? relogio(falta) : 'Já!'}</div>
-        <p class="v3-desc-r">{des.rotulo}</p>
-        <div class="v3-desc-aj">
-          <button data-a="desc-menos" onClick={() => ctx.ajustaDescanso(-15)} aria-label="Tirar 15 segundos">−15 s</button>
-          <button data-a="desc-mais" onClick={() => ctx.ajustaDescanso(15)} aria-label="Somar 15 segundos">+15 s</button>
+    <TelaDeAcao cor="papel" classe="v3-desc" centro
+      fundo={<div class="v3-desc-fundo" aria-hidden="true" style={`transform:scaleY(${(podeDissolver() ? Math.floor(cheio * 10) / 10 : cheio).toFixed(3)})`} />}
+      topo={<Topo ctx={ctx} f={prox} />} segs={<SegsDoTreino f={prox} />}
+      pe={<Botao grande data-a="desc-pula" onClick={ctx.paraDescanso}>{falta > 0 ? 'Começar já' : 'Próxima série'}</Botao>}
+      links={<>
+        <button data-a="desc-menos" onClick={() => ctx.ajustaDescanso(-15)} aria-label="Tirar 15 segundos">−15 s</button>
+        <button data-a="desc-mais" onClick={() => ctx.ajustaDescanso(15)} aria-label="Somar 15 segundos">+15 s</button>
+      </>}>
+      <h1 class="v3-desc-r" tabindex="-1">descanso</h1>
+      <div class="v3-desc-t v3-n" role="timer" aria-live="off">{falta > 0 ? relogio(falta) : 'Já!'}</div>
+      {u && (
+        <div class="v3-desc-rir">
+          <Pergunta pergunta={'Sobraram quantas? · ' + u.n + ', série ' + u.serie}
+                    nota={u.txt + '. Quantas repetições você ainda faria.'}
+                    respostas={[0, 1, 2, 3, 4].map(n => ({ k: n, t: n === 4 ? '4+' : String(n) }))}
+                    valor={u.rir} aoResponder={ctx.rirDaUltimaV3} />
         </div>
-        {u && (
-          <div class="v3-desc-rir">
-            <Pergunta pergunta={'Sobraram quantas? · ' + u.n + ', série ' + u.serie}
-                      nota={u.txt + '. Quantas repetições você ainda faria.'}
-                      respostas={[0, 1, 2, 3, 4].map(n => ({ k: n, t: n === 4 ? '4+' : String(n) }))}
-                      valor={u.rir} aoResponder={ctx.rirDaUltimaV3} />
-          </div>
-        )}
-        {prox && !prox.fim && <p class="v3-desc-prox">a seguir: {prox.ex.n}, série {prox.k + 1}</p>}
-      </div>
-      <div class="v3-acao-pe"><Botao grande data-a="desc-pula" onClick={ctx.paraDescanso}>{falta > 0 ? 'Pular o descanso' : 'Próxima série'}</Botao></div>
-    </div>
+      )}
+      {prox && !prox.fim && <p class="v3-desc-prox">a seguir: {prox.ex.n}, série {prox.k + 1}</p>}
+    </TelaDeAcao>
   );
 }
 
 function FimDoTreino({ ctx, f }) {
+  const tudo = f.feitas >= f.prescritas;
   return (
-    <>
-      <Bloco cor="menta" chave="fim-treino" medio quando={f.sessaoAberta ? 'treino aberto' : 'nenhuma série ainda'}
-             linha0={<><button onClick={ctx.fechaModoDeSessao} aria-label="Voltar">{ic.volta} Hoje</button><span class="v3-n">{f.feitas} de {f.prescritas}</span></>}
-             titulo={f.feitas >= f.prescritas ? 'Tudo feito' : 'Nada mais na fila'}
-             apoio={f.feitas >= f.prescritas ? 'Todas as séries de ' + f.nome + ' estão guardadas.' : 'O que ficou para trás foi pulado. Encerrar grava o fim agora.'}>
-        <Acoes>{f.sessaoAberta && <Botao data-a="fim-encerra" onClick={ctx.encerraTreinoV3}>Encerrar o treino</Botao>}</Acoes>
-        <Saida onClick={() => ctx.abreFolha({ k: 'listaTreino' })}>Ver a lista do treino</Saida>
-      </Bloco>
-    </>
+    <TelaDeAcao cor="papel" centro topo={<Topo ctx={ctx} f={f} />} segs={<SegsDoTreino f={f} />}
+      pe={f.sessaoAberta
+        ? <Botao grande data-a="fim-encerra" onClick={ctx.encerraTreinoV3}>Encerrar o treino</Botao>
+        : <Botao grande data-a="fim-fecha" onClick={ctx.fechaModoDeSessao}>Voltar ao Hoje</Botao>}
+      links={<button data-a="fim-lista" onClick={() => ctx.abreFolha({ k: 'listaTreino' })}>Ver a lista do treino</button>}
+      classe="v3-fim">
+      <p class="v3-acao-q">{f.sessaoAberta ? 'nada mais na fila' : 'nenhuma série ainda'}</p>
+      <h1 class="v3-fim-t" tabindex="-1">{tudo ? 'Tudo feito.' : 'O resto foi pulado.'}</h1>
+      <p class="v3-medir-f">{tudo ? 'As ' + f.prescritas + ' séries estão guardadas. Encerre para fechar o relógio.'
+                                   : f.feitas + ' de ' + f.prescritas + ' séries guardadas. Encerrar grava o fim agora.'}</p>
+    </TelaDeAcao>
   );
 }
 
 /** O treino encerrado: o resumo e o "vira regra?" do que mudou nele. */
 function TreinoEncerrado({ ctx, f }) {
   return (
-    <>
-      <Bloco cor="menta" chave="encerrado" medio quando="guardado"
-             titulo={f.series + (f.series === 1 ? ' série. ' : ' séries. ') + f.nome + ' fechado.'}
-             apoio={f.depois ? (f.depois === 1 ? 'Um exercício registrado depois' : f.depois + ' exercícios registrados depois') + ', com os números da última vez.' : null}>
-        <Acoes><Botao data-a="encerrado-fecha" onClick={ctx.fechaFimV3}>Fechar</Botao></Acoes>
-      </Bloco>
+    <TelaDeAcao cor="papel" cima classe="v3-fim" topo={<Topo ctx={ctx} rotulo={'Treino ' + f.dia} />}
+      segs={<Segmentos total={f.series} feitos={f.series} rotulo={f.series + ' séries guardadas'} />}
+      pe={<Botao grande data-a="encerrado-fecha" onClick={ctx.fechaFimV3}>Fechar</Botao>}
+      links={f.t != null && <button data-a="encerrado-series" onClick={ctx.verSeriesDoFimV3}>Ver as séries</button>}>
+      <p class="v3-acao-q">guardado{f.min ? ' · ' + f.min + ' min' : ''}</p>
+      <h1 class="v3-fim-t" tabindex="-1">{f.series + (f.series === 1 ? ' série. ' : ' séries. ') + f.nome + ' fechado.'}</h1>
+      {f.depois > 0 && <p class="v3-medir-f">{(f.depois === 1 ? 'Um exercício registrado depois' : f.depois + ' exercícios registrados depois') + ', com os números da última vez.'}</p>}
       {f.mudancas.length > 0 && (
-        <Secao titulo="O que você mudou hoje" nota="vira regra?">
+        <div class="v3-encerrado-m">
+          <div class="v3-sec-h"><h2>O que você mudou hoje</h2><small>vira regra?</small></div>
           {f.mudancas.map((m, i) => (
             <div key={m.txt} class="v3-decide">
               <p>{m.txt}</p>
@@ -170,9 +184,9 @@ function TreinoEncerrado({ ctx, f }) {
             </div>
           ))}
           <Apoio>Sem resposta agora, a pergunta continua no Hoje. {f.vence}</Apoio>
-        </Secao>
+        </div>
       )}
-    </>
+    </TelaDeAcao>
   );
 }
 

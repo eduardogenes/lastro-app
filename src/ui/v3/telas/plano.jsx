@@ -82,6 +82,9 @@ export function PlanoV3({ ctx }) {
         <Saida onClick={ctx.novaRefeicao}>{'+'} Refeição</Saida>
       </Secao>
       )}
+      <Secao>
+        <Linha titulo="Ajustes" apoio="conta, cópia de segurança, lembretes" data-a="plano-ajustes" aoTocar={ctx.abreAjustes} />
+      </Secao>
       <div class="v3-fim-da-tela" />
     </div>
   );

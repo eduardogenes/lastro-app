@@ -32,7 +32,8 @@ export function App({ ctx }) {
         <Tela ctx={ctx} />
       </main>
       {ctx.folhas()}
-      <Doca ativa={aba} onMuda={ctx.vaiPara} aoRegistrar={ctx.abreRegistrar} />
+      <Doca ativa={aba} onMuda={ctx.vaiPara} aoRegistrar={ctx.abreRegistrar}
+            tira={ctx.tiraDoTreinoV3()} aoVoltarAoTreino={ctx.voltaAoTreino} />
       {paineis}
     </>
   );

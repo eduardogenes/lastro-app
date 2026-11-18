@@ -80,17 +80,21 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   outline-offset: 3px;
 }
 
-/* A MOLDURA do app: uma coluna de telefone, com a goteira e o espaço da doca
-   embaixo, para o último item da página não ficar atrás dela. */
+/* A MOLDURA do app: uma coluna de telefone. Sem goteira própria: a margem de
+   20 é de cada componente (o bloco do momento, a seção, a tela de ação vão de
+   borda a borda e põem a margem por dentro), e aqui só entra a área segura
+   dos lados. O espaço da doca é o `.v3-fim-da-tela` de cada lugar; a tela de
+   ação ocupa a janela exata, sem sobra para rolar (100svh, `.v3-acao`). */
 #app {
   max-width: 460px;
   margin: 0 auto;
   background: var(--papel);
-  padding-left: max(20px, var(--sa-left));
-  padding-right: max(20px, var(--sa-right));
-  padding-bottom: calc(var(--doca-h) + 46px + var(--sa-bottom));
+  padding-left: var(--sa-left);
+  padding-right: var(--sa-right);
+  padding-bottom: calc(28px + var(--sa-bottom));
   -webkit-font-smoothing: antialiased;
 }
+#app:has(.v3-acao) { padding-bottom: 0; }
 /* "Abrindo o registro…": o que o index.html mostra até o app montar. */
 .msg {
   padding: 34px 20px;
@@ -99,43 +103,54 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   color: var(--tinta-3);
 }
 
-/* As transições de vista do navegador ficam secas: o movimento do visual
-   novo é das próprias folhas e telas (DESIGN.md, Movimento). */
-::view-transition-group(*),
-::view-transition-image-pair(*),
-::view-transition-old(*),
-::view-transition-new(*) { animation: none; }
+/* As transições entre telas moram em `movimento.css`, por sentido. */
 
-/* O AVISO curto ("Sincronizado", "Foto na lixeira"): a região fica sempre na
-   página, vazia quando não há aviso, para o leitor de tela anunciar o que
-   chegar. Com "Desfazer" ao lado quando a ação volta atrás. */
+/* O AVISO ("Sincronizado", "Foto na lixeira por 30 dias."): um componente só,
+   a pílula de tinta, com "Desfazer" quando a ação volta atrás
+   (02-componentes.md, §12). A região fica sempre na página, vazia quando não
+   há aviso, para o leitor de tela anunciar o que chegar. Entra SOBRE o
+   conteúdo, sem empurrar: acima da doca e da tira do treino, quando estão à
+   vista; a 14 px do fundo numa tela cheia. */
 #toast {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(var(--doca-h) + 30px + var(--sa-bottom));
+  bottom: calc(14px + var(--sa-bottom));
   width: calc(100% - 28px); max-width: 432px; z-index: 75;
   pointer-events: none;
+  /* a foto própria na troca de tela: anda junto em vez de saltar no fim */
+  view-transition-name: aviso;
 }
+html:has(.v3-doca:not(.oculta)) #toast { bottom: calc(var(--doca-h) + 24px + var(--sa-bottom)); }
+html:has(.v3-doca:not(.oculta) .v3-tira) #toast { bottom: calc(var(--doca-h) + 88px + var(--sa-bottom)); }
+/* na tela de ação, 10 acima do principal: nunca cobre o "Feito" nem as saídas */
+html:has(.v3-acao) #toast { bottom: calc(var(--botao-g) + var(--alvo) + 32px + var(--sa-bottom)); }
+/* com uma folha aberta, no alto, sobre o véu: nunca cobre o que a folha pede */
+html:has(.v3-folha-w) #toast { top: calc(14px + var(--sa-top)); bottom: auto; }
 #toast > .aviso {
-  background: var(--tinta); color: var(--branco);
-  border-radius: var(--r-bloco);
+  background: var(--tinta); color: var(--papel);
+  border-radius: var(--r-pilula);
   box-shadow: var(--sombra-flutua);
-  font: 500 14px/1.4 var(--f-texto);
-  padding: 14px 18px;
+  font: 600 15px/1.35 var(--f-texto);
+  min-height: 56px; padding: 10px 20px;
+  display: flex; align-items: center; justify-content: center;
   text-align: center;
   pointer-events: auto;
 }
-#toast > .aviso.sai { opacity: 0; pointer-events: none; }
+#toast > .aviso.sai { opacity: 0; translate: 0 10px; pointer-events: none; }
 #toast > .aviso.com-acao {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  text-align: left; padding-top: 6px; padding-bottom: 6px;
+  justify-content: space-between; gap: 10px;
+  text-align: left; padding: 6px 6px 6px 20px;
 }
 .aviso-acao {
-  flex: 0 0 auto; min-height: var(--alvo); padding: 0 6px;
-  background: none; border: 0; color: var(--lima);
-  font: 700 14px/1 var(--f-texto); cursor: pointer;
+  flex: 0 0 auto; min-height: var(--alvo); padding: 0 18px;
+  border: 0; border-radius: var(--r-pilula);
+  background: var(--lima); color: var(--tinta);
+  font: 700 15px/1 var(--f-titulo); cursor: pointer;
 }
 @media (prefers-reduced-motion: no-preference) {
-  #toast > .aviso { animation: v3-entra var(--t-entra) var(--mola) both; }
+  /* `backwards`, e não `both`: a entrada não segura a opacidade depois de
+     acabar, e a saída (a transição de `.sai`) anda */
+  #toast > .aviso { animation: v3-entra var(--d-aviso) var(--mola) backwards; }
+  #toast > .aviso.sai { transition: opacity var(--d-aviso-sai) var(--mola-sai), translate var(--d-aviso-sai) var(--mola-sai); }
 }
 
 /* Para leitor de tela: presente na árvore de acessibilidade, invisível. */

@@ -5,7 +5,7 @@
 // Os lugares continuam com as chaves de sempre no estado (`agora`,
 // `prescricao`): o que muda é o nome que a pessoa lê, "Hoje" e "Plano".
 
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
 import { ic } from './icones.jsx';
 
 export const LUGARES = [
@@ -47,11 +47,50 @@ function useTecladoAberto() {
   return aberto;
 }
 
-export function Doca({ ativa, onMuda, aoRegistrar }) {
+/**
+ * O bloco do momento ainda está à vista? No Hoje, a tira do treino aberto só
+ * aparece quando ele já saiu da tela, para não dizer a mesma coisa duas vezes.
+ */
+function useBlocoAVista(liga) {
+  const [aVista, setAVista] = useState(true);
+  // medido ANTES de pintar, e de novo a cada vez que liga: o valor de quando o
+  // Hoje foi deixado rolado não vale ao voltar a ele (a tira piscava)
+  useLayoutEffect(() => {
+    if (!liga) { setAVista(true); return undefined; }
+    const mede = () => {
+      const b = document.querySelector('main .v3-bloco');
+      setAVista(!!b && b.getBoundingClientRect().bottom > 56);
+    };
+    mede();
+    window.addEventListener('scroll', mede, { passive: true });
+    return () => window.removeEventListener('scroll', mede);
+  }, [liga]);
+  return aVista;
+}
+
+/**
+ * A TIRA DO TREINO ABERTO: pílula lima 10 acima da doca, em todo lugar com
+ * sessão aberta. Toque: volta ao treino. `t`: `{ nome, feitas, prescritas }`.
+ */
+export function Tira({ t, aoTocar }) {
+  const conta = t.prescritas ? ' · ' + t.feitas + ' de ' + t.prescritas : '';
+  return (
+    <button class="v3-tira" data-a="tira-treino" onClick={aoTocar}
+            aria-label={'Voltar ao treino aberto: ' + t.nome + (t.prescritas ? ', ' + t.feitas + ' de ' + t.prescritas + ' séries' : '')}>
+      <i aria-hidden="true" /><span>{t.nome}{conta}</span>{ic.dir}
+    </button>
+  );
+}
+
+export function Doca({ ativa, onMuda, aoRegistrar, tira, aoVoltarAoTreino }) {
   const mini = useEncolhe();
   const teclado = useTecladoAberto();
+  // no Hoje, o bloco do momento já diz que o treino está aberto
+  const blocoAVista = useBlocoAVista(!!tira && ativa === 'agora');
+  const mostraTira = !!tira && !(ativa === 'agora' && blocoAVista);
   return (
     <div class={'v3 v3-doca' + (mini ? ' mini' : '') + (teclado ? ' oculta' : '')}>
+      {mostraTira && <Tira t={tira} aoTocar={aoVoltarAoTreino} />}
       <nav class="v3-doca-n" aria-label="Lugares">
         {LUGARES.map(l => (
           <button key={l.k} aria-label={l.t} aria-current={l.k === ativa ? 'page' : undefined}

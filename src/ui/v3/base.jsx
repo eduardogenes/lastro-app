@@ -183,15 +183,30 @@ export function Vazio({ titulo, children }) {
 
 /**
  * A TELA DE AÇÃO: uma coisa por tela, fundo de cor, botão grande embaixo.
- * `topo` é a linha de cima (sair, contexto), `pe` os botões, `links` as saídas.
+ *
+ * `topo` é a linha de cima (recolher, contexto, lista), `segs` o progresso logo
+ * abaixo dele, `pe` o botão principal (um só, de largura toda) e `links` as
+ * saídas embaixo dele. `fundo` é o que fica atrás de tudo (o enchimento do
+ * descanso). `centro` e `cima` dizem onde o miolo assenta (o padrão é embaixo,
+ * perto do polegar).
+ *
+ * AS ÂNCORAS NÃO SE MOVEM entre os passos de uma tarefa
+ * (07-fluidez-e-estabilidade.md, §1): o pé e a linha das saídas existem sempre,
+ * mesmo vazios — a linha reserva os 44 px dela, para o principal não descer
+ * quando ela some —, e o miolo empurra os dois para o fim da tela. Entre dois
+ * passos, o principal tem o mesmo retângulo; na transição de passo, o topo, os
+ * segmentos, o pé e as saídas ganham nome (`src/v3/movimento.css`) e ficam
+ * parados enquanto o miolo troca.
  */
-export function TelaDeAcao({ cor = 'lima', topo, pe, links, centro, children }) {
+export function TelaDeAcao({ cor = 'lima', topo, segs, pe, links, centro, cima, fundo, classe, children }) {
   return (
-    <div class="v3 v3-acao" style={`--v3-cor:var(--${cor})`}>
+    <div class={cls('v3 v3-acao', classe)} style={`--v3-cor:var(--${cor})`}>
+      {fundo}
       {topo && <div class="v3-acao-topo">{topo}</div>}
-      <div class={cls('v3-acao-meio', centro && 'centro')}>{children}</div>
-      {pe && <div class="v3-acao-pe">{pe}</div>}
-      {links && <div class="v3-acao-links">{links}</div>}
+      {segs}
+      <div class={cls('v3-acao-meio', centro && 'centro', cima && 'cima')}>{children}</div>
+      <div class="v3-acao-pe">{pe}</div>
+      <div class="v3-acao-links">{links}</div>
     </div>
   );
 }
@@ -221,7 +236,7 @@ export function Folha({ titulo, sub, aoFechar, children }) {
   useEffect(() => { trava(); return destrava; }, []);
   useEffect(() => abreCamada(caixa.current && caixa.current.parentElement, caixa.current), []);
   return (
-    <div class="v3 v3-folha-w" style={`position:relative;z-index:${60 + (lugar || 0) * 2}`}>
+    <div class="v3 v3-folha-w" data-lugar={lugar || 0} style={`position:relative;z-index:${60 + (lugar || 0) * 2}`}>
       <div class="v3-veu" onClick={aoFechar} />
       <section class="v3-folha" role="dialog" aria-modal="true" aria-label={titulo} ref={caixa} tabindex="-1">
         <h2>{titulo}</h2>

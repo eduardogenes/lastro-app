@@ -79,3 +79,22 @@ test('"reduzir movimento" desliga animação e transição do visual novo', () =
   assert.match(bloco![1], /animation:\s*none/);
   assert.match(bloco![1], /transition-duration:\s*\.01ms/);
 });
+
+test('a porta do movimento lê só tokens que existem, e cada sentido tem o seu movimento', () => {
+  const tokens = semComentarios(ler('src/v3/tokens.css'));
+  const porta = ler('src/ui/movimento.js') + ler('src/main.jsx');
+  const lidos = [...porta.matchAll(/(?:tempo|tempoDoMovimento)\('(--[a-z0-9-]+)'\)/g)].map(m => m[1]);
+  assert.ok(lidos.length > 0, 'a porta lê algum token');
+  lidos.forEach(t => assert.ok(new RegExp(t + ':').test(tokens), t + ' não existe em src/v3/tokens.css'));
+  const mov = semComentarios(ler('src/v3/movimento.css'));
+  ['lugar', 'entra', 'sai', 'sobe', 'desce', 'passo', 'fica'].forEach(s =>
+    assert.ok(mov.includes('html[data-nav="' + s + '"]'), 'sem movimento para o sentido ' + s));
+  // os valores do movimento vêm dos tokens: nenhuma duração solta
+  assert.deepStrictEqual(mov.match(/\b\d+m?s\b/g) || [], []);
+});
+
+test('nada zera as transições de vista: o movimento entre telas está ligado', () => {
+  FOLHAS_V3.filter(f => !f.endsWith('/movimento.css')).forEach(f => {
+    assert.ok(!/::view-transition/.test(semComentarios(ler(f))), f + ' mexe na transição de vista fora de movimento.css');
+  });
+});

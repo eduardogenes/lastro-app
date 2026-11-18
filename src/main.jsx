@@ -1145,11 +1145,19 @@ async function pularEx(i, botao) {
   // na própria linha. "Pulado" concorda com "exercício", e não com o nome: a
   // frente escreveu "pulada" porque o exemplo era "Elevação lateral", e o nome
   // muda de gênero de um exercício para outro.
+  //
+  // Pular tem efeito longe da tela (o exercício some da fila): grava na hora e
+  // mostra o aviso com "Desfazer" (03-padroes-e-voz.md, "Desfazer em vez de
+  // perguntar"). O desfazer só tira o pulo se ele ainda estiver lá.
   const ex = treino(view.day).ex[i];
   const nome = ex ? ex.n : 'o exercício';
-  toast(j >= 0
-    ? 'Desfeito: ' + nome + ' voltou para a fila desta sessão.'
-    : 'Guardei como pulado hoje: ' + nome + '. Não volta a ser pedido nesta sessão; desfazer põe de volta na fila.');
+  if (j >= 0) { toast('Desfeito: ' + nome + ' voltou para a fila desta sessão.'); return; }
+  const dia = view.day;
+  avisoComAcao(nome + ' pulado hoje.', 'Desfazer', function () {
+    const sv = S.sessao;
+    if (!sv || !sv.pulados || sv.pulados.indexOf(chave) < 0 || view.day !== dia) return;
+    pularEx(i);
+  });
 }
 
 // pular antes de qualquer série também abre a sessão: é uma decisão do treino
@@ -5220,7 +5228,7 @@ function tempoDeLeitura(texto) {
  * nada se mexe, e só o tempo recomeça (como sempre foi).
  *
  * A saída: o nó ganha `.sai` (apaga, e o toque passa por ele) e é tirado pelo
- * tempo de `--ins-dur-lugar` lido na porta — nunca por evento de fim de
+ * tempo de `--d-aviso-sai` lido na porta — nunca por evento de fim de
  * animação. Sob "Reduzir movimento" (e onde a porta não sabe) o tempo é 0, e
  * ele sai de uma vez.
  */
@@ -5248,7 +5256,7 @@ function apagaAviso() {
   const regiao = document.getElementById('toast');
   const no = regiao && regiao.firstElementChild;
   if (!no || no.classList.contains('sai')) return;
-  const ms = tempoDoMovimento('--ins-dur-lugar');
+  const ms = tempoDoMovimento('--d-aviso-sai');
   if (ms > 0) {
     no.classList.add('sai');
     avisoSaindo = setTimeout(function () {
@@ -7757,87 +7765,119 @@ let camadasDesenhadas = [];
 let abaDesenhada = null;
 /** O Voltar que o navegador já animou (gesto de borda, `hasUAVisualTransition`): não anima de novo. */
 let jaAnimado = false;
+/** O passo da tela de ação que está desenhada (`passoDaAcao`): contra ele se mede o próximo. */
+let passoDesenhado = null;
 
 /**
- * Qual troca é esta, do que está desenhado para o que `view` pede:
- * `entra` (um destino chega por cima), `sai` (o de cima sai e o de baixo — ou o
- * lugar — reaparece), `fica` (nenhum destino muda, e uma folha ou o painel de
- * apagar fecham), `aba-direita`/`aba-esquerda` (o lugar à vista dos dois lados,
- * e a aba mudou: o sentido é o do índice na barra), `seca` (a aba mudou, mas uma
- * das duas não está na barra — `vaiPara('treino')` —: não há para que lado andar)
- * ou `null` (nada a mover: a folha que abre sobe por CSS, a troca do topo e o
- * "Não guardei" não se movem).
+ * Qual troca é esta, do que está desenhado para o que `view` pede. É a tabela
+ * do docs/design-system/07-fluidez-e-estabilidade.md:
  *
- * A camada vem antes da aba: fechar um destino e trocar de aba no mesmo toque
- * ("Ir para Semana", na Evolução) é a tela de cima saindo, e a aba que reaparece
- * já é a nova (02 T2). A aba vem antes da folha que fecha: a foto da folha desce
- * sozinha (`:only-child`) em qualquer transição, e o lugar anda por baixo dela.
+ *  - `entra` / `sai`: um destino chega por cima, ou o de cima sai e o de baixo
+ *    (ou o lugar) reaparece;
+ *  - `sobe` / `desce`: o mesmo, quando quem chega ou sai é uma TELA DE AÇÃO
+ *    (treino, responder os dias, medir, câmera);
+ *  - `passo`: uma tela de ação dá lugar a outra (a câmera sobre a sessão), ou a
+ *    mesma tela de ação muda de passo (a série vira descanso, a leitura vira a
+ *    próxima, o dia vira o seguinte): as âncoras ficam, o miolo troca;
+ *  - `lugar`: o lugar à vista dos dois lados, e ele mudou (fade through);
+ *  - `seca`: o lugar mudou, mas um dos dois não está na doca;
+ *  - `fica`: nenhum destino muda, e uma folha ou o painel de apagar fecham;
+ *  - `null`: nada a mover (a folha que abre sobe por CSS, um redesenho do
+ *    mesmo passo, a régua que anda).
+ *
+ * A camada vem antes do lugar: fechar um destino e trocar de lugar no mesmo
+ * toque é a tela de cima saindo, e o lugar que reaparece já é o novo. O lugar
+ * vem antes da folha que fecha, e a folha antes do passo: a foto da folha desce
+ * sozinha em qualquer transição.
  */
 const ORDEM_DAS_ABAS = ['agora', 'dias', 'corpo', 'semana', 'prescricao'];
-function sentidoDaTroca(antes, agora, abaAntes, abaAgora) {
+const TELAS_DE_ACAO = ['modoSessao', 'responderDias', 'medidas', 'camera'];
+function eAcao(c) { return TELAS_DE_ACAO.indexOf(c) >= 0; }
+function sentidoDaTroca(antes, agora, abaAntes, abaAgora, passoAntes, passoAgora) {
   const destinos = function (l) {
     return l.filter(function (c) { return c !== 'pare' && c !== 'falhou' && c.indexOf('folha:') !== 0; });
   };
   const da = destinos(antes), dn = destinos(agora);
   const topoAntes = da.length ? da[da.length - 1] : null;
   const topoAgora = dn.length ? dn[dn.length - 1] : null;
-  if (topoAntes !== topoAgora) return topoAgora == null || da.indexOf(topoAgora) >= 0 ? 'sai' : 'entra';
-  // Trocar de aba (peça 6): só com o lugar à vista — com um destino aberto, a
-  // aba de baixo nem está desenhada, e o que andaria seria a tela cheia.
+  if (topoAntes !== topoAgora) {
+    const chega = topoAgora != null && da.indexOf(topoAgora) < 0;
+    if (chega) return eAcao(topoAgora) ? (eAcao(topoAntes) ? 'passo' : 'sobe') : 'entra';
+    return eAcao(topoAntes) ? (eAcao(topoAgora) ? 'passo' : 'desce') : 'sai';
+  }
+  // Trocar de lugar: só com o lugar à vista — com um destino aberto, o lugar
+  // de baixo nem está desenhado.
   if (topoAgora == null && abaAntes !== abaAgora) {
-    const indice = function (a) { return ORDEM_DAS_ABAS.indexOf(a); };
-    const de = indice(abaAntes), para = indice(abaAgora);
-    if (de < 0 || para < 0) return 'seca';
-    return para > de ? 'aba-direita' : 'aba-esquerda';
+    if (ORDEM_DAS_ABAS.indexOf(abaAntes) < 0 || ORDEM_DAS_ABAS.indexOf(abaAgora) < 0) return 'seca';
+    return 'lugar';
   }
   const folhas = function (l) { return l.filter(function (c) { return c.indexOf('folha:') === 0; }).length; };
   if (folhas(agora) < folhas(antes)) return 'fica';
   if (antes.indexOf('pare') >= 0 && agora.indexOf('pare') < 0) return 'fica';
+  if (eAcao(topoAgora) && passoAntes != null && passoAgora != null && passoAntes !== passoAgora) return 'passo';
   return null;
+}
+
+/**
+ * O PASSO da tela de ação de cima: muda quando a tarefa avança (a série
+ * guardada vira descanso, o descanso vira a próxima série, a leitura vira a
+ * próxima, o dia vira o seguinte), e não muda num redesenho do mesmo passo
+ * (+15 s, a régua, o relógio). `null` fora de tela de ação.
+ */
+function passoDaAcao(topo) {
+  if (topo === 'modoSessao') {
+    if (view.fimV3) return 'encerrado';
+    if (timerFim) return 'descanso';
+    const d = view.day;
+    if (!d || !treino(d)) return 'vazio';
+    if (diaAberto(d) && !view.aulaPorSerie) return 'aula';
+    const f = serieEmFoco(d);
+    return f ? 'serie:' + d + ':' + f.i + ':' + f.k : 'fim:' + d;
+  }
+  if (topo === 'responderDias') {
+    const r = view.responderDias;
+    return r ? 'dia:' + r.i : null;
+  }
+  if (topo === 'medidas') {
+    const x = view.medidas && view.medidas.v3;
+    if (!x) return null;
+    if (x.feitas) return 'fim';
+    const k = x.fila[x.i];
+    return 'medida:' + x.i + ':' + ((view.medidas.leituras[k] || []).length);
+  }
+  return null;
+}
+function topoDe(l) {
+  const d = l.filter(function (c) { return c !== 'pare' && c !== 'falhou' && c.indexOf('folha:') !== 0; });
+  return d.length ? d[d.length - 1] : null;
 }
 
 function render() {
   if (desligado || desenhoPendente) return;
   const pedidas = camadasAbertas(view);
-  const sentido = abriu ? sentidoDaTroca(camadasDesenhadas, pedidas, abaDesenhada, CTX.abaAtual()) : null;
+  const sentido = abriu ? sentidoDaTroca(camadasDesenhadas, pedidas, abaDesenhada, CTX.abaAtual(),
+                                         passoDesenhado, passoDaAcao(topoDe(pedidas))) : null;
   if (!sentido) { desenhaAgora(); return; }
   desenhoPendente = true;
   marcaAsFolhasQueSaem(pedidas);
-  trocaDeCamada(sentido, desenhaPendente, !jaAnimado, rodapeDaTroca(camadasDesenhadas, pedidas));
+  trocaDeCamada(sentido, desenhaPendente, !jaAnimado);
 }
 
 /**
- * A FOLHA QUE SAI, marcada antes da foto (ajustes finais do motion; 07 §12.3).
- * Na descida (`fica`) só ela tem nome na transição: a que fica, o véu dela e o
- * que é do aparelho ficam na foto da página, que não anda (`componentes.css`,
- * "NA DESCIDA, SÓ O QUE SAI TEM FOTO") — fotografá-los à parte fazia o quadro da
- * foto passar do tempo de um quadro. Sai toda folha cuja posição passa do que
- * `view` pede (a pilha só fecha por cima); a marca de uma que fica é tirada. O
- * nó que sai deixa o DOM no desenho, e a marca vai com ele. Não muda o que se
- * desenha: só quem tem foto.
+ * A FOLHA QUE SAI, marcada antes da foto. Na descida (`fica`) só ela e o véu
+ * dela têm nome na transição (`src/v3/movimento.css`, "a folha desce"): a que
+ * fica e o resto ficam na foto da página, que não anda. Sai toda folha cuja
+ * posição passa do que `view` pede (a pilha só fecha por cima); a marca de uma
+ * que fica é tirada. O nó que sai deixa o DOM no desenho, e a marca vai com
+ * ele. Não muda o que se desenha: só quem tem foto.
  */
 function marcaAsFolhasQueSaem(pedidas) {
   if (typeof document === 'undefined' || !document.querySelectorAll) return;
   const ficam = pedidas.filter(function (c) { return c.indexOf('folha:') === 0; }).length;
-  [].slice.call(document.querySelectorAll('.ins-folha-w[data-lugar]')).forEach(function (el) {
+  [].slice.call(document.querySelectorAll('.v3-folha-w[data-lugar]')).forEach(function (el) {
     if (Number(el.getAttribute('data-lugar')) >= ficam) el.setAttribute('data-sai', '');
     else el.removeAttribute('data-sai');
   });
-}
-
-/**
- * A troca muda a reserva do rodapé? Com uma tela cheia ou o modo desenhados não
- * há barra de abas (`html:has(.tc)`, `componentes.css`), e o cronômetro e o
- * aviso ficam no fundo da tela; sem eles, sobre a barra. `desce` quando a barra
- * sai, `sobe` quando volta, `null` quando fica como está (a porta põe isto em
- * `data-pe`, e as fotos dos dois mudam de altura junto com a troca).
- */
-function rodapeDaTroca(antes, agora) {
-  const barra = function (l) {
-    return !l.some(function (c) { return c !== 'pare' && c !== 'falhou' && c.indexOf('folha:') !== 0; });
-  };
-  const a = barra(antes), d = barra(agora);
-  return a === d ? null : (a ? 'desce' : 'sobe');
 }
 
 /** O desenho que a transição pede — e que o toque no meio dela antecipa. Desenha uma vez só. */
@@ -7868,6 +7908,7 @@ function desenhaAgora() {
   depois.forEach(function (f) { f(); });
   camadasDesenhadas = camadasAbertas(view);
   abaDesenhada = CTX.abaAtual();
+  passoDesenhado = passoDaAcao(topoDe(camadasDesenhadas));
   devolveOFoco(antes, camadasDesenhadas);
   naoPerdeOFoco(focado);
   ajustaRelogio();
@@ -11799,8 +11840,10 @@ async function garanteBytesDaLixeira() {
 }
 
 /**
- * O aviso com uma AÇÃO ao lado ("Desfazer"). Fica mais tempo que o aviso
- * comum: é para dar tempo de o dedo chegar.
+ * O AVISO COM "DESFAZER": o componente único para tudo o que é reversível mas
+ * tem efeito longe da tela (apagar foto, pular exercício). A pílula de tinta,
+ * acima da doca, com a ação em lima (`global.css`, "O AVISO"). Fica 6 s, para
+ * dar tempo de o dedo chegar.
  */
 function avisoComAcao(msg, rotulo, fn) {
   const regiao = document.getElementById('toast');
@@ -11822,8 +11865,19 @@ function avisoComAcao(msg, rotulo, fn) {
   no.appendChild(t); no.appendChild(b);
   regiao.textContent = '';
   regiao.appendChild(no);
-  avisoLeitura = setTimeout(apagaAviso, Math.max(7000, tempoDeLeitura(msg)));
+  // some no próximo toque fora dele (02-componentes.md, §12)
+  const fora = function (e) {
+    if (!no.isConnected) { document.removeEventListener('pointerdown', fora, true); return; }
+    if (regiao.contains(e.target)) return;
+    document.removeEventListener('pointerdown', fora, true);
+    clearTimeout(avisoLeitura);
+    apagaAviso();
+  };
+  document.addEventListener('pointerdown', fora, true);
+  // 6 s para o dedo chegar (02-componentes.md, §12), ou o tempo de ler, se maior
+  avisoLeitura = setTimeout(apagaAviso, Math.max(AVISO_COM_ACAO_MS, tempoDeLeitura(msg)));
 }
+const AVISO_COM_ACAO_MS = 6000;
 
 // ---------- a GALERIA das fotos do corpo ----------
 CTX.abreGaleria = function () {
@@ -13228,6 +13282,23 @@ CTX.encerraSessaoEsquecida = async function () {
   toast(fraseDoFechoNaUltima(s, 'Encerrei'));
 };
 
+/**
+ * A TIRA DO TREINO ABERTO, acima da doca, em todo lugar: o nome do treino e
+ * quantas séries de quantas. `null` sem sessão aberta.
+ */
+CTX.tiraDoTreinoV3 = function () {
+  const s = S.sessao;
+  const P = s && treino(s.day);
+  if (!P) return null;
+  if (diaAberto(s.day)) return { nome: 'Aula do box', feitas: 0, prescritas: 0 };
+  const prescritas = P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0);
+  return { nome: 'Treino ' + s.day, feitas: Math.min(seriesFeitasHoje(s.day), prescritas), prescritas: prescritas };
+};
+
+/** O tempo da sessão aberta, sem as pausas: o relógio do topo do treino. */
+CTX.relogioDoTreinoV3 = function () { return S.sessao ? duracaoAtual(S.sessao) : 0; };
+CTX.verSeriesDoFimV3 = function () { const f = view.fimV3; if (f && f.t != null) abrirSessao(f.t); };
+
 CTX.voltaAoTreino = function () {
   const s = S.sessao;
   if (!s) return;
@@ -13364,8 +13435,11 @@ CTX.abreModoDeSessao = function () { if (abreModo()) render(); };
  */
 // O interruptor do visual novo (direção 3), por aparelho. Sai na Fase 5.
 
-CTX.abreAjustes = function () {
+CTX.abreAjustes = function (fechaAsFolhas) {
   if (view.ajustes) return;
+  // vindo de uma folha ("O que aparece"): ela sai no mesmo desenho, e a troca
+  // é uma só, a de entrar no destino
+  if (fechaAsFolhas === true) { (view.pilha || []).forEach(soltaEstadoDaFolha); view.pilha = []; }
   view.ajustes = true;
   entraNoDestino('ajustes');
   render();
@@ -13774,7 +13848,9 @@ CTX.encerraTreinoV3 = async function () {
     });
   });
   if (!series) return;                             // descartada: nada a resumir
-  view.fimV3 = { sid: sid, dia: dia, series: series, depois: depois };
+  const marca = S.done.filter(function (x) { return x.sid === sid; })[0];
+  view.fimV3 = { sid: sid, dia: dia, series: series, depois: depois,
+                 t: marca ? marca.t : null, min: marca && marca.dur ? Math.round(marca.dur / 60000) : null };
   render(); rola(0);
 };
 CTX.fimV3 = function () {

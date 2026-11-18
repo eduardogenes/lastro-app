@@ -224,6 +224,11 @@ export function FolhaOQueAparece({ ctx }) {
       <div class="v3-ligar">
         {M.map(m => <Chave key={m[0]} titulo={m[1]} apoio={m[2]} ligada={ctx.moduloLigado(m[0])} data-a={'aparece-' + m[0]} aoMudar={on => ctx.ligaModulo(m[0], on)} />)}
       </div>
+      {/* a porta dos Ajustes: conta, cópia de segurança, lembretes e o que apaga */}
+      <div class="v3-ligar">
+        <Linha titulo="Ajustes" apoio="conta, cópia de segurança, lembretes" data-a="aparece-ajustes"
+               aoTocar={() => ctx.abreAjustes(true)} />
+      </div>
       <Acoes><Botao onClick={() => ctx.fechaFolha()}>Pronto</Botao></Acoes>
     </Folha>
   );

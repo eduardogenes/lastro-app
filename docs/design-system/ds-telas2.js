@@ -261,7 +261,7 @@ tela({ id: 'retro', n: 'Retrospectiva do bloco', g: 'semana', c: 'destino', luga
 /* ======================= PLANO ======================= */
 tela({ id: 'plano', n: 'Plano', g: 'plano', c: 'lugar', lugar: 'plano',
   d: 'O que espera decisão no topo (e o que vence), os treinos, os dias de treino, a comida do nutricionista, alimentos e compras.',
-  es: [['normal', 'com decisão pendente'], ['vence', 'decisão vencendo hoje'], ['nada', 'nada pendente'], ['semcomida', 'comida desligada']], vai: ['programa', 'editor', 'progressao', 'revisao', 'f-refeicao-plano', 'f-alimentos', 'f-compras', 'f-nova-refeicao'],
+  es: [['normal', 'com decisão pendente'], ['vence', 'decisão vencendo hoje'], ['nada', 'nada pendente'], ['semcomida', 'comida desligada']], vai: ['programa', 'editor', 'progressao', 'revisao', 'f-refeicao-plano', 'f-alimentos', 'f-compras', 'f-nova-refeicao', 'ajustes'],
   r: e => H.cab('Plano', '5 treinos · 6 refeições', { lugar: 1 })
     + (e === 'nada' || e === 'semcomida' ? '' : H.secao('Esperando você', 'vira regra?', `${e === 'vence' ? H.caixa('a', 'Vence hoje, no treino B', 'Se você não responder até começar o B, a troca fica só daquele dia.') : ''}<div class="decide"><p>Trocou agachamento no Smith por hack machine</p><small>no treino B de 09/11 · ${e === 'vence' ? 'vence hoje' : 'vence no próximo B, quinta'}</small>${H.resp(['Só aquele dia', 'Passa a valer'], null, { nome: 'Trocou agachamento' })}</div>`))
     + H.secao('Treinos', 'toque para editar', `<div class="tiles">${D.TR.map(t => `<button class="tile ${t[0] === 'B' ? 'hoje' : ''}" data-ir="editor"><span class="L">${t[0]}</span><span><b>${t[1]}</b><span>${t[2]} séries${t[0] === 'B' ? ' · hoje' : t[3] ? ' · ' + t[3] + (t[3] === 1 ? ' diferença' : ' diferenças') : ''}</span></span></button>`).join('')}</div>
@@ -269,7 +269,8 @@ tela({ id: 'plano', n: 'Plano', g: 'plano', c: 'lugar', lugar: 'plano',
     + H.secao('Dias de treino', 'toque para trocar', `<div class="sem">${['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => `<button class="dd ${[1, 2, 3, 4, 5].includes(i) ? 't' : ''}" aria-pressed="${[1, 2, 3, 4, 5].includes(i)}" aria-label="${['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'][i]}">${d}</button>`).join('')}</div><p class="txt">Isto diz só em que dias você costuma treinar. Qual sessão vem é sempre a rotação: A, B, C, D, E.</p>`)
     + (e === 'semcomida' ? H.secao('Comida', '', `<div class="lista">${H.lin({ t: 'Comida desligada', a: 'ligue para acompanhar um plano alimentar', off: 1, marca: 'mais', folha: 'f-aparece' })}</div>`)
       : H.secao('Comida', '3.204 kcal em dia de treino', `${H.seg(['Dia de treino', 'Dia de descanso'], 'Dia de treino', 'Tipo de dia')}<div class="lista" style="margin-top:6px">${D.REF.map(r => H.lin({ t: r.n, a: r.h + ' · ' + r.it.length + ' itens' + (r.so ? ' · só em dia de treino' : ''), val: r.k, un: 'kcal', folha: 'f-refeicao-plano', n: 1 })).join('')}</div>
-        <div class="acoes">${H.alt(ic.mais + ' Refeição', { cheio: 1, folha: 'f-nova-refeicao' })}${H.alt('Alimentos', { cheio: 1, folha: 'f-alimentos' })}</div><div class="lista" style="margin-top:6px">${H.lin({ t: 'Lista de compras', a: 'o plano de uma semana, 13 itens', folha: 'f-compras' })}</div>`)) });
+        <div class="acoes">${H.alt(ic.mais + ' Refeição', { cheio: 1, folha: 'f-nova-refeicao' })}${H.alt('Alimentos', { cheio: 1, folha: 'f-alimentos' })}</div><div class="lista" style="margin-top:6px">${H.lin({ t: 'Lista de compras', a: 'o plano de uma semana, 13 itens', folha: 'f-compras' })}</div>`))
+    + H.secao('', '', `<div class="lista">${H.lin({ t: 'Ajustes', a: 'conta, cópia de segurança, lembretes', ir: 'ajustes' })}</div>`) });
 
 tela({ id: 'programa', n: 'Programa', g: 'plano', c: 'destino', lugar: 'plano',
   d: 'Mudança aqui vale a partir do próximo treino. Os treinos, a ordem, as diferenças do treinador e o histórico de mudanças (quando e por quê, com desfazer).', vai: ['editor', 'diferencas', 'historico-mudancas', 'revisao', 'f-criar-treino'],
@@ -361,7 +362,7 @@ tela({ id: 'f-compras', n: 'Lista de compras', g: 'plano', c: 'folha', base: 'pl
 
 /* ======================= AJUSTES E PRIMEIRA VEZ ======================= */
 tela({ id: 'ajustes', n: 'Ajustes', g: 'ajustes', c: 'destino', lugar: 'hoje',
-  d: 'Conta, o que aparece, lembretes, cópia de segurança e o que apaga. Chega-se pelo "Ajustes" no fim da folha "O que aparece".',
+  d: 'Conta, o que aparece, lembretes, cópia de segurança e o que apaga. Chega-se pelo "Ajustes" no fim da folha "O que aparece" e no fim do Plano.',
   es: [['conta', 'com conta'], ['semconta', 'sem conta'], ['erro', 'senha errada'], ['entrando', 'entrando']], vai: ['f-colar-copia', 'f-confirma'],
   r: e => H.cab('Ajustes', '') + H.secao('Conta', e === 'conta' ? 'sincronizado há 2 min' : 'só neste aparelho', e === 'conta'
       ? `<div class="lista">${H.lin({ tag: 'div', o: ic.nuvem, t: 'Sua conta', a: 'registro igual no celular e no computador; fotos com cópia', marca: 'nada' })}</div><div class="saidas">${H.saida('Sair desta conta')}</div>`

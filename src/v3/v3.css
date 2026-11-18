@@ -1,4 +1,4 @@
-/* O visual do app (direção 3). Regras e valores: DESIGN.md. */
+/* O visual do app (direção 3). Regras e valores: docs/design-system/. */
 @import './tokens.css';
 @import './fontes.css';
 @import './global.css';
@@ -6,3 +6,4 @@
 @import './componentes.css';
 @import './fotos.css';
 @import './registro.css';
+@import './movimento.css';

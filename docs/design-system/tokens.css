@@ -127,9 +127,17 @@
   --mola: cubic-bezier(.2, .9, .25, 1);      /* o que entra e o que muda: chega rápido, pousa macio */
   --mola-sai: cubic-bezier(.4, 0, 1, 1);     /* o que sai: parte devagar e some (07-fluidez-e-estabilidade.md) */
   --d-toque: 100ms;      /* botão encolhe 3% */
-  --d-sai: 140ms;        /* a tela que sai, num destino */
-  --d-passo: 180ms;      /* o miolo que troca entre passos da mesma tarefa; o lugar que entra */
+  --d-lugar-sai: 90ms;   /* trocar de lugar: o que sai some (fade through) */
+  --d-atraso-lugar: 60ms;/* e o que entra espera isto */
+  --d-sai: 100ms;        /* a tela que sai, num destino */
+  --d-atraso: 40ms;      /* a tela que entra num destino espera a que sai */
+  --d-passo-sai: 120ms;  /* o miolo que sai entre passos da mesma tarefa */
+  --d-passo: 180ms;      /* o miolo que entra entre passos da mesma tarefa; o lugar que entra */
+  --d-aviso-sai: 160ms;  /* aviso com desfazer e faixa saem */
+  --d-aviso: 200ms;      /* aviso com desfazer e faixa entram, 10 px + opacidade */
+  --d-volta: 220ms;      /* a tela que reaparece ao voltar de um destino */
   --d-navega: 260ms;     /* a tela que entra num destino */
+  --d-recolhe: 260ms;    /* a tela de ação desce */
   --d-fecha: 240ms;      /* folha que desce */
   --d-estado: 200ms;     /* troca de estado de um controle */
   --d-chave: 250ms;      /* a bolinha da chave */
@@ -146,5 +154,7 @@
     --d-toque: 0ms; --d-estado: 0ms; --d-chave: 0ms; --d-folha: 0ms; --d-fecha: 0ms;
     --d-acao: 0ms; --d-entra: 0ms; --d-cor: 0ms; --d-veu: 0ms;
     --d-sai: 0ms; --d-passo: 0ms; --d-navega: 0ms; --desliza: 0px;
+    --d-lugar-sai: 0ms; --d-atraso-lugar: 0ms; --d-atraso: 0ms; --d-passo-sai: 0ms;
+    --d-aviso-sai: 0ms; --d-aviso: 0ms; --d-volta: 0ms; --d-recolhe: 0ms;
   }
 }

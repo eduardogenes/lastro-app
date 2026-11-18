@@ -258,10 +258,14 @@ Ficam a 8 do topo, sobre o conteúdo, com a área segura de cima.
 
 ## 12. Aviso com ação ("Desfazer")
 
-Pílula de tinta, texto papel, 52 de altura, 10 acima da doca (ou da borda em
-destino), com o fato ("Foto na lixeira.") e o botão "Desfazer" em lima. Some
-em 6 s ou no próximo toque fora; com leitor de tela, é anunciado e fica até
-ser dispensado. Um de cada vez; o novo substitui o velho.
+Pílula de tinta, texto papel, 56 de altura, com o fato ("Foto na lixeira.")
+e o botão "Desfazer" em lima. Onde fica: 10 acima da doca (e da tira do treino
+aberto, se houver); a 14 da borda em destino; **10 acima do principal** na
+tela de ação, para nunca cobrir o "Feito" nem as saídas; e **no alto, sobre o
+véu**, com uma folha aberta, para nunca cobrir o que a folha pede. Entra em
+200 ms, deslizando 10 px, sem empurrar nada. Some em 6 s ou no próximo toque
+fora; com leitor de tela, é anunciado e fica até ser dispensado. Um de cada
+vez; o novo substitui o velho.
 
 ## 13. Aviso dentro da tela
 
