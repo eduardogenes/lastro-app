@@ -1,0 +1,351 @@
+<title>Inventário do Lastro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Página de etapa: papel do Lastro, um bloco de cor no topo, consulta compacta embaixo. Sempre clara. */
+:root{
+  color-scheme: light;
+  --papel:#F6F3EC; --branco:#FFFDF8; --areia:#EBE6DA; --fio:#DFDACE; --contorno:#858073;
+  --tinta:#0F0F0D; --tinta-2:#56554E; --tinta-3:#68675F;
+  --lima:#D2F23A; --tanja:#FF9A4D; --lilas:#D3C6FF; --ceu:#BBDDFB; --menta:#BEEBD2;
+  --f-titulo:"Bricolage Grotesque","Instrument Sans",system-ui,sans-serif;
+  --f-texto:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mola:cubic-bezier(.2,.9,.25,1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--papel)}
+body{margin:0;background:var(--papel);color:var(--tinta);font:16px/1.45 var(--f-texto);-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;text-align:inherit}
+:focus-visible{outline:2.5px solid var(--tinta);outline-offset:3px}
+h1,h2,h3,p{margin:0}
+.n{font-family:var(--f-titulo);font-variant-numeric:tabular-nums}
+.larg{max-width:760px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+
+.topo{background:var(--lilas);border-radius:0 0 34px 34px}
+.topo .larg{padding-block:22px 26px}
+.quando{font:700 14px/1.2 var(--f-texto)}
+.topo h1{font:800 50px/.92 var(--f-titulo);letter-spacing:-.04em;margin-top:8px;text-wrap:balance}
+.topo p.apoio{font-size:16px;line-height:1.4;margin-top:12px;max-width:56ch;text-wrap:pretty}
+.quadros{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:18px}
+.quadros div{border-radius:20px;background:var(--branco);padding:10px 12px;font-size:13px;font-weight:600;color:var(--tinta-2)}
+.quadros b{display:block;font:800 26px/1.05 var(--f-titulo);color:var(--tinta);letter-spacing:-.02em}
+@media (max-width:520px){.quadros{grid-template-columns:repeat(2,1fr)}.topo h1{font-size:40px}}
+
+section{padding-top:30px}
+h2{font:700 22px/1.15 var(--f-titulo);letter-spacing:-.02em;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+h2 small{font:500 14px var(--f-texto);color:var(--tinta-3);letter-spacing:0}
+.texto{color:var(--tinta-2);margin-top:8px;max-width:62ch;text-wrap:pretty}
+.texto b{color:var(--tinta)}
+
+/* perguntas */
+.perg{margin-top:14px;border-radius:28px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:18px}
+.perg h3{font:700 20px/1.2 var(--f-titulo);letter-spacing:-.01em;text-wrap:balance}
+.perg .ctx{font-size:15px;color:var(--tinta-2);margin-top:8px;text-wrap:pretty}
+.hoje{margin-top:12px;border-radius:18px;background:var(--areia);padding:10px 14px;font-size:14px;color:var(--tinta-2)}
+.hoje b{color:var(--tinta)}
+.ops{display:grid;gap:8px;margin-top:12px}
+.op{display:flex;gap:12px;align-items:flex-start;width:100%;border-radius:22px;background:var(--papel);box-shadow:inset 0 0 0 1.5px var(--contorno);padding:14px 16px;transition:transform .12s var(--mola)}
+.op:active{transform:scale(.985)}
+.op[aria-pressed="true"]{background:var(--lima);box-shadow:inset 0 0 0 2.5px var(--tinta)}
+.op .o{flex:0 0 28px;height:28px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--contorno);display:flex;align-items:center;justify-content:center;margin-top:1px;background:var(--branco)}
+.op[aria-pressed="true"] .o{background:var(--tinta);box-shadow:none;color:var(--lima)}
+.op .o svg{width:16px;height:16px;opacity:0}
+.op[aria-pressed="true"] .o svg{opacity:1}
+.op b{display:block;font:700 17px/1.2 var(--f-titulo)}
+.op span.c{display:block;font-size:14px;color:var(--tinta-2);margin-top:3px;line-height:1.4}
+.rec{display:inline-block;margin-left:6px;vertical-align:2px;font:700 12px var(--f-titulo);background:var(--tinta);color:var(--lima);border-radius:99px;padding:2px 9px}
+label.livre{display:block;margin-top:12px;font-size:14px;font-weight:600;color:var(--tinta-2)}
+textarea{display:block;width:100%;margin-top:6px;min-height:64px;border:0;border-radius:18px;background:var(--papel);box-shadow:inset 0 0 0 1.5px var(--contorno);padding:12px 14px;font:500 16px/1.4 var(--f-texto);color:var(--tinta);resize:vertical}
+textarea:focus{outline:none;box-shadow:inset 0 0 0 2.5px var(--tinta)}
+
+.copia{margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.vai{min-height:58px;padding:0 26px;border-radius:99px;background:var(--tinta);color:var(--papel);font:700 18px/1 var(--f-titulo);display:inline-flex;align-items:center;gap:10px;transition:transform .12s var(--mola)}
+.vai:active{transform:scale(.97)}
+.eco{font-size:14px;font-weight:600}
+#resumo{display:block;width:100%;margin-top:10px;min-height:120px;font:500 14px/1.45 var(--f-texto)}
+
+/* inventário */
+.legenda{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:14px;color:var(--tinta-2)}
+.m{display:inline-flex;width:20px;height:20px;border-radius:50%;vertical-align:-4px;margin-right:6px;flex:0 0 auto}
+.m.c{background:var(--tinta)}
+.m.p{background:linear-gradient(90deg,var(--tinta) 50%,var(--branco) 50%);box-shadow:inset 0 0 0 2px var(--tinta)}
+.m.o{background:var(--branco);box-shadow:inset 0 0 0 2px var(--tinta)}
+details{margin-top:10px;border-radius:22px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio)}
+summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 16px}
+summary::-webkit-details-marker{display:none}
+summary b{flex:1;font:700 18px/1.15 var(--f-titulo)}
+summary .cont{font-size:13px;font-weight:600;color:var(--tinta-2);display:flex;gap:10px}
+summary svg{width:20px;height:20px;transition:transform .2s var(--mola)}
+details[open] summary svg{transform:rotate(90deg)}
+.itens{padding:0 16px 10px}
+.it{display:flex;gap:10px;padding:10px 0;border-top:1.5px solid var(--fio)}
+.it .tx{flex:1;min-width:0}
+.it .tx b{display:block;font-weight:600;font-size:15px;line-height:1.3}
+.it .tx span{display:block;font-size:13px;color:var(--tinta-3);margin-top:2px}
+.lac{font:700 11px var(--f-titulo);background:var(--tanja);color:var(--tinta);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+
+/* divergências */
+.div{display:grid;gap:8px;margin-top:12px}
+.dv{border-radius:22px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:14px 16px}
+.dv h3{font:700 17px/1.2 var(--f-titulo);display:flex;gap:10px;align-items:baseline}
+.dv h3 i{font-style:normal;font:800 13px var(--f-titulo);background:var(--areia);border-radius:99px;padding:2px 8px}
+.dv .ab{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:13px;color:var(--tinta-2)}
+.dv .ab div{background:var(--papel);border-radius:14px;padding:8px 10px}
+.dv .ab b{display:block;color:var(--tinta);font-size:12px;font-weight:700}
+.dv .dec{margin-top:8px;font-size:15px}
+.dv .dec b{font-weight:700}
+@media (max-width:520px){.dv .ab{grid-template-columns:1fr}}
+
+.prob{margin-top:12px;display:grid;gap:8px}
+.pb{display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:var(--branco);box-shadow:inset 0 0 0 1.5px var(--fio);padding:14px 16px}
+.pb .g{flex:0 0 36px;height:36px;border-radius:50%;background:var(--tanja);display:flex;align-items:center;justify-content:center;font:800 16px var(--f-titulo)}
+.pb b{display:block;font:700 17px/1.2 var(--f-titulo)}
+.pb span{display:block;font-size:14px;color:var(--tinta-2);margin-top:3px}
+.contraste{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.contraste em{font-style:normal;font:700 13px var(--f-titulo);border-radius:99px;padding:4px 10px;color:#77766D}
+
+.pe{padding-block:34px 48px;color:var(--tinta-2);font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="topo"><div class="larg">
+  <p class="quando">design system · etapa 1 de 6 · 17 de novembro</p>
+  <h1>O que existe, e o que falta desenhar</h1>
+  <p class="apoio">Li os cinco protótipos, os documentos e o código (só para entender fluxo e dado), e listei tudo o que o app mostra. Antes de seguir, preciso de três respostas suas, logo abaixo.</p>
+  <div class="quadros">
+    <div><b class="n" id="q-tot">0</b>coisas na tela</div>
+    <div><b class="n" id="q-c">0</b>desenhadas</div>
+    <div><b class="n" id="q-p">0</b>em parte</div>
+    <div><b class="n" id="q-o">0</b>sem desenho</div>
+  </div>
+</div></header>
+
+<main class="larg">
+  <section>
+    <h2>Três perguntas <small>o resto é desenho, e eu decido</small></h2>
+    <p class="texto">Se não responder alguma, vale o que está em <b>"se não responder"</b>.</p>
+    <div id="perguntas"></div>
+    <div class="copia"><button class="vai" id="copiar" type="button">Copiar as respostas</button><span class="eco" id="eco" aria-live="polite"></span></div>
+    <textarea id="resumo" readonly aria-label="Resumo das respostas" hidden></textarea>
+  </section>
+
+  <section>
+    <h2>O inventário <small>por lugar</small></h2>
+    <div class="legenda"><span><i class="m c"></i>o protótipo desenha</span><span><i class="m p"></i>em parte</span><span><i class="m o"></i>não desenha</span><span><span class="lac" style="margin:0">lacuna</span> já sabida</span></div>
+    <div id="inv"></div>
+  </section>
+
+  <section>
+    <h2>Onde os protótipos discordam <small>e o que fica</small></h2>
+    <p class="texto">O <b>hoje.html</b> é o mais antigo e tem letras e blocos maiores; os lotes 1 a 4 são mais compactos. Medi cada um na tela do iPhone 11 Pro Max e escolhi um valor só para cada caso.</p>
+    <div class="div" id="div"></div>
+  </section>
+
+  <section>
+    <h2>O que os próprios protótipos erram <small>vale nos cinco</small></h2>
+    <div class="prob">
+      <div class="pb"><span class="g n">1</span><div><b>A legenda cinza não tem contraste</b><span>O cinza das notas e dos apoios de linha fica abaixo do mínimo de leitura (4,5) em todas as superfícies. Vou escurecer o cinza até passar.</span>
+        <div class="contraste"><em style="background:#F6F3EC">papel 4,1</em><em style="background:#EBE6DA">areia 3,7</em><em style="background:#D2F23A">lima 3,6</em><em style="background:#D3C6FF">lilás 2,9</em></div></div></div>
+      <div class="pb"><span class="g n">2</span><div><b>O contorno quieto quase some</b><span>O fio bege tem 1,3 de contraste com o papel. Serve para separar linhas, mas é o único contorno do cartão de escolha, da chave desligada e do campo de texto, que são controles e pedem 3.</span></div></div>
+      <div class="pb"><span class="g n">3</span><div><b>Alguns alvos são pequenos para o dedo</b><span>Fichas de pose (40 px), seletor em pílula (38), a saída sublinhada (32 a 36), as setas de ordem do editor (36 × 30), os pontos da linha das sessões (28 de largura). O piso é 44.</span></div></div>
+      <div class="pb"><span class="g n">4</span><div><b>Botão travado sobre cor fica ilegível</b><span>O cinza translúcido do botão desabilitado deixa o texto a 3,4 sobre lima. Precisa de outro jeito de dizer "ainda não".</span></div></div>
+    </div>
+  </section>
+
+  <p class="pe">A versão escrita, com cada item, está em <b>docs/design-system/00-inventario.md</b>. Com as respostas, sigo para a etapa 2: cor, letra, espaço, movimento e os tokens.</p>
+</main>
+
+<script>
+const ok = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const dir = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5"/></svg>';
+
+const PERG = [
+  { id:'p1', t:'O que uma pessoa nova vê na primeira vez?',
+    ctx:'O app hoje já vem com o seu programa de treino e o seu plano alimentar dentro dele. Para você, isso é ótimo. Para outra pessoa, ela abriria o app e veria o seu treino B, o seu arroz de 250 g e o seu horário das 6h15.',
+    hoje:'O Hoje mostra "Comece pelo que já está aqui", que começa com o seu programa e o seu plano.',
+    padrao:'a',
+    ops:[
+      ['a','Três passos, como o protótipo', 'De onde vem o seu treino (colar o texto do treinador, ou montar depois), e a comida (tenho um plano, ou não acompanho), e o que acompanhar. A pessoa começa vazia e traz o que é dela. Para você nada muda: seu aparelho já tem dado.', true],
+      ['b','Manter como está', 'A primeira vez continua oferecendo o seu programa e o seu plano. Só serve enquanto você for o único usuário.'],
+      ['c','Os três passos, e o seu programa como exemplo', 'Além de colar o texto, uma opção "ver um exemplo" carrega o seu programa e o seu plano marcados como exemplo, para a pessoa entender o app antes de trazer o dela.']
+    ] },
+  { id:'p2', t:'Revisão do treinador: escolher mudança por mudança, ou treino inteiro?',
+    ctx:'Quando o treinador manda um texto novo, o app compara com o programa atual e mostra o que muda. O protótipo deixava ligar e desligar cada mudança ("a hack machine entra, mas a extensora fica"). O app construído aplica treinos inteiros: ou o treino B novo entra todo, ou não entra.',
+    hoje:'Treino inteiro. Cada treino que muda aparece com a lista das mudanças dentro dele, e você escolhe quais treinos entram.',
+    padrao:'b',
+    ops:[
+      ['a','Mudança por mudança', 'Mais controle. O que você deixar de fora continua como diferença sua em relação ao treinador. É trabalho de regra no app, não só de tela, e um texto mal lido pode separar mudanças que andavam juntas.'],
+      ['b','Treino por treino, mostrando cada mudança', 'Como funciona hoje, com a leitura do protótipo: você vê cada mudança, mas aceita o treino inteiro. Simples e sem risco de deixar um treino pela metade.', true],
+      ['c','Tudo ou nada', 'Aceita a revisão inteira de uma vez. O mais rápido, e o menos flexível.']
+    ] },
+  { id:'p3', t:'"Comi outra coisa": guardar o tamanho?',
+    ctx:'Quando a refeição não foi a do plano, o protótipo pedia o tamanho ("parecido", "bem mais", "bem menos", "não sei"). Esse dado não existe no app. Guardar exigiria um campo novo, a migração dos dados e a pasta que os agentes leem, e nenhuma regra do nutricionista usa isso hoje.',
+    hoje:'A refeição fica marcada só como "fora do plano".',
+    padrao:'b',
+    ops:[
+      ['a','Guardar o tamanho', 'O nutricionista passa a ver, em cada refeição fora do plano, se foi maior ou menor. É dado novo, com migração.'],
+      ['b','Só "fora do plano"', 'Como hoje. A pergunta da noite ("foi como o plano? sim, quase, não sei") continua sendo o que a regra conta.', true]
+    ] }
+];
+
+const R = {};
+try { Object.assign(R, JSON.parse(localStorage.getItem('lastro-ds-inv') || '{}')); } catch (e) {}
+const guarda = () => { try { localStorage.setItem('lastro-ds-inv', JSON.stringify(R)); } catch (e) {} };
+
+function pintaPerguntas() {
+  document.getElementById('perguntas').innerHTML = PERG.map((p, i) => {
+    const r = R[p.id] || {};
+    const padrao = p.ops.find(o => o[0] === p.padrao);
+    return `<div class="perg" role="group" aria-labelledby="${p.id}-t"><h3 id="${p.id}-t">${i + 1}. ${p.t}</h3><p class="ctx">${p.ctx}</p>
+      <p class="hoje"><b>Como está hoje:</b> ${p.hoje}<br><b>Se não responder:</b> ${padrao[1].toLowerCase()}.</p>
+      <div class="ops">${p.ops.map(o => `<button type="button" class="op" data-p="${p.id}" data-o="${o[0]}" aria-pressed="${r.o === o[0]}"><span class="o">${ok}</span><span><b>${o[1]}${o[3] ? '<span class="rec">recomendo</span>' : ''}</b><span class="c">${o[2]}</span></span></button>`).join('')}</div>
+      <label class="livre" for="${p.id}-livre">Algo a dizer? (opcional)</label><textarea id="${p.id}-livre" data-p="${p.id}">${r.t || ''}</textarea></div>`;
+  }).join('');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.op'); if (!b) return;
+  const p = b.dataset.p; R[p] = R[p] || {}; R[p].o = R[p].o === b.dataset.o ? null : b.dataset.o; guarda();
+  document.querySelectorAll(`.op[data-p="${p}"]`).forEach(x => x.setAttribute('aria-pressed', x.dataset.o === R[p].o));
+});
+document.addEventListener('input', e => {
+  const t = e.target; if (!t.matches('textarea[data-p]')) return;
+  R[t.dataset.p] = R[t.dataset.p] || {}; R[t.dataset.p].t = t.value; guarda();
+});
+function resumo() {
+  return 'Respostas do inventário do design system:\n' + PERG.map((p, i) => {
+    const r = R[p.id] || {}, o = p.ops.find(x => x[0] === r.o);
+    return `${i + 1}. ${p.t}\n   ${o ? o[1] : 'sem resposta (vale o padrão: ' + p.ops.find(x => x[0] === p.padrao)[1] + ')'}${r.t ? '\n   Obs.: ' + r.t.trim() : ''}`;
+  }).join('\n');
+}
+document.getElementById('copiar').addEventListener('click', () => {
+  const s = resumo(), ta = document.getElementById('resumo'), eco = document.getElementById('eco');
+  ta.value = s;
+  const falha = () => { ta.hidden = false; ta.focus(); ta.select(); eco.textContent = 'Não deu para copiar sozinho: o texto está selecionado abaixo.'; };
+  try { navigator.clipboard.writeText(s).then(() => { eco.textContent = 'Copiado. Cole no chat.'; }, falha); } catch (e) { falha(); }
+});
+
+/* inventário: [nome, marca c|p|o, nota, lacuna?] */
+const INV = [
+  ['Navegação e moldura', [
+    ['Doca com os cinco lugares e o "+"','c','some em destino e tela de ação'],
+    ['Doca encolhida ao rolar','c',''],
+    ['A ação que gruda no topo ao rolar o Hoje','c',''],
+    ['Tira de treino aberto nas outras abas','p','o protótipo tem a faixa; o app só mostra no Hoje',1],
+    ['Faixa "sem rede"','c',''],
+    ['Faixa "não guardei" e o que falhou','c',''],
+    ['Confirmação de algo que apaga','p','só os textos'],
+    ['Aviso curto com "Desfazer"','o','',1],
+    ['"Gire o telefone"','o','']]],
+  ['Hoje', [
+    ['Bloco do momento: treino, em andamento, refeição, noite, livre','c',''],
+    ['Bloco: aula do box ("Fiz a aula")','o',''],
+    ['Bloco: treino parado há tempo ("Continuo / Já parei")','o',''],
+    ['Bloco: confirmar a duração do treino de antes','o',''],
+    ['A linha do dia, "Se quiser", Seu ritmo, a pergunta de ontem','c',''],
+    ['Lembrete das fotos, na véspera e no dia','o','decidido em 17/11, sem desenho'],
+    ['Primeira vez','c','o app construiu outra coisa: pergunta 1'],
+    ['Hoje com a comida desligada','o',''],
+    ['Registrar (o "+"), com o texto livre','c',''],
+    ['A refeição; o que aparece','c',''],
+    ['Folha do cardio','o','',1],
+    ['O tipo do dia (treino, descanso, turno)','o',''],
+    ['"Comi outra coisa"','c','com tamanho: pergunta 3']]],
+  ['Treino', [
+    ['Uma série por tela, com a régua','c','duas versões; fica a do lote 3'],
+    ['"Subir para X kg?" e o aviso de intervalo longo','c',''],
+    ['Descanso enchendo a tela, "sobraram quantas?"','c',''],
+    ['Lista do treino, mudar o exercício, a dor','c',''],
+    ['Opções da sessão','o',''],
+    ['Pôr em dia ("Já fiz mais do que anotei")','c',''],
+    ['Fim do treino com "vira regra?"','c',''],
+    ['Treino encerrado, nada mais na fila','o',''],
+    ['Aula do box: repetir, modelos, texto, lousa, lista rápida','o','',1],
+    ['Catálogo de exercícios, criar um novo','o','',1],
+    ['Foto do aparelho','o','',1]]],
+  ['Dias', [
+    ['O mês, o dia escolhido, a pergunta da comida','c',''],
+    ['Responder os dias, um por tela, e o fim','c',''],
+    ['O dia aberto (registros, cardio, descanso, comida)','p',''],
+    ['Pôr o dia em dia','o',''],
+    ['Sessão passada, corrigida série a série','o','',1],
+    ['Uma série passada: apagar, RIR, não feita, tentar de novo','o','',1],
+    ['Registrar treino passado','p','']]],
+  ['Corpo', [
+    ['Peso pela régua, evolução, medidas, bioimpedância, fotos','c',''],
+    ['Ligar medidas; medir agora, uma por tela; como medir; medidas guardadas','c',''],
+    ['Peso: gráfico e taxa por semana','c',''],
+    ['Corrigir uma pesagem','o','',1],
+    ['Uma medida; tudo na mesma data','c',''],
+    ['Corrigir e apagar medida antiga','o','',1],
+    ['Bioimpedância','c',''],
+    ['Nova leitura de bioimpedância','p','só descrita',1],
+    ['Corpo sem nenhum dado','p','']]],
+  ['Fotos', [
+    ['Centro, nova sessão, três passos, fim da sessão','c',''],
+    ['O preparo','o',''],
+    ['A câmera de verdade: sensor, detecção do corpo, três luzes','p','o protótipo usa manequim e luz por toque',1],
+    ['Câmera sozinho, foto torta, "tirar mesmo assim"','c',''],
+    ['Câmera: permissão negada, sem câmera, carregando, ninguém no quadro','o',''],
+    ['Sessão pela metade','o',''],
+    ['Comparar (três jeitos), no tempo, galeria, ajustar, mandar para os agentes','c',''],
+    ['Comparar sem par; foto comparada aberta','o',''],
+    ['Foto aberta com o alinhamento sugerido','p',''],
+    ['Lixeira com fotos, restaurar, apagar de vez','p','só vazia',1]]],
+  ['Semana', [
+    ['O veredito da comida, aplicar no plano','c',''],
+    ['O que a regra olha; séries por região','c',''],
+    ['Os músculos de uma região','o',''],
+    ['Retrospectiva do bloco','o','',1]]],
+  ['Plano', [
+    ['O Plano: esperando você, treinos, dias, comida','c',''],
+    ['Aviso de mudança esperando decisão ou vencendo','o','',1],
+    ['Programa, editor de um treino, revisão do treinador','c',''],
+    ['O que está diferente; histórico de mudanças','o',''],
+    ['Criar treino; trocar o nome','o','',1],
+    ['Progressão; um exercício','c',''],
+    ['Comida, uma refeição, quantidade pela régua, alimentos, compras','c',''],
+    ['Nova refeição','o','',1],
+    ['Escolher alimento; criar e editar alimento','o','',1]]],
+  ['Ajustes', [
+    ['Conta, o que aparece, lembretes, cópia de segurança','c',''],
+    ['Conta entrando, senha errada, sem rede','o',''],
+    ['Colar a cópia como texto','o','',1],
+    ['Voltar ao programa e ao plano, voltar ao começo','o','']]],
+  ['Estados do app inteiro', [
+    ['Vazio de lugar','p','um exemplo só'],
+    ['Vazio de busca','c',''],
+    ['Carregando (câmera, fotos, conta, cópia)','o',''],
+    ['Conta que entrou e veio vazia','o',''],
+    ['Dado demais (nome longo, 40 pesagens, 30 sessões)','o',''],
+    ['Módulo desligado','p','']]]
+];
+let tot = 0, cc = 0, pp = 0, oo = 0;
+document.getElementById('inv').innerHTML = INV.map(([g, l], gi) => {
+  const c = l.filter(x => x[1] === 'c').length, p = l.filter(x => x[1] === 'p').length, o = l.filter(x => x[1] === 'o').length;
+  tot += l.length; cc += c; pp += p; oo += o;
+  return `<details ${gi === 0 ? '' : ''}><summary><b>${g}</b><span class="cont n"><span><i class="m c"></i>${c}</span><span><i class="m p"></i>${p}</span><span><i class="m o"></i>${o}</span></span>${dir}</summary>
+    <div class="itens">${l.map(x => `<div class="it"><i class="m ${x[1]}" aria-label="${({ c:'desenha', p:'em parte', o:'não desenha' })[x[1]]}"></i><div class="tx"><b>${x[0]}${x[3] ? '<span class="lac">lacuna</span>' : ''}</b>${x[2] ? `<span>${x[2]}</span>` : ''}</div></div>`).join('')}</div></details>`;
+}).join('');
+document.getElementById('q-tot').textContent = tot; document.getElementById('q-c').textContent = cc;
+document.getElementById('q-p').textContent = pp; document.getElementById('q-o').textContent = oo;
+
+const DIV = [
+  ['D1','Título do bloco do momento','56 px; médio 38','50 px; médio 36','<b>50 e 36.</b> Com 56, o bloco empurra a linha do dia para fora da primeira tela; 50 continua sendo a maior coisa da tela.'],
+  ['D2','Botão principal','19 px','18 px','<b>18 px</b>, 58 de altura. No treino e na medição, 20 a 22 px e 66 a 72 de altura.'],
+  ['D3','Cabeçalho fino','34 px, sem voltar','28 px, com voltar','<b>Os dois, com papéis diferentes:</b> 34 nos cinco lugares, 28 nas telas que se abrem deles. Ajuda a saber onde se está.'],
+  ['D4','Linha de lista','68 px, depois 60','62 px','<b>60 px</b>, nome em 17.'],
+  ['D5','Título da folha','32 px, margem 22','30 px, margem 20','<b>30 px, margem 20</b>, como a margem do app inteiro.'],
+  ['D6','Número gigante','112, depois 96','92, 76, 64','<b>Três degraus:</b> 96 para o número do lugar (peso, medir), 76 para a tela que é sobre um número (exercício), 64 para a cabeça das consultas (peso, medida).'],
+  ['D7','Treino em foco','valor 76, Feito 72, "Pular · Trocar"','valor 66, Feito 68, "Mudar · Já fiz mais · Histórico"','<b>O do lote 3.</b> Cabe a sugestão de subir carga e o aviso de intervalo, e os três links cobrem o que o app faz.'],
+  ['D8','Descanso','132 px, com "sobraram quantas?"','120 px, sem a pergunta','<b>120 px, com a pergunta</b>, que o app já grava. Os botões dela sobem para 52 de altura.'],
+  ['D9','Segmentos de progresso','em curso: tinta clara','câmera: em curso em tangerina','<b>Tinta clara em todos.</b> Tangerina quer dizer atenção; a pose em curso não é atenção.'],
+  ['D10','Selo','30 px, letra 13','28 px, letra 12','<b>28 px, letra 12.</b>'],
+  ['D11','Cartão de treino','150 × 168, letra 58','150 × 160, letra 56','<b>150 × 160, letra 56.</b>'],
+  ['D12','Centro do treino','—','o lote 3 tem um "centro do treino" lima','<b>Não vira lugar.</b> Você decidiu em 16/11 que as abas ficam Hoje e Plano; o treino começa no Hoje e o resto mora no Plano.']
+];
+document.getElementById('div').innerHTML = DIV.map(d => `<div class="dv"><h3><i>${d[0]}</i>${d[1]}</h3><div class="ab"><div><b>hoje.html</b>${d[2]}</div><div><b>lotes 1 a 4</b>${d[3]}</div></div><p class="dec">${d[4]}</p></div>`).join('');
+
+pintaPerguntas();
+</script>
