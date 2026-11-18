@@ -1,0 +1,56 @@
+/* A auditoria da implementação: o que o código (src/ui/v3, src/v3, src/main.jsx)
+   faz diferente do design system, com a correção. Cada achado foi conferido no
+   código em 17/11/2026. Tipos: tamanho, espaço, cor, hierarquia, texto, estado,
+   fluxo, acessibilidade, dado (mexe em dado ou regra: pede migração ou teste de
+   domínio). Gera o 05-auditoria.md. */
+window.AUDITORIA = [
+  { g: 'O app inteiro (tokens e componentes base)', a: [
+    { t: 'cor', o: 'Cinza de legenda sem contraste', h: '--tinta-3 #77766D em toda nota de seção, apoio de linha e seta de linha: 4,1:1 no papel, 3,7:1 na areia.', c: 'Trocar por --texto-legenda #62615A (5,6:1 e 5,0:1).', l: 'src/v3/tokens.css; .v3-sec-h small, .v3-lin-t span, .v3-lin > svg em src/v3/componentes.css' },
+    { t: 'cor', o: 'Controles com contorno invisível', h: 'Chave desligada com trilho --fio, ficha e quadro com contorno --fio (1,3:1 no papel).', c: 'Nascer --contorno #858073 para contorno de controle (chave desligada: trilho de superfície com contorno e bolinha de contorno; ficha, campo, escolha). --fio fica só como divisória.', l: '.v3-chave-k, .v3-ficha, .v3-esc em componentes.css e fotos.css' },
+    { t: 'cor', o: 'Botão desabilitado ilegível sobre cor', h: 'Fundo --tinta-18 com texto --tinta-2: 3,4:1 sobre lima.', c: 'Desabilitado = fundo transparente, contorno tracejado de 2 px em tinta, texto em tinta, e a frase do porquê quando cabe.', l: '.v3-btn.p:disabled' },
+    { t: 'cor', o: 'Tokens nomeados pela cor', h: '--lima, --tanja, --lilas… usados direto nas telas, inclusive como "atenção".', c: 'Adotar docs/design-system/tokens.css: papéis (--assunto-treino, --atencao, --texto-legenda…). Uma troca de nome, sem mudar valor, exceto legenda e contorno.', l: 'src/v3/tokens.css e todo src/v3' },
+    { t: 'tamanho', o: 'Título do bloco do momento grande demais', h: '56/0,90 e médio 38/0,96 (o tamanho do hoje.html).', c: '50/0,92 e médio 36/0,98, médio quando passar de 12 letras.', l: '.v3-bloco-t; Bloco em src/ui/v3/base.jsx (medio = titulo.length > 12 no Hoje, > 14 na Semana: unificar em 12)' },
+    { t: 'tamanho', o: 'Alvos abaixo de 44 px', h: 'Saída discreta 36, seletor em pílula 38, botão da faixa 36, ficha de resposta 46, links da tela de ação 40.', c: 'Saída e links com área de 44 (o texto não muda); seletor 44; botão de faixa 44; ficha de resposta 48.', l: '.v3-saida, .v3-sel button, .v3-faixa button, .v3-perg-r button, .v3-acao-links button' },
+    { t: 'tamanho', o: 'Número do quadro', h: '20 px.', c: '22 px (--t-quadro).', l: '.v3-quadro b' },
+    { t: 'acessibilidade', o: 'Escolha única anunciada como botão de alternar', h: 'Seletor em pílula e fichas de resposta usam aria-pressed em grupo.', c: 'role="radiogroup" com role="radio" e aria-checked; o leitor de tela passa a dizer "1 de 3, selecionado".', l: 'Seletor, Fichas e Pergunta em src/ui/v3/base.jsx' },
+    { t: 'estado', o: 'A faixa "sem rede" não some', h: 'Fica no topo enquanto não houver rede.', c: 'Avisa uma vez e some em 4 s; só volta se a rede voltar e cair de novo. A falha ao guardar é a única que fica.', l: 'src/ui/v3/estados.jsx' },
+    { t: 'cor', o: 'Ponto "agora" da linha do dia sempre tangerina', h: '.v3-ld .agora .p usa --tanja, mesmo quando o agora é o treino.', c: 'A cor do momento atual (treino lima, refeição tangerina, noite lilás), como o protótipo.', l: 'src/v3/fotos.css:406' }
+  ] },
+  { g: 'Navegação', a: [
+    { t: 'fluxo', o: 'Não há como chegar aos Ajustes', h: 'CTX.abreAjustes existe em src/main.jsx, mas nenhuma tela do visual novo o chama. Conta, cópia de segurança, lembretes e "voltar ao começo" estão inalcançáveis pelo app.', c: 'Uma linha "Ajustes" no fim da folha "O que aparece" (o ícone do bloco do Hoje) e no fim do Plano. Teste de fluxo que abre Ajustes pelos dois caminhos.', l: 'src/ui/v3/telas/hoje.jsx (FolhaOQueAparece), plano.jsx' },
+    { t: 'fluxo', o: 'Sem a tira do treino aberto nos outros lugares', h: 'Saiu na Fase 5; só o Hoje leva de volta ao treino.', c: 'A tira lima acima da doca em Dias, Corpo, Semana e Plano com sessão aberta (e no Hoje quando o bloco rolou para fora).', l: 'src/ui/v3/doca.jsx, app.jsx' },
+    { t: 'estado', o: 'Sem aviso com "Desfazer" padronizado', h: 'Há frase de feito em alguns pontos (global.css), mas apagar foto, pular exercício e aplicar no plano não oferecem desfazer do mesmo jeito.', c: 'Um componente só (pílula de tinta, 6 s, "Desfazer" em lima, acima da doca) para tudo que é reversível com efeito longe da tela.', l: 'src/v3/global.css, src/ui/v3/base.jsx' }
+  ] },
+  { g: 'Hoje', a: [
+    { t: 'dado', o: 'Primeira vez começa com o programa do dono', h: '"Comece pelo que já está aqui" oferece o programa e o plano que vêm embutidos no app.', c: 'Decisão do dono (17/11): três passos (seu treino, sua comida, o que acompanhar), cada um pulável; a pessoa nova começa vazia. O aparelho do dono não muda. Pede decidir o que o app embute para quem é novo (teste de domínio do estado inicial).', l: 'PrimeiraVez em hoje.jsx; enderecoVazio e o estado padrão em src/main.jsx' },
+    { t: 'dado', o: '"Comi outra coisa" sem o tamanho', h: 'Marca só "fora".', c: 'Decisão do dono (17/11): guardar o tamanho (parecido, bem mais, bem menos, não sei). Campo novo na marca da refeição, com fusão, cópia de segurança e a pasta dos agentes; teste de domínio e do espelho.', l: 'marcaLinhaDaComida em src/main.jsx; ferramentas/espelho/monta.ts' },
+    { t: 'hierarquia', o: 'A exceção da refeição dentro do bloco', h: '"Não foi assim" troca os botões do bloco por dois de contorno e uma saída (sem principal).', c: 'O bloco fica com "Comi" e "Ver"; "Não foi assim" abre a folha com as três respostas (outra coisa, não comi, não sei). Um principal por bloco, sempre.', l: 'Momento em hoje.jsx' },
+    { t: 'espaço', o: 'Lembrete das fotos fora do padrão de aviso', h: 'Bloco próprio (.v3-lembrete) com duas saídas sublinhadas.', c: 'Caixa lilás (aviso dentro da tela) com "Abrir as fotos" pequeno cheio e "Agora não" de contorno.', l: 'hoje.jsx, src/v3/registro.css' }
+  ] },
+  { g: 'Treino', a: [
+    { t: 'hierarquia', o: 'A série mostra duas réguas ao mesmo tempo', h: 'Carga e repetição empilhadas, cada uma com número de 64 e régua própria; a tela rola.', c: 'O par carga × repetição lado a lado (66 px), uma régua só embaixo, para o que estiver escolhido (repetição por padrão). Cabe sem rolar, com "Feito" ao alcance do polegar.', l: 'Serie em src/ui/v3/telas/treino.jsx' },
+    { t: 'texto', o: 'Sigla RIR na série', h: '"série 1 de 2 · 6–10 reps · RIR 1–2".', c: '"6–10 repetições, sobrando 1–2". RIR só no histórico, com legenda.', l: 'treino.jsx, .v3-serie-q' },
+    { t: 'texto', o: 'Botão principal longo', h: '"Feita: 60 × 9" (e "Corrigir: …").', c: '"Feito", com o certo. O número já está no par, grande, logo acima.', l: 'treino.jsx' },
+    { t: 'fluxo', o: 'Links da série incompletos', h: '"Mudar este exercício" e "Lista do treino". "Já fiz mais do que anotei" só aparece pela lista ou pelo aviso.', c: '"Mudar · Já fiz mais do que anotei · Histórico" embaixo de "Feito". A lista fica no ícone do topo.', l: 'treino.jsx' },
+    { t: 'hierarquia', o: '"Subir para X?" como pergunta de areia', h: 'Componente Pergunta, depois do aviso de dor.', c: 'Aviso de sugestão (caixa de superfície com contorno de tinta) logo abaixo das séries feitas, com o porquê e "Manter" / "Subir".', l: 'treino.jsx' },
+    { t: 'tamanho', o: 'Nome do exercício', h: '38 px.', c: '30 px (--t-acao); a dica do treinador acima, em 14.', l: '.v3-serie-n em src/v3/fotos.css' },
+    { t: 'tamanho', o: 'Contagem do descanso', h: '112 px.', c: '120 px.', l: '.v3-desc-t' },
+    { t: 'hierarquia', o: 'Descanso sem a próxima série', h: '"a seguir: nome, série 2" em texto solto; sem a carga; sem "Água +1".', c: 'Cartão "a seguir" com o nome, série e a carga × repetição sugerida, e "Água +1" quando a água está ligada.', l: 'Descanso em treino.jsx' },
+    { t: 'texto', o: 'Descanso: recolher e começar', h: 'Seta para a esquerda ("Voltar") e "Pular o descanso".', c: 'Seta para baixo (recolhe, o treino continua aberto) e "Começar já".', l: 'treino.jsx' },
+    { t: 'cor', o: 'Segmentos da câmera em tangerina', h: '.v3-cam .v3-segs i.a com --tanja.', c: 'Em curso em tinta a 45%, como em todo lugar. Tangerina é atenção.', l: 'src/v3/fotos.css:89' },
+    { t: 'fluxo', o: 'Pôr em dia como folha', h: 'FolhaPorEmDia.', c: 'Tela (destino): é lista com marcação e carga por exercício e rola; "Fiz tudo como da última vez" no topo.', l: 'treino.jsx, FOLHAS_V3' },
+    { t: 'cor', o: 'Faixa do editor com a cor trocada', h: 'Menos séries que o treinador em tangerina.', c: 'Mais em tangerina (atenção: passou do prescrito), menos em céu.', l: 'src/v3/fotos.css:381' }
+  ] },
+  { g: 'Plano e revisão', a: [
+    { t: 'dado', o: 'Revisão aplica treinos inteiros', h: 'Cada treino que muda entra todo ou não entra.', c: 'Decisão do dono (17/11): mudança por mudança, com a chave em cada uma; o que ficar de fora continua como diferença sua. Pede a regra de aplicar parte de um treino (teste de domínio: aplicar 4 de 5 e conferir o programa e as diferenças).', l: 'RevisaoV3 em programa.jsx; a leitura da revisão em src/main.jsx' },
+    { t: 'estado', o: 'O que vence hoje não se destaca', h: 'O prazo aparece na linha pequena de cada mudança (g.vence), mas uma que vence hoje tem o mesmo peso das outras; venceHoje não é usado na tela.', c: 'Vencendo hoje, um aviso de atenção acima da mudança ("Vence hoje, no treino B"), e as respostas como fichas ("Só aquele dia" / "Passa a valer").', l: 'plano.jsx; src/main.jsx:10716' }
+  ] },
+  { g: 'Dias, Corpo, Fotos', a: [
+    { t: 'fluxo', o: 'Responder os dias em menta durante a tarefa', h: 'TelaDeAcao cor="menta" do começo ao fim.', c: 'Lilás (a pergunta do dia) durante; menta só na tela final ("13 dias respondidos").', l: 'ResponderDias em dias.jsx' },
+    { t: 'estado', o: 'Colar a cópia como texto', h: 'Só restaurar por arquivo.', c: 'Folha "Colar a cópia" em Ajustes: campo de texto longo, "Conferir o texto", o resumo do que tem nela, e a confirmação de restaurar.', l: 'ajustes.jsx' }
+  ] },
+  { g: 'Ajustes', a: [
+    { t: 'fluxo', o: 'Apagar tudo como saída sublinhada', h: '"Apagar todo o histórico deste aparelho" em saída discreta.', c: 'Linha "Voltar ao começo" na seção Recomeçar, que abre a confirmação dizendo o que se perde e o que não se perde.', l: 'ajustes.jsx' },
+    { t: 'texto', o: 'Interruptor de visual que não existe mais', h: 'A seção "Visual" ainda é desenhada (titulo="Visual").', c: 'Tirar: o visual antigo saiu na Fase 5.', l: 'ajustes.jsx:61' }
+  ] }
+];
