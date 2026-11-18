@@ -50,14 +50,14 @@ window.AUDITORIA = [
   ] },
   { g: 'Plano e revisão', a: [
     { t: 'dado', o: 'Revisão aplica treinos inteiros', h: 'Cada treino que muda entra todo ou não entra.', c: 'Decisão do dono (17/11): mudança por mudança, com a chave em cada uma; o que ficar de fora continua como diferença sua. Pede a regra de aplicar parte de um treino (teste de domínio: aplicar 4 de 5 e conferir o programa e as diferenças).', l: 'RevisaoV3 em programa.jsx; a leitura da revisão em src/main.jsx' },
-    { t: 'estado', o: 'O que vence hoje não se destaca', h: 'O prazo aparece na linha pequena de cada mudança (g.vence), mas uma que vence hoje tem o mesmo peso das outras; venceHoje não é usado na tela.', c: 'Vencendo hoje, um aviso de atenção acima da mudança ("Vence hoje, no treino B"), e as respostas como fichas ("Só aquele dia" / "Passa a valer").', l: 'plano.jsx; src/main.jsx:10716' }
+    { t: 'estado', f: 'peça 5, Plano', o: 'O que vence hoje não se destaca', h: 'O prazo aparece na linha pequena de cada mudança (g.vence), mas uma que vence hoje tem o mesmo peso das outras; venceHoje não é usado na tela.', c: 'Vencendo hoje, um aviso de atenção acima da mudança ("Vence hoje, no treino B"), e as respostas como fichas ("Só aquele dia" / "Passa a valer").', l: 'plano.jsx; src/main.jsx:10716' }
   ] },
   { g: 'Dias, Corpo, Fotos', a: [
     { t: 'fluxo', f: 'peça 5, Dias', o: 'Responder os dias em menta durante a tarefa', h: 'TelaDeAcao cor="menta" do começo ao fim.', c: 'Lilás (a pergunta do dia) durante; menta só na tela final ("13 dias respondidos").', l: 'ResponderDias em dias.jsx' },
-    { t: 'estado', o: 'Colar a cópia como texto', h: 'Só restaurar por arquivo.', c: 'Folha "Colar a cópia" em Ajustes: campo de texto longo, "Conferir o texto", o resumo do que tem nela, e a confirmação de restaurar.', l: 'ajustes.jsx' }
+    { t: 'estado', f: 'peça 5, Ajustes', o: 'Colar a cópia como texto', h: 'Só restaurar por arquivo.', c: 'Folha "Colar a cópia" em Ajustes: campo de texto longo, "Conferir o texto", o resumo do que tem nela, e a confirmação de restaurar.', l: 'ajustes.jsx' }
   ] },
   { g: 'Ajustes', a: [
-    { t: 'fluxo', o: 'Apagar tudo como saída sublinhada', h: '"Apagar todo o histórico deste aparelho" em saída discreta.', c: 'Linha "Voltar ao começo" na seção Recomeçar, que abre a confirmação dizendo o que se perde e o que não se perde.', l: 'ajustes.jsx' },
-    { t: 'texto', o: 'Interruptor de visual que não existe mais', h: 'A seção "Visual" ainda é desenhada (titulo="Visual").', c: 'Tirar: o visual antigo saiu na Fase 5.', l: 'ajustes.jsx:61' }
+    { t: 'fluxo', f: 'peça 5, Ajustes', o: 'Apagar tudo como saída sublinhada', h: '"Apagar todo o histórico deste aparelho" em saída discreta.', c: 'Linha "Voltar ao começo" na seção Recomeçar, que abre a confirmação dizendo o que se perde e o que não se perde.', l: 'ajustes.jsx' },
+    { t: 'texto', f: 'peça 5, Ajustes', o: 'Interruptor de visual que não existe mais', h: 'A seção "Visual" ainda é desenhada (titulo="Visual").', c: 'Tirar: o visual antigo saiu na Fase 5.', l: 'ajustes.jsx:61' }
   ] }
 ];

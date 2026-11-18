@@ -124,3 +124,31 @@ test('estados: a gravação que falhou vira a faixa fixa, e sem rede avisa sem b
   assert.ok(/Sem rede/.test(a.texto('.v3-estados')), 'voltou e caiu: avisa de novo');
   a.fechar();
 }, 15000);   // espera os 4 s da faixa sumir
+
+test('colar a cópia como texto: confere antes, diz o que tem, e restaura pela porta de sempre', async () => {
+  const a = await comVisual();
+  a.v('ctx.comecaAqui');
+  a.v('ctx.abreAjustes');
+  await a.esperar();
+  assert.ok(a.$('[data-a="ajustes-apaga"]').classList.contains('v3-lin'), '"Voltar ao começo" é uma linha, não saída sublinhada');
+  a.clicar('[data-a="ajustes-colar"]');
+  await a.esperar();
+  const campo = a.$('[data-a="colar-texto"]');
+  campo.value = 'isto não é json';
+  campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  await a.esperar();
+  a.clicar('[data-a="colar-confere"]');
+  await a.esperar();
+  assert.ok(/Não é uma cópia do app/.test(a.texto('.v3-folha')), 'texto que não é cópia: diz o que houve');
+  const copia = JSON.stringify({ app: 'lastro', data: { logs: {}, done: [{ day: 'A', t: Date.now() - 86400000, sid: 1 }], body: { peso: [{ t: 1, v: 77 }] }, comidaHist: [] } });
+  campo.value = copia;
+  campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  await a.esperar();
+  a.clicar('[data-a="colar-confere"]');
+  await a.esperar();
+  assert.ok(/1 sessão, 0 dias de comida, 1 pesagem/.test(a.texto('.v3-folha')), a.texto('.v3-folha'));
+  a.clicar('[data-a="colar-restaura"]');
+  await a.esperar(120);
+  assert.ok(a.perguntas().some(q => /substitui o histórico atual/.test(JSON.stringify(q))), 'a mesma confirmação do arquivo, que diz o que se perde');
+  a.fechar();
+});
