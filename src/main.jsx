@@ -4961,6 +4961,8 @@ CTX.naoGuardado = function () { return view.naoGuardado || null; };
 CTX.falhou = function () { return view.falhou && view.naoGuardado ? view.naoGuardado : null; };
 /** Tentar de novo é repetir a MESMA intenção: gravar o estado inteiro. */
 CTX.tentaGravar = function () { return save(); };
+/** "Ver", na faixa da falha: o painel com o que era, o porquê e o que fazer. */
+CTX.verFalha = function () { if (view.naoGuardado) { view.falhou = true; render(); } };
 /**
  * Copiar o registro inteiro: o estado é regravado inteiro a cada série (F256),
  * então a cópia é a cópia de segurança completa (F249), e não um remendo.
@@ -12861,6 +12863,30 @@ CTX.respondeODia = function (data, resposta) {
   return { ok: true, resposta: resposta };
 };
 
+/**
+ * A PERGUNTA DA NOITE, com "Desfazer": o bloco passa a "dia fechado" na hora, e
+ * o toque errado não teria volta no lugar. O desfazer desmarca pelo caminho de
+ * sempre (`marcaLinhaDaComida(…, 'desfaz')`, que deixa a lápide para a fusão)
+ * só as refeições que a resposta marcou, e devolve a aderência de antes.
+ */
+CTX.respondeHojeComDesfazer = function (resposta) {
+  const d = diaDeComida();
+  const antes = Object.keys(d.done || {});
+  const ader = d.aderencia, pordia = d.pordia;
+  const r = CTX.respondeODia(hojeISO(), resposta);
+  if (!r || !r.ok) return r;
+  const novas = Object.keys(diaDeComida().done || {}).filter(function (id) { return antes.indexOf(id) < 0; });
+  const frase = { sim: 'Hoje: foi como o plano.', quase: 'Hoje: quase como o plano.', naosei: 'Hoje fica fora da conta.' }[resposta];
+  avisoComAcao(frase, 'Desfazer', function () {
+    novas.forEach(function (id) { CTX.marcaLinhaDaComida(id, 'desfaz'); });
+    const d2 = diaDeComida();
+    if (ader === undefined) delete d2.aderencia; else d2.aderencia = ader;
+    if (pordia === undefined) delete d2.pordia; else d2.pordia = pordia;
+    queueSave(); render();
+  });
+  return r;
+};
+
 /** A resposta que uma data já tem (`sim`, `quase`, `naosei`), ou `null`. */
 CTX.respostaDoDia = function (data) {
   if (data === hojeISO()) return respostaDoDia(S.dia && S.dia.data === data ? S.dia : null);
@@ -13094,6 +13120,20 @@ CTX.cartaoDeCima = function () { return cartaoDeCima(CTX.fatosDoDia()); };
 CTX.hojeISO = function () { return hojeISO(); };
 
 /** Uma refeição de hoje, para a folha do visual novo. */
+/** "250 g arroz branco cozido" → { n: 'Arroz branco cozido', q: '250 g' }. */
+function separaQuantidade(item) {
+  const m = /^([\d.,]+\s*(?:g|ml|kg|un\.?|unidades?|colheres?(?: de sopa| de chá)?|fatias?|xícaras?)?)\s+(.*)$/i.exec(item);
+  if (!m) return { n: maiuscula(item), q: '' };
+  return { n: maiuscula(m[2]), q: m[1] };
+}
+/** O apoio do bloco da refeição: "Arroz, feijão, frango e mais 3." */
+function nomesDaRefeicao(resumo) {
+  const nomes = String(resumo || '').split(' · ').filter(Boolean).map(function (x) { return separaQuantidade(x).n.split(/\s+/)[0].toLowerCase(); });
+  if (!nomes.length) return '';
+  const tres = nomes.slice(0, 3), resto = nomes.length - tres.length;
+  const t = tres.join(', ');
+  return maiuscula(t) + (resto ? ' e mais ' + resto : '') + '.';
+}
 CTX.refeicaoV3 = function (id) {
   const H = CTX.hoje();
   const r = H.refs.filter(function (x) { return x.id === id; })[0];
@@ -13101,7 +13141,7 @@ CTX.refeicaoV3 = function (id) {
   const d = H.comidaDoDia;
   const esc = d.escala[id] != null ? d.escala[id] : 1;
   return { id: id, n: r.n, t: r.t, kcal: Math.round(totalDaRefeicao(r, H.catalogo, H.alta).kcal * esc),
-           itens: resumoDaRefeicao(r, H.catalogo, H.alta, esc).split(' · ').filter(Boolean),
+           itens: resumoDaRefeicao(r, H.catalogo, H.alta, esc).split(' · ').filter(Boolean).map(separaQuantidade),
            feita: !!d.done[id], como: d.como ? d.como[id] || null : null, metade: esc === 0.5, nota: r.nota || null };
 };
 
@@ -13144,10 +13184,12 @@ CTX.hojeV3 = function () {
   const linha = H.refs.filter(function (r) { return comOn || ehLinhaDeTreino(r); }).map(function (r) {
     const treinoL = ehLinhaDeTreino(r);
     const m = minutosDe(r.t);
-    const feita = treinoL ? !!(H.sessao.registrada || H.sessao.fechada) : !!d.done[r.id];
+    const emCurso = !!(cartao && cartao.k === 'sessao');
+    const feita = treinoL ? !emCurso && !!(H.sessao.registrada || H.sessao.fechada) : !!d.done[r.id];
     const agoraNela = cartao && ((cartao.k === 'refeicao' && cartao.id === r.id) ||
       (treinoL && (cartao.k === 'treino' || cartao.k === 'aula' || cartao.k === 'sessao')));
-    return { id: r.id, t: r.t, n: treinoL ? (H.sessao.nome || 'Treino') : r.n, treino: treinoL,
+    const diaT = diaResolvido().treino;
+    return { id: r.id, t: r.t, n: treinoL ? (diaT ? (diaAberto(diaT) ? 'Aula do box' : 'Treino ' + diaT) : 'Treino') : r.n, treino: treinoL,
              feita: feita, como: d.como ? d.como[r.id] || null : null, agora: !!agoraNela,
              falta: !feita && !agoraNela && agoraMin - m >= 60,
              kcal: treinoL ? null : Math.round(totalDaRefeicao(r, cat, H.alta).kcal) };
@@ -13158,20 +13200,33 @@ CTX.hojeV3 = function () {
   // o bloco do momento, a partir do cartão da regra
   let bloco;
   if (cartao && cartao.k === 'sessao') {
-    bloco = { k: 'sessao', cor: 'treino', quando: cartao.pergunta ? 'parado há um tempo' : 'em andamento',
-              titulo: 'Treino ' + cartao.dia, apoio: cartao.guardadas + ' de ' + cartao.prescritas + ' séries guardadas.',
+    const fP = treino(cartao.dia) ? serieEmFoco(cartao.dia) : null;
+    const exP = fP ? treino(cartao.dia).ex[fP.i] : null;
+    const sA = S.sessao;
+    bloco = { k: 'sessao', cor: 'treino', vivo: !cartao.pergunta,
+              quando: cartao.pergunta ? 'parado há ' + fmtDur(paradaDaSessao(sA)) : 'em andamento' + (sA ? ' · ' + fmtDur(duracaoAtual(sA)) : ''),
+              titulo: 'Treino ' + cartao.dia,
+              apoio: cartao.pergunta && sA
+                ? 'A última série foi às ' + horaHHMM(sA.ultima || sA.inicio).replace(':', 'h') + '. Ainda está treinando?'
+                : cartao.guardadas + ' de ' + cartao.prescritas + ' séries guardadas.' + (exP ? ' A próxima é ' + exP.n.toLowerCase() + '.' : ''),
+              sub: cartao.guardadas + ' de ' + cartao.prescritas,
               pergunta: cartao.pergunta ? (CTX.faixaDaSessao() || {}).txt || null : null };
   } else if (cartao && cartao.k === 'confirmar') {
-    bloco = { k: 'confirmar', cor: 'corpo', quando: 'o treino de antes', titulo: 'Treino ' + cartao.dia,
-              apoio: 'Fechei na última série: ' + fmtHora(cartao.inicio) + ' → ' + fmtHora(cartao.fim) + ', cerca de ' + fmtDur(cartao.fim - cartao.inicio) + '.',
+    const hh = function (t) { return horaHHMM(t).replace(':', 'h'); };
+    bloco = { k: 'confirmar', cor: 'corpo', quando: sameDay(cartao.fim, agora) ? 'o treino de hoje cedo' : 'o treino de ontem', titulo: 'Treino ' + cartao.dia,
+              apoio: 'Fechou sozinho na última série: das ' + hh(cartao.inicio) + ' às ' + hh(cartao.fim) + ', ' + fmtDur(cartao.fim - cartao.inicio) + '. Está certo?',
               fim: cartao.fim };
   } else if (cartao && (cartao.k === 'treino' || cartao.k === 'aula')) {
     const l = linha.filter(function (x) { return x.treino; })[0];
     const falta = l ? minutosDe(l.t) - agoraMin : null;
     bloco = { k: cartao.k, cor: cartao.k === 'aula' ? 'corpo' : 'treino', vivo: true,
               quando: falta == null ? 'hoje' : falta > 0 ? 'daqui a ' + falta + ' min' : 'agora',
-              titulo: cartao.k === 'aula' ? 'Aula' : H.sessao.nome || 'Treino ' + cartao.dia,
-              apoio: cartao.palpite ? 'Previsto pelo padrão da semana.' : (cartao.k === 'aula' ? 'O que o box programar.' : H.sessao.resumo) };
+              titulo: cartao.k === 'aula' ? 'Aula do box' : 'Treino ' + cartao.dia,
+              apoio: cartao.k === 'aula' ? 'Anote no fim, um número por movimento. Ou repita a última aula.'
+                : (H.sessao.nome ? H.sessao.nome + '. ' : '') +
+                  (treino(cartao.dia) ? treino(cartao.dia).ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0) + ' séries' +
+                    (duracaoDoTreino() ? ', perto de ' + fmtDur(duracaoDoTreino()) : '') + '.' : ''),
+              sub: cartao.k === 'aula' ? (l ? 'hoje, ' + l.t.replace(':', 'h') : 'hoje') : (treino(cartao.dia) ? treino(cartao.dia).ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0) + ' séries' : '') };
   } else if (comOn && agoraMin >= HORA_DA_PERGUNTA && passaram && !respondido) {
     // de noite, a pergunta do dia vem antes da próxima refeição (o protótipo)
     bloco = { k: 'noite', cor: 'corpo', quando: passaram + (passaram === 1 ? ' refeição ficou' : ' refeições ficaram') + ' sem resposta',
@@ -13181,7 +13236,8 @@ CTX.hojeV3 = function () {
     const falta = minutosDe(r.t) - agoraMin;
     bloco = { k: 'refeicao', cor: 'refeicao', vivo: true, id: r.id,
               quando: falta > 0 ? 'daqui a ' + falta + ' min' : falta === 0 ? 'agora' : 'era às ' + r.t.replace(':', 'h'),
-              titulo: r.n, apoio: resumoDaRefeicao(r, cat, H.alta, d.escala[r.id] != null ? d.escala[r.id] : 1),
+              titulo: r.n, apoio: nomesDaRefeicao(resumoDaRefeicao(r, cat, H.alta, d.escala[r.id] != null ? d.escala[r.id] : 1)),
+              sub: r.t.replace(':', 'h') + ' · ' + Math.round(totalDaRefeicao(r, cat, H.alta).kcal) + ' kcal',
               pergunta: view.perguntaDe === r.id };
   } else {
     bloco = { k: 'livre', cor: 'feito', fino: true, quando: H.diaHoje.cadencia === 'treino' ? 'tudo em dia' : 'dia de descanso',
@@ -13197,7 +13253,8 @@ CTX.hojeV3 = function () {
     const r = CTX.respostaDoDia(data);
     const hist = (S.comidaHist || []).filter(function (h) { return h.d === data; })[0];
     const ader = hist ? hist.aderencia : (i === 0 ? null : null);
-    ritmo.push({ data: data, letra: DIAS_CURTOS[new Date(t).getDay()].charAt(0).toUpperCase(), treino: m ? m.day : null, hoje: i === 0,
+    ritmo.push({ data: data, letra: DIAS_CURTOS[new Date(t).getDay()].charAt(0).toUpperCase(), nome: DIAS_LONGOS[new Date(t).getDay()],
+                 treino: m ? m.day : null, hoje: i === 0,
                  comida: !comOn ? null : r === 'sim' || ader === 'plano' ? 'cheia' : r === 'quase' || ader === 'fora' ? 'meia' : 'vazia' });
   }
   const ontem = hojeISO(agora - 86400000);
@@ -13208,7 +13265,7 @@ CTX.hojeV3 = function () {
   const semana = weekStart(agora);
   const cardioSemana = (S.cardio || []).filter(function (x) { return x.t >= semana; }).length;
   return {
-    data: DIAS_LONGOS[new Date(agora).getDay()] + ', ' + fmtDate(agora), hora: horaHHMM(agora),
+    data: DIAS_LONGOS[new Date(agora).getDay()] + ', ' + new Date(agora).getDate() + ' ' + MESES[new Date(agora).getMonth()].slice(0, 3), hora: horaHHMM(agora),
     // o tipo do dia, que a folha `dia` confirma ou corrige
     tipo: diaResolvido().cadencia === 'descanso' ? 'descanso' : 'treino',
     bloco: bloco,
@@ -13245,7 +13302,10 @@ function lembreteDasFotos(agora) {
     apoio: faltam === 1 ? 'Combine com quem vai fotografar. De noite, com a mesma luz de sempre.' : 'A sessão entra com a data em que for feita; nada vence.'
   };
 }
-CTX.dispensaLembrete = function () { view.lembreteDispensado = hojeISO(); render(); };
+CTX.dispensaLembrete = function () {
+  view.lembreteDispensado = hojeISO(); render();
+  avisoComAcao('Lembrete dispensado até amanhã.', 'Desfazer', function () { view.lembreteDispensado = null; render(); });
+};
 
 CTX.faixaDaSessao = function () {
   const s = S.sessao;
@@ -13302,6 +13362,11 @@ CTX.encerraSessaoEsquecida = async function () {
  * A TIRA DO TREINO ABERTO, acima da doca, em todo lugar: o nome do treino e
  * quantas séries de quantas. `null` sem sessão aberta.
  */
+/** O aviso com "Desfazer" (o componente único), para as telas: o fato e o que desfaz. */
+CTX.avisaComDesfazer = function (msg, desfaz) { avisoComAcao(msg, 'Desfazer', desfaz); };
+/** "Fiz mais do que anotei" de um treino aberto, a partir do Hoje: o pôr em dia do dia da sessão. */
+CTX.poeEmDiaDaSessao = function () { if (S.sessao) view.day = S.sessao.day; CTX.abrePorEmDia(); };
+
 CTX.tiraDoTreinoV3 = function () {
   const s = S.sessao;
   const P = s && treino(s.day);

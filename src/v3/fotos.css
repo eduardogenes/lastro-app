@@ -461,11 +461,13 @@
 .v3-ld .agora .p { background: var(--assunto-refeicao); color: var(--texto); box-shadow: inset 0 0 0 var(--fio-escolhido) var(--texto); }
 .v3-ld .agora.t .p { background: var(--assunto-treino); }
 .v3-ld .falta .p { box-shadow: none; background: repeating-linear-gradient(135deg, var(--superficie-quieta) 0 4px, var(--fundo) 4px 8px); }
-.v3-ld-leg { font: 500 13px var(--f-texto); color: var(--texto-2); margin-top: 8px; }
-.v3-ld-leg b { color: var(--texto); }
+.v3-ld-leg { display: flex; justify-content: space-between; gap: 10px; font: 500 13px var(--f-texto); color: var(--texto-2); margin-top: 10px; }
+.v3-ld-leg b { color: var(--texto); font-weight: 600; }
 .v3-instr { display: flex; gap: 6px; }
 .v3 .v3-gota { flex: 1; position: relative; overflow: hidden; min-height: 92px; border-radius: 24px; background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--divisoria); padding: 11px 13px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; }
 .v3-gota .nivel { position: absolute; left: 0; right: 0; bottom: 0; background: var(--assunto-semana); transition: height var(--d-cor) var(--mola); }
+/* o cardio é treino: enche em lima; a água, em céu */
+.v3-gota.cardio .nivel { background: var(--assunto-treino); }
 .v3-gota .rt, .v3-gota .v { position: relative; }
 .v3-gota .rt { font: 600 13px var(--f-texto); color: var(--texto); }
 .v3-gota .v { font: 800 28px/1 var(--f-titulo); letter-spacing: -.02em; }
@@ -549,5 +551,15 @@
 .v3-lin-arq { cursor: pointer; }
 
 /* ---- Estados: as faixas fixas no topo ----------------------------------- */
-.v3-estados { position: fixed; top: calc(6px + var(--sa-top, 0px)); left: 0; right: 0; z-index: 70; display: grid; gap: 6px; pointer-events: none; }
+.v3-estados { position: fixed; top: calc(8px + var(--sa-top, 0px)); left: 12px; right: 12px; z-index: 70; display: grid; gap: var(--e-2); pointer-events: none; max-width: 436px; margin: 0 auto; }
+.v3-estados .v3-faixa { margin: 0; }
 .v3-estados .v3-faixa { pointer-events: auto; }
+
+/* as opções de uma folha, em linhas (a exceção da refeição) */
+.v3-opcoes { margin-top: var(--e-5); }
+/* as opções em linha: 64 de altura, o círculo de 44 */
+.v3-opcoes .v3-lin { min-height: 64px; }
+.v3-opcoes .v3-lin-o { flex-basis: 44px; height: 44px; }
+.v3-itens div { display: flex; justify-content: space-between; gap: var(--e-5); }
+.v3-folha-h { margin-top: var(--e-7); }
+.v3-folha-h h3 { font: var(--t-secao); letter-spacing: -.02em; }

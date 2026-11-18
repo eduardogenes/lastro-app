@@ -99,7 +99,13 @@ test('estados: a gravação que falhou vira a faixa fixa, e sem rede avisa sem b
   a.v('ctx.comecaAqui');
   a.E(`view.naoGuardado = { motivo: 'recusa', oQue: 'a série 2', valor: null, salvo: '' }; render();`);
   await a.esperar();
-  assert.ok(/Não guardado neste aparelho · a série 2/.test(a.texto('.v3-estados')), a.texto('.v3-estados'));
+  assert.ok(/Não foi guardado: a série 2/.test(a.texto('.v3-estados')), a.texto('.v3-estados'));
+  // "Ver" abre o painel com o que era e o que fazer
+  a.clicar('.v3-estados .v3-faixa button');
+  await a.esperar(60);
+  assert.ok(a.$('.v3-pare-w'), 'o painel da falha');
+  a.v('ctx.dispensaFalha');
+  await a.esperar(40);
   assert.ok(!a.$('.ng-faixa'), 'e não a faixa antiga');
   a.E(`Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false }); window.dispatchEvent(new Event('offline'));`);
   await a.esperar();
@@ -107,7 +113,7 @@ test('estados: a gravação que falhou vira a faixa fixa, e sem rede avisa sem b
   // avisa uma vez e some em 4 s; a falha ao guardar é a única que fica
   await a.esperar(4200);
   assert.ok(!/Sem rede/.test(a.texto('.v3-estados') || ''), 'a faixa sem rede sumiu');
-  assert.ok(/Não guardado/.test(a.texto('.v3-estados')), 'a falha continua');
+  assert.ok(/Não foi guardado/.test(a.texto('.v3-estados')), 'a falha continua');
   // só volta se a rede voltar e cair de novo
   a.E(`window.dispatchEvent(new Event('offline'));`);
   await a.esperar();

@@ -75,9 +75,11 @@ sem o nome, 64 de largura) · escondida (em destino, em tela de ação, com
 campo em foco) · com a tira do treino aberto acima.
 
 **Tira do treino aberto.** Pílula lima de 54, contorno de tinta, ponto que
-pulsa, "Treino B · 8 de 22" e seta, 10 acima da doca. Aparece em **todos os
-lugares** com sessão aberta (no Hoje, só quando o bloco do momento já saiu da
-tela, para não dizer a mesma coisa duas vezes). Toque: volta ao treino.
+pulsa, "Treino B · 8 de 22" e seta, 10 acima da doca. Aparece em Dias,
+Corpo, Semana e Plano com sessão aberta. No Hoje, **não**: o bloco do momento
+já diz que o treino está aberto, e ao rolar a ação gruda no topo ("Treino B ·
+8 de 22 · Voltar"); a tira diria a mesma coisa duas vezes. Toque: volta ao
+treino.
 
 **Acessibilidade.** `nav` com nome "Lugares"; o atual com
 `aria-current="page"`; cada ícone com o nome do lugar. O "+" se chama

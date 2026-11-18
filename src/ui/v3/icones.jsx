@@ -16,6 +16,8 @@ export const ic = {
   mais: I(<path d="M12 5v14M5 12h14" />, 2.6),
   ok: I(<path d="M5 12.5l4.5 4.5L19 7.5" />, 2.8),
   x: I(<path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />, 2.4),
+  atencao: I(<><circle cx="12" cy="12" r="8.5" /><path d="M12 7.8v5M12 16.2v.1" /></>, 2.2),
+  semrede: I(<><path d="M7 18.5a4.5 4.5 0 01-.5-9A6 6 0 0118 10.5a4 4 0 01-.5 8z" /><path d="M4 4l16 16" /></>),
   seta: I(<path d="M5 12h14M13 6l6 6-6 6" />, 2.4),
   volta: I(<path d="M15 5.5L8.5 12l6.5 6.5" />, 2.4),
   dir: I(<path d="M9 5.5l6.5 6.5L9 18.5" />, 2.2),

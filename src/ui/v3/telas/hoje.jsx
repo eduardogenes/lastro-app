@@ -4,10 +4,10 @@
 // "o que aparece". Protótipo: docs/redesign-3/prototipos/hoje.html. Dados:
 // `ctx.hojeV3`, `ctx.refeicaoV3`; a regra do momento é `cartaoDeCima`.
 
-import { useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
 import { CamposDoCardio } from '../cardio.jsx';
-import { Acoes, Apoio, Bloco, Botao, Chave, Fichas, Folha, Linha, Pergunta, Saida, Secao } from '../base.jsx';
+import { Acoes, Apoio, Bloco, Botao, Caixa, Chave, Fichas, Folha, Linha, Pequeno, Pergunta, Saida, Secao, Seletor } from '../base.jsx';
 
 const RESPOSTAS = [{ k: 'sim', t: 'Foi, sim' }, { k: 'quase', t: 'Quase' }, { k: 'naosei', t: 'Não sei dizer' }];
 
@@ -22,35 +22,73 @@ function Momento({ ctx, h }) {
   if (b.k === 'sessao') {
     acoes = b.pergunta
       ? <><Acoes><Botao data-a="hoje-continuo" onClick={ctx.continuaSessao}>Continuo treinando</Botao>
-            <Botao tipo="contorno" data-a="hoje-parei" onClick={ctx.encerraSessaoEsquecida}>Já parei</Botao></Acoes></>
+            <Botao tipo="contorno" data-a="hoje-parei" onClick={ctx.encerraSessaoEsquecida}>Já parei</Botao></Acoes>
+          <Saida data-a="hoje-fiz-mais" onClick={ctx.poeEmDiaDaSessao}>Fiz mais do que anotei</Saida></>
       : <Acoes><Botao data-a="hoje-volta" onClick={ctx.voltaAoTreino}>Voltar ao treino {ic.seta}</Botao></Acoes>;
   } else if (b.k === 'confirmar') {
     acoes = <Acoes><Botao data-a="hoje-fim-ok" onClick={() => ctx.confirmaDuracao(b.fim)}>Está certo</Botao>
       <Botao tipo="contorno" data-a="hoje-fim-corrige" onClick={() => ctx.abreSessaoDoDia({ k: 'sessao', t: b.fim })}>Corrigir</Botao></Acoes>;
   } else if (b.k === 'treino' || b.k === 'aula') {
+    // "hoje não vou" abre o tipo do dia: diz o efeito antes do toque (a comida de descanso)
     acoes = <><Acoes><Botao data-a="hoje-comeca" onClick={ctx.abreTreinoDeHoje}>{b.k === 'aula' ? 'Fiz a aula' : 'Começar'} {ic.seta}</Botao></Acoes>
       <div class="v3-saidas">
-        <Saida data-a="hoje-ja-treinei" onClick={ctx.lancaTreinoDeHoje}>Já treinei e não anotei</Saida>
-        {b.k === 'treino' && <Saida data-a="hoje-nao-treino" onClick={() => ctx.setCadenciaV3('descanso')}>Hoje não vou treinar</Saida>}
+        <Saida data-a="hoje-nao-treino" onClick={() => ctx.abreFolha({ k: 'dia' })}>{b.k === 'aula' ? 'Hoje não vou' : 'Hoje não vou treinar'}</Saida>
+        {b.k === 'treino' && <Saida data-a="hoje-ja-treinei" onClick={ctx.lancaTreinoDeHoje}>Já treinei e não anotei</Saida>}
       </div></>;
   } else if (b.k === 'refeicao') {
-    acoes = b.pergunta
-      ? <><Acoes><Botao tipo="contorno" data-a="hoje-fora" onClick={() => ctx.marcaLinhaDaComida(b.id, 'fora')}>Comi outra coisa</Botao>
-            <Botao tipo="contorno" data-a="hoje-nao" onClick={() => ctx.marcaLinhaDaComida(b.id, 'nao')}>Não comi</Botao></Acoes>
-          <Saida onClick={() => ctx.marcaLinhaDaComida(b.id, 'nsei')}>Não sei</Saida></>
-      : <><Acoes><Botao data-a="hoje-comi" onClick={() => ctx.marcaLinhaDaComida(b.id, 'tudo')}>{ic.ok} Comi</Botao>
+    acoes = <><Acoes><Botao data-a="hoje-comi" onClick={() => comi(ctx, b)}>{ic.ok} Comi</Botao>
             <Botao tipo="contorno" data-a="hoje-ver" onClick={() => ctx.abreFolha({ k: 'refeicao', id: b.id })}>Ver</Botao></Acoes>
-          <Saida data-a="hoje-nao-comi" onClick={() => ctx.marcaLinhaDaComida(b.id, 'pergunta')}>Não foi assim</Saida></>;
+          <Saida data-a="hoje-nao-comi" onClick={() => ctx.abreFolha({ k: 'refeicao', id: b.id, diferente: true })}>Não foi assim</Saida></>;
   } else if (b.k === 'noite') {
-    acoes = <><Acoes><Botao data-a="noite-sim" onClick={() => ctx.respondeODia(ctx.hojeISO(), 'sim')}>Foi, sim</Botao>
-        <Botao tipo="contorno" data-a="noite-quase" onClick={() => ctx.respondeODia(ctx.hojeISO(), 'quase')}>Quase</Botao></Acoes>
-      <Saida data-a="noite-naosei" onClick={() => ctx.respondeODia(ctx.hojeISO(), 'naosei')}>Não sei dizer</Saida></>;
+    acoes = <><Acoes><Botao data-a="noite-sim" onClick={() => ctx.respondeHojeComDesfazer('sim')}>Foi, sim</Botao>
+        <Botao tipo="contorno" data-a="noite-quase" onClick={() => ctx.respondeHojeComDesfazer('quase')}>Quase</Botao></Acoes>
+      <Saida data-a="noite-naosei" onClick={() => ctx.respondeHojeComDesfazer('naosei')}>Não sei dizer</Saida></>;
   }
   return (
     <Bloco cor={b.cor} chave={b.k + (b.id || '')} fino={b.fino} vivo={b.vivo} linha0={linha0}
            quando={b.quando} titulo={b.titulo} apoio={b.apoio}>
       {acoes}
     </Bloco>
+  );
+}
+
+/**
+ * "COMI", do bloco: grava na hora e, como o bloco já passa ao próximo momento,
+ * o aviso oferece desfazer (03-padroes-e-voz.md, "Desfazer em vez de perguntar").
+ */
+function comi(ctx, b) {
+  ctx.marcaLinhaDaComida(b.id, 'tudo');
+  ctx.avisaComDesfazer(b.titulo + ' marcado como o plano.', () => ctx.marcaLinhaDaComida(b.id, 'desfaz'));
+}
+
+/**
+ * A AÇÃO QUE GRUDA NO TOPO (02-componentes.md, §1): quando o bloco do momento
+ * sai da tela, o nome e o botão principal dele ficam numa pílula no topo. O
+ * "+" da doca, embaixo, sugere a mesma ação para quem tem uma mão só.
+ */
+function Gruda({ ctx, b }) {
+  const [on, setOn] = useState(false);
+  useLayoutEffect(() => {
+    const mede = () => {
+      const el = document.querySelector('main .v3-bloco');
+      setOn(!!el && el.getBoundingClientRect().bottom < 70);
+    };
+    mede();
+    window.addEventListener('scroll', mede, { passive: true });
+    return () => window.removeEventListener('scroll', mede);
+  }, []);
+  const g = b.k === 'treino' ? ['Começar', ctx.abreTreinoDeHoje]
+    : b.k === 'aula' ? ['Fiz a aula', ctx.abreTreinoDeHoje]
+    : b.k === 'sessao' && !b.pergunta ? ['Voltar', ctx.voltaAoTreino]
+    : b.k === 'refeicao' ? ['Comi', () => comi(ctx, b)]
+    : b.k === 'noite' ? ['Foi, sim', () => ctx.respondeHojeComDesfazer('sim')]
+    : null;
+  if (!g) return null;
+  return (
+    <div class={'v3-gruda' + (on ? ' on' : '')} aria-hidden={on ? undefined : 'true'} style={`--v3-cor:${'var(--' + ({ treino: 'assunto-treino', sessao: 'assunto-treino', aula: 'assunto-corpo', refeicao: 'assunto-refeicao', noite: 'assunto-corpo' })[b.k] + ')'}`}>
+      <span>{b.k === 'noite' ? 'A comida de hoje' : b.titulo}{(b.sub || b.k === 'noite') && <small>{b.k === 'noite' ? 'foi como o plano?' : b.sub}</small>}</span>
+      <button data-a="gruda-acao" tabindex={on ? undefined : '-1'} onClick={g[1]}>{g[0]}</button>
+    </div>
   );
 }
 
@@ -92,6 +130,7 @@ export function HojeV3({ ctx }) {
   return (
     <div class="v3">
       <Momento ctx={ctx} h={h} />
+      <Gruda ctx={ctx} b={h.bloco} />
       <Secao titulo="O dia" nota={h.feitas + ' de ' + h.linha.length}>
         <div class="v3-ld" role="list">
           {h.linha.map(x => (
@@ -104,7 +143,8 @@ export function HojeV3({ ctx }) {
           ))}
         </div>
         <p class="v3-ld-leg">
-          {h.proxima ? <>a seguir: <b>{h.proxima.n}</b>, {h.proxima.t.replace(':', 'h')}{h.proxima.kcal ? ' · ' + h.proxima.kcal + ' kcal' : ''}</> : 'nada mais para hoje'}
+          <span>{h.proxima ? <>a seguir: <b>{h.proxima.n}</b>, {h.proxima.t.replace(':', 'h')}</> : 'nada mais para hoje'}</span>
+          {h.proxima && h.proxima.kcal ? <span class="v3-n">{h.proxima.kcal} kcal</span> : null}
         </p>
       </Secao>
       {tem && (
@@ -122,7 +162,7 @@ export function HojeV3({ ctx }) {
               </button>
             )}
             {q.cardio && (
-              <button class="v3-gota" data-a="hoje-cardio" onClick={ctx.abreCardio}>
+              <button class="v3-gota cardio" data-a="hoje-cardio" onClick={ctx.abreCardio}>
                 <span class="nivel" style={'height:' + Math.min(100, q.cardio.n / q.cardio.meta * 100) + '%'} />
                 <span class="rt">Cardio</span><span class="v v3-n">{q.cardio.n}<small> /{q.cardio.meta}</small></span>
               </button>
@@ -133,19 +173,18 @@ export function HojeV3({ ctx }) {
       <Secao titulo="Seu ritmo" nota="últimos 7 dias">
         <div class="v3-ritmo">
           {h.ritmo.map(d => (
-            <button key={d.data} onClick={() => ctx.vaiPara('dias')} aria-label={d.data + (d.treino ? ', treino ' + d.treino : '') + (d.comida ? ', comida ' + d.comida : '')}>
+            <button key={d.data} onClick={() => ctx.vaiPara('dias')}
+                    aria-label={(d.hoje ? 'hoje, ' : '') + d.nome + (d.treino ? ', treino ' + d.treino : ', sem treino') +
+                      (d.comida ? ', comida ' + ({ cheia: 'como o plano', meia: 'quase', vazia: 'sem resposta' })[d.comida] : '')}>
               <span class={'bola ' + (d.comida || '') + (d.hoje ? ' hoje' : '')}>{d.treino || ''}</span>{d.letra}
             </button>
           ))}
         </div>
         {h.lembrete && (
-          <div class="v3-lembrete" role="note" data-a="hoje-lembrete">
-            <b>{h.lembrete.t}</b><span>{h.lembrete.apoio}</span>
-            <div class="v3-saidas">
-              <Saida data-a="lembrete-abre" onClick={ctx.abreCentroDasFotos}>Abrir as fotos</Saida>
-              <Saida data-a="lembrete-dispensa" onClick={ctx.dispensaLembrete}>Agora não</Saida>
-            </div>
-          </div>
+          <Caixa tom="corpo" data-a="hoje-lembrete" titulo={h.lembrete.t} nota={h.lembrete.apoio}>
+            <Pequeno cheio data-a="lembrete-abre" onClick={ctx.abreCentroDasFotos}>Abrir as fotos</Pequeno>
+            <Pequeno data-a="lembrete-dispensa" onClick={ctx.dispensaLembrete}>Agora não</Pequeno>
+          </Caixa>
         )}
         {h.ontem && (
           <Pergunta pergunta="Ontem ficou em branco. Foi como o plano?" respostas={RESPOSTAS} valor={null}
@@ -157,26 +196,57 @@ export function HojeV3({ ctx }) {
   );
 }
 
-/** Uma refeição: o que tem nela, e marcar. */
+/**
+ * UMA REFEIÇÃO: o que tem nela, e marcar. "Não foi assim" troca para as
+ * respostas da exceção (`f.diferente`), em linhas: o app separa quem comeu
+ * outra coisa de quem não comeu.
+ */
+const FRASE_DA_MARCA = { tudo: ' marcado como o plano.', metade: ': comi metade.', fora: ': outra coisa.', nao: ': não comi.', nsei: ' fica fora da conta.' };
 export function FolhaRefeicaoV3({ ctx, f }) {
   const r = ctx.refeicaoV3(f.id);
+  // ao trocar para "não foi assim", o botão que tinha o foco some: o foco entra na folha
+  useEffect(() => {
+    if (!f.diferente) return;
+    const fs = document.querySelectorAll('.v3-folha');
+    const el = fs[fs.length - 1];
+    if (el) el.focus({ preventScroll: true });
+  }, [f.diferente]);
   if (!r) return null;
-  const marca = k => { ctx.fechaFolha(); ctx.marcaLinhaDaComida(r.id, k); };
+  // grava na hora; o aviso oferece desfazer (a folha fecha, e o efeito fica longe dela)
+  const marca = k => {
+    ctx.fechaFolha();
+    if (k === 'desfaz') {
+      const antes = r.como || (r.metade ? 'metade' : 'tudo');
+      ctx.marcaLinhaDaComida(r.id, 'desfaz');
+      ctx.avisaComDesfazer(r.n + ' desmarcado.', () => ctx.marcaLinhaDaComida(r.id, antes));
+      return;
+    }
+    ctx.marcaLinhaDaComida(r.id, k);
+    ctx.avisaComDesfazer(r.n + FRASE_DA_MARCA[k], () => ctx.marcaLinhaDaComida(r.id, 'desfaz'));
+  };
+  const hora = r.t.replace(':', 'h') + ' · ' + r.kcal + ' kcal';
+  if (f.diferente && !r.feita) {
+    return (
+      <Folha titulo={r.n} sub="O que aconteceu? Não precisa detalhar." aoFechar={() => ctx.fechaFolha()}>
+        <div class="v3-opcoes">
+          <Linha marca={ic.prato} titulo="Comi outra coisa" apoio="no lugar dela, fora do plano" semSeta data-a="ref-fora" aoTocar={() => marca('fora')} />
+          <Linha marca={ic.prato} titulo="Comi metade" apoio="a mesma refeição, menos" semSeta data-a="ref-metade" aoTocar={() => marca('metade')} />
+          <Linha marca={ic.x} titulo="Não comi" apoio='fica anotado; a regra conta o dia como "quase"' semSeta data-a="ref-nao" aoTocar={() => marca('nao')} />
+          <Linha marca={ic.duvida} titulo="Não sei dizer" apoio="fica fora da conta" semSeta data-a="ref-nsei" aoTocar={() => marca('nsei')} />
+        </div>
+      </Folha>
+    );
+  }
   return (
-    <Folha titulo={r.n} sub={r.t.replace(':', 'h') + ' · ' + r.kcal + ' kcal' + (r.feita ? ' · ' + (r.como === 'fora' ? 'comi outra coisa' : r.como === 'nao' ? 'não comi' : r.como === 'nsei' ? 'não sei' : r.metade ? 'metade' : 'comi') : '')}
+    <Folha titulo={r.n} sub={hora + (r.feita ? ' · ' + (r.como === 'fora' ? 'comi outra coisa' : r.como === 'nao' ? 'não comi' : r.como === 'nsei' ? 'não sei' : r.metade ? 'metade' : 'como o plano') : '')}
            aoFechar={() => ctx.fechaFolha()}>
-      <div class="v3-itens">{r.itens.map(i => <div key={i}>{i}</div>)}</div>
+      <div class="v3-itens">{r.itens.map(i => <div key={i.n}><span>{i.n}</span><span class="v3-n">{i.q}</span></div>)}</div>
       {r.nota && <Apoio>{r.nota}</Apoio>}
       {r.feita
-        ? <><Acoes><Botao data-a="ref-desfaz" onClick={() => marca('desfaz')}>Desmarcar</Botao></Acoes>
+        ? <><Acoes><Botao tipo="contorno" cheio data-a="ref-desfaz" onClick={() => marca('desfaz')}>Desmarcar</Botao></Acoes>
             <Saida onClick={() => { ctx.fechaFolha(); ctx.editaRefeicao(r.id); }}>Corrigir o que comi</Saida></>
-        : <><Acoes><Botao data-a="ref-tudo" onClick={() => marca('tudo')}>{ic.ok} Comi</Botao>
-              <Botao tipo="contorno" data-a="ref-metade" onClick={() => marca('metade')}>Metade</Botao></Acoes>
-            <div class="v3-cond">
-              <button data-a="ref-fora" onClick={() => marca('fora')}>Comi outra coisa</button>
-              <button data-a="ref-nao" onClick={() => marca('nao')}>Não comi</button>
-              <button data-a="ref-nsei" onClick={() => marca('nsei')}>Não sei</button>
-            </div></>}
+        : <Acoes><Botao data-a="ref-tudo" onClick={() => marca('tudo')}>{ic.ok} Comi</Botao>
+            <Botao tipo="contorno" data-a="ref-diferente" onClick={() => ctx.mudaFolha({ diferente: true })}>Não foi assim</Botao></Acoes>}
     </Folha>
   );
 }
@@ -264,14 +334,10 @@ export function FolhaTipoDoDia({ ctx }) {
   return (
     <Folha titulo={d.pergunta} sub={d.sub} aoFechar={() => ctx.fechaFolha()}>
       {!d.fato && (
-        <div class="v3-escolhas" role="radiogroup" aria-label="O tipo do dia">
-          {ordem.map(k => (
-            <Linha key={k} data-a={'dia-e-' + k} marca={d.cadencia === k ? ic.ok : ''}
-                   role="radio" aria-checked={d.cadencia === k ? 'true' : 'false'}
-                   titulo={k === 'descanso' ? 'É descanso' : 'Vou treinar hoje'}
-                   apoio={k === 'descanso' ? d.efeitoDescanso : d.efeitoTreino}
-                   aoTocar={() => ctx.setCadenciaV3(k)} />
-          ))}
+        <div class="v3-escolhas">
+          <Seletor rotulo="O tipo do dia" prefixo="dia-e-" valor={d.cadencia} aoMudar={k => ctx.setCadenciaV3(k)}
+                   opcoes={[{ k: 'treino', t: 'Treino' }, { k: 'descanso', t: 'Descanso' }]} />
+          <Apoio>{d.cadencia === 'descanso' ? 'Com descanso, ' + d.efeitoDescanso + '.' : 'Com treino, ' + d.efeitoTreino + '.'}</Apoio>
         </div>
       )}
       {d.cadencia === 'descanso' && (
@@ -284,14 +350,18 @@ export function FolhaTipoDoDia({ ctx }) {
       )}
       {d.cadencia === 'treino' && (
         <>
-          <p class="v3-rotulo">O turno do treino</p>
-          <Fichas rotulo="O turno do treino" prefixo="turno-" aoTocar={k => ctx.setTurnoV3(k)}
-                  opcoes={d.turnos.map(t => ({ k: t.k, t: t.n + ' · ' + t.hora.replace(':', 'h'), on: t.on }))} />
-          <Apoio>Anda o pré-treino e o intra; as outras refeições ficam na hora delas.{turno && turno.pos ? ' O pós-treino passa a ser o ' + turno.pos.toLowerCase() + '.' : ''}</Apoio>
+          <div class="v3-sec-h v3-folha-h"><h3>Turno</h3><small>muda os horários das refeições</small></div>
+          <Seletor rotulo="O turno do treino" prefixo="turno-" valor={turno ? turno.k : null} aoMudar={k => ctx.setTurnoV3(k)}
+                   opcoes={d.turnos.map(t => ({ k: t.k, t: t.n }))} />
+          <Apoio>{turno ? 'Treino às ' + turno.hora.replace(':', 'h') + '. ' : ''}Anda o pré-treino e o intra; as outras refeições ficam na hora delas.{turno && turno.pos ? ' O pós-treino passa a ser o ' + turno.pos.toLowerCase() + '.' : ''}</Apoio>
         </>
       )}
-      <Chave titulo="Demanda alta" apoio="entra o carboidrato extra do intra-treino; para o dia de perna pesada"
-             ligada={d.alta} data-a="dia-alta" aoMudar={on => ctx.setAlta(on)} />
+      <div class="v3-ligar">
+        <Chave titulo="Demanda alta" apoio="entra o carboidrato extra do intra-treino; para o dia de perna pesada"
+               ligada={d.alta} data-a="dia-alta" aoMudar={on => ctx.setAlta(on)} />
+        {d.cadencia === 'treino' && <Linha titulo="Já treinei hoje" apoio="registrar o treino que não anotou" data-a="dia-ja-treinei"
+                                           aoTocar={() => { ctx.fechaFolha(); ctx.lancaTreinoDeHoje(); }} />}
+      </div>
       <p class="v3-rotulo">Como foi o dia</p>
       <Fichas rotulo="Como foi o dia" prefixo="aderencia-" aoTocar={k => ctx.setAderencia(k)}
               opcoes={d.aderencias.map(x => ({ k: x.k, t: x.t, on: d.aderencia === x.k }))} />

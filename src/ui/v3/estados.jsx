@@ -46,7 +46,7 @@ export function EstadosV3({ ctx }) {
   return (
     <div class="v3 v3-estados">
       {n && !aberto && (
-        <Faixa falha acao="Tentar de novo" aoAgir={ctx.tentaGravar}>Não guardado neste aparelho · {n.oQue}</Faixa>
+        <Faixa falha acao="Ver" aoAgir={ctx.verFalha}>Não foi guardado: {n.oQue}</Faixa>
       )}
       {off && <Faixa>Sem rede. Tudo fica guardado neste aparelho.</Faixa>}
     </div>

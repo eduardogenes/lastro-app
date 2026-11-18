@@ -44,8 +44,8 @@ Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino 
 |---|---|---|---|---|
 | dado | **Primeira vez começa com o programa do dono** | "Comece pelo que já está aqui" oferece o programa e o plano que vêm embutidos no app. | Decisão do dono (17/11): três passos (seu treino, sua comida, o que acompanhar), cada um pulável; a pessoa nova começa vazia. O aparelho do dono não muda. Pede decidir o que o app embute para quem é novo (teste de domínio do estado inicial). | PrimeiraVez em hoje.jsx; enderecoVazio e o estado padrão em src/main.jsx |
 | dado | **"Comi outra coisa" sem o tamanho** | Marca só "fora". | Decisão do dono (17/11): guardar o tamanho (parecido, bem mais, bem menos, não sei). Campo novo na marca da refeição, com fusão, cópia de segurança e a pasta dos agentes; teste de domínio e do espelho. | marcaLinhaDaComida em src/main.jsx; ferramentas/espelho/monta.ts |
-| hierarquia | **A exceção da refeição dentro do bloco** | "Não foi assim" troca os botões do bloco por dois de contorno e uma saída (sem principal). | O bloco fica com "Comi" e "Ver"; "Não foi assim" abre a folha com as três respostas (outra coisa, não comi, não sei). Um principal por bloco, sempre. | Momento em hoje.jsx |
-| espaço | **Lembrete das fotos fora do padrão de aviso** | Bloco próprio (.v3-lembrete) com duas saídas sublinhadas. | Caixa lilás (aviso dentro da tela) com "Abrir as fotos" pequeno cheio e "Agora não" de contorno. | hoje.jsx, src/v3/registro.css |
+| hierarquia | **A exceção da refeição dentro do bloco** (feito, peça 5, Hoje) | "Não foi assim" troca os botões do bloco por dois de contorno e uma saída (sem principal). | O bloco fica com "Comi" e "Ver"; "Não foi assim" abre a folha com as três respostas (outra coisa, não comi, não sei). Um principal por bloco, sempre. | Momento em hoje.jsx |
+| espaço | **Lembrete das fotos fora do padrão de aviso** (feito, peça 5, Hoje) | Bloco próprio (.v3-lembrete) com duas saídas sublinhadas. | Caixa lilás (aviso dentro da tela) com "Abrir as fotos" pequeno cheio e "Agora não" de contorno. | hoje.jsx, src/v3/registro.css |
 
 ## Treino
 

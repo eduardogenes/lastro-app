@@ -30,6 +30,26 @@ test('às 12h05 o momento é o almoço, e "Comi" marca pela porta de sempre', as
   a.fechar();
 });
 
+test('a refeição: "Comi" oferece desfazer, e "Não foi assim" abre as respostas da exceção', async () => {
+  const a = await noHoje(12, 5);
+  a.clicar('[data-a="hoje-comi"]');
+  await a.esperar(40);
+  assert.ok(a.E('!!diaDeComida().done.almoco'), 'marcado na hora');
+  assert.strictEqual(a.$('[data-a="aviso-acao"]').textContent, 'Desfazer');
+  a.clicar('[data-a="aviso-acao"]');
+  await a.esperar(40);
+  assert.ok(!a.E('!!diaDeComida().done.almoco'), 'desfeito');
+  // um principal por bloco: a exceção mora na folha
+  assert.ok(!a.$('[data-a="hoje-fora"]'), 'o bloco não troca os botões');
+  a.clicar('[data-a="hoje-nao-comi"]');
+  await a.esperar(40);
+  assert.ok(a.$('[data-a="ref-fora"]') && a.$('[data-a="ref-nao"]') && a.$('[data-a="ref-nsei"]'), 'as respostas, na folha');
+  a.clicar('[data-a="ref-nao"]');
+  await a.esperar(40);
+  assert.strictEqual(a.E('diaDeComida().como && diaDeComida().como.almoco'), 'nao', 'não comi');
+  a.fechar();
+});
+
 test('o "+": o texto livre grava o que entendeu e diz o que não entendeu', async () => {
   const a = await noHoje(13, 0);
   a.clicar('.v3-doca-m');
@@ -68,6 +88,23 @@ test('"se quiser" obedece ao que está ligado, e a chave muda na hora', async ()
   a.clicar('[data-a="hoje-agua"]'.replace('hoje-agua', 'hoje-peso'));
   await a.esperar();
   assert.strictEqual(a.vista().aba, 'corpo', 'o peso leva à régua do Corpo');
+  a.fechar();
+});
+
+test('de noite, "Foi, sim" fecha o dia com "Desfazer", e desfazer desmarca só o que a resposta marcou', async () => {
+  const a = await noHoje(21, 0);
+  a.E(`diaDeComida().done.cafe = 1; queueSave(); render();`);   // uma já marcada antes
+  await a.esperar(40);
+  const antes = a.J('Object.keys(diaDeComida().done).sort()');
+  a.clicar('[data-a="noite-sim"]');
+  await a.esperar(60);
+  assert.strictEqual(a.E('CTX.respostaDoDia(hojeISO())'), 'sim', 'respondido');
+  assert.ok(a.J('Object.keys(diaDeComida().done)').length > antes.length, 'marcou as que faltavam');
+  assert.strictEqual(a.$('[data-a="aviso-acao"]').textContent, 'Desfazer');
+  a.clicar('[data-a="aviso-acao"]');
+  await a.esperar(60);
+  assert.deepStrictEqual(a.J('Object.keys(diaDeComida().done).sort()'), antes, 'só a que já estava marcada continua');
+  assert.notStrictEqual(a.E('CTX.respostaDoDia(hojeISO())'), 'sim', 'e a resposta saiu');
   a.fechar();
 });
 
@@ -113,7 +150,13 @@ test('cardio: o toque no Hoje abre a folha, e gravar registra pela porta de semp
 test('o tipo do dia: "Hoje não vou treinar" vira descanso, e a folha da data volta, com turno e demanda alta', async () => {
   const a = await noHoje(5, 30);
   assert.strictEqual(a.vJ('ctx.hojeV3').bloco.k, 'treino');
+  // "hoje não vou treinar" abre o tipo do dia, que diz o efeito antes do toque
   a.clicar('[data-a="hoje-nao-treino"]');
+  await a.esperar(40);
+  assert.ok(a.$('[data-a="dia-e-descanso"]'), 'a folha do tipo do dia');
+  a.clicar('[data-a="dia-e-descanso"]');
+  await a.esperar(40);
+  a.v('ctx.fechaFolha');
   await a.esperar(40);
   assert.strictEqual(a.E('diaDeComida().cadencia'), 'descanso');
   assert.notStrictEqual(a.vJ('ctx.hojeV3').bloco.k, 'treino', 'o bloco deixa de ser o treino');

@@ -42,7 +42,7 @@ ligar de volta.
 
 | O que é | Como |
 |---|---|
-| ação comum, reversível (marcar refeição, somar copo, responder um dia) | grava na hora, sem aviso; tocar de novo desfaz |
+| ação comum, reversível (marcar refeição, somar copo, responder um dia) | grava na hora, sem aviso; tocar de novo desfaz. **Exceção:** quando o toque tira a coisa da tela (o "Comi" e a pergunta da noite no bloco do Hoje, as marcas da folha da refeição, que fecha), não há "de novo" para tocar: aí vem o aviso com "Desfazer" |
 | reversível mas com efeito longe da tela (apagar foto, pular exercício, aplicar no plano, tirar alimento) | grava na hora e mostra o **aviso com "Desfazer"** por 6 s |
 | sem volta (apagar de vez, restaurar cópia, voltar ao começo, descartar treino) | **confirmação**, dizendo o que se perde e o que não se perde |
 

@@ -155,12 +155,12 @@ function Radios({ classe, rotulo, children }) {
 const radio = (on, primeiro, algum) => ({ role: 'radio', 'aria-checked': on ? 'true' : 'false', tabindex: on || (!algum && primeiro) ? 0 : -1 });
 
 /** O SELETOR: duas a quatro opções curtas lado a lado. `opcoes`: `[{ k, t }]`. */
-export function Seletor({ opcoes, valor, aoMudar, rotulo }) {
+export function Seletor({ opcoes, valor, aoMudar, rotulo, prefixo }) {
   const algum = opcoes.some(o => o.k === valor);
   return (
     <Radios classe="v3-sel" rotulo={rotulo}>
       {opcoes.map((o, i) => (
-        <button key={o.k} {...radio(o.k === valor, i === 0, algum)} onClick={() => aoMudar(o.k)}>{o.t}</button>
+        <button key={o.k} {...radio(o.k === valor, i === 0, algum)} data-a={prefixo ? prefixo + o.k : undefined} onClick={() => aoMudar(o.k)}>{o.t}</button>
       ))}
     </Radios>
   );
@@ -326,6 +326,7 @@ export function TelaDeAcao({ cor = 'treino', topo, segs, antes, pe, links, centr
 export function Faixa({ falha, acao, aoAgir, children }) {
   return (
     <div class={cls('v3-faixa', falha && 'falha')} role={falha ? 'alert' : 'status'}>
+      {falha ? ic.atencao : ic.semrede}
       <span>{children}</span>
       {acao && <button onClick={aoAgir}>{acao}</button>}
     </div>

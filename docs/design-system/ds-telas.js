@@ -72,7 +72,7 @@ tela({ id: 'f-refeicao', n: 'Uma refeição do dia', g: 'hoje', c: 'folha', base
   d: 'O que tem na refeição e marcar. "Não foi assim" abre as três respostas da exceção, em vez de "Pulei esta": o app separa quem comeu outra coisa de quem não comeu.',
   es: [['normal', 'a refeição'], ['diferente', 'não foi assim'], ['marcada', 'já marcada']], vai: ['f-comi-outra'],
   r: e => e === 'diferente'
-    ? H.folha('Almoço', 'O que aconteceu? Não precisa detalhar.', `<div class="lista" style="margin-top:12px">${H.op(ic.prato, 'Comi outra coisa', 'diga o tamanho, sem pesar nada', { folha: 'f-comi-outra' })}${H.op(ic.x, 'Não comi', 'fica anotado; a regra conta o dia como "quase"', { desfazer: 'Almoço: não comi.' })}${H.op(ic.duvida, 'Não sei dizer', 'fica fora da conta', { desfazer: 'Almoço fica fora da conta.' })}</div>`)
+    ? H.folha('Almoço', 'O que aconteceu? Não precisa detalhar.', `<div class="lista" style="margin-top:12px">${H.op(ic.prato, 'Comi outra coisa', 'diga o tamanho, sem pesar nada', { folha: 'f-comi-outra' })}${H.op(ic.prato, 'Comi metade', 'a mesma refeição, menos', { desfazer: 'Almoço: comi metade.' })}${H.op(ic.x, 'Não comi', 'fica anotado; a regra conta o dia como "quase"', { desfazer: 'Almoço: não comi.' })}${H.op(ic.duvida, 'Não sei dizer', 'fica fora da conta', { desfazer: 'Almoço fica fora da conta.' })}</div>`)
     : H.folha('Almoço', '<span class="n">12h30 · 719 kcal</span>' + (e === 'marcada' ? ' · marcado às 12h52, como o plano' : ''), `<div class="itens" style="margin-top:10px">${D.REF[2].it.map(i => `<div><span>${i[0]}</span><span class="n">${i[1]}</span></div>`).join('')}</div>
       <div class="acoes">${e === 'marcada' ? H.alt('Desmarcar', { cheio: 1, desfazer: 'Almoço desmarcado.' }) : H.vai(ic.ok + ' Comi', { desfazer: 'Almoço marcado como o plano.' }) + H.alt('Não foi assim', { est: 'diferente' })}</div>`) });
 
@@ -96,7 +96,7 @@ tela({ id: 'f-cardio', n: 'Cardio', g: 'hoje', c: 'folha', base: 'hoje',
     <div class="acoes">${H.vai(ic.ok + ' Guardar', { desfazer: 'Cardio guardado: bike, 25 min, leve.' })}</div>`) });
 
 tela({ id: 'f-tipo-dia', n: 'O tipo do dia', g: 'hoje', c: 'folha', base: 'hoje',
-  d: 'Tocar na data do bloco. Treino ou descanso, o turno (muda os horários das refeições) e "demanda alta" (dia de mais esforço, a regra do nutricionista sobe a comida).',
+  d: 'Tocar na data do bloco, ou "Hoje não vou treinar". Treino ou descanso (o efeito na comida dito antes do toque), o turno (muda os horários das refeições), "demanda alta" (dia de mais esforço, a regra do nutricionista sobe a comida) e, no app, "Como foi o dia" (a aderência que a régua da comida lê).',
   r: () => H.folha('Segunda, 16 de novembro', 'Isto muda só hoje. A semana de treino continua a mesma.', `
     <div class="corpo">${H.seg(['Treino', 'Descanso'], 'Treino', 'Tipo do dia')}</div>
     <h3 class="h" style="margin-top:18px">Turno <small>muda os horários das refeições</small></h3><div class="corpo">${H.seg(['Manhã', 'Tarde', 'Noite'], 'Manhã', 'Turno')}</div>

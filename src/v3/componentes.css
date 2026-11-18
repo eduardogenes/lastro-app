@@ -175,6 +175,21 @@ button.v3-quadro { min-height: var(--alvo); }
 .v3-caixa { margin-top: var(--e-5); border-radius: var(--r-caixa); box-shadow: inset 0 0 0 var(--fio-forte) var(--texto); padding: var(--e-5) var(--e-6); background: var(--superficie); }
 .v3-caixa.atencao { background: var(--atencao); }
 .v3-caixa.treino { background: var(--assunto-treino); }
+.v3-caixa.corpo { background: var(--assunto-corpo); }
+
+/* ---- 1. A ação que gruda no topo, quando o bloco sai da tela ------------ */
+.v3-gruda {
+  position: fixed; left: 10px; right: 10px; top: calc(8px + var(--sa-top)); z-index: 30;
+  max-width: 440px; margin: 0 auto; height: 56px; padding: 0 6px 0 18px; border-radius: var(--r-pilula);
+  background: var(--v3-cor, var(--assunto-treino)); box-shadow: inset 0 0 0 var(--fio-forte) var(--texto), var(--sombra-gruda);
+  display: flex; align-items: center; gap: 10px;
+  transform: translateY(-80px); visibility: hidden;
+  transition: transform var(--d-fecha) var(--mola-sai), visibility 0s linear var(--d-fecha);
+}
+.v3-gruda.on { transform: none; visibility: visible; transition: transform var(--d-folha) var(--mola), visibility 0s; }
+.v3-gruda span { flex: 1; min-width: 0; font: 700 16px var(--f-titulo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v3-gruda small { display: block; font: 600 12px var(--f-texto); }
+.v3 .v3-gruda button { height: var(--alvo); padding: 0 18px; border-radius: var(--r-pilula); background: var(--acao); color: var(--texto-sobre-acao); font: var(--t-botao-p); }
 .v3-caixa p { font: 700 16px/1.25 var(--f-titulo); }
 .v3-caixa p small { display: block; font: 500 13px/1.35 var(--f-texto); margin-top: 3px; }
 .v3-caixa-b { display: flex; gap: var(--e-3); margin-top: var(--e-4); flex-wrap: wrap; }
@@ -294,6 +309,7 @@ button.v3-quadro { min-height: var(--alvo); }
 }
 @keyframes v3-desce-de-cima { from { opacity: 0; transform: translateY(-10px); } }
 .v3-faixa span { flex: 1; }
+.v3-faixa svg { width: 20px; height: 20px; flex: 0 0 auto; }
 .v3-faixa.falha { background: var(--atencao); box-shadow: inset 0 0 0 var(--fio-forte) var(--texto); padding-right: 6px; }
 .v3 .v3-faixa button { min-height: var(--alvo); padding: 0 16px; border-radius: var(--r-pilula); background: var(--acao); color: var(--texto-sobre-acao); font: 700 13px var(--f-titulo); }
 
