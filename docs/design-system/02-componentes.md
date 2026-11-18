@@ -304,7 +304,7 @@ Linha de tinta de 3, pontas e junções redondas, sem grade, sem eixo Y. O
 último ponto é uma bola de 6 da cor do assunto com contorno de tinta de 3. Os
 pontos do dia (pesagens) em tinta a 28%, raio 2,6. A faixa do alvo em lilás
 chapado. As sessões de fotos como traços de 8 embaixo. O cursor ("tudo na
-mesma data") é tracejado com uma bola lima. Datas no eixo X em 11 px, 700,
+mesma data") é tracejado com uma bola lima. Datas no eixo X em 12 px, 700,
 `--texto-legenda`, só nas pontas.
 
 **Acessibilidade.** `role="img"` com um nome que diz a conclusão ("Média
@@ -369,7 +369,7 @@ não mede é tocável ("toque ao conferir").
 ## 24. Linha do dia e ritmo
 
 - **Linha do dia**: pontos de 44 numa linha de divisória, hora embaixo
-  (11 px, 700, `--texto-legenda`). Feito: tinta com certo. Agora: cor do
+  (12 px, 700, `--texto-legenda`). Feito: tinta com certo. Agora: cor do
   momento com contorno de tinta de 2,5 e 12% maior. Sem resposta depois de
   uma hora: tracejado de areia. Toque abre a refeição ou o treino.
 - **Ritmo**: sete bolas de 36 com a letra do treino; dia de treino em tinta,

@@ -20,6 +20,14 @@ const txt = v => String(v).replace('.', ',');
  * @param {(v: number) => void} p.aoMudar  chamado enquanto arrasta
  * @param {string} p.rotulo     nome acessível ("carga em kg")
  */
+const DITA = { kg: 'quilos', cm: 'centímetros', mm: 'milímetros', g: 'gramas', ml: 'mililitros', min: 'minutos', s: 'segundos' };
+/** A unidade falada: a do rótulo ("carga em kg" → "quilos"), ou o próprio rótulo ("repetições"). */
+function unidadeDita(rotulo) {
+  const m = / em (\S+)$/.exec(rotulo || '');
+  if (m) return DITA[m[1]] || m[1];
+  return rotulo || '';
+}
+
 export function Regua({ min, max, passo, valor, cada, largura = 14, aoMudar, rotulo }) {
   const el = useRef(null);
   const ultimo = useRef(valor);
@@ -70,13 +78,13 @@ export function Regua({ min, max, passo, valor, cada, largura = 14, aoMudar, rot
       <div class="v3-regua" style={`--v3-passo:${largura}px`}>
         <div class="v3-regua-r" ref={el} onScroll={aoRolar} onKeyDown={aoTeclar}
              role="slider" tabindex="0" aria-label={rotulo}
-             aria-valuemin={min} aria-valuemax={max} aria-valuenow={valor} aria-valuetext={txt(valor)}>
+             aria-valuemin={min} aria-valuemax={max} aria-valuenow={valor} aria-valuetext={(txt(valor) + ' ' + unidadeDita(rotulo)).trim()}>
           <div class="v3-regua-f">{marcas}</div>
         </div>
       </div>
       <div class="v3-regua-p">
-        <button onClick={() => anda(-1)} aria-label={`Menos ${txt(passo)}`}>−</button>
-        <button onClick={() => anda(1)} aria-label={`Mais ${txt(passo)}`}>+</button>
+        <button onClick={() => anda(-1)} aria-label={`Menos ${txt(passo)} ${unidadeDita(rotulo)}`.trim()}>−</button>
+        <button onClick={() => anda(1)} aria-label={`Mais ${txt(passo)} ${unidadeDita(rotulo)}`.trim()}>+</button>
       </div>
     </div>
   );

@@ -1,79 +1,164 @@
-/* Os valores da direção 3. Cor e medida nascem aqui; fora daqui, só `var()`. */
+/*
+ * Tokens do Lastro — direção 3. CÓPIA de docs/design-system/tokens.css: mude
+ * lá e aqui juntos (a guarda `estilo-v3.test.ts` confere que são os mesmos).
+ * A única diferença são os nomes das fontes, que aqui são os das variáveis
+ * carregadas pelo app (@fontsource-variable).
+ *
+ * A fonte única de cor, letra, espaço, forma, sombra e movimento. Cada nome diz
+ * o PAPEL, não a cor: `--assunto-treino`, e não `--lima`. Tela nova usa só
+ * `var(--…)` daqui; valor solto fora deste arquivo é erro.
+ *
+ * Tema claro sempre. Não existe bloco escuro, nem `prefers-color-scheme`.
+ * Referência: docs/design-system/01-fundamentos.md.
+ */
 :root {
-  --papel: #F6F3EC;
-  --branco: #FFFDF8;
-  --areia: #EBE6DA;
-  --fio: #DFDACE;
-  /* contorno de controle sem preenchimento forte: 3,5:1 no papel */
-  --contorno: #858073;
-  --tinta: #0F0F0D;
-  --tinta-2: #56554E;
-  --tinta-3: #77766D;
-  --lima: #D2F23A;
-  --tanja: #FF9A4D;
-  --lilas: #D3C6FF;
-  --ceu: #BBDDFB;
-  --menta: #BEEBD2;
-  /* tinta translúcida sobre bloco de cor: contorno quieto e trilho */
-  --tinta-18: rgba(15, 15, 13, .18);
-  --tinta-28: rgba(15, 15, 13, .28);
-  --veu: rgba(15, 15, 13, .38);
-  /* o cinza claro do ícone inativo sobre a doca escura */
-  --sobre-tinta-2: #A9A79C;
+  color-scheme: light;
 
-  --f-titulo: 'Bricolage Grotesque Variable', 'Instrument Sans Variable', system-ui, sans-serif;
-  --f-texto: 'Instrument Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* ---------- superfícies ---------- */
+  --fundo: #F6F3EC;              /* o papel: fundo de toda tela e de toda folha */
+  --superficie: #FFFDF8;         /* controle sobre o papel ou sobre cor: cartão de escolha, campo, quadro */
+  --superficie-quieta: #EBE6DA;  /* bloco secundário: pergunta, trilho, vazio, ícone em círculo */
+  --divisoria: #DFDACE;          /* só divisória entre linhas (1,5 px). Não é contorno de controle */
+  --contorno: #858073;           /* contorno de controle sem preenchimento forte: campo, escolha, chave desligada. 3,5:1 no fundo */
+  --veu: rgba(15, 15, 13, .38);  /* atrás da folha */
+  --tracejado: rgba(15, 15, 13, .16); /* trilho dos segmentos e marcas da régua sobre cor */
+  --marca: rgba(15, 15, 13, .28);  /* marca menor da régua, ponto do gráfico, seta desabilitada */
 
-  --r-pilula: 999px;
-  --r-bloco: 24px;
-  --r-bloco-g: 34px;
-  --r-folha: 36px;
+  /* ---------- texto ---------- */
+  --texto: #0F0F0D;              /* texto, ícone, botão principal, contorno forte. Único texto permitido sobre cor de assunto */
+  --texto-2: #56554E;            /* apoio sobre fundo, superfície e quieta (6,0 a 7,4:1). Nunca sobre tangerina */
+  --texto-legenda: #62615A;      /* legenda e nota de 12 a 13 px sobre fundo, superfície e quieta (5,0 a 6,1:1). Nunca sobre cor */
+  --texto-sobre-acao: #F6F3EC;   /* texto do botão principal e de tudo que está sobre a tinta */
+  --texto-sobre-acao-2: #A9A79C; /* ícone inativo da doca, sobre a tinta (7,9:1) */
 
-  --margem: 20px;
-  --alvo: 44px;
-  --botao: 58px;
-  --botao-g: 68px;
+  /* ---------- ação ---------- */
+  --acao: #0F0F0D;               /* botão principal, chave ligada, segmento feito */
+  --acao-em-curso: rgba(15, 15, 13, .45); /* segmento em curso */
+  --foco: #0F0F0D;               /* anel de foco, 2,5 px, afastado 3 px */
 
-  --mola: cubic-bezier(.2, .9, .25, 1);
-  --t-toque: 120ms;
-  --t-entra: 340ms;
-  --t-cor: 450ms;
+  /* ---------- assuntos: a cor do bloco diz DE QUE É o momento, nunca se foi bom ---------- */
+  --assunto-treino: #D2F23A;     /* treino, a ação de agora, o selecionado */
+  --assunto-refeicao: #FF9A4D;   /* refeição */
+  --assunto-corpo: #D3C6FF;      /* corpo, medidas, a pergunta do dia, aula */
+  --assunto-semana: #BBDDFB;     /* semana, água, dobras */
+  --assunto-feito: #BEEBD2;      /* feito, guardado, em dia, livre */
+  --atencao: #FF9A4D;            /* fora do padrão, falha, o que pede olhar. Sempre com palavra e contorno de tinta */
+  --selecionado: #D2F23A;        /* o escolhido num grupo de escolhas */
 
-  /* o movimento do design system (docs/design-system/tokens.css e o 07):
-     o que entra desacelera (--mola), o que sai acelera (--mola-sai) */
-  --mola-sai: cubic-bezier(.4, 0, 1, 1);
-  --d-toque: 100ms;
-  --d-lugar-sai: 90ms;   /* trocar de lugar: o que sai some */
-  --d-atraso-lugar: 60ms;
+  /* ---------- letra ---------- */
+  --f-titulo: 'Bricolage Grotesque Variable', 'Instrument Sans Variable', system-ui, sans-serif; /* títulos, números, botões */
+  --f-texto: 'Instrument Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif; /* texto corrido */
+
+  /* escala: tamanho / entrelinha. Peso e entreletra ao lado de cada papel no 01-fundamentos.md */
+  --t-gigante: 800 96px/.84 var(--f-titulo);        /* o número do lugar: peso, medida sendo medida */
+  --t-gigante-m: 800 76px/.84 var(--f-titulo);      /* a tela que é sobre um número: o exercício */
+  --t-gigante-p: 800 64px/.86 var(--f-titulo);      /* cabeça de consulta: peso, medida, kcal do dia */
+  --t-contagem: 800 120px/.85 var(--f-titulo);      /* o descanso */
+  --t-valor: 800 66px/.9 var(--f-titulo);           /* carga e repetição da série */
+  --t-heroi: 800 50px/.92 var(--f-titulo);          /* título do bloco do momento */
+  --t-heroi-m: 800 36px/.98 var(--f-titulo);        /* título do bloco com mais de 12 letras, ou pergunta */
+  --t-heroi-fino: 800 30px/1 var(--f-titulo);       /* bloco encolhido em faixa */
+  --t-lugar: 800 34px/1 var(--f-titulo);            /* cabeçalho de lugar (sem voltar) */
+  --t-destino: 800 28px/1 var(--f-titulo);          /* cabeçalho de destino (com voltar) */
+  --t-folha: 800 30px/1 var(--f-titulo);            /* título da folha */
+  --t-acao: 800 30px/1 var(--f-titulo);             /* o nome na tela de ação: exercício, medida, dia */
+  --t-secao: 700 17px/1.1 var(--f-titulo);          /* título de seção */
+  --t-nome: 700 17px/1.15 var(--f-titulo);          /* nome em linha de lista e em cartão */
+  --t-nome-p: 700 16px/1.2 var(--f-titulo);         /* nome em lista densa: editor, compras, alimentos */
+  --t-valor-linha: 800 19px/1 var(--f-titulo);      /* o número à direita da linha */
+  --t-quadro: 800 22px/1.05 var(--f-titulo);        /* o número do quadro */
+  --t-botao: 700 18px/1 var(--f-titulo);            /* botão principal e de contorno grande */
+  --t-botao-g: 700 22px/1 var(--f-titulo);          /* botão do treino e da medição */
+  --t-botao-p: 700 15px/1 var(--f-titulo);          /* botão pequeno: ficha de resposta, faixa */
+  --t-texto: 500 15px/1.38 var(--f-texto);          /* frase de apoio do bloco, texto corrido */
+  --t-apoio: 500 14px/1.4 var(--f-texto);           /* explicação sob uma seção, apoio da folha */
+  --t-rotulo: 600 13px/1.25 var(--f-texto);         /* rótulo de campo, nota de seção, apoio de linha */
+  --t-legenda: 600 12px/1.25 var(--f-texto);        /* o piso: nada que se lê abaixo disto */
+  --t-campo: 500 16px/1.3 var(--f-texto);           /* tudo que se digita (o Safari dá zoom abaixo de 16) */
+
+  --e-gigante: -.05em;   /* entreletra: quanto maior, mais fechada */
+  --e-heroi: -.04em;
+  --e-titulo: -.03em;
+  --e-nome: -.01em;
+
+  /* ---------- espaço (base 2, ritmo de 4) ---------- */
+  --margem: 20px;        /* lateral de toda tela e folha */
+  --entre-secoes: 18px;  /* do fim de uma seção ao título da próxima */
+  --e-1: 4px;
+  --e-2: 6px;
+  --e-3: 8px;            /* entre botões lado a lado, entre quadros */
+  --e-4: 10px;           /* do título de seção ao conteúdo */
+  --e-5: 12px;
+  --e-6: 14px;           /* entre ícone e texto numa linha */
+  --e-7: 16px;           /* do apoio aos botões, dentro do bloco */
+  --e-8: 20px;
+  --e-9: 26px;
+
+  /* ---------- forma ---------- */
+  --r-pilula: 999px;     /* botão, ficha, faixa, seletor, chave */
+  --r-bloco: 34px;       /* as duas quinas de baixo do bloco do momento */
+  --r-cartao: 26px;      /* cartão de escolha, cartão de treino, sugestão */
+  --r-caixa: 22px;       /* aviso dentro de tela, "subir para?" (a pergunta é de 24) */
+  --r-quadro: 18px;      /* quadro de número, foto em tamanho de leitura, campo */
+  --r-miniatura: 10px;   /* foto pequena em fita ou grade */
+  --r-folha: 36px;       /* as duas quinas de cima da folha */
+
+  --fio-fino: 1.5px;     /* divisória, contorno quieto */
+  --fio-forte: 2px;      /* botão de contorno, campo, aviso */
+  --fio-escolhido: 2.5px;/* o escolhido, o "agora", o foco */
+
+  /* ---------- tamanho de toque ---------- */
+  --alvo: 44px;          /* piso de qualquer coisa que se toca */
+  --alvo-saida: 44px;    /* a saída discreta sublinhada também */
+  --botao: 58px;         /* principal e contorno */
+  --botao-acao: 68px;    /* "Feito" no treino, "Guardar" na medição */
+  --resposta: 48px;      /* ficha de resposta: Foi, sim / Quase */
+  --linha: 60px;         /* linha de lista */
+  --doca: 64px;          /* altura da doca e do "+" */
+
+  /* ---------- elevação: só o que flutua tem sombra ---------- */
+  --sombra-flutua: 0 12px 30px -12px rgba(15, 15, 13, .55); /* doca, "+" */
+  --sombra-gruda: 0 10px 24px -14px rgba(15, 15, 13, .5);   /* a ação que gruda no topo, a tira do treino */
+  --camada-conteudo: 0;
+  --camada-gruda: 3;
+  --camada-doca: 4;
+  --camada-acao: 6;
+  --camada-veu: 8;
+  --camada-folha: 9;
+  --camada-faixa: 10;
+
+  /* ---------- movimento: uma curva só ---------- */
+  --mola: cubic-bezier(.2, .9, .25, 1);      /* o que entra e o que muda: chega rápido, pousa macio */
+  --mola-sai: cubic-bezier(.4, 0, 1, 1);     /* o que sai: parte devagar e some (07-fluidez-e-estabilidade.md) */
+  --d-toque: 100ms;      /* botão encolhe 3% */
+  --d-lugar-sai: 90ms;   /* trocar de lugar: o que sai some (fade through) */
+  --d-atraso-lugar: 60ms;/* e o que entra espera isto */
   --d-sai: 100ms;        /* a tela que sai, num destino */
-  --d-atraso: 40ms;      /* quanto a tela que entra espera a que sai */
+  --d-atraso: 40ms;      /* a tela que entra num destino espera a que sai */
   --d-passo-sai: 120ms;  /* o miolo que sai entre passos da mesma tarefa */
-  --d-passo: 180ms;      /* o miolo que entra; o lugar que entra */
-  --d-aviso-sai: 160ms;
-  --d-estado: 200ms;
-  --d-aviso: 200ms;      /* aviso com desfazer e faixa entram */
+  --d-passo: 180ms;      /* o miolo que entra entre passos da mesma tarefa; o lugar que entra */
+  --d-aviso-sai: 160ms;  /* aviso com desfazer e faixa saem */
+  --d-aviso: 200ms;      /* aviso com desfazer e faixa entram, 10 px + opacidade */
   --d-volta: 220ms;      /* a tela que reaparece ao voltar de um destino */
-  --d-veu: 220ms;
-  --d-fecha: 240ms;      /* folha desce */
-  --d-chave: 250ms;
   --d-navega: 260ms;     /* a tela que entra num destino */
   --d-recolhe: 260ms;    /* a tela de ação desce */
+  --d-fecha: 240ms;      /* folha que desce */
+  --d-estado: 200ms;     /* troca de estado de um controle */
+  --d-chave: 250ms;      /* a bolinha da chave */
   --d-folha: 340ms;      /* folha sobe */
   --d-acao: 380ms;       /* tela de ação sobe */
-  --d-entra: 420ms;
-  --d-cor: 450ms;
-  --desliza: 24px;       /* quanto uma tela inteira anda: diz a direção, não cansa */
-
-  --sombra-flutua: 0 12px 30px -12px rgba(15, 15, 13, .55);
-  --sombra-gruda: 0 10px 24px -14px rgba(15, 15, 13, .5);
-  --doca-h: 64px;
+  --d-entra: 420ms;      /* conteúdo do bloco entra em sequência, 40 ms entre peças */
+  --d-cor: 450ms;        /* troca de cor do bloco */
+  --d-veu: 220ms;
+  --desliza: 24px;       /* quanto uma tela inteira anda ao entrar ou sair: diz a direção, não cansa */
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --d-toque: 0ms; --d-lugar-sai: 0ms; --d-atraso-lugar: 0ms; --d-sai: 0ms; --d-atraso: 0ms;
-    --d-passo-sai: 0ms; --d-passo: 0ms; --d-aviso-sai: 0ms; --d-estado: 0ms; --d-aviso: 0ms;
-    --d-volta: 0ms; --d-veu: 0ms; --d-fecha: 0ms; --d-chave: 0ms; --d-navega: 0ms; --d-recolhe: 0ms;
-    --d-folha: 0ms; --d-acao: 0ms; --d-entra: 0ms; --d-cor: 0ms; --desliza: 0px;
+    --d-toque: 0ms; --d-estado: 0ms; --d-chave: 0ms; --d-folha: 0ms; --d-fecha: 0ms;
+    --d-acao: 0ms; --d-entra: 0ms; --d-cor: 0ms; --d-veu: 0ms;
+    --d-sai: 0ms; --d-passo: 0ms; --d-navega: 0ms; --desliza: 0px;
+    --d-lugar-sai: 0ms; --d-atraso-lugar: 0ms; --d-atraso: 0ms; --d-passo-sai: 0ms;
+    --d-aviso-sai: 0ms; --d-aviso: 0ms; --d-volta: 0ms; --d-recolhe: 0ms;
   }
 }

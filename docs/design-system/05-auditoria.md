@@ -19,16 +19,16 @@ Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino 
 
 | Tipo | O quê | Hoje | Correção | Onde |
 |---|---|---|---|---|
-| cor | **Cinza de legenda sem contraste** | --tinta-3 #77766D em toda nota de seção, apoio de linha e seta de linha: 4,1:1 no papel, 3,7:1 na areia. | Trocar por --texto-legenda #62615A (5,6:1 e 5,0:1). | src/v3/tokens.css; .v3-sec-h small, .v3-lin-t span, .v3-lin > svg em src/v3/componentes.css |
-| cor | **Controles com contorno invisível** | Chave desligada com trilho --fio, ficha e quadro com contorno --fio (1,3:1 no papel). | Nascer --contorno #858073 para contorno de controle (chave desligada: trilho de superfície com contorno e bolinha de contorno; ficha, campo, escolha). --fio fica só como divisória. | .v3-chave-k, .v3-ficha, .v3-esc em componentes.css e fotos.css |
-| cor | **Botão desabilitado ilegível sobre cor** | Fundo --tinta-18 com texto --tinta-2: 3,4:1 sobre lima. | Desabilitado = fundo transparente, contorno tracejado de 2 px em tinta, texto em tinta, e a frase do porquê quando cabe. | .v3-btn.p:disabled |
-| cor | **Tokens nomeados pela cor** | --lima, --tanja, --lilas… usados direto nas telas, inclusive como "atenção". | Adotar docs/design-system/tokens.css: papéis (--assunto-treino, --atencao, --texto-legenda…). Uma troca de nome, sem mudar valor, exceto legenda e contorno. | src/v3/tokens.css e todo src/v3 |
-| tamanho | **Título do bloco do momento grande demais** | 56/0,90 e médio 38/0,96 (o tamanho do hoje.html). | 50/0,92 e médio 36/0,98, médio quando passar de 12 letras. | .v3-bloco-t; Bloco em src/ui/v3/base.jsx (medio = titulo.length > 12 no Hoje, > 14 na Semana: unificar em 12) |
-| tamanho | **Alvos abaixo de 44 px** | Saída discreta 36, seletor em pílula 38, botão da faixa 36, ficha de resposta 46, links da tela de ação 40. | Saída e links com área de 44 (o texto não muda); seletor 44; botão de faixa 44; ficha de resposta 48. | .v3-saida, .v3-sel button, .v3-faixa button, .v3-perg-r button, .v3-acao-links button |
-| tamanho | **Número do quadro** | 20 px. | 22 px (--t-quadro). | .v3-quadro b |
-| acessibilidade | **Escolha única anunciada como botão de alternar** | Seletor em pílula e fichas de resposta usam aria-pressed em grupo. | role="radiogroup" com role="radio" e aria-checked; o leitor de tela passa a dizer "1 de 3, selecionado". | Seletor, Fichas e Pergunta em src/ui/v3/base.jsx |
-| estado | **A faixa "sem rede" não some** | Fica no topo enquanto não houver rede. | Avisa uma vez e some em 4 s; só volta se a rede voltar e cair de novo. A falha ao guardar é a única que fica. | src/ui/v3/estados.jsx |
-| cor | **Ponto "agora" da linha do dia sempre tangerina** | .v3-ld .agora .p usa --tanja, mesmo quando o agora é o treino. | A cor do momento atual (treino lima, refeição tangerina, noite lilás), como o protótipo. | src/v3/fotos.css:406 |
+| cor | **Cinza de legenda sem contraste** (feito, peça 3) | --tinta-3 #77766D em toda nota de seção, apoio de linha e seta de linha: 4,1:1 no papel, 3,7:1 na areia. | Trocar por --texto-legenda #62615A (5,6:1 e 5,0:1). | src/v3/tokens.css; .v3-sec-h small, .v3-lin-t span, .v3-lin > svg em src/v3/componentes.css |
+| cor | **Controles com contorno invisível** (feito, peça 3) | Chave desligada com trilho --fio, ficha e quadro com contorno --fio (1,3:1 no papel). | Nascer --contorno #858073 para contorno de controle (chave desligada: trilho de superfície com contorno e bolinha de contorno; ficha, campo, escolha). --fio fica só como divisória. | .v3-chave-k, .v3-ficha, .v3-esc em componentes.css e fotos.css |
+| cor | **Botão desabilitado ilegível sobre cor** (feito, peça 3) | Fundo --tinta-18 com texto --tinta-2: 3,4:1 sobre lima. | Desabilitado = fundo transparente, contorno tracejado de 2 px em tinta, texto em tinta, e a frase do porquê quando cabe. | .v3-btn.p:disabled |
+| cor | **Tokens nomeados pela cor** (feito, peça 3) | --lima, --tanja, --lilas… usados direto nas telas, inclusive como "atenção". | Adotar docs/design-system/tokens.css: papéis (--assunto-treino, --atencao, --texto-legenda…). Uma troca de nome, sem mudar valor, exceto legenda e contorno. | src/v3/tokens.css e todo src/v3 |
+| tamanho | **Título do bloco do momento grande demais** (feito, peça 3) | 56/0,90 e médio 38/0,96 (o tamanho do hoje.html). | 50/0,92 e médio 36/0,98, médio quando passar de 12 letras. | .v3-bloco-t; Bloco em src/ui/v3/base.jsx (medio = titulo.length > 12 no Hoje, > 14 na Semana: unificar em 12) |
+| tamanho | **Alvos abaixo de 44 px** (feito, peça 3) | Saída discreta 36, seletor em pílula 38, botão da faixa 36, ficha de resposta 46, links da tela de ação 40. | Saída e links com área de 44 (o texto não muda); seletor 44; botão de faixa 44; ficha de resposta 48. | .v3-saida, .v3-sel button, .v3-faixa button, .v3-perg-r button, .v3-acao-links button |
+| tamanho | **Número do quadro** (feito, peça 3) | 20 px. | 22 px (--t-quadro). | .v3-quadro b |
+| acessibilidade | **Escolha única anunciada como botão de alternar** (feito, peça 3) | Seletor em pílula e fichas de resposta usam aria-pressed em grupo. | role="radiogroup" com role="radio" e aria-checked; o leitor de tela passa a dizer "1 de 3, selecionado". | Seletor, Fichas e Pergunta em src/ui/v3/base.jsx |
+| estado | **A faixa "sem rede" não some** (feito, peça 3) | Fica no topo enquanto não houver rede. | Avisa uma vez e some em 4 s; só volta se a rede voltar e cair de novo. A falha ao guardar é a única que fica. | src/ui/v3/estados.jsx |
+| cor | **Ponto "agora" da linha do dia sempre tangerina** (feito, peça 3) | .v3-ld .agora .p usa --tanja, mesmo quando o agora é o treino. | A cor do momento atual (treino lima, refeição tangerina, noite lilás), como o protótipo. | src/v3/fotos.css:406 |
 
 ## Navegação
 
@@ -60,9 +60,9 @@ Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino 
 | tamanho | **Contagem do descanso** (feito, peça 2) | 112 px. | 120 px. | .v3-desc-t |
 | hierarquia | **Descanso sem a próxima série** | "a seguir: nome, série 2" em texto solto; sem a carga; sem "Água +1". | Cartão "a seguir" com o nome, série e a carga × repetição sugerida, e "Água +1" quando a água está ligada. | Descanso em treino.jsx |
 | texto | **Descanso: recolher e começar** (feito, peça 2) | Seta para a esquerda ("Voltar") e "Pular o descanso". | Seta para baixo (recolhe, o treino continua aberto) e "Começar já". | treino.jsx |
-| cor | **Segmentos da câmera em tangerina** | .v3-cam .v3-segs i.a com --tanja. | Em curso em tinta a 45%, como em todo lugar. Tangerina é atenção. | src/v3/fotos.css:89 |
+| cor | **Segmentos da câmera em tangerina** (feito, peça 3) | .v3-cam .v3-segs i.a com --tanja. | Em curso em tinta a 45%, como em todo lugar. Tangerina é atenção. | src/v3/fotos.css:89 |
 | fluxo | **Pôr em dia como folha** | FolhaPorEmDia. | Tela (destino): é lista com marcação e carga por exercício e rola; "Fiz tudo como da última vez" no topo. | treino.jsx, FOLHAS_V3 |
-| cor | **Faixa do editor com a cor trocada** | Menos séries que o treinador em tangerina. | Mais em tangerina (atenção: passou do prescrito), menos em céu. | src/v3/fotos.css:381 |
+| cor | **Faixa do editor com a cor trocada** (feito, peça 3) | Menos séries que o treinador em tangerina. | Mais em tangerina (atenção: passou do prescrito), menos em céu. | src/v3/fotos.css:381 |
 
 ## Plano e revisão
 

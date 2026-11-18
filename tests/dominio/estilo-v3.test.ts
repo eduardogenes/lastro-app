@@ -98,3 +98,20 @@ test('nada zera as transições de vista: o movimento entre telas está ligado',
     assert.ok(!/::view-transition/.test(semComentarios(ler(f))), f + ' mexe na transição de vista fora de movimento.css');
   });
 });
+
+test('os tokens do app são os do design system: os mesmos nomes e valores', () => {
+  // só os nomes das fontes mudam: o app usa as variáveis que ele carrega
+  const pares = (css: string) => new Map([...semComentarios(css).matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)]
+    .filter(m => !/^--f-/.test(m[1])).map(m => [m[1], m[2].trim()] as [string, string]));
+  const ds = pares(ler('docs/design-system/tokens.css'));
+  const app = pares(ler('src/v3/tokens.css'));
+  assert.deepStrictEqual([...app.entries()].sort(), [...ds.entries()].sort());
+});
+
+test('escolha única é radiogroup: o seletor, as fichas com escolha e a pergunta', () => {
+  const base = ler('src/ui/v3/base.jsx');
+  assert.match(base, /role="radiogroup"/);
+  assert.match(base, /'aria-checked'/);
+  const css = semComentarios(ler('src/v3/componentes.css'));
+  assert.ok(!/\.v3-sel button\[aria-pressed/.test(css), 'o seletor não usa mais aria-pressed');
+});

@@ -70,7 +70,7 @@ export function ResponderDias({ ctx }) {
   if (!r) return null;
   if (!r.atual) {
     return (
-      <TelaDeAcao cor="menta" topo={<><button onClick={ctx.fechaResponderDias} aria-label="Fechar">{ic.x}</button><span /><span /></>}
+      <TelaDeAcao cor="feito" topo={<><button onClick={ctx.fechaResponderDias} aria-label="Fechar">{ic.x}</button><span /><span /></>}
         pe={<Botao grande data-a="responder-fecha" onClick={ctx.fechaResponderDias}>Fechar</Botao>}>
         <h1 class="v3-serie-n" tabindex="-1">{r.total ? 'Respondidos' : 'Nada em branco'}</h1>
         <p class="v3-medir-f">{r.respondidos} de {r.de} dias com resposta. A regra do nutricionista precisa de 11 dos 14.</p>
@@ -78,7 +78,7 @@ export function ResponderDias({ ctx }) {
     );
   }
   return (
-    <TelaDeAcao cor="lilas"
+    <TelaDeAcao cor="corpo"
       topo={<><button onClick={ctx.fechaResponderDias} aria-label="Fechar" data-a="responder-sair">{ic.x}</button>
               <span class="v3-n">{r.i + 1} de {r.total}</span><span class="v3-vazio-alvo" /></>}
       pe={<div class="v3-resp-pe">

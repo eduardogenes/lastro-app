@@ -19,6 +19,7 @@
   --contorno: #858073;           /* contorno de controle sem preenchimento forte: campo, escolha, chave desligada. 3,5:1 no fundo */
   --veu: rgba(15, 15, 13, .38);  /* atrás da folha */
   --tracejado: rgba(15, 15, 13, .16); /* trilho dos segmentos e marcas da régua sobre cor */
+  --marca: rgba(15, 15, 13, .28);  /* marca menor da régua, ponto do gráfico, seta desabilitada */
 
   /* ---------- texto ---------- */
   --texto: #0F0F0D;              /* texto, ícone, botão principal, contorno forte. Único texto permitido sobre cor de assunto */
@@ -94,7 +95,7 @@
   --r-pilula: 999px;     /* botão, ficha, faixa, seletor, chave */
   --r-bloco: 34px;       /* as duas quinas de baixo do bloco do momento */
   --r-cartao: 26px;      /* cartão de escolha, cartão de treino, sugestão */
-  --r-caixa: 22px;       /* pergunta, aviso dentro de tela, "subir para?" */
+  --r-caixa: 22px;       /* aviso dentro de tela, "subir para?" (a pergunta é de 24) */
   --r-quadro: 18px;      /* quadro de número, foto em tamanho de leitura, campo */
   --r-miniatura: 10px;   /* foto pequena em fita ou grade */
   --r-folha: 36px;       /* as duas quinas de cima da folha */

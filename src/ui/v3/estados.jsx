@@ -7,15 +7,35 @@
 import { useEffect, useState } from 'preact/hooks';
 import { Faixa } from './base.jsx';
 
+/**
+ * SEM REDE avisa UMA vez e some em 4 s (03-padroes-e-voz.md, "Sem rede"): tudo
+ * funciona sem rede, e a faixa parada no topo só ocupava lugar. Só volta a
+ * avisar se a rede voltar e cair de novo. A marca fica fora do componente para
+ * valer entre um desenho e outro.
+ */
+const AVISO_SEM_REDE_MS = 4000;
+let jaAvisouSemRede = false;
 function useSemRede() {
-  const [off, setOff] = useState(() => typeof navigator !== 'undefined' && navigator.onLine === false);
+  const [mostra, setMostra] = useState(false);
   useEffect(() => {
-    const muda = () => setOff(navigator.onLine === false);
+    let relogio = null;
+    const avisa = () => {
+      if (jaAvisouSemRede) return;
+      jaAvisouSemRede = true;
+      setMostra(true);
+      clearTimeout(relogio);
+      relogio = setTimeout(() => setMostra(false), AVISO_SEM_REDE_MS);
+    };
+    const muda = () => {
+      if (navigator.onLine === false) avisa();
+      else { jaAvisouSemRede = false; clearTimeout(relogio); setMostra(false); }
+    };
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) avisa();
     window.addEventListener('online', muda);
     window.addEventListener('offline', muda);
-    return () => { window.removeEventListener('online', muda); window.removeEventListener('offline', muda); };
+    return () => { clearTimeout(relogio); window.removeEventListener('online', muda); window.removeEventListener('offline', muda); };
   }, []);
-  return off;
+  return mostra;
 }
 
 export function EstadosV3({ ctx }) {

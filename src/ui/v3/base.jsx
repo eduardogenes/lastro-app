@@ -12,18 +12,30 @@ import { trava, destrava, abreCamada, LugarNaPilha } from './camada.js';
 const cls = (...p) => p.filter(Boolean).join(' ');
 
 /**
+ * A cor de um bloco ou de uma tela de ação, pelo PAPEL (docs/design-system/
+ * tokens.css): a cor diz de que assunto é o momento, nunca se foi bom.
+ * `treino`, `refeicao`, `corpo`, `semana`, `feito`, `atencao`, `quieta` (a
+ * superfície quieta) e `fundo` (o papel).
+ */
+const CORES = { treino: 'assunto-treino', refeicao: 'assunto-refeicao', corpo: 'assunto-corpo', semana: 'assunto-semana',
+                feito: 'assunto-feito', atencao: 'atencao', quieta: 'superficie-quieta', fundo: 'fundo' };
+export const corDe = cor => `var(--${CORES[cor] || CORES.treino})`;
+
+/**
  * O BLOCO DO MOMENTO: o topo de cor que diz o que importa agora.
  *
- * `cor` é o nome de um token (`lima`, `tanja`, `lilas`, `ceu`, `menta`,
- * `areia`). `chave` identifica o momento: quando ela muda, o conteúdo entra
+ * `cor` é o papel (`corDe`): `treino`, `refeicao`, `corpo`, `semana`, `feito`. `chave` identifica o momento: quando ela muda, o conteúdo entra
  * em sequência; enquanto é a mesma, um redesenho não reanima nada.
- * `fino` é a faixa de quando não há o que fazer.
+ * `fino` é a faixa de quando não há o que fazer. `medio` (o título em 36) é
+ * calculado pelo tamanho do título quando não vem.
  */
-export function Bloco({ cor = 'lima', linha0, quando, vivo, titulo, medio, apoio, fino, chave, children }) {
+export function Bloco({ cor = 'treino', linha0, quando, vivo, titulo, medio, apoio, fino, chave, children }) {
+  // o título passa a 36 com mais de 12 letras, em todo lugar (02-componentes.md, §1)
+  if (medio == null) medio = String(titulo == null ? '' : titulo).length > 12;
   const anima = Bloco.ultima !== chave && chave != null;
   Bloco.ultima = chave;
   return (
-    <section class={cls('v3-bloco', fino && 'fino')} style={`--v3-cor:var(--${cor})`}>
+    <section class={cls('v3-bloco', fino && 'fino')} style={`--v3-cor:${corDe(cor)}`}>
       {linha0 && <div class="v3-bloco-l0">{linha0}</div>}
       <div class={anima ? 'anima' : undefined} key={chave}>
         {quando && <p class="v3-bloco-q">{vivo && <i />}{quando}</p>}
@@ -117,30 +129,72 @@ export function Segmentos({ total, feitos, grupos, rotulo }) {
   return <div class="v3-segs" role="img" aria-label={rotulo || `${feitos} de ${total}`}>{tracos}</div>;
 }
 
-/** Duas ou três opções lado a lado. `opcoes`: `[{ k, t }]`. */
+/**
+ * Uma escolha única entre opções que se tocam: o leitor de tela ouve "1 de 3,
+ * selecionado" (`radiogroup` com `radio` e `aria-checked`), e as setas andam
+ * entre elas, como num grupo de rádio do sistema.
+ */
+function Radios({ classe, rotulo, children }) {
+  const anda = e => {
+    const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+    if (!d) return;
+    const bs = [].slice.call(e.currentTarget.querySelectorAll('[role="radio"]'));
+    const i = bs.indexOf(document.activeElement);
+    if (i < 0) return;
+    e.preventDefault();
+    const b = bs[(i + d + bs.length) % bs.length];
+    b.focus(); b.click();
+  };
+  return <div class={classe} role="radiogroup" aria-label={rotulo} onKeyDown={anda}>{children}</div>;
+}
+/** O botão de uma escolha única: só o escolhido (ou o primeiro, sem escolha) entra no Tab. */
+const radio = (on, primeiro, algum) => ({ role: 'radio', 'aria-checked': on ? 'true' : 'false', tabindex: on || (!algum && primeiro) ? 0 : -1 });
+
+/** O SELETOR: duas a quatro opções curtas lado a lado. `opcoes`: `[{ k, t }]`. */
 export function Seletor({ opcoes, valor, aoMudar, rotulo }) {
+  const algum = opcoes.some(o => o.k === valor);
   return (
-    <div class="v3-sel" role="group" aria-label={rotulo}>
-      {opcoes.map(o => (
-        <button key={o.k} aria-pressed={o.k === valor ? 'true' : 'false'} onClick={() => aoMudar(o.k)}>{o.t}</button>
+    <Radios classe="v3-sel" rotulo={rotulo}>
+      {opcoes.map((o, i) => (
+        <button key={o.k} {...radio(o.k === valor, i === 0, algum)} onClick={() => aoMudar(o.k)}>{o.t}</button>
       ))}
-    </div>
+    </Radios>
   );
 }
 
 /**
- * FICHAS: escolha entre opções de texto longo ou em número variável, que
- * quebram linha (o `Seletor` é a barra de duas a quatro opções curtas).
- * `opcoes`: `[{ k, t, on }]`; `prefixo` vira o `data-a` de cada uma.
+ * FICHAS: opções de texto longo ou em número variável, que quebram linha (o
+ * `Seletor` é a barra de duas a quatro opções curtas). `opcoes`: `[{ k, t, on }]`;
+ * `prefixo` vira o `data-a` de cada uma.
+ *
+ * `palpite` marca a opção que o app sugere mas que NÃO está registrada (o
+ * horário do plano em "Pôr o dia"): ela se distingue sem parecer escolhida.
+ *
+ * Com `on` nas opções, é escolha única (`radiogroup`); com `multipla`, cada uma
+ * liga e desliga (`aria-pressed`); sem `on`, são atalhos (cada toque faz uma
+ * coisa, e nada fica escolhido).
  */
-export function Fichas({ opcoes, aoTocar, rotulo, prefixo }) {
+export function Fichas({ opcoes, aoTocar, rotulo, prefixo, multipla }) {
+  const escolha = opcoes.some(o => o.on !== undefined);
+  const da = o => prefixo ? prefixo + o.k : undefined;
+  if (!escolha || multipla) {
+    return (
+      <div class="v3-fichas" role="group" aria-label={rotulo}>
+        {opcoes.map(o => (
+          <button key={o.k} class="v3-ficha" aria-pressed={multipla ? (o.on ? 'true' : 'false') : undefined}
+                  data-a={da(o)} onClick={() => aoTocar(o.k)}>{o.t}</button>
+        ))}
+      </div>
+    );
+  }
+  const algum = opcoes.some(o => o.on);
   return (
-    <div class="v3-fichas" role="group" aria-label={rotulo}>
-      {opcoes.map(o => (
-        <button key={o.k} class="v3-ficha" aria-pressed={o.on ? 'true' : 'false'}
-                data-a={prefixo ? prefixo + o.k : undefined} onClick={() => aoTocar(o.k)}>{o.t}</button>
+    <Radios classe="v3-fichas" rotulo={rotulo}>
+      {opcoes.map((o, i) => (
+        <button key={o.k} class={cls('v3-ficha', o.palpite && 'palpite')} {...radio(o.on, i === 0, algum)} data-a={da(o)}
+                onClick={() => aoTocar(o.k)}>{o.t}{o.palpite && <span class="so-leitor"> (sugestão, ainda não registrada)</span>}</button>
       ))}
-    </div>
+    </Radios>
   );
 }
 
@@ -167,11 +221,11 @@ export function Pergunta({ pergunta, nota, respostas, valor, aoResponder }) {
     <div class="v3-perg">
       <p>{pergunta}</p>
       {nota && <small>{nota}</small>}
-      <div class="v3-perg-r">
-        {respostas.map(r => (
-          <button key={r.k} aria-pressed={r.k === valor ? 'true' : 'false'} onClick={() => aoResponder(r.k)}>{r.t}</button>
+      <Radios classe="v3-perg-r" rotulo={pergunta}>
+        {respostas.map((r, i) => (
+          <button key={r.k} {...radio(r.k === valor, i === 0, respostas.some(x => x.k === valor))} onClick={() => aoResponder(r.k)}>{r.t}</button>
         ))}
-      </div>
+      </Radios>
     </div>
   );
 }
@@ -198,9 +252,9 @@ export function Vazio({ titulo, children }) {
  * segmentos, o pé e as saídas ganham nome (`src/v3/movimento.css`) e ficam
  * parados enquanto o miolo troca.
  */
-export function TelaDeAcao({ cor = 'lima', topo, segs, pe, links, centro, cima, fundo, classe, children }) {
+export function TelaDeAcao({ cor = 'treino', topo, segs, pe, links, centro, cima, fundo, classe, children }) {
   return (
-    <div class={cls('v3 v3-acao', classe)} style={`--v3-cor:var(--${cor})`}>
+    <div class={cls('v3 v3-acao', classe)} style={`--v3-cor:${corDe(cor)}`}>
       {fundo}
       {topo && <div class="v3-acao-topo">{topo}</div>}
       {segs}

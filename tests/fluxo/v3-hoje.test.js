@@ -99,7 +99,8 @@ test('cardio: o toque no Hoje abre a folha, e gravar registra pela porta de semp
   a.clicar('[data-a="cardio-m-remo"]');
   a.clicar('[data-a="cardio-min-30"]');
   await a.esperar();
-  assert.strictEqual(a.$('[data-a="cardio-min-30"]').getAttribute('aria-pressed'), 'true');
+  // escolha única: o leitor de tela ouve "selecionado" (radiogroup)
+  assert.strictEqual(a.$('[data-a="cardio-min-30"]').getAttribute('aria-checked'), 'true');
   assert.ok(/30 min de remo/.test(a.texto('[data-a="cardio-grava"]')));
   a.clicar('[data-a="cardio-grava"]');
   await a.esperar(60);

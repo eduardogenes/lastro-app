@@ -33,7 +33,7 @@ export function CorpoV3({ ctx }) {
   const abreQuadro = k => k === 'peso' ? ctx.abreEvolucao() : k === 'cintura' ? ctx.abreMedida('cintura') : ctx.abreMedida('bio');
   return (
     <div class="v3">
-      <Bloco cor="ceu" chave="corpo" linha0={<><span>Corpo</span><span>{c.peso.ultima}</span></>}>
+      <Bloco cor="corpo" chave="corpo" linha0={<><span>Corpo</span><span>{c.peso.ultima}</span></>}>
         <div class="v3-gigante v3-n" aria-live="polite">{virgula(v)}<small>kg</small></div>
         <Regua min={Math.max(20, Math.floor(c.peso.valor - 20))} max={Math.ceil(c.peso.valor + 20)} passo={0.1} cada={1} largura={12}
                valor={v} aoMudar={setPeso} rotulo="peso em kg" />
@@ -136,7 +136,7 @@ export function MedirAgora({ ctx }) {
     : d.ultima ? 'da última vez: ' + d.ultima : 'primeira vez: comece perto de ' + d.partida;
   const rotuloGuarda = d.passo === 1 ? 'Guardar a 1ª' : d.passo === 2 ? 'Guardar a 2ª' : 'Guardar a 3ª';
   return (
-    <TelaDeAcao cor={m.dobra ? 'menta' : 'areia'}
+    <TelaDeAcao cor={m.dobra ? 'semana' : 'corpo'}
       topo={<><button onClick={ctx.fechaMedidas} aria-label="Sair" data-a="medir-sair">{ic.x}</button>
               <span>{m.dobra ? 'adipômetro' : 'fita'} · <span class="v3-n">{d.i + 1} de {d.total}</span></span><span class="v3-vazio-alvo" /></>}
       pe={ultimaLeitura
@@ -168,7 +168,7 @@ export function MedirAgora({ ctx }) {
 /** Nenhuma medida ligada: o caminho é ligar uma. */
 function SemMedidas({ ctx }) {
   return (
-    <TelaDeAcao cor="areia" topo={<button onClick={ctx.fechaMedidas} aria-label="Sair">{ic.x}</button>}
+    <TelaDeAcao cor="quieta" topo={<button onClick={ctx.fechaMedidas} aria-label="Sair">{ic.x}</button>}
       pe={<Botao grande onClick={() => ctx.abreFolha({ k: 'ligarMedidas' })}>Ligar medidas</Botao>}>
       <h2 class="v3-medir-n">Nenhuma medida ligada</h2>
       <p class="v3-medir-f">Ligue as medidas que você faz com a fita (ou as dobras) e elas aparecem aqui, uma por tela.</p>
@@ -179,7 +179,7 @@ function SemMedidas({ ctx }) {
 function Medido({ ctx, d }) {
   return (
     <>
-      <Bloco cor="menta" chave="medido" medio quando="guardadas"
+      <Bloco cor="feito" chave="medido" medio quando="guardadas"
              titulo={d.feitas.length + (d.feitas.length === 1 ? ' medida, com a hora de agora' : ' medidas, com a hora de agora')}>
         <Acoes><Botao data-a="medido-fecha" onClick={ctx.fechaMedidas}>Fechar</Botao></Acoes>
       </Bloco>

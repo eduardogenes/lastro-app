@@ -104,5 +104,17 @@ test('estados: a gravação que falhou vira a faixa fixa, e sem rede avisa sem b
   a.E(`Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false }); window.dispatchEvent(new Event('offline'));`);
   await a.esperar();
   assert.ok(/Sem rede/.test(a.texto('.v3-estados')));
+  // avisa uma vez e some em 4 s; a falha ao guardar é a única que fica
+  await a.esperar(4200);
+  assert.ok(!/Sem rede/.test(a.texto('.v3-estados') || ''), 'a faixa sem rede sumiu');
+  assert.ok(/Não guardado/.test(a.texto('.v3-estados')), 'a falha continua');
+  // só volta se a rede voltar e cair de novo
+  a.E(`window.dispatchEvent(new Event('offline'));`);
+  await a.esperar();
+  assert.ok(!/Sem rede/.test(a.texto('.v3-estados') || ''), 'cair de novo sem ter voltado não avisa');
+  a.E(`Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true }); window.dispatchEvent(new Event('online'));`);
+  a.E(`Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false }); window.dispatchEvent(new Event('offline'));`);
+  await a.esperar();
+  assert.ok(/Sem rede/.test(a.texto('.v3-estados')), 'voltou e caiu: avisa de novo');
   a.fechar();
-});
+}, 15000);   // espera os 4 s da faixa sumir

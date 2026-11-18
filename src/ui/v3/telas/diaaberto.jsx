@@ -272,7 +272,7 @@ export function RegistrarPassadoV3({ ctx }) {
             {d.livre ? (
               <>
                 <p class="v3-rotulo">O que trabalhou</p>
-                <Fichas rotulo="O que trabalhou" opcoes={d.grupos} prefixo="lanca-grupo-" aoTocar={k => ctx.grupoDoLancamento(k)} />
+                <Fichas multipla rotulo="O que trabalhou" opcoes={d.grupos} prefixo="lanca-grupo-" aoTocar={k => ctx.grupoDoLancamento(k)} />
                 <p class="v3-rotulo">Quanto tempo</p>
                 <Fichas rotulo="Quanto tempo" opcoes={d.duracoes} prefixo="lanca-dur-" aoTocar={k => ctx.duracaoDoLancamento(k)} />
                 {d.durAberta && (
@@ -339,7 +339,7 @@ export function FolhaPoeODiaV3({ ctx, f }) {
             {l.procedencia && <small>{l.procedencia}</small>}
             <small>{l.resumo}</small>
             <Fichas rotulo={'O que comeu: ' + l.nome} prefixo={'marca-' + l.id + '-'}
-                    opcoes={MARCAS.map(m => ({ k: m.k, t: m.t, on: l.marca === m.k }))}
+                    opcoes={MARCAS.map(m => ({ k: m.k, t: m.t, on: !l.sugerida && l.marca === m.k, palpite: !!l.sugerida && l.marca === m.k }))}
                     aoTocar={k => { setPorcao(null); ctx.marcaNoDiaPassado(f.data, l.id, k, null); }} />
             <Saida data-a={'porcao-' + l.id} aria-expanded={porcao === l.id ? 'true' : 'false'}
                    onClick={() => setPorcao(porcao === l.id ? null : l.id)}>porção · {PORCAO[l.escala] || l.escala}</Saida>

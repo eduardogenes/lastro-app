@@ -16,13 +16,13 @@ export function SemanaV3({ ctx }) {
   return (
     <div class="v3">
       {!comida && (
-        <Bloco cor="ceu" chave="semana-treino" linha0={<><span>Semana</span><span>o treino</span></>}
+        <Bloco cor="semana" chave="semana-treino" linha0={<><span>Semana</span><span>o treino</span></>}
                titulo={feitas + (feitas === 1 ? ' série feita' : ' séries feitas')}
                apoio={vem ? 'E ' + vem + ' ainda vêm até domingo, pelos treinos que faltam.' : 'Nada mais previsto até domingo.'} />
       )}
       {comida && <>
-      <Bloco cor="ceu" chave={'semana-' + v.t} linha0={<><span>Semana</span><span>o que fazer com a comida</span></>}
-             titulo={v.t} medio={v.t.length > 14} apoio={v.p}>
+      <Bloco cor={v.k === 'mais' ? 'treino' : 'semana'} chave={'semana-' + v.t} linha0={<><span>Semana</span><span>o que fazer com a comida</span></>}
+             titulo={v.t} apoio={v.p}>
         <Acoes>
           {v.podeAplicar && v.acaoTxt && <Botao data-a="semana-aplica" onClick={ctx.aplicaAjuste}>{v.acaoTxt.charAt(0).toUpperCase() + v.acaoTxt.slice(1)}</Botao>}
           {precisaDias && <Botao tipo={v.podeAplicar ? 'contorno' : 'principal'} data-a="semana-responder" onClick={ctx.abreResponderDias}>Responder os dias</Botao>}

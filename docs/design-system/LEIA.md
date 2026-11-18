@@ -42,8 +42,8 @@ marcado em `05-auditoria.md` com o commit.
 | Peça | Estado |
 |---|---|
 | 1. Documentos (`DESIGN.md` e o contrato apontam para cá) | feita |
-| 2. O que se perde, e a fluidez | feita: Ajustes alcançável, a tira do treino aberto, o aviso com "Desfazer", a porta do movimento religada, as âncoras da tela de ação |
-| 3. Tokens e componentes base | a fazer |
+| 2. O que se perde, e a fluidez | feita (`f5df85a`): Ajustes alcançável, a tira do treino aberto, o aviso com "Desfazer", a porta do movimento religada, as âncoras da tela de ação |
+| 3. Tokens e componentes base | feita, depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
 | 4. Treino | a fazer |
 | 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | a fazer |
 | 6. Os três de dado | a fazer |
@@ -59,6 +59,21 @@ Pendências que a revisão da peça 2 deixou para depois, de propósito:
   uma só (`fica`), em vez de `passo`;
 - a série com uma régua só, o "Feito" e o topo do treino como a referência
   ficam na peça 4 (hoje a série tem 71 px de folga no miolo).
+
+Pendências que a revisão da peça 3 deixou para a peça 5 (são de tela, não de
+componente):
+
+- Corpo: "Guardar 76,7 kg hoje" aparece tracejado mas funciona; a referência
+  diz "Arraste a régua para pesar hoje" na espera e, já pesado, um principal
+  cheio que desfaz;
+- Dias: depois de responder, a pergunta some; as respostas deviam ficar para
+  corrigir;
+- Hoje: o cardio enche em céu (a cor da água); na referência, em lima;
+- folha da refeição: "Comi outra coisa", "Não comi" e "Não sei" em menta (a cor
+  de feito); a referência usa linhas de opção. No menu da sessão, o treino
+  atual em atenção;
+- faixas de estado: 8 do topo e 6 entre elas, com ícone, e "Ver" na de falha,
+  como a referência.
 
 ## As páginas publicadas
 

@@ -48,7 +48,7 @@ function Momento({ ctx, h }) {
   }
   return (
     <Bloco cor={b.cor} chave={b.k + (b.id || '')} fino={b.fino} vivo={b.vivo} linha0={linha0}
-           quando={b.quando} titulo={b.titulo} medio={b.titulo.length > 12} apoio={b.apoio}>
+           quando={b.quando} titulo={b.titulo} apoio={b.apoio}>
       {acoes}
     </Bloco>
   );
@@ -62,7 +62,7 @@ function Momento({ ctx, h }) {
 function PrimeiraVez({ ctx, v }) {
   return (
     <>
-      <Bloco cor="lima" chave="primeira-vez" quando="primeira vez aqui" titulo="Comece pelo que já está aqui" medio
+      <Bloco cor="treino" chave="primeira-vez" quando="primeira vez aqui" titulo="Comece pelo que já está aqui" medio
              apoio={'O treino: ' + v.programa + '. A comida: ' + v.plano + '.'}>
         <Acoes><Botao data-a="primeira-comeca" onClick={ctx.comecaAqui}>Começar assim {ic.seta}</Botao></Acoes>
         <Saida data-a="primeira-aparece" onClick={() => ctx.abreFolha({ k: 'oQueAparece' })}>Escolher o que aparece</Saida>
@@ -95,7 +95,7 @@ export function HojeV3({ ctx }) {
       <Secao titulo="O dia" nota={h.feitas + ' de ' + h.linha.length}>
         <div class="v3-ld" role="list">
           {h.linha.map(x => (
-            <button key={x.id} role="listitem" class={x.feita ? 'ok' : x.agora ? 'agora' : x.falta ? 'falta' : undefined}
+            <button key={x.id} role="listitem" class={x.feita ? 'ok' : x.agora ? (x.treino ? 'agora t' : 'agora') : x.falta ? 'falta' : undefined}
                     data-a={'linha-' + x.id} aria-label={x.n + ', ' + x.t + (x.feita ? ', feito' : x.falta ? ', sem resposta' : '')}
                     onClick={() => x.treino ? ctx.abreTreinoDeHoje() : ctx.abreFolha({ k: 'refeicao', id: x.id })}>
               <span class="p">{x.feita ? ic.ok : x.treino ? ic.halter : ic.prato}</span>
@@ -202,14 +202,14 @@ export function FolhaRegistrar({ ctx }) {
         <button aria-label="Guardar" data-a="registrar-envia">{ic.seta}</button>
       </form>
       <p class="v3-eco" role="status" aria-live="polite">{eco}</p>
-      <div class="v3-sug">
-        {b.k === 'refeicao' && <button class="v3-sug-b pri" data-a="reg-comi" onClick={faz(() => ctx.marcaLinhaDaComida(b.id, 'tudo'))}><b>Comi: {b.titulo}</b><span>como o plano</span></button>}
-        {(b.k === 'treino' || b.k === 'aula') && <button class="v3-sug-b pri" data-a="reg-treino" onClick={faz(ctx.abreTreinoDeHoje)}><b>Começar: {b.titulo}</b><span>o treino de hoje</span></button>}
-        {b.k === 'noite' && <button class="v3-sug-b pri" data-a="reg-noite" onClick={faz(() => ctx.respondeODia(ctx.hojeISO(), 'sim'))}><b>Hoje foi como o plano</b><span>responde as que faltam</span></button>}
-        {h.seQuiser.agua && <button class="v3-sug-b" data-a="reg-agua" onClick={ctx.maisUmCopo}><b>+1 copo de água</b><span>{h.seQuiser.agua.n} de {h.seQuiser.agua.meta} hoje</span></button>}
-        {h.seQuiser.peso && <button class="v3-sug-b" data-a="reg-peso" onClick={faz(() => ctx.vaiPara('corpo'))}><b>Peso de hoje</b><span>{h.seQuiser.peso.hoje ? h.seQuiser.peso.hoje + ' kg · mudar' : 'pela régua do Corpo'}</span></button>}
-        {h.seQuiser.cardio && <button class="v3-sug-b" data-a="reg-cardio" onClick={faz(ctx.abreCardio)}><b>Cardio</b><span>{h.seQuiser.cardio.n} de {h.seQuiser.cardio.meta} na semana</span></button>}
-        <button class="v3-sug-b" data-a="reg-ja-treinei" onClick={faz(ctx.lancaTreinoDeHoje)}><b>Já treinei e não anotei</b><span>o treino de hoje, depois</span></button>
+      <div class="v3-reg">
+        {b.k === 'refeicao' && <button class="v3-reg-b pri" data-a="reg-comi" onClick={faz(() => ctx.marcaLinhaDaComida(b.id, 'tudo'))}><b>Comi: {b.titulo}</b><span>como o plano</span></button>}
+        {(b.k === 'treino' || b.k === 'aula') && <button class="v3-reg-b pri" data-a="reg-treino" onClick={faz(ctx.abreTreinoDeHoje)}><b>Começar: {b.titulo}</b><span>o treino de hoje</span></button>}
+        {b.k === 'noite' && <button class="v3-reg-b pri" data-a="reg-noite" onClick={faz(() => ctx.respondeODia(ctx.hojeISO(), 'sim'))}><b>Hoje foi como o plano</b><span>responde as que faltam</span></button>}
+        {h.seQuiser.agua && <button class="v3-reg-b" data-a="reg-agua" onClick={ctx.maisUmCopo}><b>+1 copo de água</b><span>{h.seQuiser.agua.n} de {h.seQuiser.agua.meta} hoje</span></button>}
+        {h.seQuiser.peso && <button class="v3-reg-b" data-a="reg-peso" onClick={faz(() => ctx.vaiPara('corpo'))}><b>Peso de hoje</b><span>{h.seQuiser.peso.hoje ? h.seQuiser.peso.hoje + ' kg · mudar' : 'pela régua do Corpo'}</span></button>}
+        {h.seQuiser.cardio && <button class="v3-reg-b" data-a="reg-cardio" onClick={faz(ctx.abreCardio)}><b>Cardio</b><span>{h.seQuiser.cardio.n} de {h.seQuiser.cardio.meta} na semana</span></button>}
+        <button class="v3-reg-b" data-a="reg-ja-treinei" onClick={faz(ctx.lancaTreinoDeHoje)}><b>Já treinei e não anotei</b><span>o treino de hoje, depois</span></button>
       </div>
     </Folha>
   );
@@ -264,9 +264,10 @@ export function FolhaTipoDoDia({ ctx }) {
   return (
     <Folha titulo={d.pergunta} sub={d.sub} aoFechar={() => ctx.fechaFolha()}>
       {!d.fato && (
-        <div class="v3-escolhas">
+        <div class="v3-escolhas" role="radiogroup" aria-label="O tipo do dia">
           {ordem.map(k => (
             <Linha key={k} data-a={'dia-e-' + k} marca={d.cadencia === k ? ic.ok : ''}
+                   role="radio" aria-checked={d.cadencia === k ? 'true' : 'false'}
                    titulo={k === 'descanso' ? 'É descanso' : 'Vou treinar hoje'}
                    apoio={k === 'descanso' ? d.efeitoDescanso : d.efeitoTreino}
                    aoTocar={() => ctx.setCadenciaV3(k)} />

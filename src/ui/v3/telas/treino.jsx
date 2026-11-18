@@ -62,7 +62,7 @@ function Serie({ ctx, f }) {
   const ex = f.ex;
   const aceitaSubir = () => { setCarga(f.sobe); setSobe(true); };
   return (
-    <TelaDeAcao cor="lima" topo={<Topo ctx={ctx} f={f} />} segs={<SegsDoTreino f={f} />}
+    <TelaDeAcao cor="treino" topo={<Topo ctx={ctx} f={f} />} segs={<SegsDoTreino f={f} />}
       pe={<Botao grande data-a="serie-feita" onClick={() => ctx.fazSerieV3(carga, reps)}>
             {ic.ok} {f.jaFeita ? 'Corrigir' : 'Feita'}: {ex.semCarga && !(carga > 0) ? '' : virgula(carga) + ' × '}{reps}
           </Botao>}
@@ -120,7 +120,7 @@ function Descanso({ ctx, des }) {
   const u = ctx.ultimaV3();
   const prox = ctx.focoV3();
   return (
-    <TelaDeAcao cor="papel" classe="v3-desc" centro
+    <TelaDeAcao cor="fundo" classe="v3-desc" centro
       fundo={<div class="v3-desc-fundo" aria-hidden="true" style={`transform:scaleY(${(podeDissolver() ? Math.floor(cheio * 10) / 10 : cheio).toFixed(3)})`} />}
       topo={<Topo ctx={ctx} f={prox} />} segs={<SegsDoTreino f={prox} />}
       pe={<Botao grande data-a="desc-pula" onClick={ctx.paraDescanso}>{falta > 0 ? 'Começar já' : 'Próxima série'}</Botao>}
@@ -146,7 +146,7 @@ function Descanso({ ctx, des }) {
 function FimDoTreino({ ctx, f }) {
   const tudo = f.feitas >= f.prescritas;
   return (
-    <TelaDeAcao cor="papel" centro topo={<Topo ctx={ctx} f={f} />} segs={<SegsDoTreino f={f} />}
+    <TelaDeAcao cor="fundo" centro topo={<Topo ctx={ctx} f={f} />} segs={<SegsDoTreino f={f} />}
       pe={f.sessaoAberta
         ? <Botao grande data-a="fim-encerra" onClick={ctx.encerraTreinoV3}>Encerrar o treino</Botao>
         : <Botao grande data-a="fim-fecha" onClick={ctx.fechaModoDeSessao}>Voltar ao Hoje</Botao>}
@@ -163,7 +163,7 @@ function FimDoTreino({ ctx, f }) {
 /** O treino encerrado: o resumo e o "vira regra?" do que mudou nele. */
 function TreinoEncerrado({ ctx, f }) {
   return (
-    <TelaDeAcao cor="papel" cima classe="v3-fim" topo={<Topo ctx={ctx} rotulo={'Treino ' + f.dia} />}
+    <TelaDeAcao cor="fundo" cima classe="v3-fim" topo={<Topo ctx={ctx} rotulo={'Treino ' + f.dia} />}
       segs={<Segmentos total={f.series} feitos={f.series} rotulo={f.series + ' séries guardadas'} />}
       pe={<Botao grande data-a="encerrado-fecha" onClick={ctx.fechaFimV3}>Fechar</Botao>}
       links={f.t != null && <button data-a="encerrado-series" onClick={ctx.verSeriesDoFimV3}>Ver as séries</button>}>
@@ -201,7 +201,7 @@ function Aula({ ctx, t }) {
   const [colado, setColado] = useState('');
   return (
     <>
-      <Bloco cor="lilas" chave={'aula-' + t.dia}
+      <Bloco cor="corpo" chave={'aula-' + t.dia}
              linha0={<><button onClick={ctx.fechaModoDeSessao} aria-label="Voltar, deixando a aula aberta">{ic.volta} Hoje</button>
                        <button onClick={() => ctx.abreFolha({ k: 'menuSessao' })} data-a="menu-sessao" aria-label="Opções desta sessão">{ic.lista}</button></>}
              quando={t.movimentos ? t.movimentos + (t.movimentos === 1 ? ' movimento' : ' movimentos') : 'aula aberta'}

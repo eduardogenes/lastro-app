@@ -5240,6 +5240,8 @@ function toast(msg) {
   const texto = msg == null ? '' : String(msg);
   clearTimeout(avisoLeitura);
   if (avisoSaindo) { clearTimeout(avisoSaindo); avisoSaindo = null; }
+  // sem texto, não há aviso: nunca uma pílula vazia na tela
+  if (!texto.trim()) { regiao.textContent = ''; avisoLeitura = null; return; }
   const atual = regiao.firstElementChild;
   if (!atual || atual.classList.contains('sai') || atual.textContent !== texto) {
     const no = document.createElement('div');
@@ -8492,7 +8494,7 @@ CTX.dados = function () {
 
   return {
     veredito: {
-      t: v.t, p: v.p,
+      t: v.t, p: v.p, k: v.k,
       cor: (v.k === 'menos' || v.k === 'observar') ? 'amber' : v.k === 'faltam' ? 't4' : 'acid',
       // Só 'mais' e 'menos' propõem passo. 'observar' e 'manter' não oferecem
       // ação nenhuma: antes, com o alvo lido como DESTINO, um veredito de
@@ -13142,33 +13144,33 @@ CTX.hojeV3 = function () {
   // o bloco do momento, a partir do cartão da regra
   let bloco;
   if (cartao && cartao.k === 'sessao') {
-    bloco = { k: 'sessao', cor: 'lima', quando: cartao.pergunta ? 'parado há um tempo' : 'em andamento',
+    bloco = { k: 'sessao', cor: 'treino', quando: cartao.pergunta ? 'parado há um tempo' : 'em andamento',
               titulo: 'Treino ' + cartao.dia, apoio: cartao.guardadas + ' de ' + cartao.prescritas + ' séries guardadas.',
               pergunta: cartao.pergunta ? (CTX.faixaDaSessao() || {}).txt || null : null };
   } else if (cartao && cartao.k === 'confirmar') {
-    bloco = { k: 'confirmar', cor: 'lilas', quando: 'o treino de antes', titulo: 'Treino ' + cartao.dia,
+    bloco = { k: 'confirmar', cor: 'corpo', quando: 'o treino de antes', titulo: 'Treino ' + cartao.dia,
               apoio: 'Fechei na última série: ' + fmtHora(cartao.inicio) + ' → ' + fmtHora(cartao.fim) + ', cerca de ' + fmtDur(cartao.fim - cartao.inicio) + '.',
               fim: cartao.fim };
   } else if (cartao && (cartao.k === 'treino' || cartao.k === 'aula')) {
     const l = linha.filter(function (x) { return x.treino; })[0];
     const falta = l ? minutosDe(l.t) - agoraMin : null;
-    bloco = { k: cartao.k, cor: 'lima', vivo: true,
+    bloco = { k: cartao.k, cor: cartao.k === 'aula' ? 'corpo' : 'treino', vivo: true,
               quando: falta == null ? 'hoje' : falta > 0 ? 'daqui a ' + falta + ' min' : 'agora',
               titulo: cartao.k === 'aula' ? 'Aula' : H.sessao.nome || 'Treino ' + cartao.dia,
               apoio: cartao.palpite ? 'Previsto pelo padrão da semana.' : (cartao.k === 'aula' ? 'O que o box programar.' : H.sessao.resumo) };
   } else if (comOn && agoraMin >= HORA_DA_PERGUNTA && passaram && !respondido) {
     // de noite, a pergunta do dia vem antes da próxima refeição (o protótipo)
-    bloco = { k: 'noite', cor: 'lilas', quando: passaram + (passaram === 1 ? ' refeição ficou' : ' refeições ficaram') + ' sem resposta',
+    bloco = { k: 'noite', cor: 'corpo', quando: passaram + (passaram === 1 ? ' refeição ficou' : ' refeições ficaram') + ' sem resposta',
               titulo: 'A comida de hoje foi como o plano?' };
   } else if (comOn && cartao && cartao.k === 'refeicao') {
     const r = H.refs.filter(function (x) { return x.id === cartao.id; })[0];
     const falta = minutosDe(r.t) - agoraMin;
-    bloco = { k: 'refeicao', cor: 'tanja', vivo: true, id: r.id,
+    bloco = { k: 'refeicao', cor: 'refeicao', vivo: true, id: r.id,
               quando: falta > 0 ? 'daqui a ' + falta + ' min' : falta === 0 ? 'agora' : 'era às ' + r.t.replace(':', 'h'),
               titulo: r.n, apoio: resumoDaRefeicao(r, cat, H.alta, d.escala[r.id] != null ? d.escala[r.id] : 1),
               pergunta: view.perguntaDe === r.id };
   } else {
-    bloco = { k: 'livre', cor: 'menta', fino: true, quando: H.diaHoje.cadencia === 'treino' ? 'tudo em dia' : 'dia de descanso',
+    bloco = { k: 'livre', cor: 'feito', fino: true, quando: H.diaHoje.cadencia === 'treino' ? 'tudo em dia' : 'dia de descanso',
               titulo: prox ? 'Livre até as ' + prox.t.replace(':', 'h') : 'Dia fechado',
               apoio: prox ? 'O próximo é ' + prox.n.toLowerCase() + '. Ele aparece aqui meia hora antes.' : 'Nada mais para hoje.' };
   }

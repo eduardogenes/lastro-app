@@ -6,7 +6,7 @@
    de `Foto` (src/ui/v3/foto.jsx), sobre o centro. */
 .v3-foto {
   position: relative; display: block; width: 100%; aspect-ratio: 3 / 4; overflow: hidden;
-  border-radius: 18px; background: var(--areia);
+  border-radius: 18px; background: var(--superficie-quieta);
 }
 .v3-foto img {
   position: absolute; left: 50%; top: 50%; width: 100%; height: 100%;
@@ -14,58 +14,58 @@
 }
 .v3-foto small {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: var(--tinta-3);
+  padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: var(--texto-legenda);
 }
 .v3-foto-m {
   position: absolute; right: 5px; top: 5px; width: 18px; height: 18px; border-radius: 50%;
-  background: var(--tanja); box-shadow: inset 0 0 0 1.5px var(--tinta);
+  background: var(--atencao); box-shadow: inset 0 0 0 1.5px var(--texto);
 }
 
 /* ---- Escolha grande --------------------------------------------------- */
 .v3 .v3-esc {
   display: flex; align-items: center; gap: 14px; width: 100%; margin-top: 8px; padding: 14px 16px;
-  border-radius: 26px; background: var(--branco); box-shadow: inset 0 0 0 1.5px var(--fio);
-  transition: scale var(--t-toque);
+  border-radius: 26px; background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--contorno);
+  transition: scale var(--d-toque);
 }
 .v3-esc:active { scale: .98; }
-.v3 .v3-esc[aria-pressed="true"] { background: var(--lima); box-shadow: inset 0 0 0 2.5px var(--tinta); }
+.v3 .v3-esc[aria-pressed="true"] { background: var(--selecionado); box-shadow: inset 0 0 0 2.5px var(--texto); }
 .v3-esc-o {
-  flex: 0 0 44px; height: 44px; border-radius: 50%; background: var(--areia);
+  flex: 0 0 44px; height: 44px; border-radius: 50%; background: var(--superficie-quieta);
   display: flex; align-items: center; justify-content: center;
 }
-.v3-esc[aria-pressed="true"] .v3-esc-o { background: var(--tinta); color: var(--lima); }
+.v3-esc[aria-pressed="true"] .v3-esc-o { background: var(--acao); color: var(--selecionado); }
 .v3-esc-o svg { width: 22px; height: 22px; }
 .v3-esc-t { flex: 1; min-width: 0; }
 .v3-esc-t b { display: block; font: 700 18px/1.15 var(--f-titulo); letter-spacing: -.01em; }
-.v3-esc-t span { display: block; margin-top: 2px; font-size: 14px; line-height: 1.35; color: var(--tinta-2); }
+.v3-esc-t span { display: block; margin-top: 2px; font-size: 14px; line-height: 1.35; color: var(--texto-2); }
 
 /* ---- "Tudo como da última vez?" -------------------------------------- */
 .v3-cond { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .v3 .v3-cond button {
-  min-height: 44px; padding: 0 14px; border-radius: var(--r-pilula); background: var(--menta);
+  min-height: 44px; padding: 0 14px; border-radius: var(--r-pilula); background: var(--assunto-feito);
   display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600;
 }
-.v3 .v3-cond button[aria-pressed="true"] { background: var(--tanja); box-shadow: inset 0 0 0 2px var(--tinta); }
+.v3 .v3-cond button[aria-pressed="true"] { background: var(--atencao); box-shadow: inset 0 0 0 2px var(--texto); }
 .v3-cond svg { width: 16px; height: 16px; }
 
 /* ---- Os três passos --------------------------------------------------- */
 .v3-passos { display: grid; gap: 12px; margin-top: 4px; }
 .v3-passos > div { display: flex; gap: 14px; align-items: flex-start; }
 .v3-passos i {
-  flex: 0 0 38px; height: 38px; border-radius: 50%; background: var(--tinta); color: var(--papel);
+  flex: 0 0 38px; height: 38px; border-radius: 50%; background: var(--acao); color: var(--texto-sobre-acao);
   display: flex; align-items: center; justify-content: center; font: 800 16px var(--f-titulo); font-style: normal;
 }
 .v3-passos b { display: block; font: 700 18px/1.2 var(--f-titulo); }
-.v3-passos span { font-size: 14px; line-height: 1.4; color: var(--tinta-2); }
-.v3-cartao { margin: 8px 12px 0; padding: 18px 20px 20px; border-radius: var(--r-bloco-g); background: var(--v3-cor, var(--lima)); }
+.v3-passos span { font-size: 14px; line-height: 1.4; color: var(--texto-2); }
+.v3-cartao { margin: 8px 12px 0; padding: 18px 20px 20px; border-radius: var(--r-bloco); background: var(--v3-cor, var(--assunto-treino)); }
 
 /* ---- O preparo (folha) ------------------------------------------------ */
 .v3-preparo { margin-top: 12px; }
-.v3-preparo > div { padding: 12px 0; border-top: 1.5px solid var(--fio); }
+.v3-preparo > div { padding: 12px 0; border-top: 1.5px solid var(--divisoria); }
 .v3-preparo > div:first-child { border-top: 0; }
 .v3-preparo b { display: block; font: 700 16px/1.2 var(--f-titulo); }
-.v3-preparo em { font-style: normal; color: var(--tinta-2); font-weight: 600; font-size: 14px; }
-.v3-preparo p { font-size: 14px; line-height: 1.45; color: var(--tinta-2); margin-top: 4px; }
+.v3-preparo em { font-style: normal; color: var(--texto-2); font-weight: 600; font-size: 14px; }
+.v3-preparo p { font-size: 14px; line-height: 1.45; color: var(--texto-2); margin-top: 4px; }
 
 /* ---- Grade de fotos --------------------------------------------------- */
 .v3-grade { display: grid; grid-template-columns: repeat(var(--v3-col, 4), 1fr); gap: 6px; margin-top: 10px; }
@@ -77,33 +77,33 @@
 .v3-cam {
   height: 100vh; height: 100svh; overflow: hidden; display: flex; flex-direction: column;
   padding: calc(4px + var(--sa-top, 0px)) 14px calc(12px + var(--sa-bottom, 0px));
-  background: var(--papel);
+  background: var(--fundo);
 }
 .v3-cam-topo { display: flex; align-items: center; gap: 6px; min-height: 48px; }
 .v3-cam-topo > button { flex: 0 0 var(--alvo); min-height: var(--alvo); display: flex; align-items: center; justify-content: center; }
 .v3-cam-topo svg { width: 24px; height: 24px; }
 .v3-cam-topo div { flex: 1; min-width: 0; }
 .v3-cam-topo b { display: block; font: 800 21px/1.05 var(--f-titulo); letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.v3-cam-topo span { font-size: 13px; font-weight: 600; color: var(--tinta-2); }
+.v3-cam-topo span { font-size: 13px; font-weight: 600; color: var(--texto-2); }
 .v3-cam .v3-segs { margin: 2px 0 8px; }
-.v3-cam .v3-segs i.a { background: var(--tanja); opacity: 1; }
+.v3-cam .v3-segs i.a { background: var(--acao-em-curso); opacity: 1; }
 
 /* o aviso de cima: o que acertar agora, numa frase */
 .v3-cam-aviso {
   display: flex; align-items: center; gap: 12px; min-height: 52px; margin-bottom: 8px; padding: 10px 14px;
-  border-radius: 22px; background: var(--tanja); box-shadow: inset 0 0 0 2px var(--tinta);
+  border-radius: 22px; background: var(--atencao); box-shadow: inset 0 0 0 2px var(--texto);
   font: 700 16px/1.2 var(--f-titulo); animation: v3-entra .36s var(--mola) both;
 }
-.v3-cam-aviso.ok { background: var(--lima); }
+.v3-cam-aviso.ok { background: var(--assunto-treino); }
 .v3-cam-aviso svg { width: 26px; height: 26px; flex: 0 0 auto; }
-.v3-cam-aviso small { display: block; font: 600 13px var(--f-texto); color: var(--tinta-2); margin-top: 2px; }
+.v3-cam-aviso small { display: block; font: 600 13px var(--f-texto); color: var(--texto-2); margin-top: 2px; }
 
 /* O quadro vivo, 3:4 como a foto guardada: a altura que sobra para ele
    decide a largura, e no iPhone grande ele fica com quase toda a largura. */
 .v3-visor {
   position: relative; overflow: hidden; flex: 0 0 auto; aspect-ratio: 3 / 4;
   width: min(100%, calc((100svh - 400px) * 3 / 4)); margin: 0 auto;
-  border-radius: 24px; background: var(--areia); box-shadow: inset 0 0 0 2px var(--tinta);
+  border-radius: 24px; background: var(--superficie-quieta); box-shadow: inset 0 0 0 2px var(--texto);
 }
 .v3-cam-video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .v3-cam-tela, .v3-cam-sombra { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
@@ -111,13 +111,13 @@
 
 /* As guias da cabeça e dos pés, a 4% das bordas: a mesma régua do protocolo.
    Verdes quando a luz delas está verde. */
-.v3-guia { position: absolute; left: 0; right: 0; height: 2px; background: var(--papel); box-shadow: 0 0 0 1px var(--tinta-28); pointer-events: none; }
-.v3-guia.ok { background: var(--lima); height: 3px; }
+.v3-guia { position: absolute; left: 0; right: 0; height: 2px; background: var(--fundo); box-shadow: 0 0 0 1px var(--marca); pointer-events: none; }
+.v3-guia.ok { background: var(--assunto-treino); height: 3px; }
 .v3-guia.cab { top: 4%; }
 .v3-guia.pes { bottom: 4%; }
 .v3-guia span {
   position: absolute; left: 10px; padding: 2px 8px; border-radius: var(--r-pilula);
-  background: var(--papel); font: 700 12px var(--f-titulo);
+  background: var(--fundo); font: 700 12px var(--f-titulo);
 }
 .v3-guia.cab span { top: 6px; }
 .v3-guia.pes span { bottom: 6px; }
@@ -127,29 +127,29 @@
 
 .v3-cam-conta {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  background: var(--veu); color: var(--lima); font: 800 120px/1 var(--f-titulo); font-variant-numeric: tabular-nums;
+  background: var(--veu); color: var(--assunto-treino); font: 800 120px/1 var(--f-titulo); font-variant-numeric: tabular-nums;
 }
-.v3-cam-clarao { position: absolute; inset: 0; background: var(--branco); opacity: 0; pointer-events: none; animation: v3-clarao .35s ease-out; }
+.v3-cam-clarao { position: absolute; inset: 0; background: var(--superficie); opacity: 0; pointer-events: none; animation: v3-clarao .35s ease-out; }
 @keyframes v3-clarao { from { opacity: .9; } }
 
 /* a foto que acabou de sair, 3 s no canto, com Refazer */
 .v3-cam-mini {
   position: absolute; top: calc(4% + 32px); right: 8px; width: 30%; padding: 5px;
-  border-radius: 16px; background: var(--papel); box-shadow: inset 0 0 0 2px var(--tinta);
+  border-radius: 16px; background: var(--fundo); box-shadow: inset 0 0 0 2px var(--texto);
   display: grid; gap: 5px; animation: v3-entra .3s var(--mola) both;
 }
 .v3-cam-mini .v3-foto { border-radius: 11px; }
-.v3-cam-mini small { font-size: 12px; font-weight: 700; color: var(--tinta); text-align: center; }
-.v3 .v3-cam-mini button { min-height: 36px; border-radius: var(--r-pilula); background: var(--tinta); color: var(--papel); font: 700 13px var(--f-titulo); text-align: center; }
+.v3-cam-mini small { font-size: 12px; font-weight: 700; color: var(--texto); text-align: center; }
+.v3 .v3-cam-mini button { min-height: 36px; border-radius: var(--r-pilula); background: var(--acao); color: var(--texto-sobre-acao); font: 700 13px var(--f-titulo); text-align: center; }
 
 /* a foto torta: por cima do pé do quadro, onde o polegar já está */
 .v3-cam-torta {
   position: absolute; left: 10px; right: 10px; bottom: 10px; padding: 14px;
-  border-radius: 22px; background: var(--papel); box-shadow: inset 0 0 0 2px var(--tinta);
+  border-radius: 22px; background: var(--fundo); box-shadow: inset 0 0 0 2px var(--texto);
   animation: v3-entra .3s var(--mola) both;
 }
 .v3-cam-torta b { display: block; font: 700 18px/1.2 var(--f-titulo); }
-.v3-cam-torta span { display: block; margin-top: 2px; font-size: 14px; color: var(--tinta-2); }
+.v3-cam-torta span { display: block; margin-top: 2px; font-size: 14px; color: var(--texto-2); }
 .v3-cam-torta .v3-acoes { margin-top: 12px; }
 .v3-cam-torta .v3-btn { min-height: 50px; }
 
@@ -157,35 +157,35 @@
 .v3-luzes { display: flex; gap: 6px; margin-top: 8px; }
 .v3 .v3-luz {
   flex: 1; min-width: 0; min-height: 50px; padding: 6px 10px; border-radius: 18px;
-  background: var(--tanja); box-shadow: inset 0 0 0 2px var(--tinta);
+  background: var(--atencao); box-shadow: inset 0 0 0 2px var(--texto);
   display: flex; align-items: center; gap: 8px; font: 700 14px/1.15 var(--f-titulo);
-  transition: background var(--t-cor) var(--mola);
+  transition: background var(--d-cor) var(--mola);
 }
-.v3 .v3-luz.ok { background: var(--lima); }
+.v3 .v3-luz.ok { background: var(--assunto-treino); }
 .v3-luzes svg { width: 18px; height: 18px; flex: 0 0 auto; }
-.v3-luzes small { display: block; font: 500 12px var(--f-texto); color: var(--tinta-2); }
-.v3 .v3-luzes.mini .v3-luz { min-height: 38px; border-radius: var(--r-pilula); justify-content: center; box-shadow: inset 0 0 0 1.5px var(--tinta); }
+.v3-luzes small { display: block; font: 500 12px var(--f-texto); color: var(--texto-2); }
+.v3 .v3-luzes.mini .v3-luz { min-height: 38px; border-radius: var(--r-pilula); justify-content: center; box-shadow: inset 0 0 0 1.5px var(--texto); }
 .v3-luzes.mini small { display: none; }
 
 /* a fala da pose, para quem fotografa ler */
 .v3-cam-fala { display: flex; align-items: center; gap: 10px; min-height: 50px; margin-top: 8px; }
 .v3-cam-fala p { flex: 1; min-width: 0; font: 600 15px/1.3 var(--f-texto); }
-.v3-cam-fala small { display: block; font-size: 12px; font-weight: 600; color: var(--tinta-2); }
-.v3 .v3-cam-fala button { flex: 0 0 46px; height: 46px; border-radius: 50%; background: var(--areia); display: flex; align-items: center; justify-content: center; }
+.v3-cam-fala small { display: block; font-size: 12px; font-weight: 600; color: var(--texto-2); }
+.v3 .v3-cam-fala button { flex: 0 0 46px; height: 46px; border-radius: 50%; background: var(--superficie-quieta); display: flex; align-items: center; justify-content: center; }
 .v3-cam-fala svg { width: 22px; height: 22px; }
 
 /* o disparo: a foto anterior à esquerda, o botão no meio, o que falta à direita */
 .v3-disparo { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 8px; }
-.v3-disparo-l { flex: 0 0 88px; min-height: 46px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 13px; font-weight: 700; color: var(--tinta-2); }
-.v3 .v3-anterior { border-radius: var(--r-pilula); color: var(--tinta); box-shadow: inset 0 0 0 1.5px var(--fio); }
-.v3 .v3-anterior[aria-pressed="true"] { background: var(--tinta); color: var(--papel); box-shadow: none; }
+.v3-disparo-l { flex: 0 0 88px; min-height: 46px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 13px; font-weight: 700; color: var(--texto-2); }
+.v3 .v3-anterior { border-radius: var(--r-pilula); color: var(--texto); box-shadow: inset 0 0 0 1.5px var(--contorno); }
+.v3 .v3-anterior[aria-pressed="true"] { background: var(--acao); color: var(--texto-sobre-acao); box-shadow: none; }
 .v3 .v3-disparo-b {
-  flex: 0 0 80px; width: 80px; height: 80px; border-radius: 50%; background: var(--tinta); color: var(--papel);
-  box-shadow: 0 0 0 5px var(--papel), 0 0 0 7.5px var(--tinta);
+  flex: 0 0 80px; width: 80px; height: 80px; border-radius: 50%; background: var(--acao); color: var(--texto-sobre-acao);
+  box-shadow: 0 0 0 5px var(--fundo), 0 0 0 7.5px var(--texto);
   display: flex; align-items: center; justify-content: center; transition: scale .1s, background .3s;
 }
 .v3-disparo-b:active { scale: .92; }
-.v3 .v3-disparo-b:disabled { background: var(--tinta-18); color: var(--tinta-2); box-shadow: 0 0 0 5px var(--papel), 0 0 0 7.5px var(--tinta-18); }
+.v3 .v3-disparo-b:disabled { background: var(--tracejado); color: var(--texto-2); box-shadow: 0 0 0 5px var(--fundo), 0 0 0 7.5px var(--tracejado); }
 .v3-disparo-b svg { width: 30px; height: 30px; }
 .v3-cam .v3-saida { margin: 4px auto 0; text-align: center; }
 
@@ -198,9 +198,9 @@
 .v3-poses.v3-poses-dentro { padding: 0; margin: 0 calc(-1 * var(--margem)); padding-inline: var(--margem); }
 .v3 .v3-poses button {
   flex: 0 0 auto; min-height: 40px; padding: 0 14px; border-radius: var(--r-pilula);
-  box-shadow: inset 0 0 0 1.5px var(--fio); font-size: 14px; font-weight: 600; white-space: nowrap;
+  box-shadow: inset 0 0 0 1.5px var(--contorno); font-size: 14px; font-weight: 600; white-space: nowrap;
 }
-.v3 .v3-poses button[aria-pressed="true"] { background: var(--lilas); box-shadow: inset 0 0 0 2px var(--tinta); }
+.v3 .v3-poses button[aria-pressed="true"] { background: var(--assunto-corpo); box-shadow: inset 0 0 0 2px var(--texto); }
 
 .v3-fita { display: flex; gap: 5px; }
 .v3-fita .v3-foto { flex: 1; border-radius: 9px; }
@@ -213,114 +213,114 @@
 .v3-cortina { touch-action: pan-y; }
 .v3-cortina .v3-foto, .v3-sobre .v3-foto { border-radius: 0; }
 .v3-cortina-cima, .v3-sobre-cima { position: absolute; inset: 0; }
-.v3-cortina-pega { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: var(--tinta); pointer-events: none; }
+.v3-cortina-pega { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: var(--acao); pointer-events: none; }
 .v3-cortina-pega::after {
   content: ""; position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin: -22px;
-  border-radius: 50%; background: var(--lima); box-shadow: inset 0 0 0 2.5px var(--tinta);
+  border-radius: 50%; background: var(--assunto-treino); box-shadow: inset 0 0 0 2.5px var(--texto);
 }
-.v3-cortina-et { position: absolute; bottom: 10px; padding: 3px 9px; border-radius: var(--r-pilula); background: var(--papel); font: 700 12px var(--f-titulo); }
+.v3-cortina-et { position: absolute; bottom: 10px; padding: 3px 9px; border-radius: var(--r-pilula); background: var(--fundo); font: 700 12px var(--f-titulo); }
 .v3-cortina-et.e { left: 10px; }
 .v3-cortina-et.d { right: 10px; }
 
 /* a faixa de arrastar: trilho de fio e pega lima */
 .v3 .v3-faixa-r { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 44px; margin: 4px 0 0; background: none; }
-.v3-faixa-r::-webkit-slider-runnable-track { height: 6px; border-radius: 9px; background: var(--fio); }
-.v3-faixa-r::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; margin-top: -13px; border-radius: 50%; background: var(--lima); box-shadow: inset 0 0 0 2.5px var(--tinta); }
-.v3-faixa-r::-moz-range-track { height: 6px; border-radius: 9px; background: var(--fio); }
-.v3-faixa-r::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: var(--lima); border: 2.5px solid var(--tinta); }
+.v3-faixa-r::-webkit-slider-runnable-track { height: 6px; border-radius: 9px; background: var(--contorno); }
+.v3-faixa-r::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; margin-top: -13px; border-radius: 50%; background: var(--assunto-treino); box-shadow: inset 0 0 0 2.5px var(--texto); }
+.v3-faixa-r::-moz-range-track { height: 6px; border-radius: 9px; background: var(--contorno); }
+.v3-faixa-r::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: var(--assunto-treino); border: 2.5px solid var(--texto); }
 
 .v3-datas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px var(--margem) 0; }
-.v3-datas > div { border-radius: 18px; background: var(--branco); box-shadow: inset 0 0 0 1.5px var(--fio); padding: 9px 12px; font-size: 12px; font-weight: 600; color: var(--tinta-2); display: grid; gap: 4px; justify-items: start; }
-.v3-datas b { font: 800 18px/1.1 var(--f-titulo); color: var(--tinta); letter-spacing: -.02em; }
+.v3-datas > div { border-radius: 18px; background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--divisoria); padding: 9px 12px; font-size: 12px; font-weight: 600; color: var(--texto-2); display: grid; gap: 4px; justify-items: start; }
+.v3-datas b { font: 800 18px/1.1 var(--f-titulo); color: var(--texto); letter-spacing: -.02em; }
 
 /* a linha das sessões: as pontas do par grandes, a ressalva em tangerina */
 .v3-trilha { position: relative; display: flex; justify-content: space-between; margin: 12px var(--margem) 0; min-height: 52px; }
-.v3-trilha::before { content: ""; position: absolute; left: 14px; right: 14px; top: 21px; height: 2px; background: var(--fio); }
-.v3 .v3-trilha button { position: relative; flex: 0 0 auto; min-width: 28px; min-height: 48px; display: flex; flex-direction: column; align-items: center; gap: 6px; font: 600 12px var(--f-titulo); color: var(--tinta-3); }
-.v3-trilha i { width: 14px; height: 14px; margin-top: 14px; border-radius: 50%; background: var(--papel); box-shadow: inset 0 0 0 2px var(--tinta-3); transition: scale .2s var(--mola); }
-.v3-trilha i.r { box-shadow: inset 0 0 0 3px var(--tanja); }
-.v3 .v3-trilha .de, .v3 .v3-trilha .ate { color: var(--tinta); }
-.v3-trilha .de i { scale: 1.8; background: var(--tinta); box-shadow: none; }
-.v3-trilha .ate i { scale: 1.8; background: var(--lilas); box-shadow: inset 0 0 0 2.5px var(--tinta); }
+.v3-trilha::before { content: ""; position: absolute; left: 14px; right: 14px; top: 21px; height: 2px; background: var(--divisoria); }
+.v3 .v3-trilha button { position: relative; flex: 0 0 auto; min-width: 28px; min-height: 48px; display: flex; flex-direction: column; align-items: center; gap: 6px; font: 600 12px var(--f-titulo); color: var(--texto-legenda); }
+.v3-trilha i { width: 14px; height: 14px; margin-top: 14px; border-radius: 50%; background: var(--fundo); box-shadow: inset 0 0 0 2px var(--texto-legenda); transition: scale .2s var(--mola); }
+.v3-trilha i.r { box-shadow: inset 0 0 0 3px var(--atencao); }
+.v3 .v3-trilha .de, .v3 .v3-trilha .ate { color: var(--texto); }
+.v3-trilha .de i { scale: 1.8; background: var(--acao); box-shadow: none; }
+.v3-trilha .ate i { scale: 1.8; background: var(--assunto-corpo); box-shadow: inset 0 0 0 2.5px var(--texto); }
 
 .v3-tempo-f { padding: 10px 56px 0; }
 .v3-ver { padding: 6px 44px 0; }
 .v3-ver-n { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px 0; }
 .v3 .v3-ver-n button { min-width: 48px; min-height: 48px; display: flex; align-items: center; justify-content: center; }
-.v3-ver-n button:disabled { color: var(--tinta-28); }
+.v3-ver-n button:disabled { color: var(--marca); }
 .v3-ver-n svg { width: 24px; height: 24px; }
 .v3-ver-n b { display: block; font: 700 18px var(--f-titulo); text-align: center; }
-.v3-ver-n span { display: block; font: 500 13px var(--f-texto); color: var(--tinta-2); text-align: center; }
+.v3-ver-n span { display: block; font: 500 13px var(--f-texto); color: var(--texto-2); text-align: center; }
 
-.v3-lixo { display: flex; align-items: center; gap: 12px; min-height: 76px; border-top: 1.5px solid var(--fio); }
+.v3-lixo { display: flex; align-items: center; gap: 12px; min-height: 76px; border-top: 1.5px solid var(--divisoria); }
 .v3-lixo:first-child { border-top: 0; }
 .v3-lixo .v3-foto { flex: 0 0 48px; border-radius: 10px; }
-.v3 .v3-lixo-b { flex: 0 0 auto; min-height: var(--alvo); padding: 0 14px; border-radius: var(--r-pilula); box-shadow: inset 0 0 0 2px var(--tinta); font: 700 14px var(--f-titulo); }
+.v3 .v3-lixo-b { flex: 0 0 auto; min-height: var(--alvo); padding: 0 14px; border-radius: var(--r-pilula); box-shadow: inset 0 0 0 2px var(--texto); font: 700 14px var(--f-titulo); }
 
 /* o quadro do ajuste: o mesmo 3:4 e as mesmas linhas da câmera */
-.v3-quadro-aj { position: relative; margin: 8px 44px 0; border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 0 2px var(--tinta); touch-action: none; cursor: grab; }
+.v3-quadro-aj { position: relative; margin: 8px 44px 0; border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 0 2px var(--texto); touch-action: none; cursor: grab; }
 .v3-quadro-aj > .v3-foto { border-radius: 0; }
 .v3-quadro-aj-f { position: absolute; inset: 0; opacity: .45; pointer-events: none; }
 .v3-quadro-aj-f .v3-foto { border-radius: 0; background: none; }
 .v3-ctl { padding: 10px var(--margem) 0; }
-.v3-ctl label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--tinta-2); }
-.v3-ctl label b { font: 800 16px var(--f-titulo); color: var(--tinta); }
+.v3-ctl label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--texto-2); }
+.v3-ctl label b { font: 800 16px var(--f-titulo); color: var(--texto); }
 
 /* a sugestão de alinhamento do app, na foto aberta: aceitar é dele */
-.v3-sug { margin: 10px var(--margem) 0; padding: 14px 16px; border-radius: var(--r-bloco); background: var(--lilas); }
+.v3-sug { margin: 10px var(--margem) 0; padding: 14px 16px; border-radius: var(--r-caixa); background: var(--assunto-corpo); }
 .v3-sug p { font-size: 14px; line-height: 1.4; }
 .v3-sug b { font: 700 16px/1.2 var(--f-titulo); display: block; margin-bottom: 2px; }
 .v3-sug-b { display: flex; gap: 8px; margin-top: 10px; }
 .v3 .v3-sug-ver, .v3 .v3-sug-sim { flex: 1; min-height: 48px; border-radius: var(--r-pilula); font: 700 15px var(--f-titulo); text-align: center; }
-.v3 .v3-sug-ver { box-shadow: inset 0 0 0 2px var(--tinta); }
-.v3 .v3-sug-ver[aria-pressed="true"] { background: var(--branco); }
-.v3 .v3-sug-sim { background: var(--tinta); color: var(--papel); }
+.v3 .v3-sug-ver { box-shadow: inset 0 0 0 2px var(--texto); }
+.v3 .v3-sug-ver[aria-pressed="true"] { background: var(--superficie); }
+.v3 .v3-sug-sim { background: var(--acao); color: var(--texto-sobre-acao); }
 
 /* ---- Corpo (Fase 2) ----------------------------------------------------- */
-.v3-mini { display: block; width: 100%; height: 26px; margin-top: 6px; color: var(--tinta); }
+.v3-mini { display: block; width: 100%; height: 26px; margin-top: 6px; color: var(--texto); }
 .v3 .v3-fita-b { display: flex; width: 100%; border-radius: 12px; }
-.v3-fim-da-tela { height: calc(var(--doca-h) + 44px + var(--sa-bottom, 0px)); }
+.v3-fim-da-tela { height: calc(var(--doca) + 44px + var(--sa-bottom, 0px)); }
 .v3-ligar { margin-top: 10px; }
 .v3-como { font-size: 15px; line-height: 1.45; margin-top: 12px; }
 .v3-medir-onde { margin-top: 14px; font-size: 14px; }
 .v3-medir-n { font: 800 34px/1 var(--f-titulo); letter-spacing: -.03em; margin-top: 6px; text-wrap: balance; }
 .v3-medir-f { font-size: 15px; line-height: 1.4; margin-top: 10px; min-height: 42px; }
 .v3-leituras { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.v3-leituras span { min-height: 30px; padding: 0 11px; display: inline-flex; align-items: center; border-radius: var(--r-pilula); background: var(--branco); font: 700 13px var(--f-titulo); }
-.v3-leituras span.m { background: var(--tinta); color: var(--papel); }
+.v3-leituras span { min-height: 30px; padding: 0 11px; display: inline-flex; align-items: center; border-radius: var(--r-pilula); background: var(--superficie); font: 700 13px var(--f-titulo); }
+.v3-leituras span.m { background: var(--acao); color: var(--texto-sobre-acao); }
 .v3-vazio-alvo { min-width: var(--alvo); }
 .v3-gigante.v3-gigante-m { font-size: 64px; margin: 4px 0 10px; }
 .v3-gigante-m small { font-size: 15px; font-weight: 600; letter-spacing: 0; }
 .v3-fim-curto { height: 40px; }
 .v3-data-g { font: 800 26px/1.1 var(--f-titulo); letter-spacing: -.02em; margin-top: 4px; }
 .v3-bio-n { font: 800 24px/1.1 var(--f-titulo); letter-spacing: -.02em; margin-top: 14px; }
-.v3-taxa { display: flex; align-items: center; gap: 12px; min-height: 60px; border-top: 1.5px solid var(--fio); }
+.v3-taxa { display: flex; align-items: center; gap: 12px; min-height: 60px; border-top: 1.5px solid var(--divisoria); }
 .v3-taxa:first-child { border-top: 0; }
 .v3-taxa-v { font: 800 19px var(--f-titulo); letter-spacing: -.02em; }
 
 /* ---- Gráfico ---------------------------------------------------------- */
 .v3-graf { display: block; width: 100%; height: auto; margin-top: 10px; overflow: visible; }
-.v3-graf-linha { fill: none; stroke: var(--tinta); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.v3-graf-ponto { fill: var(--tinta-28); }
-.v3-graf-bola { fill: var(--papel); stroke: var(--tinta); stroke-width: 3; }
-.v3-graf-fim { fill: var(--lilas); stroke: var(--tinta); stroke-width: 3; }
-.v3-graf-alvo { fill: var(--lilas); opacity: .7; }
-.v3-graf-marca { stroke: var(--tinta); stroke-width: 3; stroke-linecap: round; }
+.v3-graf-linha { fill: none; stroke: var(--texto); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.v3-graf-ponto { fill: var(--marca); }
+.v3-graf-bola { fill: var(--fundo); stroke: var(--texto); stroke-width: 3; }
+.v3-graf-fim { fill: var(--assunto-corpo); stroke: var(--texto); stroke-width: 3; }
+.v3-graf-alvo { fill: var(--assunto-corpo); opacity: .7; }
+.v3-graf-marca { stroke: var(--texto); stroke-width: 3; stroke-linecap: round; }
 .v3-quadro .v3-graf { margin-top: 6px; }
-.v3-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--tinta-2); }
+.v3-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--texto-2); }
 .v3-leg span { display: inline-flex; align-items: center; gap: 6px; }
-.v3-leg i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; background: var(--tinta); }
-.v3-leg i.p { width: 8px; height: 8px; border-radius: 50%; background: var(--tinta-28); }
-.v3-leg i.a { background: var(--lilas); height: 10px; }
+.v3-leg i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; background: var(--acao); }
+.v3-leg i.p { width: 8px; height: 8px; border-radius: 50%; background: var(--marca); }
+.v3-leg i.a { background: var(--assunto-corpo); height: 10px; }
 .v3-leg i.m { width: 3px; height: 10px; }
 
 /* ---- Treino em foco (Fase 3) ------------------------------------------ */
 .v3-serie-q { font: 700 14px var(--f-texto); margin-top: 12px; }
 .v3-serie-n { font: 800 38px/.98 var(--f-titulo); letter-spacing: -.035em; margin-top: 4px; text-wrap: balance; }
-.v3-serie-c { font-size: 14px; line-height: 1.4; margin-top: 6px; color: var(--tinta-2); }
+.v3-serie-c { font-size: 14px; line-height: 1.4; margin-top: 6px; color: var(--texto-2); }
 .v3-serie-g { margin-top: 10px; }
 .v3-serie-ant { font-size: 14px; font-weight: 600; margin-top: 8px; }
-.v3-serie-dor { margin-top: 12px; padding: 12px 14px; border-radius: 20px; background: var(--tanja); box-shadow: inset 0 0 0 2px var(--tinta); font-size: 14px; }
+.v3-serie-dor { margin-top: 12px; padding: 12px 14px; border-radius: 20px; background: var(--atencao); box-shadow: inset 0 0 0 2px var(--texto); font-size: 14px; }
 .v3-acao .v3-perg { margin-top: 12px; }
 .v3-lista-t { margin-top: 8px; }
 .v3-menu-l { margin-top: 8px; }
@@ -329,7 +329,7 @@
    É uma tela de ação (as âncoras são as da série); o enchimento fica atrás. */
 .v3-acao.v3-desc { position: relative; overflow: clip; }
 /* só transform: a escala de baixo para cima, e não a altura */
-.v3-desc-fundo { position: absolute; inset: 0; background: var(--lima); transform-origin: 50% 100%; transition: transform 1s linear; z-index: 0; }
+.v3-desc-fundo { position: absolute; inset: 0; background: var(--assunto-treino); transform-origin: 50% 100%; transition: transform 1s linear; z-index: 0; }
 .v3-desc > *:not(.v3-desc-fundo) { position: relative; z-index: 1; }
 .v3-desc .v3-acao-meio { text-align: center; align-items: center; }
 .v3-desc .v3-acao-links { justify-content: center; gap: 8px; }
@@ -343,156 +343,161 @@
 .v3-desc-rir { margin-top: 18px; align-self: stretch; }
 .v3-desc .v3-perg-r { justify-content: center; }
 .v3-desc-prox { font: 700 15px var(--f-titulo); margin-top: 14px; }
-.v3-serie-int { margin-top: 12px; padding: 12px 14px; border-radius: 20px; background: var(--branco); box-shadow: inset 0 0 0 2px var(--tinta); font-size: 14px; }
+.v3-serie-int { margin-top: 12px; padding: 12px 14px; border-radius: 20px; background: var(--superficie); box-shadow: inset 0 0 0 2px var(--texto); font-size: 14px; }
 .v3-emdia { margin-top: 14px; }
 .v3-emdia b { font: 700 16px var(--f-titulo); }
 
 /* ---- Progressão e um exercício ---------------------------------------- */
-.v3-passo { margin: 6px 0 4px; padding: 12px 14px; border-radius: 20px; background: var(--areia); }
-.v3-passo.subir { background: var(--lima); box-shadow: inset 0 0 0 2px var(--tinta); }
-.v3-passo.parado { background: var(--tanja); }
+.v3-passo { margin: 6px 0 4px; padding: 12px 14px; border-radius: 20px; background: var(--superficie-quieta); }
+.v3-passo.subir { background: var(--assunto-treino); box-shadow: inset 0 0 0 2px var(--texto); }
+.v3-passo.parado { background: var(--atencao); }
 .v3-passo b { display: block; font: 700 17px/1.2 var(--f-titulo); }
 .v3-passo span { display: block; font-size: 14px; line-height: 1.4; margin-top: 2px; }
-.v3-sess { display: flex; align-items: center; gap: 12px; min-height: 52px; border-top: 1.5px solid var(--fio); }
+.v3-sess { display: flex; align-items: center; gap: 12px; min-height: 52px; border-top: 1.5px solid var(--divisoria); }
 .v3-sess:first-child { border-top: 0; }
 .v3-sess > span { flex: 0 0 auto; min-width: 54px; font: 700 14px var(--f-titulo); }
-.v3-sess > span small { font: 600 12px var(--f-texto); color: var(--tinta-2); }
+.v3-sess > span small { font: 600 12px var(--f-texto); color: var(--texto-2); }
 .v3-sess div { flex: 1; display: flex; gap: 4px; flex-wrap: wrap; }
-.v3-sess i { font-style: normal; min-width: 28px; height: 28px; border-radius: 8px; background: var(--areia); display: inline-flex; align-items: center; justify-content: center; font: 700 13px var(--f-titulo); }
-.v3-sess i.t { background: var(--lima); box-shadow: inset 0 0 0 1.5px var(--tinta); }
+.v3-sess i { font-style: normal; min-width: 28px; height: 28px; border-radius: 8px; background: var(--superficie-quieta); display: inline-flex; align-items: center; justify-content: center; font: 700 13px var(--f-titulo); }
+.v3-sess i.t { background: var(--assunto-treino); box-shadow: inset 0 0 0 1.5px var(--texto); }
 .v3-sess b { font: 800 16px var(--f-titulo); }
 .v3-ex-foto { display: block; width: 100%; border-radius: 18px; margin-bottom: 8px; }
-.v3 .v3-campo { display: block; width: 100%; min-height: 52px; margin-top: 14px; padding: 0 14px; border-radius: 16px; border: 1.5px solid var(--fio); background: var(--branco); font: 500 17px var(--f-texto); color: var(--tinta); }
-.v3-decide { padding: 12px 0; border-top: 1.5px solid var(--fio); }
+.v3 .v3-campo { display: block; width: 100%; min-height: 52px; margin-top: 14px; padding: 0 14px; border-radius: 16px; border: 1.5px solid var(--contorno); background: var(--superficie); font: 500 17px var(--f-texto); color: var(--texto); }
+.v3-decide { padding: 12px 0; border-top: 1.5px solid var(--divisoria); }
 .v3-decide:first-child { border-top: 0; }
 .v3-decide p { font: 700 16px/1.25 var(--f-titulo); }
-.v3-decide small { display: block; font-size: 13px; color: var(--tinta-2); margin-top: 2px; }
+.v3-decide small { display: block; font-size: 13px; color: var(--texto-2); margin-top: 2px; }
 .v3-decide .v3-acoes { margin-top: 10px; }
 
 /* ---- Programa e editor ------------------------------------------------- */
 .v3-tiles { display: grid; gap: 8px; }
-.v3-tile { display: flex; align-items: stretch; gap: 6px; border-radius: 22px; background: var(--branco); box-shadow: inset 0 0 0 1.5px var(--fio); }
+.v3-tile { display: flex; align-items: stretch; gap: 6px; border-radius: 22px; background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--divisoria); }
 .v3 .v3-tile-b { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
-.v3-tile-l { flex: 0 0 44px; height: 44px; border-radius: 14px; background: var(--lima); display: flex; align-items: center; justify-content: center; font: 800 20px var(--f-titulo); box-shadow: inset 0 0 0 2px var(--tinta); }
+.v3-tile-l { flex: 0 0 44px; height: 44px; border-radius: 14px; background: var(--assunto-treino); display: flex; align-items: center; justify-content: center; font: 800 20px var(--f-titulo); box-shadow: inset 0 0 0 2px var(--texto); }
 .v3-tile-m, .v3-ed-m { display: flex; flex-direction: column; justify-content: center; }
 .v3 .v3-tile-m button, .v3 .v3-ed-m button { min-width: var(--alvo); min-height: 32px; display: flex; align-items: center; justify-content: center; }
-.v3-tile-m button:disabled, .v3-ed-m button:disabled { color: var(--tinta-28); }
+.v3-tile-m button:disabled, .v3-ed-m button:disabled { color: var(--marca); }
 .v3-tile-m svg, .v3-ed-m svg { width: 20px; height: 20px; }
 .v3-vol { display: flex; gap: 6px; overflow-x: auto; padding: 8px var(--margem) 2px; scrollbar-width: none; }
-.v3-vol span { flex: 0 0 auto; padding: 8px 12px; border-radius: 16px; background: var(--areia); font-size: 12px; font-weight: 600; color: var(--tinta-2); }
-.v3-vol span b { display: block; font: 800 17px var(--f-titulo); color: var(--tinta); }
-.v3-vol span.mais { background: var(--lima); }
-.v3-vol span.menos { background: var(--tanja); }
-.v3-ed { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 64px; border-top: 1.5px solid var(--fio); }
+.v3-vol span { flex: 0 0 auto; padding: 8px 12px; border-radius: 16px; background: var(--superficie-quieta); font-size: 12px; font-weight: 600; color: var(--texto-2); }
+.v3-vol span b { display: block; font: 800 17px var(--f-titulo); color: var(--texto); }
+.v3-vol span.mais { background: var(--atencao); }
+.v3-vol span.menos { background: var(--assunto-semana); }
+.v3-ed { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 64px; border-top: 1.5px solid var(--divisoria); }
 .v3-ed:first-child { border-top: 0; }
 .v3 .v3-ed-n { flex: 1; min-width: 0; min-height: var(--alvo); }
 .v3-ed-n b { display: block; font: 700 16px/1.15 var(--f-titulo); }
-.v3-ed-n span { font-size: 13px; color: var(--tinta-3); }
+.v3-ed-n span { font-size: 13px; color: var(--texto-legenda); }
 .v3-ed-s { display: flex; align-items: center; gap: 4px; }
-.v3 .v3-ed-s button { min-width: 40px; min-height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--tinta-18); font: 800 18px var(--f-titulo); }
+.v3 .v3-ed-s button { min-width: 40px; min-height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--tracejado); font: 800 18px var(--f-titulo); }
 .v3-ed-s b { min-width: 24px; text-align: center; font: 800 18px var(--f-titulo); }
 .v3-ed-troca { flex: 0 0 100%; padding: 4px 0 10px 50px; }
 .v3 .v3-texto { min-height: 180px; padding: 12px 14px; line-height: 1.45; resize: vertical; }
 
 /* ---- Aula do box -------------------------------------------------------- */
-.v3-rapida { display: flex; align-items: center; gap: 8px; min-height: 64px; border-top: 1.5px solid var(--fio); }
+.v3-rapida { display: flex; align-items: center; gap: 8px; min-height: 64px; border-top: 1.5px solid var(--divisoria); }
 .v3-rapida:first-child { border-top: 0; }
 .v3-rapida-c { flex: 0 0 76px; display: flex; flex-direction: column; align-items: center; }
-.v3 .v3-rapida-c input { width: 100%; min-height: 46px; border-radius: 14px; border: 1.5px solid var(--fio); background: var(--branco); text-align: center; font: 800 18px var(--f-titulo); color: var(--tinta); }
-.v3-rapida-c small { font-size: 12px; font-weight: 600; color: var(--tinta-2); }
+.v3 .v3-rapida-c input { width: 100%; min-height: 46px; border-radius: 14px; border: 1.5px solid var(--contorno); background: var(--superficie); text-align: center; font: 800 18px var(--f-titulo); color: var(--texto); }
+.v3-rapida-c small { font-size: 12px; font-weight: 600; color: var(--texto-2); }
 
 /* ---- Hoje (Fase 4) ------------------------------------------------------ */
 .v3-ld { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
-.v3 .v3-ld button { flex: 0 0 auto; min-width: 52px; display: flex; flex-direction: column; align-items: center; gap: 4px; font: 700 12px var(--f-titulo); color: var(--tinta-2); }
-.v3-ld .p { width: 44px; height: 44px; border-radius: 50%; background: var(--areia); display: flex; align-items: center; justify-content: center; color: var(--tinta); }
+.v3 .v3-ld button { flex: 0 0 auto; min-width: 52px; display: flex; flex-direction: column; align-items: center; gap: 4px; font: 700 12px var(--f-titulo); color: var(--texto-2); }
+.v3-ld .p { width: 44px; height: 44px; border-radius: 50%; background: var(--fundo); box-shadow: inset 0 0 0 var(--fio-fino) var(--contorno); display: flex; align-items: center; justify-content: center; color: var(--texto-2); }
 .v3-ld .p svg { width: 20px; height: 20px; }
-.v3-ld .ok .p { background: var(--menta); }
-.v3-ld .agora .p { background: var(--tanja); box-shadow: inset 0 0 0 2px var(--tinta); }
-.v3-ld .falta .p { box-shadow: inset 0 0 0 2px var(--tanja); background: var(--papel); }
-.v3-ld-leg { font-size: 13px; color: var(--tinta-2); margin-top: 8px; }
-.v3-ld-leg b { color: var(--tinta); }
+.v3-ld .ok .p { background: var(--acao); color: var(--texto-sobre-acao); box-shadow: none; }
+/* o "agora" tem a cor do momento: refeição, ou treino (`.t`) */
+.v3-ld .agora .p { background: var(--assunto-refeicao); color: var(--texto); box-shadow: inset 0 0 0 var(--fio-escolhido) var(--texto); }
+.v3-ld .agora.t .p { background: var(--assunto-treino); }
+.v3-ld .falta .p { box-shadow: none; background: repeating-linear-gradient(135deg, var(--superficie-quieta) 0 4px, var(--fundo) 4px 8px); }
+.v3-ld-leg { font: 500 13px var(--f-texto); color: var(--texto-2); margin-top: 8px; }
+.v3-ld-leg b { color: var(--texto); }
 .v3-instr { display: flex; gap: 6px; }
-.v3 .v3-gota { flex: 1; position: relative; overflow: hidden; min-height: 92px; border-radius: 22px; background: var(--branco); box-shadow: inset 0 0 0 1.5px var(--fio); padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; }
-.v3-gota .nivel { position: absolute; left: 0; right: 0; bottom: 0; background: var(--ceu); transition: height var(--t-cor) var(--mola); }
+.v3 .v3-gota { flex: 1; position: relative; overflow: hidden; min-height: 92px; border-radius: 24px; background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--divisoria); padding: 11px 13px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; }
+.v3-gota .nivel { position: absolute; left: 0; right: 0; bottom: 0; background: var(--assunto-semana); transition: height var(--d-cor) var(--mola); }
 .v3-gota .rt, .v3-gota .v { position: relative; }
-.v3-gota .rt { font-size: 12px; font-weight: 700; color: var(--tinta-2); }
+.v3-gota .rt { font: 600 13px var(--f-texto); color: var(--texto); }
 .v3-gota .v { font: 800 28px/1 var(--f-titulo); letter-spacing: -.02em; }
-.v3-gota .v small { font: 600 13px var(--f-texto); color: var(--tinta-2); }
+.v3-gota .v small { font: 600 13px var(--f-texto); color: var(--texto); }
 .v3-ritmo { display: flex; justify-content: space-between; }
-.v3 .v3-ritmo button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 40px; font: 700 12px var(--f-titulo); color: var(--tinta-2); }
-.v3-ritmo .bola { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 800 13px var(--f-titulo); color: var(--tinta); box-shadow: inset 0 0 0 1.5px var(--fio); }
-.v3-ritmo .bola.cheia { background: var(--lima); box-shadow: none; }
-.v3-ritmo .bola.meia { background: linear-gradient(to top, var(--lima) 50%, var(--papel) 50%); box-shadow: inset 0 0 0 1.5px var(--fio); }
-.v3-ritmo .bola.hoje { box-shadow: inset 0 0 0 2.5px var(--tinta); }
+.v3 .v3-ritmo button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: var(--alvo); font: 700 12px var(--f-titulo); color: var(--texto-2); }
+.v3-ritmo .bola { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 800 13px var(--f-titulo); color: var(--texto); box-shadow: inset 0 0 0 1.5px var(--contorno); }
+.v3-ritmo .bola.cheia { background: var(--assunto-treino); box-shadow: none; }
+.v3-ritmo .bola.meia { background: linear-gradient(to top, var(--assunto-treino) 50%, var(--fundo) 50%); box-shadow: inset 0 0 0 1.5px var(--contorno); }
+.v3-ritmo .bola.hoje { box-shadow: inset 0 0 0 2.5px var(--texto); }
 .v3-ritmo + .v3-perg { margin-top: 12px; }
 .v3-itens { margin-top: 12px; display: grid; gap: 2px; }
-.v3-itens div { padding: 8px 0; border-top: 1.5px solid var(--fio); font-size: 15px; }
+.v3-itens div { padding: 8px 0; border-top: 1.5px solid var(--divisoria); font-size: 15px; }
 .v3-itens div:first-child { border-top: 0; }
 .v3-diga { display: flex; gap: 6px; margin-top: 14px; }
-.v3 .v3-diga input { flex: 1; min-width: 0; min-height: 52px; padding: 0 16px; border-radius: var(--r-pilula); border: 1.5px solid var(--fio); background: var(--branco); font: 500 16px var(--f-texto); color: var(--tinta); }
-.v3 .v3-diga button { flex: 0 0 52px; height: 52px; border-radius: 50%; background: var(--tinta); color: var(--papel); display: flex; align-items: center; justify-content: center; }
+.v3 .v3-diga input { flex: 1; min-width: 0; min-height: 52px; padding: 0 16px; border-radius: var(--r-pilula); border: var(--fio-forte) solid var(--texto); background: var(--superficie); font: 500 16px var(--f-texto); color: var(--texto); }
+.v3 .v3-diga button { flex: 0 0 52px; height: 52px; border-radius: 50%; background: var(--acao); color: var(--texto-sobre-acao); display: flex; align-items: center; justify-content: center; }
 .v3-diga svg { width: 22px; height: 22px; }
 .v3-eco { min-height: 22px; font-size: 14px; font-weight: 600; margin-top: 6px; }
-.v3-sug { display: grid; gap: 6px; margin-top: 4px; }
-.v3 .v3-sug-b { display: flex; flex-direction: column; align-items: flex-start; min-height: 58px; padding: 10px 16px; border-radius: 20px; background: var(--branco); box-shadow: inset 0 0 0 1.5px var(--fio); text-align: left; }
-.v3 .v3-sug-b.pri { background: var(--lima); box-shadow: inset 0 0 0 2px var(--tinta); }
-.v3-sug b { font: 700 16px var(--f-titulo); }
-.v3-sug span { font-size: 13px; color: var(--tinta-2); }
+.v3-reg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+.v3 .v3-reg-b { display: flex; flex-direction: column; align-items: flex-start; min-height: 58px; padding: 10px 16px; border-radius: 20px; background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--contorno); text-align: left; }
+.v3 .v3-reg-b.pri { grid-column: 1 / -1; background: var(--assunto-treino); box-shadow: inset 0 0 0 2px var(--texto); }
+.v3-reg b { font: 700 16px var(--f-titulo); }
+.v3-reg span { font: 500 13px var(--f-texto); color: var(--texto-2); }
+/* sobre a cor do principal, o apoio é tinta */
+.v3-reg-b.pri span { color: var(--texto); }
 
 /* ---- Dias (Fase 4) ------------------------------------------------------ */
 .v3-mes-nav { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 0; }
 .v3 .v3-mes-nav button { min-width: var(--alvo); min-height: var(--alvo); display: flex; align-items: center; justify-content: center; }
-.v3-mes-nav button:disabled { color: var(--tinta-28); }
+.v3-mes-nav button:disabled { color: var(--marca); }
 .v3-mes-nav svg { width: 22px; height: 22px; }
 .v3-mes-nav b { font: 700 16px var(--f-titulo); text-align: center; }
 .v3-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .v3-cal-h { margin-bottom: 6px; }
-.v3-cal-h span { text-align: center; font-size: 12px; font-weight: 700; color: var(--tinta-3); }
-.v3 .v3-dia { position: relative; aspect-ratio: 1; border-radius: 12px; background: var(--areia); display: flex; flex-direction: column; align-items: center; justify-content: center; font: 800 15px var(--f-titulo); }
-.v3-cal button small { position: absolute; top: 3px; left: 5px; font: 600 12px var(--f-texto); color: var(--tinta-2); }
-.v3 .v3-cal button.t { background: var(--lima); }
-.v3 .v3-cal button.fut { background: transparent; box-shadow: inset 0 0 0 1px var(--fio); }
-.v3 .v3-cal button.branco { background: repeating-linear-gradient(135deg, var(--areia) 0 5px, var(--papel) 5px 9px); }
-.v3 .v3-cal button.hoje { box-shadow: inset 0 0 0 2px var(--tinta); }
-.v3 .v3-cal button.sel { box-shadow: inset 0 0 0 3px var(--tinta); }
-.v3-cal-c { position: absolute; bottom: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--tinta); }
+.v3-cal-h span { text-align: center; font-size: 12px; font-weight: 700; color: var(--texto-legenda); }
+.v3 .v3-dia { position: relative; aspect-ratio: 1; border-radius: 12px; background: var(--superficie-quieta); display: flex; flex-direction: column; align-items: center; justify-content: center; font: 800 15px var(--f-titulo); }
+.v3-cal button small { position: absolute; top: 3px; left: 5px; font: 600 12px var(--f-texto); color: var(--texto-2); }
+.v3 .v3-cal button.t { background: var(--assunto-treino); }
+.v3 .v3-cal button.fut { background: transparent; box-shadow: inset 0 0 0 1px var(--contorno); }
+.v3 .v3-cal button.branco { background: repeating-linear-gradient(135deg, var(--superficie-quieta) 0 5px, var(--fundo) 5px 9px); }
+.v3 .v3-cal button.hoje { box-shadow: inset 0 0 0 2px var(--texto); }
+.v3 .v3-cal button.sel { box-shadow: inset 0 0 0 3px var(--texto); }
+.v3-cal-c { position: absolute; bottom: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--acao); }
 .v3-dia-txt { font-size: 15px; line-height: 1.4; margin-bottom: 10px; }
 .v3-resp-pe { display: grid; gap: 8px; width: 100%; }
 
 /* ---- Semana (Fase 4) ---------------------------------------------------- */
-.v3-crit { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1.5px solid var(--fio); }
+.v3-crit { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1.5px solid var(--divisoria); }
 .v3-crit:first-child { border-top: 0; }
-.v3-crit .g { flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--menta); display: flex; align-items: center; justify-content: center; }
-.v3-crit .g.n { background: var(--tanja); }
+.v3-crit .g { flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--assunto-feito); display: flex; align-items: center; justify-content: center; }
+.v3-crit .g.n { background: var(--atencao); }
 .v3-crit .g svg { width: 18px; height: 18px; }
 .v3-crit b { display: block; font: 700 16px/1.2 var(--f-titulo); }
-.v3-crit span { font-size: 13px; color: var(--tinta-2); line-height: 1.4; }
-.v3-musc { display: flex; align-items: center; gap: 12px; min-height: 56px; border-top: 1.5px solid var(--fio); }
+.v3-crit span { font-size: 13px; color: var(--texto-2); line-height: 1.4; }
+.v3-musc { display: flex; align-items: center; gap: 12px; min-height: 56px; border-top: 1.5px solid var(--divisoria); }
 .v3-musc:first-child { border-top: 0; }
-.v3-musc-b { flex: 0 0 96px; height: 10px; border-radius: 9px; overflow: hidden; display: flex; background: var(--areia); }
-.v3-musc-b .f { background: var(--tinta); }
-.v3-musc-b .v { background: var(--lilas); }
+.v3-musc-b { flex: 0 0 96px; height: 10px; border-radius: 9px; overflow: hidden; display: flex; background: var(--superficie-quieta); }
+.v3-musc-b .f { background: var(--acao); }
+.v3-musc-b .v { background: var(--assunto-corpo); }
 
 /* ---- Plano (Fase 4) ----------------------------------------------------- */
 .v3-semana-c { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .v3-semana-c .v3-dia { aspect-ratio: auto; min-height: 58px; font: 700 12px var(--f-titulo); padding-top: 14px; }
-.v3-item { display: flex; align-items: center; gap: 10px; min-height: 56px; border-top: 1.5px solid var(--fio); }
+.v3-semana-c .v3-dia small { display: block; font: 600 12px var(--f-texto); }
+.v3-item { display: flex; align-items: center; gap: 10px; min-height: 56px; border-top: 1.5px solid var(--divisoria); }
 .v3-item:first-child { border-top: 0; }
-.v3 .v3-qtd { min-height: 40px; padding: 0 14px; border-radius: var(--r-pilula); background: var(--areia); font: 800 15px var(--f-titulo); }
+.v3 .v3-qtd { min-height: 40px; padding: 0 14px; border-radius: var(--r-pilula); background: var(--superficie-quieta); font: 800 15px var(--f-titulo); }
 .v3-compras { margin-top: 10px; }
-.v3 .v3-compra { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; border-top: 1.5px solid var(--fio); text-align: left; }
+.v3 .v3-compra { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; border-top: 1.5px solid var(--divisoria); text-align: left; }
 .v3-compra:first-child { border-top: 0; }
-.v3-compra .ck { flex: 0 0 28px; height: 28px; border-radius: 9px; box-shadow: inset 0 0 0 2px var(--tinta-28); display: flex; align-items: center; justify-content: center; color: transparent; }
+.v3-compra .ck { flex: 0 0 28px; height: 28px; border-radius: 9px; box-shadow: inset 0 0 0 2px var(--marca); display: flex; align-items: center; justify-content: center; color: transparent; }
 .v3-compra .ck svg { width: 16px; height: 16px; }
-.v3-compra.ok .ck { background: var(--lima); box-shadow: inset 0 0 0 2px var(--tinta); color: var(--tinta); }
-.v3-compra.ok .v3-lin-t b { text-decoration: line-through; color: var(--tinta-3); }
+.v3-compra.ok .ck { background: var(--assunto-treino); box-shadow: inset 0 0 0 2px var(--texto); color: var(--texto); }
+.v3-compra.ok .v3-lin-t b { text-decoration: line-through; color: var(--texto-legenda); }
 
 /* ---- Ajustes (Fase 4) --------------------------------------------------- */
-.v3-rotulo { display: block; margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--tinta-2); }
+.v3-rotulo { display: block; margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--texto-2); }
 .v3-rotulo + .v3-campo { margin-top: 4px; }
-.v3-erro { margin-top: 8px; font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 12px; background: var(--tanja); }
+.v3-erro { margin-top: 8px; font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 12px; background: var(--atencao); }
 .v3-lin-arq { cursor: pointer; }
 
 /* ---- Estados: as faixas fixas no topo ----------------------------------- */
 .v3-estados { position: fixed; top: calc(6px + var(--sa-top, 0px)); left: 0; right: 0; z-index: 70; display: grid; gap: 6px; pointer-events: none; }
-.v3-estados .v3-faixa { pointer-events: auto; box-shadow: var(--sombra-flutua); }
+.v3-estados .v3-faixa { pointer-events: auto; }

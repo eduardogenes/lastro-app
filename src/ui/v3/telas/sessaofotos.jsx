@@ -142,7 +142,7 @@ function Fim({ ctx, fim }) {
   const vaiComparar = () => { ctx.fechaProtocolo(); ctx.abreComparar(); };
   return (
     <>
-      <Bloco cor={fim.fora ? 'tanja' : 'menta'} chave="fim-fotos" medio
+      <Bloco cor={fim.fora ? 'atencao' : 'feito'} chave="fim-fotos" medio
              linha0={<><span>sessão de hoje</span>{fim.tempo && <span class="v3-n">{fim.tempo}</span>}</>}
              quando="guardada" titulo={fim.titulo}
              apoio={[

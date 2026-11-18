@@ -34,7 +34,7 @@ export function CentroDasFotos({ ctx }) {
   if (!c) return null;
   return (
     <>
-      <Bloco cor="lilas" chave="centro-fotos"
+      <Bloco cor="corpo" chave="centro-fotos"
              linha0={<><button onClick={ctx.fechaCentroDasFotos} data-a="fotos-voltar">{ic.volta} Corpo</button><span>fotos do corpo</span></>}
              quando={c.quando} titulo={c.titulo} apoio={c.apoio}>
         <Acoes>

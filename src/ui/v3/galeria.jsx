@@ -17,7 +17,7 @@ function Galeria() {
   const [folha, setFolha] = useState(false);
   const [acao, setAcao] = useState(false);
   if (acao) return (
-    <TelaDeAcao cor="lima"
+    <TelaDeAcao cor="treino"
       topo={<><button onClick={() => setAcao(false)} aria-label="Recolher">{ic.baixo}</button><span>Treino B · 12:40</span><button aria-label="Lista">{ic.lista}</button></>}
       pe={<Botao grande>{ic.ok} Feito</Botao>}
       links={<><button>Mudar</button><button>Histórico</button></>}>
@@ -30,7 +30,7 @@ function Galeria() {
   );
   return (
     <div class="v3">
-      <Bloco cor="lima" chave="treino" quando="daqui a 10 min" vivo titulo="Treino B"
+      <Bloco cor="treino" chave="treino" quando="daqui a 10 min" vivo titulo="Treino B"
              apoio="Pernas completas e panturrilhas. 22 séries, perto de uma hora."
              linha0={<><span>segunda, 16 nov · 06h05</span><button aria-label="O que aparece">{ic.ajuste}</button></>}>
         <Acoes><Botao onClick={() => setAcao(true)}>Começar {ic.seta}</Botao></Acoes>

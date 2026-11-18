@@ -2,15 +2,15 @@
 
 /* Com o visual novo ligado, o fundo da página é o papel, mesmo nas telas que
    ainda são as antigas, e a reserva do rodapé é a da doca. */
-html[data-visual="3"] body { background: var(--papel); }
-html[data-visual="3"] { --ins-barra-de-abas: calc(var(--doca-h) + 22px); }
+html[data-visual="3"] body { background: var(--fundo); }
+html[data-visual="3"] { --ins-barra-de-abas: calc(var(--doca) + 22px); }
 /* o descanso é a tela cheia do treino em foco: a barra antiga, fixa fora da
    árvore do app (#timer, em index.html), não aparece no visual novo */
 html[data-visual="3"] #timer { display: none; }
 
 .v3 {
-  color: var(--tinta);
-  font: 400 15px/1.4 var(--f-texto);
+  color: var(--texto);
+  font: var(--t-texto);
   -webkit-font-smoothing: antialiased;
   /* a camada de toque das telas antigas não vale aqui */
   --ins-toque: transparent;
@@ -25,9 +25,14 @@ html[data-visual="3"] #timer { display: none; }
 }
 :where(.v3) button:disabled { opacity: 1; cursor: default; }
 .v3 button:focus-visible, .v3 [tabindex]:focus-visible, .v3 input:focus-visible {
-  outline: 2.5px solid var(--tinta); outline-offset: 3px;
+  outline: 2.5px solid var(--foco); outline-offset: 3px;
 }
-.v3 ::selection { background: var(--lima); }
+/* o título que recebe o foco por código (ao abrir uma folha, um destino, um
+   passo) é só o ponto de partida do leitor de tela: não é controle, e o anel
+   nele parecia um botão */
+.v3 h1[tabindex="-1"]:focus-visible, .v3 h2[tabindex="-1"]:focus-visible,
+.v3 section[tabindex="-1"]:focus-visible { outline: none; }
+.v3 ::selection { background: var(--selecionado); }
 .v3 .v3-n { font-family: var(--f-titulo); font-variant-numeric: tabular-nums; }
 .v3 svg { display: block; }
 

@@ -777,16 +777,21 @@ test('a folha oferece as CINCO marcas por linha, e "Não comi" é uma delas', as
   a.v('ctx.abrePoeODia', data);
   await a.esperar(60);
 
-  const marcas = a.$$('[data-a^="marca-almoco-"]').map(function (b) { return b.textContent; });
+  // o texto à vista (a nota do palpite, só para leitor de tela, fica de fora)
+  const marcas = a.$$('[data-a^="marca-almoco-"]').map(function (b) { return b.childNodes[0].textContent; });
   assert.deepStrictEqual(marcas, ['Tudo', 'Metade', 'Fora', 'Não sei', 'Não comi'],
     'as cinco, e o quinto é o que destrava o portão');
-  // `aria-pressed` e não só a classe: o estado de um chip tem de chegar a quem
-  // usa leitor de tela.
-  const ligado = a.$$('[data-a^="marca-almoco-"]').filter(function (b) {
-    return b.getAttribute('aria-pressed') === 'true';
+  // A sugestão do horário NÃO é resposta: nenhuma ficha vem marcada
+  // (`aria-checked`) antes do toque, e a sugerida chega ao leitor de tela como
+  // sugestão, não como "selecionado" — quem fechasse achando que marcou não
+  // registraria o dia.
+  const marcadas = a.$$('[data-a^="marca-almoco-"]').filter(function (b) {
+    return b.getAttribute('aria-checked') === 'true';
   });
-  assert.strictEqual(ligado.length, 1, 'uma marca ligada por linha');
-  assert.strictEqual(ligado[0].textContent, 'Tudo', 'e a sugestão é "tudo"');
+  assert.strictEqual(marcadas.length, 0, 'nada registrado antes do toque');
+  const palpite = a.$$('[data-a^="marca-almoco-"].palpite');
+  assert.strictEqual(palpite.length, 1, 'um palpite por linha');
+  assert.ok(/^Tudo/.test(palpite[0].textContent) && /sugestão/.test(palpite[0].textContent), 'e a sugestão é "tudo", dita como sugestão');
   a.fechar();
 });
 
