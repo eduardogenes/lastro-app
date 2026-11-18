@@ -41,7 +41,9 @@ test('dias: "Abrir o dia" leva ao dia aberto novo, com o treino daquele dia', as
   assert.ok(a.$('.v3 .v3-cab h1'), 'a tela nova');
   assert.ok(!a.$('.dia-reg'), 'e não a antiga');
   assert.ok(/Treino A/.test(a.texto('[data-a="dia-sessao"]')), a.texto('[data-a="dia-sessao"]'));
-  assert.ok(!a.$('[data-a="dia-descanso"]'), 'dia com treino não aceita a marca de descanso');
+  a.clicar('[data-a="dia-poe"]');
+  await a.esperar();
+  assert.ok(!a.$('[data-a="poe-descanso"]'), 'dia com treino não aceita a marca de descanso');
   a.fechar();
 });
 
@@ -49,11 +51,16 @@ test('o dia vazio: "Foi descanso" marca, e o cardio esquecido entra sem hora', a
   const a = await comTreinoPassado();
   await abreODia(a, ONTEM);
   assert.ok(a.$('.v3-vazio'), 'nenhum treino, nenhum descanso');
-  a.clicar('[data-a="dia-descanso"]');
+  // "Pôr o dia em dia" → "Foi descanso"
+  a.clicar('[data-a="dia-poe"]');
+  await a.esperar();
+  a.clicar('[data-a="poe-descanso"]');
   await a.esperar(60);
   assert.ok(a.E(`!!S.descanso[${JSON.stringify(dataLocal(ONTEM))}]`), 'descanso marcado');
   assert.ok(a.$('[data-a="dia-tira-descanso"]'));
-  a.clicar('[data-a="dia-cardio-novo"]');
+  a.clicar('[data-a="dia-poe"]');
+  await a.esperar();
+  a.clicar('[data-a="poe-cardio"]');
   await a.esperar();
   a.clicar('[data-a="dia-cardio-novo-m-remo"]');
   await a.esperar();
@@ -75,7 +82,8 @@ test('a sessão passada: tocar na série abre a folha, e guardar corrige pela po
   a.clicar(`[data-a="serie-${id}-1"]`);
   await a.esperar(40);
   assert.ok(a.$('[data-a="passada-guarda"]'), 'a folha da série');
-  assert.ok(/40 × 9/.test(a.texto('.v3-folha-s')), a.texto('.v3-folha-s'));
+  // o par da folha parte do que foi guardado
+  assert.ok(/40/.test(a.texto('[data-a="par-carga"]')) && /9/.test(a.texto('[data-a="par-reps"]')), a.texto('.v3-dupla'));
   a.v('ctx.guardaSeriePassadaV3', 42.5, 8, 2);
   await a.esperar(80);
   assert.deepStrictEqual(a.J(`S.logs[logKey('A', 0)][0].sets[1]`), [42.5, 8, 2]);

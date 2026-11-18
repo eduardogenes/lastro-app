@@ -19,7 +19,7 @@ import { FolhaAlimentos, FolhaCompras, FolhaRefeicaoDoPlano, PlanoV3 } from './t
 import { AjustesV3 } from './telas/ajustes.jsx';
 import { FolhaCatalogo } from './telas/catalogo.jsx';
 import { FolhaEditaAlimentoV3, FolhaEditaRefeicaoV3, FolhaSeletorV3 } from './telas/comida.jsx';
-import { DiaAbertoV3, FolhaPoeODiaV3, FolhaSeriePassada, RegistrarPassadoV3, SessaoPassadaV3 } from './telas/diaaberto.jsx';
+import { DiaAbertoV3, FolhaPoeODiaGeralV3, FolhaPoeODiaV3, FolhaSeriePassada, RegistrarPassadoV3, SessaoPassadaV3 } from './telas/diaaberto.jsx';
 export const TELAS_V3 = {
   // Fase 2
   corpo: CorpoV3,
@@ -77,6 +77,6 @@ export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoCompara
   ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir, corrigeMarca: FolhaCorrigeMarca, bio: FolhaBioV3,
   listaTreino: FolhaListaTreino, mudarEx: FolhaMudarEx, menuSessao: FolhaMenuSessaoV3,
   renomeiaEx: FolhaRenomeiaEx,
-  registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, poeODia: FolhaPoeODiaV3, seriePassada: FolhaSeriePassada,
+  registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, poeODia: FolhaPoeODiaV3, poeODiaGeral: FolhaPoeODiaGeralV3, seriePassada: FolhaSeriePassada,
   editaRefeicao: FolhaEditaRefeicaoV3, seletor: FolhaSeletorV3, editaAlimento: FolhaEditaAlimentoV3, catalogo: FolhaCatalogo, foto: FolhaFotoV3, refeicao: FolhaRefeicaoV3, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos,
   refeicaoDoPlano: FolhaRefeicaoDoPlano, alimentos: FolhaAlimentos, compras: FolhaCompras };

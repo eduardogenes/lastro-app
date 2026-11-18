@@ -45,7 +45,7 @@ marcado em `05-auditoria.md` com o commit.
 | 2. O que se perde, e a fluidez | feita (`f5df85a`): Ajustes alcançável, a tira do treino aberto, o aviso com "Desfazer", a porta do movimento religada, as âncoras da tela de ação |
 | 3. Tokens e componentes base | feita (`933171b`), depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
 | 4. Treino | feita (`318532f`), depois da revisão: a série com o par e uma régua só, sem rolar; o descanso com o "a seguir" e "Água +1"; o fim; pôr em dia como tela; a aula do box como tela de ação. O principal tem o mesmo retângulo em série, descanso e fim |
-| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | em curso: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias, a tela do mês e responder os dias |
+| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | em curso: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada) |
 | 6. Os três de dado | a fazer |
 | 7. Revisão final | a fazer |
 
@@ -110,6 +110,16 @@ vêm em seguida, na mesma peça):
   (apagar uma resposta não existe no dado ainda);
 - a hora sem zero à esquerda ("6h08") vem de `horaDeMinutos`, usada em várias
   telas; o "No mês" já completa, as outras telas entram quando forem feitas.
+- "Treino que não anotei" (registrar passado) continua no fluxo do app: um
+  toque grava a presença, e a hora e as séries vêm depois. A referência pede
+  escolher o dia numa régua e o treino, e então "Marcar os exercícios" (o pôr
+  em dia "depois"). É mudança de fluxo, não de desenho: fica para decidir;
+- a hora da sessão passada ainda se corrige no painel (campo e fichas de
+  duração), não na folha com a régua de cinco em cinco minutos;
+- no dia aberto, as refeições ainda não abrem a folha da refeição (ela é do
+  dia de hoje); "Corrigir refeição por refeição" leva à folha do dia passado;
+- o quadro tocável tem contorno de divisória (1,3:1), na referência e no app;
+  o design system precisa decidir o contorno de quadro que se toca.
 
 ## As páginas publicadas
 

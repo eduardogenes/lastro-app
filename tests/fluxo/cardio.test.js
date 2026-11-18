@@ -30,7 +30,7 @@ test('o cardio do mesmo dia mora no dia, não na sessão', async () => {
   } });
   a.v('ctx.abreDia', t);
   await a.esperar();
-  assert.ok(/20 min de bike/.test(a.texto('[data-a="dia-cardio"]')), a.texto('[data-a="dia-cardio"]'));
+  assert.ok(/Cardio: bike/.test(a.texto('[data-a="dia-cardio"]')) && /20 min/.test(a.texto('[data-a="dia-cardio"]')), a.texto('[data-a="dia-cardio"]'));
   assert.ok(/leve/.test(a.texto('[data-a="dia-cardio"]')));
   a.v('abrirSessao', t);
   assert.strictEqual(a.$('.cardio-dia'), null, 'e a sessão não o repete');
@@ -46,7 +46,10 @@ test('o cardio esquecido entra pelo dia passado, sem hora, e conta no dia certo'
   a.aba('dias');
   a.v('ctx.abreDia', tres);
   await a.esperar();
-  a.clicar('[data-a="dia-cardio-novo"]');
+  // pelo "Pôr o dia em dia": "Fiz cardio"
+  a.clicar('[data-a="dia-poe"]');
+  await a.esperar();
+  a.clicar('[data-a="poe-cardio"]');
   await a.esperar();
   a.clicar('[data-a="dia-cardio-novo-m-remo"]');
   a.clicar('[data-a="dia-cardio-novo-min-30"]');
@@ -86,7 +89,10 @@ test('hoje e o futuro não ganham o lançamento: hoje é pelo Agora', async () =
   const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [] } });
   a.v('ctx.abreDia', agora + 2 * DIA);
   await a.esperar();
-  assert.strictEqual(a.$('[data-a="dia-cardio-novo"]'), null);
+  a.clicar('[data-a="dia-poe"]');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="poe-cardio"]'), null, 'o futuro não oferece cardio');
+  a.v('ctx.fechaFolha');
   a.v('ctx.abreCardioNoDia');
   await a.v('ctx.gravaCardioNoDia');
   assert.strictEqual(a.S().cardio.length, 0);

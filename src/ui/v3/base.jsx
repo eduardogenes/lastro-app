@@ -209,7 +209,7 @@ export function Quadros({ itens, colunas = 2 }) {
       {itens.map(q => {
         const dentro = <><b>{q.valor}{q.unidade && <small> {q.unidade}</small>}</b>{q.rotulo}</>;
         return q.aoTocar
-          ? <button key={q.k} class="v3-quadro" onClick={q.aoTocar}>{dentro}</button>
+          ? <button key={q.k} class="v3-quadro" data-a={q.a} onClick={q.aoTocar}>{dentro}</button>
           : <div key={q.k} class="v3-quadro">{dentro}</div>;
       })}
     </div>

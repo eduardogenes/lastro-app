@@ -874,7 +874,8 @@ test('o começo de um treino registrado se corrige no detalhe, e as séries cont
   });
   a.v('ctx.abreSessaoDoDia', { k: 'sessao', t: t });
   await a.esperar();
-  a.clicar('[data-a="sessao-corrige-tempo"]');
+  // tocar no quadro do começo abre a correção do tempo
+  a.clicar('[data-a="sessao-ini"]');
   await a.esperar();
   const campo = a.$('[data-a="sessao-comeco"]');
   assert.ok(campo, 'o campo do começo aparece no painel de corrigir');

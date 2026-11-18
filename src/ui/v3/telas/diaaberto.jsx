@@ -11,35 +11,45 @@
 
 import { useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Botao, Cabecalho, Fichas, Folha, Linha, Quadros, Saida, Secao, Vazio } from '../base.jsx';
+import { Acoes, Apoio, Botao, Caixa, Cabecalho, Fichas, Folha, Linha, Par, Quadros, Respostas, Saida, Secao, Selo, Vazio } from '../base.jsx';
 import { Regua } from '../regua.jsx';
 import { CamposDoCardio } from '../cardio.jsx';
 
 const virgula = n => String(Math.round(n * 100) / 100).replace('.', ',');
 const meioDia = data => new Date(data + 'T12:00:00').getTime();
+/** "6h02" ou "6:02" → "06h02" (a voz pede a hora com dois dígitos). */
+const hh = x => String(x || '').replace(/^(\d)[h:]/, '0$1h').replace(':', 'h');
 
-/** O nome de cada marca da comida, em palavra (a marca não pode ser só forma). */
-const MARCA = { tudo: 'comeu', metade: 'metade', fora: 'fora do plano', nsei: 'não sabe', nao: 'não comeu', sem: 'sem marca' };
+/** Cada marca da comida, em palavra e num selo (a marca não pode ser só forma). */
+const SELO = { tudo: ['ok', null], metade: ['metade', 'quieto'], fora: ['fora', 'atencao'], nsei: ['não sabe', 'quieto'], nao: ['não comeu', 'quieto'], sem: ['sem marca', 'quieto'] };
 
 /**
- * O DIA ABERTO: o que foi registrado (cada linha abre), o que se acrescenta
- * (treino, descanso, o cardio esquecido) e a comida do dia, com "pôr em dia".
- * Quando algo destoa, o app aponta e não corrige: dois cardios iguais ficam
- * lado a lado, o segundo dizendo "igual ao das 7h35".
+ * O DIA ABERTO (ds-telas.js, "dia-aberto"): tudo o que aconteceu num dia, para
+ * conferir e corrigir. O treino (que abre a sessão), o cardio, o peso, a comida
+ * refeição por refeição, e "Pôr o dia em dia" para o que faltou. Quando algo
+ * destoa, o app aponta e não corrige: dois cardios iguais ficam lado a lado, o
+ * segundo dizendo "igual ao das 7h35".
  */
 export function DiaAbertoV3({ ctx }) {
   const d = ctx.diaAberto();
   if (!d) return null;
-  const temTreino = d.registros.some(r => r.k === 'sessao');
   const t = meioDia(d.data);
+  const poe = () => ctx.abreFolha({ k: 'poeODiaGeral', data: d.data });
   return (
     <>
       <Cabecalho titulo={d.titulo} nota={d.procedencia} aoVoltar={ctx.fechaDia} />
-      <div class="v3-pad">
-        {(d.registros.length > 0 || d.descanso) && (
-          <div class="v3-dia-reg">
+      {d.vazio ? (
+        <Secao>
+          <Vazio titulo="Nenhum treino, nenhum descanso">
+            <p>Este dia ficou em branco. Ele fica fora das contas até você dizer o que foi.{d.palpite ? ' ' + d.palpite : ''}</p>
+            <Acoes><Botao data-a="dia-poe" onClick={poe}>Pôr o dia em dia</Botao></Acoes>
+          </Vazio>
+        </Secao>
+      ) : (
+        <Secao titulo="Treino">
+          <div>
             {d.registros.map(r => r.k === 'sessao'
-              ? <Linha key={'s' + r.t} marca={r.letra === 'fora' ? '•' : r.letra === 'aula' ? ic.halter : r.letra}
+              ? <Linha key={'s' + r.t} marca={r.letra === 'fora' ? '•' : r.letra === 'aula' ? ic.halter : r.letra} marcaTom="f"
                        titulo={r.titulo} apoio={r.detalhe} data-a="dia-sessao"
                        aoTocar={() => ctx.abreSessaoDoDia({ k: 'sessao', t: r.t })} />
               : (
@@ -61,41 +71,41 @@ export function DiaAbertoV3({ ctx }) {
               </div>
             )}
           </div>
-        )}
-        {d.vazio && <Vazio titulo="Nenhum treino, nenhum descanso">{d.palpite && <p>{d.palpite}</p>}</Vazio>}
-
-        <Acoes>
-          <Botao tipo="contorno" cheio data-a="dia-registrar" onClick={() => ctx.abreSessaoDoDia({ k: 'lancar', t: t })}>
-            {temTreino ? 'Outro treino' : 'Registrar treino'}
-          </Botao>
-          {d.podeDescanso && !d.descanso && (
-            <Botao tipo="contorno" cheio data-a="dia-descanso" onClick={() => ctx.alternaDescansoDoDia(t)}>Foi descanso</Botao>
-          )}
-        </Acoes>
-        {!d.podeDescanso && <Apoio>Este dia tem treino, então não aceita a marca de descanso.</Apoio>}
-        {d.podeCardio && (
-          <Saida data-a="dia-cardio-novo" aria-expanded={d.cardioNovo ? 'true' : 'false'} onClick={ctx.abreCardioNoDia}>
-            {d.cardioNovo ? 'Fechar o cardio' : 'Registrar um cardio neste dia'}
-          </Saida>
-        )}
-        {d.cardioNovo && (
+        </Secao>
+      )}
+      {d.cardioNovo && (
+        <Secao titulo="Cardio neste dia">
           <div class="v3-dia-ed">
             <CamposDoCardio campos={d.cardioNovo} prefixo="dia-cardio-novo-" aoTocar={(campo, k) => ctx.cardioNoDiaSet(campo, k)} />
-            <Acoes><Botao data-a="dia-cardio-grava" onClick={ctx.gravaCardioNoDia}>Gravar o cardio neste dia</Botao></Acoes>
+            <Acoes><Botao data-a="dia-cardio-grava" onClick={ctx.gravaCardioNoDia}>Guardar</Botao></Acoes>
             <Apoio>Entra sem hora: o dia é este, a hora não foi anotada.</Apoio>
-            {d.cardioNovo.falhou && <p class="v3-erro" role="alert">{d.cardioNovo.falhou}</p>}
+            {d.cardioNovo.falhou && <Caixa tom="atencao" titulo="Não guardei." nota={d.cardioNovo.falhou} />}
+            <Saida data-a="dia-cardio-novo" onClick={ctx.abreCardioNoDia}>Fechar o cardio</Saida>
           </div>
-        )}
-      </div>
-
+        </Secao>
+      )}
+      {d.peso && (
+        <Secao titulo="Corpo">
+          <Linha titulo="Peso" apoio={'às ' + d.peso.hora} valor={d.peso.valor} unidade="kg" data-a="dia-peso"
+                 aoTocar={() => ctx.abreFolha({ k: 'corrigeMarca', marca: 'peso', t: d.peso.t, data: d.peso.data + ' às ' + d.peso.hora, u: 'kg', valor: d.peso.v })} />
+        </Secao>
+      )}
       {d.comida && ctx.moduloLigado('comida') && (
         <Secao titulo="A comida do dia" nota={d.comida.resumo}>
           <div>
-            {d.comida.momentos.map(x => <Linha key={x.id} quieta titulo={x.nome} apoio={x.hora} valor={MARCA[x.marca] || x.marca} />)}
+            {d.comida.momentos.map(x => {
+              const sl = SELO[x.marca] || [x.marca, 'quieto'];
+              return <Linha key={x.id} titulo={x.nome} apoio={x.hora} valor={<Selo tom={sl[1]}>{x.marca === 'tudo' && ic.ok}{sl[0]}</Selo>} />;
+            })}
           </div>
           <Apoio>Água: {d.comida.agua}. {d.comida.regra}</Apoio>
-          <Acoes><Botao tipo="contorno" cheio data-a="dia-poe-em-dia" onClick={() => ctx.abrePoeODia(d.data)}>Pôr este dia em dia</Botao></Acoes>
+          <Saida data-a="dia-poe-em-dia" onClick={() => ctx.abrePoeODia(d.data)}>Corrigir refeição por refeição</Saida>
           {d.comida.plano && <Apoio>{d.comida.plano}</Apoio>}
+        </Secao>
+      )}
+      {!d.vazio && (
+        <Secao>
+          <Acoes class="v3-acoes-0"><Botao tipo="contorno" cheio data-a="dia-poe" onClick={poe}>Pôr o dia em dia</Botao></Acoes>
         </Secao>
       )}
       <div class="v3-fim-curto" />
@@ -104,10 +114,49 @@ export function DiaAbertoV3({ ctx }) {
 }
 
 /**
- * A SESSÃO PASSADA, como foi: o começo e o fim (o fim que fechou sozinho é
- * aproximado, e "Corrigir o tempo" fica ao lado), cada série na ordem, e o
- * que estava prescrito e não foi feito fica "não feito", na posição dele: não
- * é falha. Tocar num número abre a série para corrigir.
+ * PÔR O DIA EM DIA (ds-telas.js, "f-poe-dia"): para o dia que ficou em branco,
+ * o que foi, de uma vez. Treinei (registra o treino daquele dia), foi descanso,
+ * fiz cardio, e a comida numa resposta. O que entra fica marcado como
+ * registrado depois.
+ */
+export function FolhaPoeODiaGeralV3({ ctx, f }) {
+  const d = ctx.diaAberto();
+  if (!d) return null;
+  const t = meioDia(f.data);
+  const resposta = ctx.respostaDoDia(f.data);
+  const fecha = fn => () => { ctx.fechaFolha(); fn(); };
+  return (
+    <Folha titulo="Pôr o dia em dia" sub={d.titulo.charAt(0).toUpperCase() + d.titulo.slice(1) + '. O que entrar aqui fica marcado como registrado depois.'}
+           aoFechar={() => ctx.fechaFolha()}>
+      <div class="v3-opcoes">
+        <Linha marca={ic.halter} titulo="Treinei neste dia" apoio="qual treino foi, e os exercícios como da última vez" data-a="poe-treinei"
+               aoTocar={fecha(() => ctx.abreSessaoDoDia({ k: 'lancar', t: t }))} />
+        {d.podeDescanso && !d.descanso && (
+          <Linha marca={ic.ok} titulo="Foi descanso" apoio="marca o dia como descanso" semSeta data-a="poe-descanso"
+                 aoTocar={fecha(() => { ctx.alternaDescansoDoDia(t); ctx.avisaComDesfazer('Dia marcado como descanso.', () => ctx.alternaDescansoDoDia(t)); })} />
+        )}
+        {d.podeCardio && (
+          <Linha marca={ic.coracao} titulo="Fiz cardio" apoio="bike, esteira, outro" data-a="poe-cardio"
+                 aoTocar={fecha(() => { if (!d.cardioNovo) ctx.abreCardioNoDia(); })} />
+        )}
+      </div>
+      {ctx.moduloLigado('comida') && (
+        <>
+          <div class="v3-sec-h v3-folha-h"><h3>A comida</h3></div>
+          <Respostas sobreFundo rotulo="A comida deste dia foi como o plano?" valor={resposta}
+                     opcoes={[{ k: 'sim', t: 'Foi, sim' }, { k: 'quase', t: 'Quase' }, { k: 'naosei', t: 'Não lembro' }]}
+                     aoResponder={k => ctx.respondeODia(f.data, k)} />
+        </>
+      )}
+    </Folha>
+  );
+}
+
+/**
+ * A SESSÃO PASSADA (ds-telas.js, "sessao-passada"): o começo, o fim e a duração
+ * em quadros (tocar corrige), cada série na ordem, em fichas: feita em tinta,
+ * registrada depois em areia, não feita só com o contorno, na posição dela (não
+ * é falha). Tocar numa abre a série para corrigir.
  */
 export function SessaoPassadaV3({ ctx }) {
   const d = ctx.detalheDaSessao();
@@ -116,28 +165,27 @@ export function SessaoPassadaV3({ ctx }) {
     return (
       <>
         <Cabecalho titulo={d.titulo} nota={d.meta} aoVoltar={ctx.fechaSessao} />
-        <div class="v3-pad">
-          <Quadros itens={d.stats.map(s => ({ k: s.k, valor: s.valor, rotulo: s.rotulo }))} />
+        <Secao>
+          <Quadros colunas={3} itens={d.stats.map(s => ({ k: s.k, valor: s.valor, rotulo: s.rotulo }))} />
           {d.grupos.length > 0 && <Apoio>Trabalhou: {d.grupos.join(', ')}.</Apoio>}
           <Apoio>Fora do plano. Conta como dia treinado no calendário e na média da semana, mas não tem carga nem série e não move a sequência.</Apoio>
-          <Saida data-a="sessao-apaga" onClick={() => ctx.editaSessao(d.t)}>Apagar este registro</Saida>
-        </div>
+          <Acoes><Botao tipo="contorno" cheio data-a="sessao-apaga" onClick={() => ctx.editaSessao(d.t)}>{ic.lixo} Apagar este registro</Botao></Acoes>
+        </Secao>
         <div class="v3-fim-curto" />
       </>
     );
   }
+  const data = (d.cab.meta.split(' · ').filter(x => /\d\d\/\d\d/.test(x))[0]) || d.cab.meta;
+  const corrige = d.corrigivel ? () => ctx.abreCorrecaoDoTempo(d.t) : null;
   return (
     <>
-      <Cabecalho titulo={d.cab.titulo} nota={d.cab.meta} aoVoltar={ctx.fechaSessao} />
-      <div class="v3-pad">
-        <div class="v3-ss-tempo">
-          <Linha quieta titulo="Começo" apoio={d.comeco.nota} valor={d.comeco.hora} />
-          {d.fim && <Linha quieta titulo="Fim" apoio={d.fim.nota} valor={(d.fim.aprox ? '~' : '') + d.fim.hora} />}
-        </div>
-        {d.corrigivel && (
-          <Saida data-a="sessao-corrige-tempo" aria-expanded={d.corrigindoTempo ? 'true' : 'false'}
-                 onClick={() => ctx.abreCorrecaoDoTempo(d.t)}>{d.corrigindoTempo ? 'Fechar a correção do tempo' : 'Corrigir o tempo'}</Saida>
-        )}
+      <Cabecalho titulo={d.cab.titulo} nota={data} aoVoltar={ctx.fechaSessao} />
+      <Secao>
+        <Quadros colunas={3} itens={[
+          { k: 'ini', a: 'sessao-ini', valor: hh(d.comeco.hora), rotulo: 'começo', aoTocar: corrige },
+          { k: 'fim', valor: d.fim ? (d.fim.aprox ? '~' : '') + hh(d.fim.hora) : '—', rotulo: d.fim && d.fim.aprox ? 'fim, aproximado' : 'fim', aoTocar: corrige },
+          { k: 'dur', valor: d.duracaoTxt || '—', rotulo: 'duração' }]} />
+        {d.comeco.nota && <Apoio>{d.comeco.nota}</Apoio>}
         {d.corrigindoTempo && (
           <div class="v3-dia-ed">
             <label class="v3-rotulo" for="scomeco">Começo</label>
@@ -146,11 +194,12 @@ export function SessaoPassadaV3({ ctx }) {
             <p class="v3-rotulo">Duração</p>
             <Fichas rotulo="Duração" opcoes={d.duracoes} prefixo="sessao-dur-" aoTocar={k => ctx.corrigeDuracao(d.t, k)} />
             <Apoio>Hoje está {d.duracaoTxt}. O fim anda junto com o começo. Corrigir torna o tempo declarado, e o "aproximado" some.</Apoio>
+            <Saida data-a="sessao-corrige-tempo" onClick={() => ctx.abreCorrecaoDoTempo(d.t)}>Fechar a correção do tempo</Saida>
           </div>
         )}
-      </div>
+      </Secao>
 
-      <Secao titulo="As séries" nota={d.exercicios.length ? 'toque num número para corrigir' : null}>
+      <Secao titulo="As séries" nota={d.exercicios.length ? 'toque numa para corrigir' : null}>
         {d.exercicios.length === 0
           ? <Vazio titulo="Nenhuma série registrada"><p>Só a presença.</p></Vazio>
           : (
@@ -158,24 +207,27 @@ export function SessaoPassadaV3({ ctx }) {
               {d.exercicios.map(x => (
                 <div key={x.idEx + (x.chave || '')} class="v3-ss-ex">
                   <div class="v3-ss-n"><b>{x.nome}</b><span>{x.presc}</span></div>
-                  <div class="v3-ss-series">
+                  <div class="v3-feitas v3-ss-series">
                     {x.series.map(sr => sr.nao
                       ? (sr.lanca
-                          ? <button key={sr.k} class="v3-ss-sv nf" data-a={'serie-' + x.idEx + '-' + sr.k}
+                          ? <button key={sr.k} class="nf" data-a={'serie-' + x.idEx + '-' + sr.k}
                                     aria-label={'série ' + (sr.k + 1) + ': não feita. Tocar lança, se você fez.'}
-                                    onClick={() => ctx.abreSeriePassadaV3(x.idEx, x.chave, sr.k)}>não feito</button>
-                          : <span key={sr.k} class="v3-ss-sv nf">não feito</span>)
+                                    onClick={() => ctx.abreSeriePassadaV3(x.idEx, x.chave, sr.k)}>não feita</button>
+                          : <span key={sr.k} class="nf">não feita</span>)
                       : (
-                        <button key={sr.k} class="v3-ss-sv v3-n" disabled={!sr.editavel} data-a={'serie-' + x.idEx + '-' + sr.k}
-                                aria-label={'série ' + (sr.k + 1) + ': ' + sr.texto + (sr.rir ? ', ' + sr.rir : '') + (sr.editavel ? '. Tocar corrige.' : '')}
+                        <button key={sr.k} class={(sr.dp ? 'dp' : 'f') + ' v3-n'} disabled={!sr.editavel} data-a={'serie-' + x.idEx + '-' + sr.k}
+                                aria-label={'série ' + (sr.k + 1) + ': ' + sr.texto + (sr.rir ? ', ' + sr.rir : '') + (sr.dp ? ', registrada depois' : '') + (sr.editavel ? '. Tocar corrige.' : '')}
                                 onClick={() => ctx.abreSeriePassadaV3(x.idEx, x.chave, sr.k)}>
-                          {sr.texto}<small>{sr.rir || ' '}</small>
+                          {!sr.dp && ic.ok}{sr.texto}
                         </button>
                       ))}
                   </div>
                   {x.nota && <p class="v3-ss-nota">{x.nota}</p>}
                 </div>
               ))}
+              <div class="v3-legm" role="group" aria-label="Legenda das séries">
+                <span><i class="t" />feita</span><span><i class="q" />registrada depois</span><span><i class="nf" />não feita</span>
+              </div>
             </div>
           )}
         {d.notas.length > 0 && <Apoio>{d.notas.join(' ')}</Apoio>}
@@ -194,7 +246,7 @@ export function SessaoPassadaV3({ ctx }) {
         </Secao>
       )}
       <Secao>
-        <Saida data-a="sessao-apaga" onClick={() => ctx.editaSessao(d.t)}>Apagar este treino</Saida>
+        <Acoes class="v3-acoes-0"><Botao tipo="contorno" cheio data-a="sessao-apaga" onClick={() => ctx.editaSessao(d.t)}>{ic.lixo} Apagar esta sessão</Botao></Acoes>
       </Secao>
       <div class="v3-fim-curto" />
     </>
@@ -202,35 +254,35 @@ export function SessaoPassadaV3({ ctx }) {
 }
 
 /**
- * A SÉRIE PASSADA, numa folha: as duas réguas da série de hoje, o RIR e o
- * apagar. Grava no "Guardar"; a série que não foi feita nasce no "Lançar".
+ * A SÉRIE PASSADA (ds-telas.js, "f-serie-passada"): o mesmo par e a mesma
+ * régua da série de hoje, o "sobraram quantas?" e apagar. Grava no "Guardar";
+ * a série que não foi feita nasce no "Lançar". Se o aparelho recusar, o número
+ * fica na folha e a caixa diz o que houve.
  */
 export function FolhaSeriePassada({ ctx }) {
   const s = ctx.seriePassadaV3();
   const [carga, setCarga] = useState(s ? s.carga : 0);
   const [reps, setReps] = useState(s ? s.reps : 0);
   const [rir, setRir] = useState(s ? s.rir : null);
+  const [qual, setQual] = useState('reps');
   if (!s) return null;
   return (
     <Folha titulo={s.titulo} sub={s.sub} aoFechar={ctx.fechaSeriePassadaV3}>
-      {!s.semCarga && (
-        <div class="v3-serie-g">
-          <div class="v3-gigante v3-n v3-gigante-m">{virgula(carga)}<small>{s.un}</small></div>
-          <Regua min={0} max={Math.max(60, Math.ceil(carga * 2 / 10) * 10)} passo={s.passo} cada={s.passo >= 2.5 ? 10 : 5}
-                 largura={12} valor={carga} aoMudar={setCarga} rotulo={'carga em ' + s.un} />
-        </div>
-      )}
-      <div class="v3-serie-g">
-        <div class="v3-gigante v3-n v3-gigante-m">{reps}<small>repetições</small></div>
-        <Regua min={0} max={Math.max(30, reps + 15)} passo={1} cada={5} largura={16} valor={reps} aoMudar={setReps} rotulo="repetições" />
-      </div>
+      {s.semCarga
+        ? <Par escolhido="reps" aoEscolher={() => {}} itens={[{ k: 'reps', rotulo: 'repetições', valor: reps }]} />
+        : <Par escolhido={qual} aoEscolher={setQual} itens={[{ k: 'carga', rotulo: s.un, valor: virgula(carga) }, { k: 'reps', rotulo: 'repetições', valor: reps }]} />}
+      {!s.semCarga && qual === 'carga'
+        ? <Regua key="carga" min={0} max={Math.max(60, Math.ceil(carga * 2 / 10) * 10)} passo={s.passo} cada={s.passo >= 2.5 ? 10 : 5}
+                 largura={16} valor={carga} aoMudar={setCarga} rotulo={'carga em ' + s.un} passos={false} />
+        : <Regua key="reps" min={1} max={Math.max(30, reps + 15)} passo={1} cada={5} largura={30} valor={reps} aoMudar={setReps} rotulo="repetições" passos={false} />}
       {s.faixa && <Apoio>{s.faixa}</Apoio>}
-      <p class="v3-rotulo">Repetições que sobravam (RIR)</p>
-      <Fichas rotulo="RIR" prefixo="passada-rir-" aoTocar={k => setRir(k === 'nenhum' ? null : k)}
-              opcoes={s.rirs.map(v => ({ k: v, t: String(v), on: rir === v })).concat([{ k: 'nenhum', t: 'nenhum', on: rir == null }])} />
-      {s.falhou && <p class="v3-erro" role="alert">{s.falhou}</p>}
+      <p class="v3-apoio">Sobraram quantas? <span class="v3-legenda">(RIR: repetições que sobraram)</span></p>
+      <Respostas sobreFundo rotulo="Repetições que sobraram" valor={rir == null ? 'nenhum' : rir}
+                 opcoes={s.rirs.map(v => ({ k: v, t: String(v) })).concat([{ k: 'nenhum', t: 'não sei' }])}
+                 aoResponder={k => setRir(k === 'nenhum' ? null : k)} />
+      {s.falhou && <Caixa tom="atencao" titulo="Não guardei." nota={s.falhou + ' Os números continuam aqui.'} />}
       <Acoes><Botao data-a="passada-guarda" onClick={() => ctx.guardaSeriePassadaV3(s.semCarga ? null : carga, reps, rir)}>
-        {s.novo ? 'Lançar a série' : 'Guardar a correção'}
+        {s.falhou ? 'Tentar de novo' : s.novo ? 'Lançar a série' : <>{ic.ok} Guardar</>}
       </Botao></Acoes>
       {!s.novo && <Saida data-a="passada-apaga" onClick={ctx.apagaSerieDaPassadaV3}>Apagar esta série</Saida>}
     </Folha>

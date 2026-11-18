@@ -10200,13 +10200,15 @@ CTX.diaAberto = function () {
     }, 0);
     const P = !m.livre && treino(m.day);
     const prescritas = P ? P.ex.reduce(function (n, ex) { return n + ex.s; }, 0) : 0;
-    const hora = temHora(m) ? fmtHoraDita(m.t) : null;
-    const fim = hora && m.dur ? fmtHoraDita(m.t + m.dur + (m.pausado || 0)) : null;
+    const hh = function (x) { return horaHHMM(x).replace(':', 'h'); };
+    const hora = temHora(m) ? hh(m.t) : null;
+    const fim = hora && m.dur ? hh(m.t + m.dur + (m.pausado || 0)) : null;
     const detalhe = m.livre
       ? [(m.grupos || []).join(', ') || null, m.dur ? fmtDur(m.dur) : null].filter(Boolean)
-      : [hora ? hora + (fim ? ' → ' + fim : '') : 'sem hora',
-         m.dur && m.fim !== 'manual' ? 'fechou sem você' : null,
-         prescritas ? feitas + ' de ' + prescritas + ' séries' : (feitas ? feitas + ' séries' : null)].filter(Boolean);
+      : [hora ? hora + (fim ? ' às ' + fim : '') : 'sem hora',
+         feitas ? feitas + (prescritas && feitas < prescritas ? ' de ' + prescritas : '') + ' séries' : (prescritas ? 'nenhuma série' : null),
+         m.dur ? fmtDur(m.dur) : null,
+         m.dur && m.fim !== 'manual' ? 'fechou sem você' : null].filter(Boolean);
     return {
       k: 'sessao', t: m.t, letra: letraDoRegistro(m),
       titulo: m.livre ? (m.nome || 'Treino fora da prescrição') : diaAberto(m.day) ? 'Aula' : 'Treino ' + m.day,
@@ -10218,8 +10220,8 @@ CTX.diaAberto = function () {
     const depois = !c.semHora && marcas.some(function (m) { return !m.livre && temHora(m) && m.t < c.t; });
     return {
       k: 'cardio', t: c.t,
-      titulo: 'Cardio · ' + c.min + ' min de ' + c.m,
-      detalhe: [c.i, horaDoCardio(c) ? horaDoCardio(c) + (depois ? ', depois do treino' : '') : 'lançado depois, sem hora']
+      titulo: 'Cardio: ' + c.m,
+      detalhe: [c.min + ' min' + (c.i ? ', ' + c.i : ''), horaDoCardio(c) ? horaDoCardio(c) + (depois ? ', depois do treino' : '') : 'lançado depois, sem hora']
                  .filter(Boolean).join(' · ') +
                (igual ? (horaDoCardio(igual) ? ' · igual ao das ' + horaDoCardio(igual) : ' · igual a outro deste dia') : ''),
       igual: !!igual,
@@ -10250,6 +10252,10 @@ CTX.diaAberto = function () {
     procedencia: marcas.length ? 'dia de treino, pela sessão registrada'
                : desc ? 'descanso, marcado por você' : 'nada registrado',
     registros: sessoes.concat(listaCardio).sort(function (a, b) { return a.t - b.t; }),
+    peso: (function () {
+      const p = (S.body.peso || []).filter(function (x) { return sameDay(x.t, t); }).slice(-1)[0];
+      return p ? { valor: fmtDec(p.v), v: p.v, t: p.t, hora: horaHHMM(p.t).replace(':', 'h'), data: fmtDate(p.t) } : null;
+    })(),
     vazio: !marcas.length && !desc && !cardios.length,
     descanso: desc,
     // "marcado agora, às 21h22 · não conta como treino em nenhuma conta" (estado 9)
@@ -10353,7 +10359,7 @@ CTX.detalheDaSessao = function () {
       const aberta = !!(pa && pa.idEx === idEx && pa.chave === chave && pa.k === k);
       series.push(s
         ? { k: k, texto: e.u ? textoDaSerie(s, e.u, e.q) : textoDaSerieDaPassada(idEx, s),
-            rir: s[2] != null ? 'RIR ' + s[2] : null, editavel: !e.u, aberta: aberta }
+            rir: s[2] != null ? 'RIR ' + s[2] : null, editavel: !e.u, aberta: aberta, dp: !!e.dp }
         : { k: k, nao: true, lanca: !e.u, aberta: aberta });
     }
     let editor = null;
@@ -14049,10 +14055,10 @@ CTX.seriePassadaV3 = function () {
   const fx = faixaDoTexto(ex ? ex.r : null);
   const sr = x ? x.s : null;
   return {
-    titulo: 'Série ' + (p.k + 1),
-    sub: nomeEx(p.idEx) + ' · ' + (p.novo
-      ? (p.ref ? 'não registrada; a carga vem da série de referência' : 'não registrada')
-      : 'guardada: ' + textoDaSerieDaPassada(p.idEx, p.era)),
+    titulo: nomeEx(p.idEx) + ' · série ' + (p.k + 1),
+    sub: DIAS_LONGOS[new Date(m.t).getDay()] + ', ' + fmtDate(m.t) + '. ' + (p.novo
+      ? (p.ref ? 'Não registrada; a carga vem da série de referência.' : 'Não registrada.')
+      : 'Corrigir aqui não muda o programa.'),
     novo: !!p.novo,
     un: CARGAS[tipo].rot,
     semCarga: tipo === 'corpo',

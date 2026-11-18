@@ -21,7 +21,7 @@ test('o dia aberto mostra a hora da sessão', async () => {
   a.aba('dias');
   a.v('ctx.abreDia', t);
   await a.esperar();
-  assert.ok(a.texto('[data-a="dia-sessao"]').includes('6h40 → 7h30'), a.texto('[data-a="dia-sessao"]'));
+  assert.ok(a.texto('[data-a="dia-sessao"]').includes('06h40 às 07h30'), a.texto('[data-a="dia-sessao"]'));
   a.fechar();
 });
 

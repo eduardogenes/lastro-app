@@ -22,7 +22,7 @@
 }
 .v3 .v3-ss-sv small { font: 600 12px var(--f-texto); color: var(--texto-2); }
 .v3 .v3-ss-sv.nf { background: transparent; box-shadow: inset 0 0 0 1.5px var(--contorno); color: var(--texto-2); font-weight: 600; font-size: 13px; }
-.v3 .v3-ss-sv:disabled { box-shadow: none; background: var(--superficie-quieta); }
+.v3 .v3-ss-series button:disabled { opacity: 1; }
 .v3-ss-nota { margin-top: 6px; font-size: 13px; color: var(--texto-2); }
 
 /* uma sessão do histórico do exercício, que abre para corrigir */
