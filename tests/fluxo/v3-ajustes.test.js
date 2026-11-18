@@ -7,7 +7,6 @@ import { app, agoraEstavel } from './harness.js';
 async function comVisual(estado) {
   const a = await app({ aba: 'agora', agora: agoraEstavel(15), estado: estado || { logs: {}, done: [] } });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.v('ctx.fechaModoDeSessao');
   await a.esperar();
   return a;
@@ -35,16 +34,13 @@ test('ajustes: a conta, o que aparece e o interruptor do visual', async () => {
   a.clicar('[data-a="ajustes-cardio"]');
   await a.esperar();
   assert.strictEqual(a.E(`ligado(S.modulos, 'cardio')`), false, 'desligou o cardio');
-  a.clicar('[data-a="visual-novo"]');
-  await a.esperar();
-  assert.strictEqual(a.E('visualNovo()'), false, 'voltou ao visual antigo');
+  assert.strictEqual(a.$('[data-a="visual-novo"]'), null, 'não há mais interruptor de visual: o novo é o único');
   a.fechar();
 });
 
 test('confirmação: a folha nova, com "Deixar como está" como principal e com o foco nele', async () => {
   const a = await app({ aba: 'agora', agora: agoraEstavel(15), estado: { logs: {}, done: [] }, painelManual: true });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.v('ctx.fechaModoDeSessao');
   a.v('ctx.comecaAqui');
   await a.esperar();

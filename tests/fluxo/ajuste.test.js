@@ -143,7 +143,7 @@ test('o backup leva o saldo e o ledger', async () => {
   a.E("S.ajusteHist = [{ t: 1, de: -1, para: -2, k: 'menos', p: 'texto', reg: 13 }]");
   a.aba('ajustes');
   a.v('showJSON');
-  const bkp = JSON.parse(a.doc.getElementById('jout').value);
+  const bkp = JSON.parse(a.v('payload'));
   assert.strictEqual(bkp.data.ajuste, -2);
   assert.strictEqual(bkp.data.ajusteHist.length, 1);
   a.fechar();
@@ -543,32 +543,6 @@ test('cancelar a restauração do plano NÃO carimba a versão', async () => {
   a.fechar();
 });
 
-test('o passo diz antes do toque o que vira base, e depois diz quem aplicou, quando e quanto', async () => {
-  // §6.3 da frente 3. Antes: a consequência em número (V4), e o que não volta
-  // sozinho. Depois: o agente é o app (V8), com o instante e as kcal do dia de
-  // treino antes e depois — guardadas no passo, porque o plano muda.
-  const a = await comPeso([73.0, 73.05, 73.10]);
-  a.aba('semana');
-  await a.esperar();
-  const v0 = a.vJ('ctx.dados').veredito;
-  assert.strictEqual(v0.estado.indexOf('plano base'), 0, 'pré-condição: sem passo, a linha é o estado');
-  const m = /^Depois de aplicado, ([\d.]+) kcal vira a nova base\. Se o peso voltar ao alvo, o passo não é devolvido sozinho\.$/.exec(v0.naoVolta);
-  assert.ok(m, 'a frase do que não volta, antes do toque: ' + v0.naoVolta);
-  assert.ok(a.texto('.dd-naovolta'), 'e ela está na tela, junto do botão');
-
-  await a.v('ctx.aplicaAjuste'); await a.esperar();
-  assert.strictEqual(a.toast(), 'Apliquei +150 kcal. O arroz do plano foi para ' + a.v('arrozAtual') + ' g.');
-  const passo = a.S().ajusteHist.slice(-1)[0];
-  assert.strictEqual(passo.kpara.toLocaleString('pt-BR'), m[1], 'o número prometido antes é o que o passo deu');
-  assert.ok(passo.kpara > passo.kde, 'e subiu');
-  // O passo seguinte é outro veredito; a linha olha só o que está em vigor.
-  const e = a.vJ('ctx.dados').veredito.estado;
-  assert.ok(new RegExp('^Apliquei \\+150 kcal em \\d\\d/\\d\\d, às \\d+h\\d\\d · ' +
-    passo.kde.toLocaleString('pt-BR').replace('.', '\\.') + ' → ' + m[1].replace('.', '\\.') +
-    ' kcal em dia de treino · ajuste \\+150 kcal · arroz \\d+ g$').test(e), e);
-  a.fechar();
-});
-
 // ---------- os portões, o vazio e o desfazer (§6.2, §6.4, §6.3 da frente 3) ----------
 
 function comPesoEComida(medias, dias) {
@@ -579,53 +553,6 @@ function comPesoEComida(medias, dias) {
   } });
 }
 
-test('com a adesão faltando, a Semana promete não cobrar em outro lugar — e o Agora não cobra', async () => {
-  // Decisão do dono, 14/10: a promessa entra, e é cumprida.
-  const a = await comPesoEComida([73.0, 73.05, 73.10], 1);
-  a.aba('semana');
-  await a.esperar();
-  assert.strictEqual(a.texto('[data-a="promessa-adesao"]'),
-    'Enquanto a adesão não chega a 11, o veredito não muda, por mais pesagem que entre. A tela não vai pedir isso de novo em outro lugar.');
-  a.aba('agora');
-  await a.esperar();
-  const agora = a.texto('#app');
-  assert.ok(!/adesão/i.test(agora), 'o Agora não fala de adesão: ' + (agora.match(/.{0,40}ades.{0,40}/i) || [''])[0]);
-  a.fechar();
-
-  const b = await comPesoEComida([73.0, 73.05, 73.10], 14);
-  b.aba('semana');
-  await b.esperar();
-  assert.strictEqual(b.$('[data-a="promessa-adesao"]'), null, 'com a adesão cumprida, não há o que prometer');
-  b.fechar();
-});
-
-test('peso parado mostra os três portões, e o da adesão leva a pôr os dias em dia', async () => {
-  const a = await comPesoEComida([73.0, 73.05, 73.10], 1);
-  a.aba('semana');
-  await a.esperar();
-  const ks = a.$$('[data-portao]').map(function (x) { return x.getAttribute('data-portao'); });
-  assert.deepStrictEqual(ks, ['taxa', 'forca', 'adesao']);
-  assert.strictEqual(a.texto('[data-portao="forca"] .ins-linha-t'), 'Força: cumprida — não está subindo');
-  assert.strictEqual(a.texto('[data-portao="adesao"] .ins-linha-t'), 'Adesão: falta — 1 dia de 14');
-  assert.ok(a.$('[data-portao="forca"] [data-a="portao-ver-forca"]'), 'a força tem o "Ver a força"');
-
-  a.clicar('[data-a="portao-por-em-dia"]');
-  await a.esperar();
-  assert.strictEqual(a.vista().aba, 'dias', '"Pôr em dia" leva aos dias, onde cada um se põe em dia');
-  a.fechar();
-});
-
-test('peso subindo rápido mostra taxa, adesão e avaliação visual — sem força', async () => {
-  const a = await comPesoEComida([73.0, 73.5, 74.0], 14);
-  a.aba('semana');
-  await a.esperar();
-  const ks = a.$$('[data-portao]').map(function (x) { return x.getAttribute('data-portao'); });
-  assert.deepStrictEqual(ks, ['taxa', 'adesao', 'visual']);
-  assert.strictEqual(a.texto('[data-portao="visual"] .ins-linha-t'), 'Avaliação visual: falta — sem resposta');
-  assert.strictEqual(a.$('[data-a="portao-responder"]'), null, 'sem par de fotos, não há o que responder');
-  a.fechar();
-});
-
 test('com uma semana sozinha fora da faixa, não há portão nenhum', async () => {
   const a = await comPesoEComida([73.0, 73.1, 73.85], 14);
   a.aba('semana');
@@ -634,82 +561,3 @@ test('com uma semana sozinha fora da faixa, não há portão nenhum', async () =
   a.fechar();
 });
 
-test('o vazio lista as semanas, e as duas saídas levam ao Corpo', async () => {
-  const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
-  a.aba('semana');
-  await a.esperar();
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Não mexer: faltam pesagens');
-  assert.strictEqual(a.$$('.dd-semanas .ins-linha').length, 4, 'as quatro últimas semanas');
-  assert.strictEqual(a.$$('.dd-semanas .ins-linha-v')[1].textContent, 'nenhuma pesagem', 'zero se diz "nenhuma", não "0 pesagens"');
-  assert.strictEqual(a.texto('.dd-naoinvente'), 'Não invente o peso de um dia que passou.');
-
-  a.clicar('[data-a="vazio-outro-dia"]');
-  await a.esperar();
-  assert.strictEqual(a.vista().aba, 'corpo');
-  assert.strictEqual(a.vista().bodyDiaAberto, 'peso', 'e com o dia do peso já aberto');
-  a.fechar();
-});
-
-test('o vazio diz a saída quando um buraco separa duas semanas válidas', async () => {
-  const s = function (k, dow) { return inicioDaSemana(Date.now()) - k * 7 * DIA + dow * DIA + 10 * 3600000; };
-  const peso = [
-    { t: s(3, 1), v: 73 }, { t: s(3, 3), v: 73 },
-    { t: s(2, 2), v: 73 },
-    { t: s(1, 1), v: 73 }, { t: s(1, 3), v: 73 }
-  ];
-  const a = await app({ estado: { logs: {}, done: [], body: { peso: peso, cintura: [] } } });
-  a.aba('semana');
-  await a.esperar();
-  assert.ok(/^Com a semana de \d\d\/\d\d incompleta, as de \d\d\/\d\d e \d\d\/\d\d não formam sequência\. Uma pesagem com data passada em \d\d\/\d\d ainda resolve isso — se você souber o número\.$/
-    .test(a.texto('.dd-saida')), a.texto('.dd-saida'));
-  a.fechar();
-});
-
-test('"Desfazer" volta o plano ao saldo de antes, e o passo fica no registro marcado', async () => {
-  const a = await comPeso([73.0, 73.05, 73.10]);
-  a.aba('semana');
-  await a.esperar();
-  const base = a.v('arrozAtual');
-  assert.strictEqual(a.$('[data-a="desfaz-ajuste"]'), null, 'sem passo, não há o que desfazer');
-
-  await a.v('ctx.aplicaAjuste'); await a.esperar();
-  a.clicar('[data-a="desfaz-ajuste"]');
-  await a.esperar();
-  assert.strictEqual(a.S().ajuste, 0, 'o saldo voltou');
-  assert.strictEqual(a.v('arrozAtual'), base, 'e o arroz junto');
-  assert.strictEqual(a.S().ajusteHist.length, 1, 'o passo não sumiu do registro');
-  assert.ok(a.S().ajusteHist[0].desfeito > 0, 'ficou marcado como desfeito');
-  assert.strictEqual(a.toast(), 'Desfiz o +150 kcal. O arroz do plano voltou para ' + base + ' g.');
-  assert.strictEqual(a.$('[data-a="desfaz-ajuste"]'), null, 'e o botão sai: não há mais passo em vigor');
-  assert.ok(a.vJ('ctx.dados').veredito.estado.indexOf('plano base') === 0, 'a linha volta ao estado');
-  a.fechar();
-});
-
-test('se o aparelho recusa, o passo não entra pela metade e a tela diz o que não mudou', async () => {
-  // A D (`semana.html`, estado 10). O passo mexe no ajuste, no histórico dele e
-  // no arroz de duas refeições — e antes dizia "Apliquei" sem saber se tinha
-  // gravado. Agora grava na hora; se o aparelho recusa, os três voltam juntos.
-  const a = await comPeso([73.0, 73.05, 73.10]);
-  a.aba('semana');
-  const base = a.v('arrozAtual');
-  const plano = JSON.stringify(a.S().comida.plano);
-  a.encheCota();
-  await a.v('ctx.aplicaAjuste'); await a.esperar(60);
-
-  assert.strictEqual(a.S().ajuste || 0, 0, 'o ajuste não mudou');
-  assert.strictEqual((a.S().ajusteHist || []).length, 0, 'o histórico do passo não ganhou linha');
-  assert.strictEqual(a.v('arrozAtual'), base, 'e o arroz continua onde estava');
-  assert.strictEqual(JSON.stringify(a.S().comida.plano), plano, 'o plano inteiro, igual');
-  assert.ok(!/Apliquei/.test(a.toast() || ''), 'nenhum "Apliquei" antes de gravar');
-  assert.ok(/O passo não foi aplicado/.test(a.texto('.dd-passo-falhou')), a.texto('.dd-passo-falhou'));
-  assert.ok(/O veredito continua valendo: \+150 kcal/.test(a.texto('.dd-passo-falhou')));
-
-  a.encheCota(false);
-  a.clicar('[data-a="passo-tenta"]');
-  await a.esperar(60);
-  assert.strictEqual(a.S().ajuste, 1, '"Tentar de novo" aplica');
-  assert.strictEqual(a.v('arrozAtual'), base + 120);
-  assert.strictEqual(a.$('.dd-passo-falhou'), null);
-  assert.ok(/Apliquei \+150 kcal/.test(a.toast()), a.toast());
-  a.fechar();
-});

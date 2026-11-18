@@ -11,16 +11,6 @@ async function noPrograma(d) {
   return a;
 }
 
-test('a lista mostra os seis dias e a conta contra o treinador', async () => {
-  const a = await noPrograma();
-  const stats = a.$$('.stats b').map(function (x) { return x.textContent; });
-  assert.deepStrictEqual(stats, ['90', '90', '0'], 'começa idêntico ao programa dele');
-  assert.strictEqual(a.$$('.progd').length, 6, 'cinco de musculação e o HYROX');
-  assert.strictEqual(a.$$('.progd-l')[0].textContent, 'A');
-  assert.strictEqual(a.$$('.progd-l')[3].textContent, 'D', 'a ordem da lista é a da rotação');
-  a.fechar();
-});
-
 test('mudar série no programa é imediato e fica no histórico', async () => {
   const a = await noPrograma('B');
   await a.v('progSeries', 'B', 0, 1);
@@ -237,22 +227,6 @@ test('as duas edições não se confundem', async () => {
   a.fechar();
 });
 
-test('todas as telas do programa renderizam', async () => {
-  const a = await noPrograma();
-  const titulos = { lista: 'Programa', diff: 'O que está diferente', historico: 'Histórico de mudanças' };
-  Object.keys(titulos).forEach(function (m) {
-    a.v('modoPrograma', m);
-    assert.strictEqual(a.texto('.htitle'), titulos[m], 'tela errada: ' + m);
-    assert.ok(a.$('.back'), 'sem caminho de volta em ' + m);
-  });
-  a.v('abrirPrograma', 'E');
-  assert.ok(a.$$('.edx').length, 'o treino abre com os exercícios');
-  a.v('fecharPrograma');
-  assert.strictEqual(a.vista().prog, null);
-  assert.ok(a.$('.ins-estado-v'), 'e volta para a tela de treino');
-  a.fechar();
-});
-
 // ---------- o freio no painel de músculos ----------
 
 test('o painel atribui a série ao exercício registrado, não à posição', async () => {
@@ -266,62 +240,6 @@ test('o painel atribui a série ao exercício registrado, não à posição', as
   const m = a.vJ('seriesPorMusculo', 0, Date.now() + 1);
   assert.strictEqual(m['peito'], 2, 'contou onde o trabalho aconteceu');
   assert.strictEqual(m['delt lateral'], undefined, 'e não onde ele estava prescrito');
-  a.fechar();
-});
-
-test('exercício cadastrado por ele conta no painel', async () => {
-  const a = await app();
-  a.E(`S.ex["maquina-nova"] = { n:"Máquina nova", car:"pino", g:"dorsal", c:0, cue:"", meu:1 };
-       montaCatalogo()`);
-  a.v('modoEdicao', true);
-  await a.v('addExercicio', 'maquina-nova');
-  await a.esperar();
-  a.v('modoEdicao', false);
-  const i = a.vJ('treino', 'A').ex.length - 1;
-  a.v('toggle', i);
-  a.preencher(i, 0, 50, 10);
-
-  assert.strictEqual(a.vJ('seriesPorMusculo', 0, Date.now() + 1)['dorsal'], 1);
-  a.aba('semana');
-  await a.modo('treino');
-  assert.ok(a.doc.getElementById('app').textContent.includes('dorsal'));
-  a.fechar();
-});
-
-test('o painel de corpo avisa quando o programa saiu do alvo do treinador', async () => {
-  const a = await app();
-  a.aba('semana');
-  await a.modo('treino');
-  assert.strictEqual(a.$('.dd-fora'), null, 'programa igual ao dele: nada a dizer');
-
-  a.v('abrirPrograma', 'A');
-  await a.v('progSeries', 'A', 4, 1);
-  await a.esperar();
-  a.v('fecharPrograma');
-  a.aba('semana');
-  // Voltar ao DADOS remonta a tela e o modo cai no padrão: séries por músculo
-  // mora no de treino.
-  await a.modo('treino');
-
-  const aviso = a.texto('.dd-fora');
-  assert.ok(aviso, 'programa fora do alvo aparece onde ele acompanha o volume');
-  assert.match(aviso, /delt lateral: 13 na rotação · o treinador prescreveu 12/);
-  a.fechar();
-});
-
-test('músculo que saiu do programa mas foi treinado continua aparecendo', async () => {
-  // Tibial anterior saiu do programa na revisão de 2026 e sobrevive no catálogo
-  // como legado: continua trocável, e o trabalho feito nele continua contando.
-  const a = await app();
-  a.v('go', 'B');
-  a.v('toggle', 4);
-  a.v('setAlt', 4, 'tibial-anterior');
-  a.preencher(4, 0, 20, 15);
-  a.aba('semana');
-  await a.modo('treino');
-  const musculos = a.$$('.dd-mus-n').map(function (x) { return x.textContent; });
-  assert.ok(musculos.some(function (x) { return /tibial/.test(x); }),
-    'sumir da tabela esconderia trabalho que existiu');
   a.fechar();
 });
 
@@ -403,83 +321,3 @@ test('ctx.restauraPrograma sem diferença nenhuma não pergunta e não mexe', as
   a.fechar();
 });
 
-// ---------------------------------------------------------------------------
-// O ACHADO 1: as quatro capacidades do cartão do exercício ganham porta
-// ---------------------------------------------------------------------------
-//
-// Com a aba de treino fora, o cartão do exercício só existe DENTRO do modo — e
-// quatro coisas moravam só nele, sem segunda porta: o gráfico do "estou ficando
-// mais forte nisto", a correção de uma série de semanas atrás, o renome do
-// exercício e o tipo de carga.
-//
-// A perda não apareceria no dia: apareceria quando ele fosse corrigir. E
-// corrigir a série de três semanas atrás não é tarefa de quem está treinando.
-
-test('a Prescrição abre o programa — o lugar que o possui tem a porta', async () => {
-  // A §1.5 lista "o programa dele e a rotação" como posse de Prescrição, e as
-  // duas portas que existiam eram a tela do treino (hoje dentro do modo) e o
-  // painel de volume da Semana. Nenhuma das duas é "quero mexer no meu
-  // programa": uma é no meio do treino, a outra é consequência de um número.
-  const a = await app({ aba: 'prescricao' });
-  await a.esperar();
-
-  const porta = a.$('[data-a="abre-programa"]');
-  assert.ok(porta, 'a porta está no chip do programa');
-  porta.click();
-  await a.esperar(60);
-  assert.ok(a.vista().prog, 'e abre o editor');
-  a.fechar();
-});
-
-test('cada linha do programa abre o histórico daquele exercício', async () => {
-  const a = await app({ aba: 'prescricao' });
-  await a.esperar();
-  a.clicar('[data-a="abre-programa"]');
-  await a.esperar(60);
-  a.v('abrirPrograma', 'B');            // abre o dia B no editor
-  await a.esperar(60);
-
-  const portas = a.$$('[data-a="hist-prescricao"]');
-  assert.ok(portas.length > 0, 'as linhas têm a porta do histórico');
-  assert.ok(portas[0].getAttribute('aria-label'),
-    'com nome acessível: "histórico" sozinho não diz de quê');
-
-  portas[0].click();
-  await a.esperar(60);
-  assert.ok(a.vista().hist, 'abriu o histórico');
-  assert.strictEqual(a.vista().hist.day, 'B',
-    'do dia que a LINHA mostra, e não do último dia visitado');
-  a.fechar();
-});
-
-test('o histórico abre POR CIMA do programa, e o Voltar devolve o programa', async () => {
-  // A ordem das camadas mudou para isto, e o caso é o que a segura: abrindo de
-  // dentro do programa, o histórico é a camada de cima. Com a ordem antiga o
-  // programa ganhava e o histórico simplesmente não aparecia.
-  const a = await app({ aba: 'prescricao' });
-  await a.esperar();
-  a.clicar('[data-a="abre-programa"]');
-  await a.esperar(60);
-  a.v('abrirPrograma', 'B');            // abre o dia B no editor
-  await a.esperar(60);
-  a.clicar('[data-a="hist-prescricao"]');
-  await a.esperar(60);
-
-  assert.deepStrictEqual(camadasAbertas(a.vista()), ['prog', 'hist'],
-    'o histórico é a camada de CIMA');
-  // `.hwrap` NÃO serve de prova: o editor de programa usa a mesma classe de
-  // corpo, e com a ordem invertida o caso ficava verde desenhando a tela errada.
-  // Quem distingue é o título — o do histórico é o nome do exercício.
-  const titulo = a.texto('.tc-titulo');
-  assert.ok(!/[Pp]rograma/.test(titulo),
-    'e é o histórico que está desenhado, não o programa: ' + titulo);
-  assert.ok(a.$('.hgraf') || a.$('.hvazio') || /registrad|sessão/i.test(
-    a.doc.getElementById('app').textContent),
-    'com o conteúdo do histórico na tela');
-
-  a.window.history.back();
-  await a.esperar(80);
-  assert.strictEqual(a.vista().hist, null, 'o Voltar fechou o histórico');
-  assert.ok(a.vista().prog, 'e devolveu o programa, não o lugar');
-  a.fechar();
-});

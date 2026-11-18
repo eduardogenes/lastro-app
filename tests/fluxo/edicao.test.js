@@ -12,14 +12,6 @@ async function editando(o) {
   return a;
 }
 
-test('editar só aparece no treino do dia', async () => {
-  const a = await app();
-  assert.ok(a.$('.edlink'), 'no dia da rotação, dá para editar');
-  a.v('go', 'E');
-  assert.strictEqual(a.$('.edlink'), null, 'outro dia é edição de programa, não de sessão');
-  a.fechar();
-});
-
 test('mudar séries vale para hoje e não toca no oficial', async () => {
   const a = await editando();
   const oficial = a.S().prog.A.ex[4].s;
@@ -92,23 +84,6 @@ test('remover exercício tira do dia e apaga o registro da sessão', async () =>
     'e o registro daquela sessão foi junto');
   assert.strictEqual(a.S().prog.A.ex.filter(function (x) { return x.id === chave; }).length, 1,
     'mas continua no programa oficial');
-  a.fechar();
-});
-
-test('cadastrar equipamento novo cria exercício com histórico próprio', async () => {
-  const a = await editando();
-  a.v('abrirNovoEx');
-  a.digitar('nxn', 'Chest press da academia nova');
-  a.$('#nxg').value = 'peito superior';
-  a.$('#nxk').checked = true;
-  await a.v('criarExercicio');
-  await a.esperar();
-
-  const k = 'chest-press-da-academia-nova';
-  assert.strictEqual(a.dado('CAT')[k].g, 'peito superior');
-  assert.strictEqual(a.dado('CAT')[k].c, 1);
-  assert.strictEqual(a.dado('CAT')[k].meu, 1);
-  assert.ok(a.vJ('treino', 'A').ex.some(function (x) { return x.id === k; }), 'já entrou no dia');
   a.fechar();
 });
 
@@ -451,19 +426,6 @@ test('renomear não move o histórico, porque não mexe no id', async () => {
   assert.ok(!!a.S().fotos[alvo], 'a foto do aparelho também');
   assert.ok(a.S().prog[a.vista().hist.day].ex.some(function (x) { return x.id === alvo; }),
     'e a prescrição no programa');
-  a.fechar();
-});
-
-test('o nome novo aparece no título e no cartão', async () => {
-  const a = await app();
-  const alvo = abreHistorico(a);
-  await a.v('ctx.renomeiaExercicio', alvo, 'Cadeira do fundo');
-  await a.esperar(60);
-  assert.strictEqual(a.texto('.htitle'), 'Cadeira do fundo');
-
-  a.v('ctx.fechaHist');
-  assert.ok(a.$$('.ex').map(x => x.textContent).join(' ').includes('Cadeira do fundo'),
-    'o cartão do treino segue o nome');
   a.fechar();
 });
 

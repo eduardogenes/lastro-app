@@ -147,24 +147,6 @@ test('trocar a medida do dia alcança o que já foi digitado', async () => {
   a.fechar();
 });
 
-test('o cartão de um movimento com grandeza não pede RIR nem aproximação', async () => {
-  const a = await app({});
-  a.aba('treino');
-  a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
-  a.E('view.day="HX"');
-  a.v('addExercicio', 'remo-ergometro');
-  await a.esperar(50);
-  a.E('view.open=0'); a.v('render');
-  await a.esperar();
-
-  assert.strictEqual(a.$$('.ex.open .rirbtn').length, 0, 'nenhum botão de RIR na tabela');
-  assert.ok(!a.$('.ex.open .aquec'),
-    '"2 a 3 séries subindo carga" não quer dizer nada num remo');
-  assert.strictEqual(a.texto('.ex.open .ex-sub span'), '1 × 1.000 m',
-    'o cartão diz o que foi passado, não só um número solto');
-  a.fechar();
-});
-
 test('o catálogo conhece o vocabulário do box', async () => {
   const a = await app({});
   a.aba('treino');
@@ -188,49 +170,6 @@ test('todo movimento de box fica fora do alvo por músculo e declara grandeza', 
   assert.deepStrictEqual(falhas, [],
     'movimento com grupo entraria no volume; sem grandeza viraria série de musculação');
   assert.strictEqual(a.dado('ALVO_TOTAL'), 90, 'o alvo continua sendo só a musculação');
-  a.fechar();
-});
-
-test('exercício cadastrado por ele pode declarar grandeza', async () => {
-  const a = await app({});
-  a.aba('treino');
-  a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
-  a.E('view.day="HX"');
-  a.v('abrirAddEx'); a.v('abrirNovoEx');
-  await a.esperar();
-  a.doc.getElementById('nxn').value = 'Sandbag over shoulder';
-  a.doc.getElementById('nxg').value = 'peito';
-  a.doc.getElementById('nxu').value = 'rep';
-  a.doc.getElementById('nxq').value = '15';
-  a.clicar('.novoex .dbtn');
-  await a.esperar(60);
-
-  const ex = a.S().ex["sandbag-over-shoulder"];
-  assert.strictEqual(ex.u, 'rep', 'a grandeza escolhida entra no catálogo dele');
-  assert.strictEqual(ex.q, 15);
-  assert.strictEqual(ex.g, '',
-    'movimento com grandeza não leva grupo: contaria como série de peito no volume');
-  assert.strictEqual(a.vJ('treino', 'HX').ex[0].u, 'rep', 'e entra no dia já medido certo');
-  a.fechar();
-});
-
-test('o cabeçalho acompanha a quantidade enquanto ele digita', async () => {
-  const a = await app({});
-  a.aba('treino');
-  a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
-  a.E('view.day="HX"');
-  a.v('addExercicio', 'remo-ergometro');
-  await a.esperar(50);
-  a.E('view.open=0'); a.v('abrirMedida', 0);
-  await a.esperar();
-  assert.strictEqual(a.texto('#presc0'), '1 × 1.000 m');
-
-  // digitar não re-renderiza — o campo é controlado e "5," viraria "5" no meio
-  // da digitação. Quem mantém o cabeçalho honesto é a escrita direta.
-  a.digitar('q0', '500');
-  await a.esperar();
-  assert.strictEqual(a.texto('#presc0'), '1 × 500 m',
-    'o cabeçalho dizia 1.000 enquanto o campo já mostrava 500');
   a.fechar();
 });
 

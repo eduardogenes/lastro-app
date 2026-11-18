@@ -11,7 +11,6 @@ const dia = (h, m, extra) => Object.assign({ data: dataLocal(agoraEstavel(h, m))
 async function noHoje(h, m, extra) {
   const a = await app({ agora: agoraEstavel(h, m), estado: Object.assign({ logs: {}, done: [], dia: dia(h, m) }, extra || {}) });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   // num dia de treino o app abre no treino; o Hoje fica por baixo dele
   a.v('ctx.fechaModoDeSessao');
   a.v('ctx.comecaAqui');        // aparelho vazio: passa da primeira vez

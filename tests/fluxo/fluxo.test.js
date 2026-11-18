@@ -75,10 +75,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   assert.strictEqual(a.vista().day, 'C');
   a.v('modoEdicao', true);
   a.v('abrirNovoEx');
-  a.digitar('nxn', 'Pendulum da unidade nova');
-  a.$('#nxg').value = 'quadríceps';
-  a.$('#nxk').checked = true;
-  await a.v('criarExercicio');
+  await a.E("criarExercicioCom({ nome: 'Pendulum da unidade nova', grupo: 'quadríceps', composto: true })");
   await a.esperar();
   a.v('modoEdicao', false);
 
@@ -128,15 +125,11 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   // o agachamento da terça + 3 do aparelho novo cadastrado na quarta
   assert.strictEqual(mus['quadríceps'], setsB0 + 3, 'o pendulum novo contou em quadríceps');
 
-  // e todas as telas continuam de pé
-  ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (t) {
+  // e os cinco lugares continuam de pé
+  ['agora', 'dias', 'corpo', 'semana', 'prescricao'].forEach(function (t) {
     b.aba(t);
-    assert.ok(b.doc.getElementById('app').innerHTML.length > 600, 'aba vazia: ' + t);
+    assert.ok(b.doc.getElementById('app').innerHTML.length > 600, 'lugar vazio: ' + t);
   });
-  b.v('abrirPrograma', null);
-  assert.strictEqual(b.texto('.htitle'), 'Programa');
-  b.v('modoPrograma', 'diff');
-  assert.ok(b.doc.getElementById('app').textContent.includes('treino B'), 'a diferença aponta o que ele mudou');
   b.fechar();
 // Limite PRÓPRIO, e só deste caso: ele monta uma semana inteira de app e leva
 // ~1,9 s sozinho; com a suíte inteira em paralelo passou dos 5 s duas vezes em
@@ -155,9 +148,6 @@ test('deload com programa editado corta as séries pela metade do que ele prescr
 
   assert.strictEqual(a.vJ('treino', 'A').ex[0].s, 4, 'a prescrição é a dele');
   assert.strictEqual(a.v('setsFor', a.vJ('treino', 'A').ex[0]), 2, 'e o deload corta essa, não a do treinador');
-  a.v('toggle', 0);
-  assert.strictEqual(a.$$('.ex.open .setrow').length, 2, 'duas linhas na tela, não quatro');
-  assert.ok(a.texto('.ex.open .ex-sub').includes('deload'));
   a.fechar();
 });
 

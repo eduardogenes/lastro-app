@@ -18,7 +18,6 @@ function iso(t) {
 async function novaSessao(antes) {
   const a = await app({ aba: 'corpo' });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   cacheFalso(a);
   cameraFalsa(a);
   if (antes) antes(a);
@@ -165,29 +164,6 @@ test('celular girando no disparo: a foto entra marcada como tremida', async () =
   a.clicar('[data-a="cam-disparo"]');
   await a.esperar(150);
   assert.deepStrictEqual(fotoDeHoje(a).cap.fora, ['tremida']);
-  a.fechar();
-});
-
-test('no visual antigo nada trava e nada é marcado, menos a torta guardada de propósito', async () => {
-  const a = await app({ aba: 'corpo' });
-  a.E('window.DeviceMotionEvent = function () {}');
-  cacheFalso(a);
-  cameraFalsa(a);
-  a.v('ctx.abreProtocolo');
-  a.v('ctx.comecaSessaoDeFotos');
-  await a.v('ctx.abreCamera');
-  await a.esperar(60);
-  a.v('ctx.ajustado');
-  a.E(`const e = new Event('devicemotion');
-       e.accelerationIncludingGravity = { x: 9.81 * Math.tan(3 * Math.PI / 180), y: 9.81, z: 0 };
-       e.rotationRate = { alpha: 0, beta: 0, gamma: 0 };
-       for (let i = 0; i < 40; i++) window.dispatchEvent(e);`);
-  await a.esperar(260);
-  a.v('ctx.disparaCamera');
-  await a.esperar(120);
-  await a.v('ctx.registraTorta');
-  await a.esperar(60);
-  assert.deepStrictEqual(fotoDeHoje(a).cap.fora, ['nivel'], 'guardar torta é fora do padrão no nível');
   a.fechar();
 });
 

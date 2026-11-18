@@ -98,21 +98,6 @@ test('sem sessão aberta não há atalho', async () => {
   a.fechar();
 });
 
-test('com treino em andamento, o atalho aparece nas outras abas', async () => {
-  const a = await app();
-  a.v('go', 'A');
-  a.v('toggle', 0);
-  a.preencher(0, 0, 40, 10);
-  await a.esperar();
-  assert.ok(a.S().sessao, 'a sessão nasceu na primeira série');
-
-  a.aba('prescricao');
-  const b = a.$('.ins-atalho');
-  assert.ok(b, 'o atalho está lá');
-  assert.ok(b.textContent.includes('em andamento'));
-  a.fechar();
-});
-
 test('na própria aba de treino o atalho some', async () => {
   const a = await app();
   a.v('go', 'A');
@@ -126,39 +111,3 @@ test('na própria aba de treino o atalho some', async () => {
   a.fechar();
 });
 
-test('o atalho diz para onde vai, e leva até lá', async () => {
-  const a = await app();
-  a.v('go', 'A');
-  a.v('toggle', 0);
-  a.preencher(0, 0, 40, 10);      // deixa o 0 PARCIAL: é onde ele parou
-  await a.esperar();
-
-  a.aba('semana');
-  const nome = a.vJ('treino', 'A').ex[0].n;
-  assert.ok(a.$('.ins-atalho').textContent.includes(nome),
-    'um atalho que não diz para onde vai obriga a tocar para descobrir');
-
-  a.clicar(a.$('.ins-atalho'));
-  await a.esperar();
-  // O atalho leva ao MODO, e a asserção trocou de propósito: ele dizia "aba
-  // treino", e a aba virou modo. O lugar por baixo fica onde estava.
-  assert.strictEqual(a.vista().modoSessao, true, 'o atalho entrou no modo');
-  assert.strictEqual(a.vista().aba, 'semana', 'e o lugar por baixo, intacto');
-  assert.strictEqual(a.vista().open, 0, 'o exercício começado vence a ordem');
-  a.fechar();
-});
-
-test('sem exercício começado, o atalho aponta o primeiro não tocado', async () => {
-  const a = await app();
-  a.v('go', 'A');
-  a.v('toggle', 0);
-  const n = a.v('setsFor', a.vJ('treino', a.vista().day).ex[0]);
-  for (let k = 0; k < n; k++) a.preencher(0, k, 40, 10);
-  await a.esperar();
-
-  a.aba('semana');
-  a.clicar(a.$('.ins-atalho'));
-  await a.esperar();
-  assert.strictEqual(a.vista().open, 1);
-  a.fechar();
-});

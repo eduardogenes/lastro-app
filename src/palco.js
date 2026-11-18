@@ -452,9 +452,9 @@ function montaBancada() {
   }
 
   function celula(rotulo, valor, fonte) {
-    return '<div class="pl-cel"><span class="ins-label-sm">' + rotulo + '</span>' +
+    return '<div class="pl-cel"><span class="pl-rotulo">' + rotulo + '</span>' +
            '<b class="pl-val">' + valor + '</b>' +
-           '<i class="ins-provenance">' + fonte + '</i></div>';
+           '<i class="pl-proc">' + fonte + '</i></div>';
   }
 
   /** O relógio do sistema é do sistema: hora de verdade, virando no minuto. */
@@ -547,22 +547,22 @@ function esqueleto() {
 
 <aside class="pl-painel">
   <div class="pl-id">
-    <span class="ins-label">aparelho</span>
+    <span class="pl-rotulo">aparelho</span>
     <h2 class="pl-nome"></h2>
   </div>
 
-  <div class="pl-leitura ins-hairgrid"></div>
+  <div class="pl-leitura"></div>
 
   <div class="pl-secao">
     <div class="pl-cab">
-      <span class="ins-label">prateleira</span>
+      <span class="pl-rotulo">prateleira</span>
       <kbd class="pl-tecla">alt 1—4</kbd>
     </div>
     <div class="pl-lista"></div>
   </div>
 
   <div class="pl-secao">
-    <span class="ins-label">bancada</span>
+    <span class="pl-rotulo">bancada</span>
     <button type="button" class="pl-girar pl-acao">
       <span>girar o aparelho</span><kbd class="pl-tecla">alt r</kbd>
     </button>

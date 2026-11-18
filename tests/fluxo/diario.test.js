@@ -126,7 +126,7 @@ test('o histórico atravessa o backup', async () => {
   await a.esperar();
   a.aba('ajustes');
   a.v('showJSON');
-  const bkp = JSON.parse(a.doc.getElementById('jout').value);
+  const bkp = JSON.parse(a.v('payload'));
   assert.strictEqual(bkp.data.comidaHist.length, 1,
     'coleção que fica de fora do export some na primeira troca de aparelho');
   a.fechar();

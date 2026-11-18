@@ -40,23 +40,6 @@ test('antes de 1h30 a faixa é atalho, não pergunta', async () => {
   a.fechar();
 });
 
-test('passando de 1h30 a faixa pergunta, e pergunta até dentro do modo', async () => {
-  // Quem esquece de finalizar costuma ter esquecido olhando justamente para ela.
-  // O nome do caso trocou "aba de treino" por "modo": a aba deixou de existir, e
-  // o lugar onde ele fica olhando passou a ser o modo.
-  const a = await comSessao();
-  parada(a, 95);
-  a.aba('treino');
-  await a.pintar();                    // `parada` escreve por E(), que não pinta
-  const f = a.vJ('ctx.faixaDaSessao');
-  assert.strictEqual(f.tipo, 'pergunta');
-  assert.ok(a.$('.ins-faixa-p'), 'e está na tela');
-  // `.ins-faixa-q`, e não a sobrancelha: a pergunta é prosa em display, porque
-  // rótulo mono de 9px não é onde se lê uma frase.
-  assert.ok(a.texto('.ins-faixa-q').includes('sem série nova'), a.texto('.ins-faixa-q'));
-  a.fechar();
-});
-
 test('pausado não conta como esquecido: pausar é aviso, não ausência', async () => {
   const a = await comSessao();
   await a.v('pausarSessao');
@@ -113,27 +96,6 @@ test('na abertura: dentro da graça a sessão vive, além dela fecha', async () 
   const morta = await app({ estado: estado(105) });
   assert.strictEqual(morta.S().sessao, null, 'passada a graça, o app não pergunta mais');
   morta.fechar();
-});
-
-test('dentro do modo a pergunta de 1h30 continua na tela', async () => {
-  // Item 1 da lista do que NÃO some dentro do modo (frente 1, §4.3): "dentro
-  // do modo, a pergunta continua". A razão é a mesma de ela aparecer em todas
-  // as abas — quem esqueceu de finalizar costuma ter esquecido olhando
-  // justamente para o treino. E o modo é onde ele fica olhando.
-  //
-  // A quebra que isto segura é silenciosa e foi real: a casca devolve a tela
-  // cheia ANTES de desenhar a faixa (`app.jsx`), então o modo nascia sem ela —
-  // e a sessão esquecida passava a só ser perguntada se ele SAÍSSE do modo.
-  const a = await comSessao();
-  parada(a, 95);
-  a.v('ctx.abreModoDeSessao');
-  await a.pintar();
-  assert.strictEqual(a.vista().modoSessao, true, 'pré-condição: dentro do modo');
-
-  assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'pergunta', 'o modelo pergunta');
-  assert.ok(a.$('.ins-faixa-p'), 'e a pergunta está NA TELA do modo');
-  assert.ok(a.texto('.ins-faixa-q').includes('sem série nova'), a.texto('.ins-faixa-q'));
-  a.fechar();
 });
 
 test('dentro do modo o atalho de voltar ao treino não aparece', async () => {

@@ -19,7 +19,6 @@ async function comHistorico() {
     const r2 = series(2, topo(2)); r2[1] = [40, topo(2) - 3];
     S.logs[logKey('A', 2)] = [{ t: agora - 7 * ${DIA}, sid: 2, sets: r2 }];
   })()`);
-  a.E('CTX.alternaVisual()');
   await a.esperar();
   return a;
 }

@@ -391,37 +391,6 @@ function abrirApp(opcoes) {
     },
 
     /**
-     * Escolhe o chip interno de um lugar — SEMANA ('treino' | 'comida') ou
-     * PRESCRIÇÃO ('programa' | 'comida' | 'alimentos' | 'semana').
-     *
-     * Os chips existem porque a altura obriga: sem eles a tela da Semana somava
-     * quase cinco telas de rolagem, não por estar mal organizada, mas por fazer
-     * oito coisas legítimas de uma vez. Corpo, Dias e Ajustes não têm chip —
-     * cada um é um assunto só.
-     *
-     * O modo é estado do componente, não de `view`, então não dá para alcançá-lo
-     * pelo `__escopo` — e é bom que não dê: o caminho é o mesmo do usuário,
-     * tocar no chip.
-     *
-     * **Devolve promessa, e precisa de `await`.** `useState` do Preact agenda o
-     * render num microtask em vez de rodar na hora, ao contrário do `render()`
-     * do casco que o `aba()` chama. Ler o DOM logo depois do clique pega a tela
-     * anterior.
-     *
-     * Sem argumento devolve o modo aceso, e aí é síncrono.
-     */
-    modo: function (nome) {
-      const chips = Array.from(d.querySelectorAll('.ins-chips .ins-chip'));
-      if (nome == null) {
-        const on = chips.filter(function (b) { return b.classList.contains('on'); })[0];
-        return on ? on.textContent.trim() : null;
-      }
-      const alvo = chips.filter(function (b) { return b.textContent.trim() === nome; })[0];
-      if (!alvo) throw new Error('modo "' + nome + '" não está na tela');
-      alvo.dispatchEvent(new w.Event('click', { bubbles: true }));
-      return app.esperar();
-    },
-    /**
      * Força um render.
      *
      * Existe por causa do `E()`: ele escreve no estado pela porta velha, sem
@@ -455,42 +424,6 @@ function abrirApp(opcoes) {
     preencher: function (i, k, peso, reps) {
       if (peso !== null && peso !== undefined) app.v('anotaSerie', i, k, 0, peso);
       if (reps !== null && reps !== undefined) app.v('anotaSerie', i, k, 1, reps);
-    },
-    /**
-     * Registra `v` repetições na série `k` do exercício `i` TOCANDO na régua.
-     *
-     * Abre a régua, anda até a página em que `v` aparece e toca no número — o
-     * caminho do dedo, e não a porta do modelo. É o que `preencher` deixou de
-     * fazer: lá a repetição entra por `anotaSerie` porque os casos de lá são
-     * sobre outra coisa; aqui o assunto é a régua.
-     *
-     * Estoura se não alcançar, e isso é de propósito: o domínio promete no
-     * máximo três toques, e um caso que não alcança é a promessa quebrada.
-     */
-    regua: async function (i, k, v) {
-      const abre = d.getElementById('r' + i + '_' + k);
-      if (!abre) throw new Error('não há botão de repetição em r' + i + '_' + k);
-      if (!d.querySelector('[data-a="regua-' + v + '"]')) {
-        app.clicar(abre);
-        await app.esperar();
-      }
-      for (let volta = 0; volta < 6; volta++) {
-        const alvo = d.querySelector('[data-a="regua-' + v + '"]');
-        if (alvo) { app.clicar(alvo); await app.esperar(); return volta; }
-        const visiveis = Array.from(d.querySelectorAll('[data-a^="regua-"]'))
-          .map(function (b) { return Number(String(b.getAttribute('data-a')).slice(6)); })
-          .filter(function (n) { return Number.isFinite(n); });
-        if (!visiveis.length) throw new Error('a régua não está aberta em r' + i + '_' + k);
-        const dir = v < Math.min.apply(null, visiveis) ? 'menos' : 'mais';
-        const seta = d.querySelector('[data-a="regua-' + dir + '"]');
-        if (!seta) {
-          throw new Error('a régua não alcança ' + v + ': ela mostra ' + visiveis.join(', ') +
-            ' e não há seta para ' + dir);
-        }
-        app.clicar(seta);
-        await app.esperar();
-      }
-      throw new Error('a régua não chegou a ' + v + ' em seis voltas');
     },
     digitar: function (id, valor) {
       const el = d.getElementById(id);

@@ -22,7 +22,6 @@ function comHistorico(sets) {
 async function emFoco(opcoes) {
   const a = await app(opcoes || comHistorico());
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.E(`view.day = proximoTreino(S, ROT_BASE)`);
   a.v('ctx.abreModoDeSessao');
   await a.esperar();

@@ -31,38 +31,9 @@ import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
 import { DESTINOS_V3, FOLHAS_V3 } from './ui/v3/telas.js';
-import { visualNovo, poeVisual, aplicaVisual } from './infra/visual';
 import { ligado, fitaLigada, comModulo, comFita, normalizaModulos } from './dominio/modulos';
-import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
-import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
-import { FolhaFoto } from './ui/folhas/foto.jsx';
-import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
-import { FolhaPesoRapido } from './ui/folhas/pesorapido.jsx';
-import { FolhaPeso } from './ui/folhas/peso.jsx';
-import { FolhaBio } from './ui/folhas/bio.jsx';
-import { Medidas } from './ui/telas/medidas.jsx';
-import { Galeria } from './ui/telas/galeria.jsx';
 import { DIAS_NA_LIXEIRA, chaveDaLixeira, diasRestantes, nomeNaLixeira, ordemDaLixeira, pastaDaLixeira, vencidos as vencidosDaLixeira } from './dominio/lixeira';
-import { DetalheDaMedida } from './ui/telas/medida.jsx';
-import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
-import { FolhaDecidir } from './ui/folhas/decidir.jsx';
-import { ChegadaDaFolha, LugarNaPilha } from './ui/instrumento/folha.jsx';
-import { ABAS } from './ui/instrumento/tabbar.jsx';
-import { Protocolo } from './ui/telas/protocolo.jsx';
-import { Comparar } from './ui/telas/comparar.jsx';
-import { Revisao } from './ui/telas/revisao.jsx';
-import { Evolucao } from './ui/telas/evolucao.jsx';
-import { Dia } from './ui/telas/dia.jsx';
-import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
-import { Camera } from './ui/telas/camera.jsx';
-import { Ajustes } from './ui/telas/ajustes.jsx';
-import { Sessao } from './ui/telas/sessao.jsx';
-import { Historico } from './ui/telas/historico.jsx';
-import { SessaoModo } from './ui/telas/sessaomodo.jsx';
-import { avisaOContador } from './ui/telas/treino.jsx';
-import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
-import { Retroativo } from './ui/telas/retroativo.jsx';
-import { Programa } from './ui/telas/programa.jsx';
+import { LugarNaPilha } from './ui/v3/camada.js';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { diasComTreino as _diasComTreino, inicioDoDia as _inicioDoDia, iniciosDoPeriodo as _iniciosDoPeriodo, medianaDosInicios as _medianaDosInicios, leituraDosDias as _leituraDosDias,
          serieDaMediaMovel as _serieDaMediaMovel } from './dominio/mes';
@@ -74,7 +45,6 @@ import {
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste,
   poeComidaNoDia, resumoDaRefeicao, FOLGA_POS, fmtKg
 } from './dominio/nutricao/calculo';
-import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana, treinosQueVem, somaPorGrupo } from './dominio/volume';
 import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGRA_DA_FITA, REGRA_DA_DOBRA, MEDIDAS_DE_DOBRA, ORDEM_DE_MEDIR, CONFERIR_ACIMA, doMeio, mediaDaFita, pedeTerceira, passoDaLeitura, naMesmaData, pesoDaSemana, medidaDoCorpo, ondeMediu,
@@ -386,12 +356,6 @@ let audioCtx = null, wakeLock = null, querSegurar = false;
 // entrar no modo ainda na avaliação deste módulo.
 const ESPERA_DO_SOM_MS = 500;
 let somAgendado = null;
-// O cronômetro que o ResizeObserver de `alturaDoTimer` já vigia, e a última
-// altura que ele entregou (-1 antes da primeira). Aqui em cima porque o
-// observador nasce com o nó, ainda na avaliação deste módulo (`ligaBotaoDoTimer`).
-let alturaVigiada = null, alturaMedida = -1;
-// O cronômetro descendo: o relógio que tira `.sai` quando a descida acaba.
-let timerSaindo = null;
 
 
 const STORE_LABEL = {
@@ -2278,7 +2242,7 @@ function ajustaRelogio() {
  * (`Contador`, em `ui/telas/treino.jsx`), que lê `contadorDoDia()`; aqui ele é
  * só avisado, e se redesenha sozinho, antes do próximo quadro.
  */
-function atualizaEstado() { avisaOContador(); }
+function atualizaEstado() {}
 
 /**
  * O que o contador do topo do treino mostra agora: o valor e se acende.
@@ -2810,28 +2774,6 @@ const CTX = {
               view.ajustes || view.modoSessao || view.revisao || view.fotos || view.noTempo || view.naMesmaData || view.progressao || view.responderDias);
   },
 
-  // ---------- cabeçalho de HOJE ----------
-  cabecalhoDeHoje: function () {
-    const h = diaResolvido();
-    // `new Date(Date.now())` e não `new Date()`: TODO o relógio do app passa
-    // por `Date.now`, e é o que permite ao teste fixar o dia. Um `new Date()`
-    // solto escapa dessa porta e lê o relógio de verdade — a tela passaria a
-    // discordar do resto do app no meio de um teste que viajou no tempo.
-    const d = new Date(Date.now());
-    // A PROCEDÊNCIA do tipo do dia, e é ela a linha tocável (a D,
-    // `agora-descanso.html`, estados 1, 4 e 5): o palpite diz que é palpite, com
-    // o pontilhado; o que ele disse e a sessão registrada são fato.
-    const treinoTxt = h.treino ? (diaAberto(h.treino) ? ' · aula' : ' · Treino ' + h.treino) : '';
-    const procedencia = h.origem === 'registrado' ? 'dia de treino, pela sessão registrada' + treinoTxt
-      : h.origem === 'aberta' ? 'dia de treino, com a sessão aberta' + treinoTxt
-      : h.origem === 'manual' ? (h.cadencia === 'descanso' ? 'descanso, você disse' : 'dia de treino, você disse' + treinoTxt)
-      : (h.cadencia === 'descanso' ? 'descanso, pelo padrão semanal' : 'dia de treino, pelo padrão semanal' + treinoTxt);
-    return {
-      data: DIAS_LONGOS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()],
-      procedencia: procedencia,
-      palpite: !!h.previsto
-    };
-  },
 
   // ---------- HOJE ----------
   hoje: function () {
@@ -2944,7 +2886,6 @@ const CTX = {
     d.aguaM = Date.now();              // a correção para menos atravessa a fusão
     queueSave(); render();
   },
-  abreRefeicao: function (id) { CTX.abreFolha({ k: 'refeicao', id: id }); },
 
   // ---------- a água em linha (a D, `agora-descanso.html`, estados 3 e 8) ----------
   //
@@ -2985,31 +2926,7 @@ const CTX = {
     }
     render();
   },
-  abreCorrecaoDaAgua: function () { view.aguaCorrige = !view.aguaCorrige; render(); },
 
-  // ---------- a linha da comida, aberta no lugar (a D, `agora-descanso.html`
-  // estado 2; `momento-2.html` estados 1 e 5) ----------
-  //
-  // A linha tocada abre ali mesmo com o que o cartão teria: a procedência, os
-  // itens e os três botões. Um toque grava — não há "guardar". Só uma linha
-  // abre por vez, para o dedo nunca acertar o botão de outra refeição.
-  linhaDaComida: function () {
-    const u = view.ultimaMarca;
-    const d = diaDeComida();
-    const f = view.formaRecem;
-    return { aberta: view.linhaComida || null, pergunta: view.perguntaDe || null,
-             // a leitura de volta do último toque (momento 2, estado 2): fica
-             // enquanto a marca existir e for de hoje
-             ultima: u && u.data === d.data && d.done[u.id] ? u : null,
-             // a linha cuja forma POUSA (peça 8 do motion), enquanto a marca de
-             // recém vale (ver `marcaLinhaDaComida`)
-             recem: f && f.data === d.data && Date.now() - f.t < VIDA_DO_RECEM_MS ? f.id : null };
-  },
-  abreLinhaDaComida: function (id) {
-    view.linhaComida = view.linhaComida === id ? null : id;
-    view.perguntaDe = null;
-    render();
-  },
   /**
    * `k`: `'tudo'`, `'metade'` (a marca com porção ½, como na folha de pôr o dia
    * em dia), `'fora'`, `'nsei'`, `'nao'` — ou `'pergunta'`, que abre a única
@@ -3084,7 +3001,7 @@ const CTX = {
    */
   jaFizHoje: function (k) {
     pilha().pop();
-    if (k === 'cardio') { if (visualNovo()) CTX.abreFolha({ k: 'cardio' }); else { view.cardioRapido = true; render(); } return; }
+    if (k === 'cardio') { CTX.abreFolha({ k: 'cardio' }); return; }
     abrirAdicionar(Date.now());
   },
   /**
@@ -3115,43 +3032,12 @@ const CTX = {
 // Não são abas — em cada uma o assunto é uma coisa só, e a tab bar convidaria
 // a sair no meio. O voltar é o único caminho de saída.
 function telaCheia() {
-  // O visual novo desenha o destino de cima quando tem a versão dele. A camada
-  // de cima é a mesma que o Voltar desfaz (`camadasAbertas`), sem as folhas.
-  if (visualNovo()) {
-    const destinos = camadasAbertas(view).filter(function (c) { return c.indexOf('folha:') !== 0 && c !== 'pare' && c !== 'falhou'; });
-    const D = DESTINOS_V3[destinos[destinos.length - 1]];
-    // `so`: o destino novo que só assume a camada em certas condições (o
-    // histórico de um exercício, aberto pela progressão nova)
-    if (D && (!D.so || D.so(view))) return <div class="v3"><D ctx={CTX} /></div>;
-  }
-  if (view.ajustes) return <Ajustes ctx={CTX} />;
-  if (view.camera) return <Camera ctx={CTX} />;
-  if (view.ajuste) return <AjusteFoto ctx={CTX} />;
-  if (view.protocolo) return <Protocolo ctx={CTX} />;
-  if (view.revisao) return <Revisao ctx={CTX} />;
-  if (view.comparar) return <Comparar ctx={CTX} />;
-  // Registrar medidas abre de dentro do detalhe de uma medida ("Nova medida"),
-  // e fica por cima dele.
-  if (view.galeria) return <Galeria ctx={CTX} />;
-  if (view.medidas) return <Medidas ctx={CTX} />;
-  if (view.medida) return <DetalheDaMedida ctx={CTX} />;
-  // Depois de comparar: a comparação abre DE DENTRO da Evolução, e fica por cima.
-  if (view.evolucao) return <Evolucao ctx={CTX} />;
-
-  if (view.retro) return <Retrospectiva ctx={CTX} />;
-  if (view.add) return <Retroativo ctx={CTX} />;
-  if (view.sessao) return <Sessao ctx={CTX} />;
-  // O DIA aberto fica ABAIXO da sessão e do registro de treino passado: os
-  // dois abrem de dentro dele, e Voltar devolve ao dia.
-  if (view.diaAberto) return <Dia ctx={CTX} />;
-  // O histórico ANTES do programa: `telaCheia` desenha o primeiro que casa, e
-  // quem casa primeiro está por cima. Abrindo o histórico de dentro do programa
-  // — que é a porta nova da Prescrição —, ele é a camada de cima.
-  if (view.hist) return <Historico ctx={CTX} />;
-  if (view.prog) return <Programa ctx={CTX} />;
-  // O modo é o ÚLTIMO: camada mais funda, tudo que se abre de dentro dele fica
-  // por cima. A ordem aqui é a inversa da pilha de `camadasAbertas`.
-  if (view.modoSessao) return <SessaoModo ctx={CTX} />;
+  // O destino de cima é o mesmo que o Voltar desfaz (`camadasAbertas`), sem as
+  // folhas e os painéis. `so`: o destino que só assume a camada em certas
+  // condições (o histórico de um exercício, aberto pela progressão).
+  const destinos = camadasAbertas(view).filter(function (c) { return c.indexOf('folha:') !== 0 && c !== 'pare' && c !== 'falhou'; });
+  const D = DESTINOS_V3[destinos[destinos.length - 1]];
+  if (D && (!D.so || D.so(view))) return <div class="v3"><D ctx={CTX} /></div>;
   return null;
 }
 
@@ -3855,7 +3741,6 @@ CTX.respondeRevisao = function (nome, r) {
   view.revisao.respostas = Object.assign({}, view.revisao.respostas, { [nome]: r });
   render();
 };
-CTX.modeloDaRevisao = function () { return MODELO_DA_REVISAO; };
 
 function catalogoParaRevisao() {
   const c = {};
@@ -4755,12 +4640,6 @@ function instanteDaMedida(k) {
     return x.getTime();
   }
   return sameDay(d, Date.now()) ? Date.now() : d;
-}
-/** A hora que o campo mostra: a escolhida, a de agora (hoje) ou 07:00 (dia passado). */
-function horaDaMedida(k) {
-  const h = view.bodyHora && view.bodyHora[k];
-  if (h) return h;
-  return sameDay(diaDaMedida(k), Date.now()) ? horaHHMM(Date.now()) : '07:00';
 }
 function horaHHMM(t) { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
 function rotuloDoDia(t) {
@@ -5694,35 +5573,6 @@ function anotaSerieRapida(i, pos, valor) {
   queueSave();
 }
 
-/**
- * O teclado próprio na LISTA RÁPIDA, para a carga (`pos` 0) e a medida (1) de
- * um movimento.
- *
- * §6.1 manda próprio aqui, e o fonte já dizia por quê, no comentário de
- * `anotaSerieRapida`: a janela de registro da aula é "DEPOIS da aula, ofegante,
- * sentado, e ela é curta". Curta é o que define — o teclado do sistema cobre
- * metade da tela e esconde os movimentos seguintes da própria lista.
- *
- * Parte do valor REGISTRADO, como na série e ao contrário do corpo: aqui não há
- * stepper acima mostrando o número, então o teclado é o único editor do valor,
- * e abrir vazio faria um valor já registrado parecer ausente.
- *
- * Tocar no mesmo botão fecha; tocar no outro troca. Um painel só.
- */
-function abreTecladoRapido(i, pos) {
-  if (!treino(view.day).ex[i]) return;
-  const a = view.teclado && view.teclado.alvo;
-  if (a && a.tipo === 'rapida' && a.i === i && a.pos === pos) {
-    view.teclado = null; render(); return;
-  }
-  const dr = draftPeek(i);
-  const v = dr && dr.s && dr.s[0] ? dr.s[0][pos] : null;
-  view.regua = null; view.rir = null;
-  view.teclado = { alvo: { tipo: 'rapida', i: i, pos: pos },
-                   texto: v != null ? String(v).replace('.', ',') : '' };
-  render();
-  mostraOTecladoInteiro();
-}
 
 function abrirRapido() {
   view.rapido = !view.rapido; view.open = null;
@@ -6410,38 +6260,6 @@ function abreTecladoDeCarga(i, k) {
   mostraOTecladoInteiro();
 }
 
-/**
- * O teclado próprio em CORPO, para peso e cintura.
- *
- * §6.1 manda próprio nos dois, "com a régua de 100 g na frente" — e é isso que o
- * stepper é. O que faltava era a outra metade da frase: *"a régua resolve o caso
- * comum e o próprio resolve o resto"*.
- *
- * O resto tem tamanho medido: **a primeira pesagem parte de 75 kg**
- * (`CORPO_PADRAO`), então quem pesa 73,6 chega lá com **14 toques** no menos —
- * e a cintura parte de 85. Um valor longe do último não tinha caminho nenhum
- * além de apertar.
- *
- * Escreve no RASCUNHO (`view.bodyForm`), que é onde o stepper escreve: quem
- * registra continua sendo o botão de registrar, e a data escolhida continua
- * valendo. O teclado é outra porta para o mesmo número, não outro registro.
- */
-function abreTecladoDeCorpo(campo) {
-  const a = view.teclado && view.teclado.alvo;
-  if (a && a.tipo === 'corpo' && a.campo === campo) {
-    view.teclado = null; render(); return;
-  }
-  // NASCE VAZIO, e aqui isso é diferente da série. Lá o teclado é o único editor
-  // do valor, então ele parte do que está registrado. Aqui o stepper já mostra o
-  // número atual logo acima, e o valor de partida pode ser o PADRÃO (75 kg para
-  // o peso, 85 cm para a cintura) — pré-encher faria ele apagar dois dígitos
-  // antes de digitar os seus, que é o mesmo defeito dos catorze toques em
-  // miniatura. A divisão da §6.1 fica limpa: o stepper para o perto, o teclado
-  // para o resto.
-  view.teclado = { alvo: { tipo: 'corpo', campo: campo }, texto: '' };
-  render();
-  mostraOTecladoInteiro();
-}
 
 function abreRir(i, k) {
   const aberto = view.rir && view.rir.i === i && view.rir.k === k;
@@ -6957,58 +6775,7 @@ function textoDaSerieDaPassada(idEx, s) {
   return s[0] != null && s[0] !== '' ? fmtNum(s[0]).replace('.', ',') + ' × ' + s[1] : s[1] + ' repetições';
 }
 
-function repsDaPassada(v) {
-  const n = Math.round(+v);
-  if (!(n >= 0) || n > 200) return;
-  if (view.passada && view.passada.novo) return lancaSerieDaPassada(n);
-  return gravaNaPassada(function (s) { s[1] = n; }, { k: 'reps', v: n });
-}
-function andaReguaDaPassada(dir) {
-  const pn = view.passada;
-  if (pn && pn.novo) {
-    const P = view.sessao && view.sessao.day ? treino(view.sessao.day) : null;
-    const ex = P ? P.ex.filter(function (x) { return x.id === pn.idEx || x.orig === pn.idEx; })[0] : null;
-    const fx = faixaDoTexto(ex ? ex.r : null);
-    const base = pn.ref ? pn.ref[1] : (fx ? fx[0] : 10);
-    view.passada.foco = anda(regua(base, fx), pn.foco != null ? pn.foco : base, dir);
-    render();
-    return;
-  }
-  const x = serieDaPassada();
-  if (!x) return;
-  const fx = faixaDoTexto((exDoRegistro(x.p.idEx, x.e) || {}).r);
-  const reg = regua(x.p.era[1], fx);
-  view.passada.foco = anda(reg, view.passada.foco != null ? view.passada.foco : x.s[1], dir);
-  render();
-}
-function rirDaPassada(v) {
-  if (v === 'abre') { view.passada.rir = !view.passada.rir; view.teclado = null; render(); return; }
-  view.passada.rir = false;
-  return gravaNaPassada(function (s) {
-    if (v == null || s[2] === v) s.length = 2; else s[2] = Math.max(0, Math.min(5, v));
-  }, { k: 'rir', v: v });
-}
 
-/** O teclado da carga, na sessão passada: escreve no visor, grava quando o número fecha. */
-function abreCargaDaPassada() {
-  const p = view.passada;
-  if (p && p.novo) {
-    const a0 = view.teclado && view.teclado.alvo;
-    if (a0 && a0.tipo === 'passada') { view.teclado = null; render(); return; }
-    view.teclado = { alvo: { tipo: 'passada', pos: 0 }, texto: p.carga != null ? String(p.carga).replace('.', ',') : '' };
-    render();
-    mostraOTecladoInteiro();
-    return;
-  }
-  const x = serieDaPassada();
-  if (!x) return;
-  const a = view.teclado && view.teclado.alvo;
-  if (a && a.tipo === 'passada') { view.teclado = null; render(); return; }
-  view.passada.rir = false;
-  view.teclado = { alvo: { tipo: 'passada', pos: 0 }, texto: x.s[0] != null ? String(x.s[0]).replace('.', ',') : '' };
-  render();
-  mostraOTecladoInteiro();
-}
 function cargaDaPassada(texto) {
   const n = numeroDoCampo(texto);
   if (n == null || n < 0) return;
@@ -7305,122 +7072,6 @@ function descOf(ex) { return ex && ex.d ? ex.d : (ex && ex.c ? D_COMPOSTO : D_CU
 // lido de outro lugar.
 const KEY_DESCANSO = 'lastro-descanso-v1';
 
-/**
- * Publica a altura do cronômetro para quem se empilha acima dele.
- *
- * Medida em vez de constante porque ela muda: com a linha de procedência o
- * cronômetro tem uma altura, sem ela tem outra, e o toast precisa da de agora.
- * Chamada quando ele entra e quando sai — não a cada quadro, que é o ritmo em
- * que ele repinta.
- *
- * A MEDIDA NÃO PRENDE O TOQUE (peça 2 do motion; docs/motion/04 R8). Ler
- * `offsetHeight` aqui, no meio do toque da série, obrigava o navegador a montar
- * o layout da página ANTES do render() — e de novo depois: 3,5 ms do toque da
- * primeira série, medidos no Chromium, metade do que passava da meta de 16 ms.
- * Agora quem mede é um ResizeObserver no próprio cronômetro: ele entrega a
- * altura no desenho seguinte, depois do layout e antes da pintura, e a variável
- * publicada ali já vale para esse mesmo quadro — o toast e o fim da página
- * nunca veem a altura velha na tela. De quebra pega também a troca de altura
- * pela linha de procedência, que antes só valia na entrada e na saída. Sem
- * ResizeObserver (o jsdom; Safari antes do 13.1), mede na hora, como antes.
- *
- * ENTRAR E SAIR NÃO MUDAM MAIS A ALTURA (peça 3 do motion). O cronômetro
- * deixou de ser `display: none` fora de cena para poder subir e descer: ele
- * fica layoutado, abaixo da borda e invisível, com a mesma altura dentro e
- * fora. O observador então não tem o que entregar quando o descanso começa ou
- * para — e a altura publicada não pode ser a da caixa, que nunca mais é 0. Por
- * isso são duas coisas: o observador guarda a ALTURA (`alturaMedida`, quando
- * ela muda de verdade — o rótulo de procedência, a orientação), e a publicação
- * diz a VERDADE do momento: essa altura com o cronômetro em cena, 0 fora dela.
- * Entrar e sair publicam na hora, sem medir nada (o toque não monta layout); o
- * toast e a faixa leem a variável no `translate` e acompanham a subida e a
- * descida no mesmo tempo.
- */
-function alturaDoTimer() {
-  const box = document.getElementById('timer');
-  if (!box) return;
-  if (typeof ResizeObserver === 'function') {
-    // Um observador só, para o nó de `index.html`, posto quando o módulo sobe:
-    // a primeira entrega chega muito antes do primeiro descanso.
-    if (alturaVigiada !== box) {
-      alturaVigiada = box;
-      alturaMedida = -1;
-      new ResizeObserver(function () {
-        // depois do layout e antes da pintura: ler aqui não monta nada
-        alturaMedida = box.offsetHeight;
-        publicaAlturaDoTimer();
-      }).observe(box);
-    }
-    // Sem medida ainda, a primeira entrega do observador publica.
-    if (alturaMedida >= 0) publicaAlturaDoTimer();
-    return;
-  }
-  publicaAlturaDoTimer();
-}
-function publicaAlturaDoTimer() {
-  const box = document.getElementById('timer');
-  const emCena = !!box && box.classList.contains('on');
-  const h = !emCena ? 0 : alturaMedida >= 0 ? alturaMedida : box.offsetHeight;
-  try { document.documentElement.style.setProperty('--ins-timer-h', h + 'px'); } catch (e) {}
-}
-
-/**
- * Põe o cronômetro em cena. `anda` quando um toque o liga (sobe da borda); sem
- * ele, aparece no lugar — o descanso que volta na abertura do app, que não se
- * move. Desfaz uma descida pela metade: a transição nova parte de onde a velha
- * estava, e ele volta a subir dali.
- */
-function poeEmCena(box, anda) {
-  if (timerSaindo) { clearTimeout(timerSaindo); timerSaindo = null; }
-  box.classList.remove('sai');
-  if (anda) box.classList.add('anda');
-  box.classList.add('on');
-}
-
-/**
- * Tira o cronômetro de cena: ele desce por onde veio, e continua VISÍVEL e
- * inteiro enquanto desce (com o número e a procedência que tinha). Quem segura
- * a visibilidade é `.sai`, pelo tempo de `--ins-dur-sai` lido na porta do
- * movimento — nada escuta o fim da transição. Sob "Reduzir movimento" (e onde a
- * porta não sabe) o tempo é 0: sai de uma vez, como sempre saiu.
- *
- * O estado já mudou antes disto (`stopTimer` zera o alvo e apaga a chave
- * local); aqui é só a apresentação dele.
- */
-function tiraDeCena(box) {
-  if (!box.classList.contains('on')) {
-    // já fora, ou já descendo: a descida em curso termina sozinha
-    if (!timerSaindo) limpaProcedencia();
-    return;
-  }
-  // O tempo ANTES de mexer na classe: a porta lê o token no estilo computado,
-  // e lida depois ela obrigaria o motor a resolver o estilo novo do cronômetro
-  // no meio da tarefa, antes de a altura publicada (logo abaixo) mudar a do
-  // toast e da faixa. Lida antes, as três mudanças chegam juntas ao motor.
-  // (Nos dois motores desta máquina as três transições começaram no mesmo
-  // instante das duas maneiras; é cautela, não conserto medido.)
-  const ms = tempoDoMovimento('--ins-dur-sai');
-  box.classList.remove('on');
-  box.classList.add('anda');
-  if (ms > 0) {
-    box.classList.add('sai');
-    timerSaindo = setTimeout(terminaDescida, ms);
-  } else {
-    limpaProcedencia();
-  }
-}
-/** O fim da descida: fora de cena de vez. Também o atalho de `desliga`. */
-function terminaDescida() {
-  if (timerSaindo) { clearTimeout(timerSaindo); timerSaindo = null; }
-  const box = document.getElementById('timer');
-  if (box) box.classList.remove('sai');
-  limpaProcedencia();
-}
-function limpaProcedencia() {
-  const ctx = document.getElementById('tctx');
-  if (ctx) ctx.textContent = '';
-}
-
 function gravaDescanso() {
   try {
     DB.set(KEY_DESCANSO, JSON.stringify({ fim: timerFim, total: timerTotal, ctx: timerCtx }));
@@ -7450,11 +7101,7 @@ async function retomaDescanso() {
   timerFim = g.fim;
   timerAvisado = false;
   timerCtx = g.ctx || '';
-  const box = document.getElementById('timer');
-  // no lugar, sem subir: é a abertura do app, e a abertura não se move
-  if (box) poeEmCena(box, false);
   pintaTimer();
-  alturaDoTimer();
   if (timer) clearInterval(timer);
   timer = setInterval(pintaTimer, 250);
 }
@@ -7471,11 +7118,6 @@ function startTimer(sec, ctx) {
   timerFim = Date.now() + sec*1000;
   timerAvisado = false;
   timerCtx = ctx || '';
-  // O alvo já está gravado acima, antes de qualquer desenho: a subida é só a
-  // apresentação de um descanso que já existe. Um descanso que substitui outro
-  // troca no lugar — `stopTimer` lá em cima tirou `.on` e isto o devolve na
-  // mesma tarefa, sem um estilo no meio.
-  poeEmCena(document.getElementById('timer'), true);
   // Dentro do gesto do usuário, que é o que o iPhone exige para o som começar.
   // Desde a peça 2 o contexto já nasceu ao entrar no modo (`preparaAudioDepois`)
   // e isto só o retoma se estiver suspenso; criar aqui é a rede de quem chegou
@@ -7483,7 +7125,6 @@ function startTimer(sec, ctx) {
   preparaAudio();
   segurarTela();
   pintaTimer();
-  alturaDoTimer();
   timer = setInterval(pintaTimer, 250);
   gravaDescanso();
 }
@@ -7511,65 +7152,27 @@ function ajustaTimer(delta) {
   // daria uma escala acima de 1 e a barra vazaria da calha.
   timerTotal = Math.max(timerTotal, Math.ceil((timerFim - agora) / 1000));
   timerAvisado = false;
-  const val = document.getElementById('tval');
-  if (val) val.classList.remove('zero');
   if (!timer) timer = setInterval(pintaTimer, 250);
   pintaTimer();
   gravaDescanso();
 }
 
+/**
+ * O tique do descanso: quando ele zera, para o relógio e avisa (som e
+ * vibração). Quem DESENHA o descanso é o treino em foco (`src/ui/v3/telas/treino.jsx`),
+ * que lê `timerFim` pelo contexto e se redesenha com o próprio relógio.
+ */
 function pintaTimer() {
-  const val = document.getElementById('tval');
-  const fill = document.getElementById('tfill');
-  if (!val || !fill || !timerFim) return;
-  const ctx = document.getElementById('tctx');
-  if (ctx && ctx.textContent !== timerCtx) ctx.textContent = timerCtx;
-
+  if (!timerFim) return;
   const restante = Math.max(0, timerFim - Date.now());
-  fill.style.transform = 'scaleX(' + (restante / (timerTotal * 1000)) + ')';
-
-  if (restante <= 0) {
-    val.textContent = 'vai';
-    val.classList.add('zero');
-    if (timer) { clearInterval(timer); timer = null; }
-    if (!timerAvisado) {
-      timerAvisado = true;
-      // só avisa se a tela estiver à vista; se zerou com o app em segundo
-      // plano, tocar depois seria pior do que não tocar
-      if (!document.hidden) aviso();
-    }
-    return;
+  if (restante > 0) return;
+  if (timer) { clearInterval(timer); timer = null; }
+  if (!timerAvisado) {
+    timerAvisado = true;
+    // só avisa se a tela estiver à vista; se zerou com o app em segundo
+    // plano, tocar depois seria pior do que não tocar
+    if (!document.hidden) aviso();
   }
-  const left = Math.ceil(restante/1000);
-  val.textContent = Math.floor(left/60) + ':' + String(left%60).padStart(2,'0');
-  val.classList.remove('zero');
-}
-
-// O cronômetro de descanso vive FORA da árvore do Preact, em `index.html`:
-// ele repinta 4× por segundo e redesenhar a tela nesse ritmo roubaria o foco
-// do campo que ele está preenchendo no meio da série. O botão de parar era o
-// último `onclick=` do projeto; agora é `addEventListener`, como todo o resto.
-function ligaBotaoDoTimer() {
-  const b = document.getElementById('tstop');
-  // parar redesenha: o que só existe enquanto o descanso conta ("enquanto
-  // descansa", no cartão aberto) sai junto com ele
-  if (b) b.addEventListener('click', function () { stopTimer(); render(); });
-  const menos = document.getElementById('tmenos');
-  if (menos) menos.addEventListener('click', function () {
-    const contava = !!timerFim;
-    ajustaTimer(-15);
-    if (contava && !timerFim) render();
-  });
-  const mais = document.getElementById('tmais');
-  if (mais) mais.addEventListener('click', function () { ajustaTimer(15); });
-  // O observador da altura nasce com o nó: o cronômetro fora de cena já está
-  // layoutado, e a medida fica pronta antes do primeiro descanso.
-  alturaDoTimer();
-}
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', ligaBotaoDoTimer);
-} else {
-  ligaBotaoDoTimer();
 }
 
 function stopTimer() {
@@ -7578,10 +7181,6 @@ function stopTimer() {
   timerCtx = '';
   apagaDescanso();
   try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {}
-  // desce por onde veio; a procedência sai do nó quando ele termina de descer
-  const box = document.getElementById('timer');
-  if (box) tiraDeCena(box);
-  alturaDoTimer();
 }
 
 // ---------- aviso sonoro ----------
@@ -7762,8 +7361,6 @@ CTX.desliga = function () {
   desligado = true;
   clearTimeout(syncT);
   stopTimer();
-  // a descida do cronômetro também é um relógio: termina agora
-  if (timerSaindo) terminaDescida();
   if (somAgendado) { clearTimeout(somAgendado); somAgendado = null; }
   if (relogioT) { clearInterval(relogioT); relogioT = null; }
   if (batida) { clearInterval(batida); batida = null; }
@@ -8037,36 +7634,13 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 // serem convertidas — é o que `emTelaCheia()` sinaliza para a shell.
 function folhaAberta() {
   return (view.pilha || []).map(function (f, i) {
-    // A pilha diz à folha COMO ela nasce: subindo (camada nova) ou no lugar da
-    // de cima, quando `trocaFolha` a pôs lá (peça 4 do motion; 02 T8).
-    return (
-      <ChegadaDaFolha.Provider key={i} value={TROCADAS.has(f) ? 'troca' : 'sobe'}>
-        {/* e onde ela está na pilha: o nome dela na transição de vista (peça 5) */}
-        <LugarNaPilha.Provider value={i}>{folhaDe(f, i)}</LugarNaPilha.Provider>
-      </ChegadaDaFolha.Provider>
-    );
+    // a posição na pilha dá a ordem de empilhamento da folha
+    return <LugarNaPilha.Provider key={i} value={i}>{folhaDe(f, i)}</LugarNaPilha.Provider>;
   });
 }
 function folhaDe(f, i) {
-  // o visual novo desenha a sua versão da folha, quando ela existe
-  if (visualNovo() && FOLHAS_V3[f.k]) { const F = FOLHAS_V3[f.k]; return <F key={i} ctx={CTX} f={f} />; }
-  if (f.k === 'refeicao') return <FolhaRefeicao key={i} ctx={CTX} id={f.id} />;
-  if (f.k === 'dia') return <FolhaDia key={i} ctx={CTX} />;
-  if (f.k === 'decidir') return <FolhaDecidir key={i} ctx={CTX} />;
-  if (f.k === 'editaRefeicao') return <FolhaEditaRefeicao key={i} ctx={CTX} id={f.id} />;
-  // `alvo`, e nunca `ref`: `ref` é prop reservada do Preact e NÃO chega ao
-  // componente. A folha recebia `undefined` como refeição de destino, e
-  // escolher um alimento na busca não fazia nada — sem erro, sem toast, sem
-  // nada. Os testes não pegavam porque chamavam `adicionaItem` direto.
-  if (f.k === 'seletor') return <FolhaSeletor key={i} ctx={CTX} alvo={f.ref} idx={f.idx} />;
-  if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
-  if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
-  if (f.k === 'menuSessao') return <FolhaMenuDaSessao key={i} ctx={CTX} />;
-  if (f.k === 'pesoRapido') return <FolhaPesoRapido key={i} ctx={CTX} />;
-  if (f.k === 'peso') return <FolhaPeso key={i} ctx={CTX} />;
-  if (f.k === 'bio') return <FolhaBio key={i} ctx={CTX} />;
-  if (f.k === 'poeODia') return <FolhaPoeODia key={i} ctx={CTX} data={f.data} />;
-  return null;
+  const F = FOLHAS_V3[f.k];
+  return F ? <F key={i} ctx={CTX} f={f} /> : null;
 }
 
 // leituras que as folhas precisam
@@ -8199,6 +7773,7 @@ let jaAnimado = false;
  * já é a nova (02 T2). A aba vem antes da folha que fecha: a foto da folha desce
  * sozinha (`:only-child`) em qualquer transição, e o lugar anda por baixo dela.
  */
+const ORDEM_DAS_ABAS = ['agora', 'dias', 'corpo', 'semana', 'prescricao'];
 function sentidoDaTroca(antes, agora, abaAntes, abaAgora) {
   const destinos = function (l) {
     return l.filter(function (c) { return c !== 'pare' && c !== 'falhou' && c.indexOf('folha:') !== 0; });
@@ -8210,7 +7785,7 @@ function sentidoDaTroca(antes, agora, abaAntes, abaAgora) {
   // Trocar de aba (peça 6): só com o lugar à vista — com um destino aberto, a
   // aba de baixo nem está desenhada, e o que andaria seria a tela cheia.
   if (topoAgora == null && abaAntes !== abaAgora) {
-    const indice = function (a) { return ABAS.findIndex(function (x) { return x.k === a; }); };
+    const indice = function (a) { return ORDEM_DAS_ABAS.indexOf(a); };
     const de = indice(abaAntes), para = indice(abaAgora);
     if (de < 0 || para < 0) return 'seca';
     return para > de ? 'aba-direita' : 'aba-esquerda';
@@ -8271,7 +7846,6 @@ function desenhaPendente() { if (desenhoPendente) desenhaAgora(); }
 function desenhaAgora() {
   desenhoPendente = false;
   if (desligado) return;
-  aplicaVisual();
   const antes = camadasDesenhadas;
   const focado = typeof document !== 'undefined' ? document.activeElement : null;
   montaNoApp(<App ctx={CTX} />);
@@ -8582,8 +8156,6 @@ function volumeDoDia(d) {
   return v;
 }
 
-// O contador do topo: o componente lê daqui, a cada desenho (ver `atualizaEstado`).
-CTX.contadorDoDia = contadorDoDia;
 
 CTX.treino = function () {
   const h = diaResolvido();
@@ -8752,13 +8324,8 @@ CTX.sessaoAberta = function () {
 };
 CTX.acoesEx = ACOES;
 CTX.vaiParaDia = function (d) { go(d); };
-CTX.iniciarSessao = function () { iniciarSessao(); };
-CTX.pausarSessao = function () { pausarSessao(); };
-CTX.retomarSessao = function () { retomarSessao(); };
-CTX.finalizarSessao = function () { finalizarSessao(); };
 CTX.modoEdicao = function () { modoEdicao(true); };
 CTX.abrePrograma = function () { abrirPrograma(null); };
-CTX.abreHistorico = function () { openHist(0); };
 
 // ---------- DADOS ----------
 /**
@@ -9065,24 +8632,6 @@ CTX.desfazAjuste = async function () {
   if (ok) toast('Desfiz o ' + sinalDoPasso(passo) + ' kcal. O arroz do plano voltou para ' + arrozAtual() + ' g.');
 };
 
-/** O passo que o aparelho recusou, para a tela dizer o que não mudou. */
-CTX.passoFalhou = function () {
-  const f = view.passoFalhou;
-  if (!f) return null;
-  return {
-    titulo: 'O passo não foi ' + f.oQue.verbo,
-    texto: 'O armazenamento deste aparelho recusou a gravação. O plano continua em ' + fmtInt(f.kcal) +
-      ' kcal no dia de treino' + (f.arroz.length ? ', com arroz ' + f.arroz.map(function (x) { return fmtInt(x.q) + ' g no ' + x.refeicao.toLowerCase(); }).join(' e ') : '') +
-      ', e o ajuste acumulado continua em ' + (f.ajuste ? sinalDoPasso(f.ajuste) + ' kcal' : '0') + '.',
-    linhas: f.arroz.map(function (x) { return x.refeicao + ' · arroz cozido ' + fmtInt(x.q) + ' g'; })
-      .concat(['Dia de treino ' + fmtInt(f.kcal) + ' kcal']),
-    veredito: f.oQue.verbo === 'aplicado'
-      ? 'O veredito continua valendo: ' + sinalDoPasso(f.oQue.passo) + ' kcal. Ele não vence e não some.'
-      : null,
-    tenta: f.oQue.verbo === 'aplicado' ? 'aplicar' : 'desfazer'
-  };
-};
-CTX.dispensaPassoFalhou = function () { view.passoFalhou = null; render(); };
 
 /** "+150" / "−300": o passo em kcal, com o sinal de verdade. */
 function sinalDoPasso(passos) { return (passos > 0 ? '+' : '−') + Math.abs(passos) * 150; }
@@ -9123,24 +8672,6 @@ function linhaDoAjuste() {
     ' · ' + estado;
 }
 
-// ---------- GUIA ----------
-CTX.guia = function () {
-  const cat = catalogoAlimentos();
-  const plano = planoDeComida();
-  const dTreino = totalDoDia(plano, cat, true, false);
-  const dFolga = totalDoDia(plano, cat, false, false);
-  return {
-    cadencia: cadenciaDaSemana(),
-    rotacao: rot().join(' → '),
-    alvos: [
-      { k: 't', t: 'Dia de treino', s: 'com pré-treino e intra-treino',
-        v: fmtInt(dTreino.kcal) + ' kcal' },
-      { k: 'd', t: 'Dia de descanso', s: 'sem as refeições de treino',
-        v: fmtInt(dFolga.kcal) + ' kcal' }
-    ],
-    regras: RULES
-  };
-};
 
 CTX.alternaCadencia = function (i) {
   const c = cadenciaDaSemana().slice();
@@ -9192,33 +8723,6 @@ function medidasRecentes(k, un) {
     });
 }
 
-/**
- * O VAZIO DE VERDADE do Corpo (a D, `corpo.html`, estado 10): aparelho novo, ou
- * histórico apagado — nenhum peso, nenhuma medida, nenhuma foto. O vazio diz
- * quanto custa sair dele, com os números da regra e não com uma barra de
- * progresso: duas taxas semanais seguidas são três semanas de média, e cada
- * média pede `MIN_PESAGENS` pesagens.
- */
-CTX.corpoVazio = function () {
-  const b = S.body || {};
-  const alguma = Object.keys(b).some(function (k) { return Array.isArray(b[k]) && b[k].length; }) ||
-    (S.protocolo && Array.isArray(S.protocolo.sessoes) && S.protocolo.sessoes.length);
-  if (alguma) return null;
-  const semanas = 3, pesagens = semanas * MIN_PESAGENS_CORPO;
-  return {
-    titulo: semanas + ' semanas até a regra poder decidir',
-    texto: 'Ela precisa de três semanas seguidas com média válida, e cada média precisa de pelo menos ' +
-      MIN_PESAGENS_CORPO + ' pesagens. São ' + pesagens + ' pesagens, em ' + semanas + ' semanas, para o primeiro veredito existir.',
-    linhas: [
-      { k: 'peso', t: 'Peso', d: 'de manhã, antes de treinar, mesma roupa' },
-      { k: 'fita', t: 'Medidas com fita e dobras', d: 'na mesma noite das fotos, todas num formulário' },
-      { k: 'bio', t: 'Bioimpedância', d: 'uma vez por mês' },
-      { k: 'fotos', t: 'Fotos', d: 'a cada ' + CADENCIA_DIAS + ' dias, ' + posesDo(S.protocolo && S.protocolo.poses).length + ' poses, menos de 5 min' }
-    ],
-    conta: NUVEM.sessao() ? null
-      : 'Se você já tem histórico em outro aparelho, entrar na conta traz tudo de volta antes de registrar qualquer coisa aqui.'
-  };
-};
 
 /**
  * O que o campo "como eu medi" mostra: o que ele está digitando, ou, quando a
@@ -9326,18 +8830,6 @@ CTX.corpo = function () {
   };
 };
 
-/**
- * O cardio de HOJE, no Agora (decisão do dono, 14/10): o lugar onde se lança é
- * o lugar onde se desfaz. Antes, o lançado por engano só se apagava amanhã, em
- * Dias — tocar em hoje abre o Agora, e o Agora não listava o do dia.
- */
-CTX.cardioDeHoje = function () {
-  return S.cardio.filter(function (x) { return sameDay(x.t, Date.now()); })
-    .sort(function (a, b) { return a.t - b.t; })
-    .map(function (x) {
-      return { t: x.t, txt: fmtHoraDita(x.t) + ' · ' + x.min + ' min de ' + x.m + ', ' + x.i };
-    });
-};
 
 CTX.musculos = function () {
   const semana = weekStart(Date.now());
@@ -9412,18 +8904,6 @@ CTX.musculos = function () {
   };
 };
 
-/** O teclado próprio de uma medida de corpo, quando ele está aberto nela. */
-CTX.tecladoDoCorpo = function (campo) {
-  const a = view.teclado && view.teclado.alvo;
-  if (!a || a.tipo !== 'corpo' || a.campo !== campo) return null;
-  return { texto: view.teclado.texto, decimal: true,
-           unidade: unidadeDoCorpo(campo) };
-};
-CTX.abreTecladoDeCorpo = function (campo) { abreTecladoDeCorpo(campo); };
-// As duas são as MESMAS de `acoesEx`: um teclado só, uma função só. O que muda
-// entre a sessão e o corpo é o ALVO, e ele mora no estado do teclado.
-CTX.tecla = function (t) { teclaDoTeclado(t); };
-CTX.fechaTeclado = function () { fechaTeclado(); };
 
 CTX.setPeso = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { peso: v }); render(); };
 CTX.setCintura = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { cintura: v }); render(); };
@@ -9568,36 +9048,7 @@ CTX.bioimpedancia = function (dia) {
 };
 
 CTX.registraBio = function (leitura, quando, semHora) { return registraBio(leitura, quando, semHora); };
-CTX.setHoraCorpo = function (k, h) {
-  view.bodyHora = Object.assign({}, view.bodyHora, { [k]: String(h || '') });
-  render();
-};
 
-// ---------- o registro do PESO, em folha (docs/corpo/02, §2.3) ----------
-CTX.abreRegistroDePeso = function () {
-  view.bodyForm = Object.assign({}, view.bodyForm); delete view.bodyForm.peso;
-  view.bodyDia = Object.assign({}, view.bodyDia); delete view.bodyDia.peso;
-  view.bodyHora = Object.assign({}, view.bodyHora); delete view.bodyHora.peso;
-  CTX.abreFolha({ k: 'peso' });
-};
-CTX.registroDePeso = function () {
-  const v = valorDoCorpo('peso');
-  const u = (S.body.peso || [])[(S.body.peso || []).length - 1];
-  return {
-    valor: isNaN(v) ? baseDoCorpo('peso') : v,
-    teclado: CTX.tecladoDoCorpo('peso'),
-    dia: diaDaMedidaVM('peso'),
-    hora: horaDaMedida('peso'),
-    ultima: u ? 'última: ' + fmtDec(u.v) + ' kg · ' + rotuloDoDia(u.t) : null
-  };
-};
-CTX.salvaPeso = async function () {
-  const m = Date.now();
-  await addBody('peso');
-  const gravou = (S.body.peso || []).some(function (x) { return x.m >= m; });
-  const p = view.pilha || [];
-  if (gravou && p.length && p[p.length - 1].k === 'peso') { pilha().pop(); render(); }
-};
 
 // ---------- a BIOIMPEDÂNCIA, em folha ----------
 CTX.abreBio = function () { CTX.abreFolha({ k: 'bio' }); };
@@ -9625,7 +9076,7 @@ CTX.abreMedidas = function (foco) {
   };
   view.bodyOnde = {};
   // no visual novo, a mesma porta abre o "medir agora" de uma medida por tela
-  if (visualNovo()) iniciaMedirV3(view.medidas, foco);
+  iniciaMedirV3(view.medidas, foco);
   entraNoDestino('medidas'); render(); rola(0);
 };
 CTX.fechaMedidas = function () { view.medidas = null; view.bodyOnde = {}; render(); saiDoDestino('medidas'); };
@@ -9634,22 +9085,6 @@ CTX.setLeitura = function (k, i, txt) {
   const l = (v.leituras[k] || ['', '', '']).slice(); l[i] = String(txt);
   v.leituras = Object.assign({}, v.leituras, { [k]: l });
   v.salvo = null;
-  render();
-};
-CTX.alternaComo = function (k) {
-  const v = view.medidas; if (!v) return;
-  v.como = Object.assign({}, v.como, { [k]: !v.como[k] }); render();
-};
-CTX.segundaLeitura = function (k) {
-  const v = view.medidas; if (!v) return;
-  const l = (v.leituras[k] || ['', '', '']).slice(); if (l[1] == null) l[1] = '';
-  v.leituras = Object.assign({}, v.leituras, { [k]: l });
-  v.segunda = Object.assign({}, v.segunda, { [k]: true }); render();
-};
-CTX.mostraDobras = function () { if (view.medidas) { view.medidas.dobras = !view.medidas.dobras; render(); } };
-CTX.setQuandoDasMedidas = function (campo, valor) {
-  const v = view.medidas; if (!v) return;
-  if (campo === 'data') v.data = String(valor); else v.hora = String(valor);
   render();
 };
 function numeroDaLeitura(t) {
@@ -9670,38 +9105,6 @@ function instanteDasMedidas(v) {
   if (p.length !== 3 || !p[0]) return NaN;
   return new Date(p[0], p[1] - 1, p[2], h[0] || 0, h[1] || 0, 0, 0).getTime();
 }
-CTX.medidasForm = function () {
-  const v = view.medidas;
-  if (!v) return null;
-  const linha = function (m) {
-    const l = v.leituras[m.k] || ['', '', ''];
-    const valor = valorDoFormulario(m, l);
-    const a = numeroDaLeitura(l[0]), b = numeroDaLeitura(l[1]);
-    return {
-      k: m.k, n: m.n.charAt(0).toUpperCase() + m.n.slice(1), u: m.u, dobra: !!m.dobra,
-      ponto: (view.bodyOnde && typeof view.bodyOnde[m.k] === 'string' ? view.bodyOnde[m.k] : null) || ondeMediu(S.body[m.k]) || m.onde || '',
-      ondeRascunho: rascunhoDoOnde(m.k),
-      como: m.como || '', comoAberto: !!v.como[m.k],
-      leituras: m.dobra ? [l[0] || '', l[1] || '', l[2] || ''] :
-        (v.segunda && v.segunda[m.k]) || (l[1] || '') ? (pedeTerceira(a, b) || (l[2] || '') ? [l[0] || '', l[1] || '', l[2] || ''] : [l[0] || '', l[1] || '']) : [l[0] || ''],
-      pedeTerceira: !m.dobra && pedeTerceira(a, b),
-      grava: typeof valor === 'number' && !isNaN(valor) ? fmtDec(valor) + ' ' + m.u : null,
-      invalida: typeof valor === 'number' && isNaN(valor),
-      foco: v.foco === m.k
-    };
-  };
-  const todas = medidasDeMedir();
-  const fita = todas.filter(function (m) { return !m.dobra; }).map(linha);
-  const dobras = todas.filter(function (m) { return m.dobra; }).map(linha);
-  const n = fita.concat(v.dobras ? dobras : []).filter(function (x) { return x.grava; }).length;
-  return {
-    data: v.data, hora: v.hora, max: hojeISO(),
-    fita: fita, dobras: dobras, dobrasAbertas: !!v.dobras,
-    regraDaFita: REGRA_DA_FITA, regraDaDobra: REGRA_DA_DOBRA,
-    n: n, salvar: n ? 'Salvar ' + (n === 1 ? '1 medida' : n + ' medidas') : 'Nada para salvar',
-    salvo: v.salvo
-  };
-};
 CTX.salvaMedidas = async function () {
   const v = view.medidas; if (!v) return { ok: false };
   const t = instanteDasMedidas(v);
@@ -10129,7 +9532,7 @@ CTX.apagaMedida = function (k, t) { delBody(k, t); };
 CTX.apagaCardio = function (t) { delCardio(t); };
 CTX.corrigeCardio = function (t, campo, valor) { return corrigeCardio(t, campo, valor); };
 // No visual novo o cardio rápido é uma folha; no antigo, o painel do Agora.
-CTX.abreCardio = function () { if (visualNovo()) CTX.abreFolha({ k: 'cardio' }); else abrirCardioRapido(); };
+CTX.abreCardio = function () { CTX.abreFolha({ k: 'cardio' }); };
 
 // ---------- edição de COMIDA ----------
 // Lei 3 do sistema: não existe modo de edição. Toda refeição carrega o próprio
@@ -10144,13 +9547,7 @@ CTX.abreCardio = function () { if (visualNovo()) CTX.abreFolha({ k: 'cardio' });
 
 /** A pilha de folhas. Três níveis, nunca mais. */
 function pilha() { return view.pilha || (view.pilha = []); }
-/**
- * As folhas da pilha que nasceram por `trocaFolha`: no lugar da de cima, sem
- * subir (peça 4 do motion; docs/motion/02 T8 — a camada não se move, só o
- * conteúdo troca). É estado de TELA, e não da pilha: fica fora de `view.pilha`
- * (que é navegação, e o Voltar lê) e morre com a folha, que é a chave.
- */
-const TROCADAS = new WeakSet();
+
 
 CTX.abreFolha = function (f) { pilha().push(f); render(); };
 /** Muda campos da folha de cima (uma escolha dentro dela, no visual novo) e redesenha. */
@@ -10163,7 +9560,7 @@ CTX.mudaFolha = function (campos) { const p = pilha(); if (!p.length) return; Ob
  * o fechar leva de volta. Cadastrar é a continuação da busca que não achou, não
  * uma camada por cima dela.
  */
-CTX.trocaFolha = function (f) { pilha().pop(); pilha().push(f); TROCADAS.add(f); render(); };
+CTX.trocaFolha = function (f) { pilha().pop(); pilha().push(f); render(); };
 // O estado que uma folha do visual novo segura sai com ela, feche como fechar
 // (o X, o véu, o Voltar do sistema, o Esc): sem isto o catálogo e a série
 // passada ficavam "abertos" no `view` depois de a folha sumir.
@@ -10481,20 +9878,6 @@ CTX.nuvemCampo = function (k, v) {
   render();
 };
 
-/**
- * A sessão de login que expirou (a D, `prescricao.html`, estado 11). Sem rede a
- * sincronia falha em silêncio, de propósito — o subsolo é o lugar normal de uso.
- * Login expirado NÃO é sem rede, e virar uma coisa só seria mentir: o que ele
- * registra continua gravado no aparelho, e o que falta é a réplica.
- */
-CTX.loginExpirou = function () {
-  if (!sync.expirou || NUVEM.sessao()) return null;
-  return {
-    texto: 'O que você registra continua gravado neste aparelho. Só não vai para a cópia remota, e os outros aparelhos não veem o que mudou aqui.',
-    esperando: sync.sujo ? 'Há mudanças deste aparelho esperando subir.' : null,
-    ultima: sync.em ? 'Última sincronização: ' + (sameDay(sync.em, Date.now()) ? 'hoje' : fmtDate(sync.em)) + ', ' + fmtHoraDita(sync.em) + '.' : null
-  };
-};
 
 CTX.entrarNaNuvem = async function () {
   const f = view.nuvemForm || {};
@@ -10612,22 +9995,6 @@ CTX.abreSessaoDoDia = function (a) {
 CTX.cardioSet = function (k, v) { cardioSet(k, v); };
 CTX.addCardio = function () { addCardio(); };
 
-// ---------- o MÊS em Dias (a D, `dias.html`, estado 1) ----------
-//
-// O mês é a entrada, e o dia é o lugar. Cada célula diz o que o dia teve por
-// forma e palavra — a letra do treino, "aula", "fora", "desc.", o coração do
-// cardio, a barra da comida — e um toque abre o dia. Dia sem nada fica sem
-// nada: o domingo não vira descanso sozinho, e a segunda sem registro não vira
-// treino. Embaixo, três leituras do mês, e só estas.
-//
-// Saíram daqui, pelo desenho: a faixa da semana (o mês já mostra a semana), o
-// quadro de dias, tempo e volume (volume é leitura de Semana) e a lista de
-// sessões, dos dias de comida e dos cardios — que moram agora no dia aberto. A
-// marca de período nas células também tinha saído, e voltou a pedido do dono
-// (21/10), com a legenda: ela e o horário de início dizem a mesma coisa de dois
-// jeitos, e ele lê o mês pelo canto da célula.
-
-const DIA_MS = 86400000;
 function maiuscula(x) { return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; }
 /** "7h56", de minutos desde a meia-noite */
 function horaDeMinutos(min) { const m = Math.round(min); return Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0'); }
@@ -11070,24 +10437,6 @@ CTX.detalheDaSessao = function () {
   };
 };
 CTX.fechaSessao = function () { fecharSessao(); };
-CTX.abreSerieDaPassada = function (idEx, chave, k) { abreSerieDaPassada(idEx, chave, k); };
-CTX.repsDaPassada = function (v) { return repsDaPassada(v); };
-CTX.andaReguaDaPassada = function (dir) { andaReguaDaPassada(dir); };
-CTX.rirDaPassada = function (v) { return rirDaPassada(v); };
-/**
- * "Tentar de novo" repete o toque que o aparelho recusou, seja ele qual for. O
- * botão repetia sempre a repetição: quando o recusado era o RIR ou a carga, não
- * havia repetição tocada, e a série era regravada com 0 repetições.
- */
-CTX.tentaDeNovoNaPassada = function () {
-  const t = view.passada && view.passada.tocado;
-  if (!t) return;
-  if (t.k === 'reps') return repsDaPassada(t.v);
-  if (t.k === 'rir') return rirDaPassada(t.v);
-  if (t.k === 'carga') return gravaNaPassada(function (s) { s[0] = t.v; }, t);
-};
-CTX.abreCargaDaPassada = function () { abreCargaDaPassada(); };
-CTX.apagaSerieDaPassada = function () { return apagaSerieDaPassada(); };
 CTX.abreCorrecaoDoTempo = function (t) { abreCorrecaoDoTempo(t); };
 CTX.editaSessao = function (t) { return apagaRegistroDeTreino(t); };
 CTX.corrigeDuracao = function (t, min) { corrigeDuracao(t, min); };
@@ -11253,10 +10602,8 @@ CTX.fechaHist = function () { closeHist(); };
 CTX.histKey = function (k) { histKey(k); };
 CTX.editaLinha = function (real) { editarSessao(real); };
 CTX.cancelaEdicao = function () { cancelarEdicao(); };
-CTX.salvaEdicao = function () { salvarEdicao(); };
 CTX.apagaLinha = function () { apagarSessao(); };
 CTX.editDor = function (k) { editDor(k); };
-CTX.limpaNum = function (el, dec) { limpaNum(el, dec); };
 
 // ---------- tela cheia: decisão de fim de sessão ----------
 /**
@@ -11338,17 +10685,6 @@ CTX.respondeMudanca = async function (sid, i, permanente, motivo) {
     : 'Ficou como só daquele dia. O treino registrado não muda.');
 };
 
-/**
- * A procedência do vazio da fila (a D, prescrição, estado 4): quando foi a
- * última mudança que entrou no programa. "Fica só naquele dia" não deixa
- * registro com data, então a frase fala só do que entrou.
- */
-CTX.ultimaQueEntrou = function () {
-  const log = Array.isArray(S.progLog) ? S.progLog : [];
-  if (!log.length) return null;
-  const t = Math.max.apply(null, log.map(function (x) { return x.t || 0; }));
-  return t ? 'a última mudança que entrou no programa foi em ' + fmtDate(t) : null;
-};
 
 CTX.mudancasQueEsperam = function () {
   const fila = Array.isArray(S.promoPendente) ? S.promoPendente : [];
@@ -11737,16 +11073,6 @@ CTX.acoesDia = {
   pronto: function () { modoEdicao(false); }
 };
 
-// `inp` saiu: a lista rápida não tem mais campo, e o par por valor dela
-// (`anotaSerieRapida`) continua sendo a porta do modelo. `tecla` e
-// `fechaTeclado` são as MESMAS da sessão e do corpo — um teclado só; o que muda
-// é o alvo, e ele mora no estado do teclado.
-CTX.acoesRapido = {
-  abre: function () { abrirRapido(); },
-  abreTeclado: function (i, pos) { abreTecladoRapido(i, pos); },
-  tecla: function (t) { teclaDoTeclado(t); },
-  fechaTeclado: function () { fechaTeclado(); }
-};
 
 CTX.acoesAulas = {
   abre: function () { abrirAulas(); },
@@ -11760,7 +11086,7 @@ CTX.acoesAulas = {
 
 CTX.acoesAdd = {
   // no visual novo o catálogo é uma folha (`catalogo`), no programa e na aula
-  abre: function () { if (visualNovo()) CTX.abreCatalogoV3(); else abrirAddEx(); },
+  abre: function () { CTX.abreCatalogoV3(); },
   fecha: function () { fecharAddEx(); },
   busca: function (v) { buscaEx(v); },
   adiciona: function (k) { addExercicio(k); },
@@ -12524,18 +11850,6 @@ CTX.apagaDaGaleria = async function (d, pose) {
   return ok;
 };
 CTX.restauraDaLixeira = function (k) { return restauraDaLixeira(k); };
-CTX.apagaDaLixeira = async function (k) {
-  const x = lixeiraDeFotos().filter(function (y) { return chaveDaLixeira(y) === k; })[0];
-  if (!x) return false;
-  const p = poseDe(x.pose);
-  const sim = await pare({ texto: 'Apagar de vez a foto de ' + (p ? p.n.toLowerCase() : x.pose) + ' de ' + fmtDate(instanteDaData(x.d)) +
-    ' tira ela da lixeira, deste aparelho e da nuvem. Isso não tem volta.', sim: 'Apagar de vez' });
-  if (!sim) return false;
-  await apagaDaLixeiraDeVez(x);
-  await save(); render();
-  toast('Foto apagada de vez.');
-  return true;
-};
 CTX.esvaziaLixeira = async function () {
   const todos = lixeiraDeFotos().slice();
   if (!todos.length) return false;
@@ -12845,13 +12159,6 @@ CTX.setDataComparada = function (qual, d) {
   render();
 };
 CTX.setSobrepor = function (on) { view.comparar.sobrepor = !!on; if (on) view.comparar.cortina = false; render(); };
-/**
- * A CORTINA (a D, `comparar.html`, estado 2): uma foto por cima da outra, e a
- * divisa diz onde uma termina e a outra começa. É a leitura que a geometria
- * permite — mesma pose, mesma distância, mesmas marcas —, de pé, com um dedo,
- * sem depender de ler nada.
- */
-CTX.setCortina = function (on) { view.comparar.cortina = !!on; if (on) view.comparar.sobrepor = false; render(); };
 CTX.setCorte = function (n) { view.comparar.corte = Math.max(0, Math.min(100, Number(n) || 0)); render(); };
 CTX.setOpacidade = function (n) { view.comparar.opacidade = n; render(); };
 
@@ -13432,59 +12739,6 @@ CTX.guardando = function () { return DB.mode !== 'mem'; };
 /** As porções que o app oferece. Duas acima de 1 — "comi mais que o plano". */
 const PORCOES_DO_DIA = [0.5, 0.75, 1, 1.25, 1.5];
 
-/**
- * As linhas da folha de pôr um dia em dia.
- *
- * ABRE PRÉ-MARCADA COMO SUGESTÃO, e a regra é a do protótipo: dia passado vem
- * tudo marcado. Mas aqui há histórico, e o que está REGISTRADO vence a sugestão
- * — `poeComidaNoDia` completa em vez de substituir, e a tela não pode prometer
- * o contrário.
- *
- * `sugerida` separa as duas, e a separação não pode ser só de cor (1.4.1): a
- * linha carrega a PROCEDÊNCIA da marca em palavra — "marcada pelo horário" para
- * a sugestão, nada para o que ele declarou.
- *
- * `null` quando a data não serve: futura, ilegível. A folha não abre para um dia
- * que não aconteceu.
- */
-/**
- * Os dias de comida JÁ FECHADOS — a lista que Dias possui (§1.2).
- *
- * É daqui que a folha de pôr em dia é alcançada: Dias é "o LUGAR" dela, e o que
- * o lugar oferece é a lista do que aconteceu, com a porta para corrigir cada
- * dia. Os dias SEM linha aparecem também, e são justamente os que ele pode pôr
- * em dia — um dia sem registro é o caso de uso inteiro desta peça.
- *
- * Catorze dias, a mesma janela do portão: é o recorte em que pôr um dia em dia
- * ainda muda a conta que a regra lê. Mais que isso é arqueologia.
- */
-CTX.diasDeComidaFechados = function () {
-  const hoje = hojeISO();
-  const porData = {};
-  (Array.isArray(S.comidaHist) ? S.comidaHist : []).forEach(function (h) {
-    if (h && h.d) porData[h.d] = h;
-  });
-
-  const dias = [];
-  for (let k = 1; k <= 14; k++) {
-    const dt = new Date(hoje + 'T12:00:00');
-    dt.setDate(dt.getDate() - k);
-    const iso = hojeISO(dt.getTime());
-    const h = porData[iso];
-    const marcas = h ? Object.keys(h.done || {}).length : 0;
-    dias.push({
-      data: iso,
-      rotulo: fmtDate(dt.getTime()),
-      // Contagem, nunca percentual: um número contra 100% implícito funciona
-      // como nota, e registro não leva nota.
-      txt: h
-        ? marcas + (marcas === 1 ? ' refeição marcada' : ' refeições marcadas')
-        : 'sem registro',
-      tem: !!h
-    });
-  }
-  return dias;
-};
 
 /**
  * As refeições do plano numa data passada. Dia sem linha: o tipo vem da mesma
@@ -13724,57 +12978,7 @@ CTX.marcaNoDiaPassado = async function (data, id, marca, escala) {
   return { ok: true };
 };
 
-// A regra do treinador sobre séries a mais (F99, o guia em
-// `src/dominio/programa.ts`), condensada pela D para caber ao lado da decisão.
-const REGRA_DAS_SERIES = 'Não acrescentar séries agora. Considerar 1 a 2 a mais só num músculo estagnado, ' +
-  'depois de várias exposições, com recuperação boa e sem dor.';
 
-/**
- * A linha e a folha da mudança que espera decisão, no Agora (a D,
- * `agora-descanso.html`, estados 6 e 7). A leitura é a mesma da lista de
- * Prescrição (`mudancasQueEsperam`), e o verbo também (`respondeMudanca`): é o
- * mesmo item, sem trocar de lugar.
- */
-CTX.decisaoNoAgora = function () {
-  const fila = CTX.mudancasQueEsperam().filter(function (g) { return !g.venceu; });
-  if (!fila.length) return null;
-  const n = fila.reduce(function (k, g) { return k + g.mudancas.length; }, 0);
-  const origem = function (g) {
-    return 'da sessão de ' + DIAS_LONGOS[new Date(g.quando).getDay()] + ', ' + fmtDate(g.quando) + ' · Treino ' + g.dia;
-  };
-  const so = n === 1 ? fila[0] : null;
-  return {
-    olho: so ? origem(so) : 'esperando decisão',
-    titulo: so ? so.mudancas[0].txt : n + ' mudanças esperam você',
-    // a linha do Agora: "Uma mudança do Treino D espera você"
-    linha: {
-      titulo: so ? 'Uma mudança do Treino ' + so.dia + ' espera você' : n + ' mudanças esperam você',
-      detalhe: so
-        ? so.mudancas[0].txt + ', na ' + DIAS_LONGOS[new Date(so.quando).getDay()] + ' ' + fmtDate(so.quando) +
-          (so.vence ? ' · ' + so.vence : '')
-        : fila.map(function (g) { return 'Treino ' + g.dia; }).filter(function (x, i, xs) { return xs.indexOf(x) === i; }).join(', ')
-    },
-    grupos: fila.map(function (g) {
-      const nome = 'Treino ' + g.dia;
-      return {
-        sid: g.sid, origem: origem(g),
-        mudancas: g.mudancas.map(function (m, i) {
-          return { i: i, txt: m.txt, impacto: m.impacto ? m.impacto.replace(/^Se entrar no [^:]+: /, '') : null,
-                   acima: m.acima, regra: m.acrescenta ? REGRA_DAS_SERIES : null };
-        }),
-        seNinguem: 'Se ninguém decidir, quando o ' + nome + ' voltar ela fica como só daquele dia — dito na lista de ' +
-          'Prescrição, e desfazível até a vez seguinte do ' + nome + '. A sessão de ' + fmtDate(g.quando) +
-          ' guarda o que foi feito de qualquer jeito.'
-      };
-    })
-  };
-};
-CTX.abreDecisao = function () { CTX.abreFolha({ k: 'decidir' }); };
-/** Decide pela folha do Agora, e a fecha quando não sobra mudança nenhuma. */
-CTX.decideNoAgora = async function (sid, i, permanente) {
-  await CTX.respondeMudanca(sid, i, permanente);
-  if (!CTX.decisaoNoAgora() && (view.pilha || []).some(function (f) { return f.k === 'decidir'; })) CTX.fechaFolha();
-};
 
 CTX.esperandoDecisao = function () {
   const fila = CTX.mudancasQueEsperam().filter(function (g) { return !g.venceu; });
@@ -14038,59 +13242,6 @@ CTX.voltaAoTreino = function () {
   else rola(0);
 };
 
-/**
- * As linhas do corpo no Agora: a pesagem da manhã e, quando vence, a sessão de
- * fotos. Linhas e não cartão (frente 1 §5, regra 5): cada uma tem um dia em que
- * é prevista, e nenhuma é "a próxima coisa a fazer". O desenho é o M1‑13 da D
- * ("Peso de hoje · antes de treinar, depois do pré · última: 73,8 · Anotar"),
- * com o nome que a §10.2 da frente 3 deu: "Peso da manhã", porque com a
- * bioimpedância há dois pesos no mesmo dia.
- */
-CTX.linhasDoCorpo = function () {
-  const agora = Date.now();
-  const peso = S.body.peso || [];
-  const hoje = peso.filter(function (x) { return sameDay(x.t, agora); }).slice(-1)[0];
-  const antes = peso.filter(function (x) { return !sameDay(x.t, agora); }).slice(-1)[0];
-  const h = diaResolvido();
-  const treina = h.cadencia === 'treino';
-
-  // A HORA manda nas duas linhas (a D, `agora-descanso.html`, estados 1 e 5).
-  // A pesagem é de manhã em semi-jejum (F42) — em dia de treino, antes de
-  // treinar —, e passada a hora ela não aparece: aparecer à tarde seria pedir
-  // um número que não compara. As FOTOS não seguem a hora (decisão do dono,
-  // 14/10: "apenas indique o horário da foto — a maioria eu tiro de noite"):
-  // a sessão é oferecida quando vence, e a hora de cada foto fica anotada e
-  // aparece na comparação.
-  const H = CTX.hoje();
-  const refs = H.refs.filter(function (r) { return !ehLinhaDeTreino(r); });
-  const primeira = refs[0] || null;
-  const linhaTreino = H.refs.filter(ehLinhaDeTreino)[0] || null;
-  const minAgora = new Date(agora).getHours() * 60 + new Date(agora).getMinutes();
-  const comeu = !!(primeira && H.comidaDoDia.done[primeira.id]);
-  const passouAHora = treina
-    ? (h.origem === 'registrado' || h.origem === 'aberta' || (linhaTreino && minAgora > minutosDe(linhaTreino.t)))
-    : (comeu || (primeira && minAgora > minutosDe(primeira.t)));
-  const semana = peso.filter(function (x) { return x.t >= weekStart(agora); }).length;
-
-  const linhas = [];
-  if (hoje) {
-    linhas.push({ k: 'peso', t: 'Peso da manhã', v: comUnidade(hoje.v, 'kg'),
-                  d: 'anotado às ' + fmtHoraDita(hoje.t) + ' · ' + semana + (semana === 1 ? ' nesta semana' : ' nesta semana') });
-  } else if (!passouAHora) {
-    linhas.push({ k: 'peso', t: 'Peso da manhã', v: 'sem marca',
-      d: (treina ? 'antes de treinar, depois do pré' : 'de manhã, em semi-jejum') +
-         (antes ? ' · última: ' + fmtDec(antes.v) + ' em ' + fmtDate(antes.t) : '') +
-         (semana ? ' · ' + semana + ' nesta semana' : ''),
-      acao: 'Anotar' });
-  }
-  const dias = diasDesdeAFoto(S.protocolo.sessoes, agora);
-  const u = ultimaSessaoFoto(S.protocolo.sessoes);
-  if (dias != null && dias >= CADENCIA_DIAS && u) {
-    linhas.push({ k: 'fotos', t: 'Fotos do corpo', v: 'faz ' + dias + ' dias',
-      d: 'a cada ' + CADENCIA_DIAS + ' dias · a hora de cada foto fica anotada', acao: 'Nova sessão' });
-  }
-  return linhas;
-};
 
 CTX.protocoloFotos = function () {
   const lista = posesDo(S.protocolo.poses);
@@ -14212,8 +13363,6 @@ CTX.abreModoDeSessao = function () { if (abreModo()) render(); };
  * qualquer outra.
  */
 // O interruptor do visual novo (direção 3), por aparelho. Sai na Fase 5.
-CTX.visualNovo = function () { return visualNovo(); };
-CTX.alternaVisual = function () { poeVisual(!visualNovo()); render(); };
 
 CTX.abreAjustes = function () {
   if (view.ajustes) return;
@@ -14229,94 +13378,6 @@ CTX.fechaAjustes = function () {
   saiDoDestino('ajustes');
 };
 
-/**
- * A PORTA 1 do modo: o cartão de cima do Agora.
- *
- * As outras duas portas devolvem alguém a uma sessão que já existe (a faixa) ou
- * a reabrem no pouso do app. Esta é a que COMEÇA — e começar não é abrir
- * sessão: "entrar no modo é navegação", e a sessão nasce na primeira série
- * completa (frente 1, §4.4). Por isso aqui não há `abreSessao` nenhuma.
- *
- * O dia vem resolvido, e não de `view.day`: o cartão fala do treino de HOJE, e
- * o dedo pode ter deixado a letra em outro dia por outro caminho.
- *
- * E ela NÃO mexe em `view.aba`. Com a aba de treino, mexer era obrigatório — a
- * tela do treino era uma aba. Agora o modo é camada POR CIMA do lugar, e trocar
- * o lugar por baixo faria fechar o modo devolver a pessoa a outro lugar que não
- * o de onde ela entrou.
- */
-/**
- * O menu `···` da sessão: o que é RARO, e por isso não fica à vista.
- *
- * Nasce com um item só — o deload —, e isso é por decisão e não por falta de
- * ideia. A decisão 6 do dono mandou o interruptor sair de Ajustes para cá, e o
- * argumento que caiu com ele era bom o bastante para ficar escrito:
- *
- *   "um interruptor que corta metade das séries não deve estar a um toque no
- *    meio de uma sessão. O app existe em parte para frear, e o caminho de menor
- *    esforço tem que ser o conservador."
- *
- * **O lugar ERA o freio**, e ele decidiu movê-lo sabendo disso — foi perguntado
- * duas vezes na mesma noite e manteve. Então o freio passa do LUGAR para a
- * PALAVRA: o item não é um interruptor com nome, é uma frase que diz **o corte
- * em número antes do toque** (frente 3, §7.6).
- *
- * Os números são do dado e não de exemplo: saem do prescrito do dia e da conta
- * do deload (`setsFor`), calculados na hora de abrir o menu.
- *
- * `null` sem treino no dia: não há séries a cortar.
- */
-/**
- * Em que ponto do bloco ele está.
- *
- * Veio do cabeçalho do TREINO (achado 7 da frente 1): o ciclo responde "em que
- * ponto do bloco eu estou", que é a mesma pergunta que a retrospectiva responde
- * em prosa — e a retrospectiva é de Semana. No cabeçalho da sessão ele era a
- * terceira célula de uma linha que se lê de pé, no meio de uma série.
- *
- * A conta é por VOLTAS DA ROTAÇÃO e não por semanas: o ciclo é quantas vezes a
- * sequência inteira já passou, e por isso ele depende do tamanho dela — cinco
- * dias mais o HYROX, ou o que a rotação dele tiver. Contar em semanas daria o
- * número errado toda vez que ele treinasse mais ou menos que a rotação pede.
- */
-/**
- * Os catorze dias que a regra do corte lê — as fatias e a contagem.
- *
- * §1.1 lista isto como posse do Agora, e o §5.7 o nomeia no estado mais mudo
- * que a tela tem: num dia de descanso fora de qualquer janela "ficam a linha do
- * dia, a água e A CONTAGEM DOS 14 DIAS, e não há cartão". Faltava — e pior, o
- * aviso de aparelho sem armazenamento que eu escrevi diz "não entra na conta
- * dos 14 dias", citando uma conta que não estava em tela nenhuma.
- *
- * **A janela é a mesma que o portão lê**, e é por isso que ela inclui a casa de
- * HOJE mesmo sabendo que ela vai estar vazia: `diasInterpretaveis` conta sobre
- * `S.comidaHist`, e o dia corrente só entra lá quando a data vira
- * (`fechaDiaDeComida`). Mostrar treze casas e contar sobre catorze faria a tela
- * e a regra discordarem — e a tela perderia, porque quem decide o corte é a
- * regra. A casa de hoje vazia é informação: o dia não fechou.
- *
- * `null` numa fatia é dia sem registro interpretável, e o primitivo desenha
- * casa vazia — é o que faz as catorze lerem como presença e ausência em vez de
- * um gráfico de zero e um.
- */
-/**
- * O histórico de um exercício, a partir de uma linha do PROGRAMA.
- *
- * A porta que o achado 1 da frente 1 pede. `openHist(i)` indexa pelo
- * `view.day`, e no editor de programa o dia é o de `view.prog` — podia ser
- * outro. Aqui o dia vem explícito, e `view.day` o acompanha porque é dele que a
- * tela do histórico lê a prescrição da posição.
- *
- * As QUATRO capacidades que moravam só no cartão do exercício chegam por aqui:
- * o gráfico do "estou ficando mais forte nisto", a correção de uma série de
- * semanas atrás, o renome do exercício e o tipo de carga. Com a aba de treino
- * fora, o cartão só existe dentro do modo — e corrigir a série de três semanas
- * atrás não é tarefa de quem está treinando.
- */
-CTX.abreHistoricoDaPrescricao = function (dia, i) {
-  view.day = dia;
-  openHist(i);
-};
 
 /**
  * RESPONDER OS DIAS (visual novo): os 13 dias antes de hoje, cada um com a
@@ -14504,8 +13565,6 @@ CTX.abreTreinoDeHoje = function () {
  * exercícios e séries" abre o modo na data e na hora do registro.
  */
 CTX.lancaTreinoDeHoje = function () { abrirAdicionar(Date.now()); };
-/** O dia de hoje aberto, com o que já foi registrado nele (corrigir, apagar). */
-CTX.abreDiaDeHoje = function () { CTX.abreDia(Date.now()); };
 
 // ---------- enquanto descansa (a D, momento 1, estado 2) ----------
 //
@@ -14547,18 +13606,6 @@ CTX.abrePesoNoDescanso = function () {
     delete view.bodyDia.peso;
   }
   CTX.abreFolha({ k: 'pesoRapido' });
-};
-CTX.pesoRapido = function () {
-  const c = CTX.corpo().peso;
-  return { valor: c.valor, teclado: CTX.tecladoDoCorpo('peso') };
-};
-CTX.registraPesoRapido = async function () {
-  const m = Date.now();
-  await addBody('peso');
-  // só fecha se gravou: valor inválido deixa a folha aberta, com o aviso dito
-  const gravou = (S.body.peso || []).some(function (x) { return x.m >= m && sameDay(x.t, m); });
-  const p = view.pilha || [];
-  if (gravou && p.length && p[p.length - 1].k === 'pesoRapido') { pilha().pop(); render(); }
 };
 
 // ---------- O TREINO EM FOCO no visual novo (Fase 3): uma série por tela ----------
@@ -15556,7 +14603,7 @@ CTX.abreCamera = async function () {
     // As três luzes do disparo (visual novo; docs/redesign-3/02-captura.md):
     // o que quem fotografa conferiu a olho, e se escolheu tirar mesmo assim.
     // No visual antigo nada disso trava nem é gravado.
-    v3: visualNovo(), conferi: {}, forcado: false
+    v3: true, conferi: {}, forcado: false
   };
   movimento = NIVEL.criaMovimento();
   entraNoDestino('camera'); render();

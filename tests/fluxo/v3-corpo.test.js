@@ -11,7 +11,7 @@ async function corpo(antes) {
   const a = await app({ aba: 'corpo' });
   await a.pronto();
   if (antes) antes(a);
-  a.E('CTX.alternaVisual()');
+  a.v('render');
   await a.esperar();
   return a;
 }

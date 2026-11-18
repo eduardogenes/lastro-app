@@ -1,7 +1,7 @@
 # Lastro — leia antes de mexer no front
 
-O app está **trocando de visual**. Há dois desenhos no código ao mesmo tempo, e
-só um deles orienta trabalho novo.
+O app tem **um visual só**, a direção 3. O anterior (Instrumento) saiu do código
+na Fase 5, em 17/11/2026.
 
 ## O que vale
 
@@ -23,24 +23,23 @@ Quando o protótipo e um documento discordarem, vale o protótipo, e o documento
 ## O que não vale mais
 
 O visual anterior se chamava **Instrumento** (escuro e claro, fio de 1px,
-uma fonte, "painel de instrumento"). Ele ainda está no código até a Fase 5 do
-plano, e por isso aparece em três lugares que **não orientam nada novo**:
+uma fonte, "painel de instrumento"). Saiu do código na Fase 5. Ainda aparece em
+dois lugares que **não orientam nada novo**:
 
 - **`docs/historico/`** — todo o processo anterior: o redesenho de outubro
   (direções A a D, frentes, tokens), a revisão de regras, a auditoria de UX, o
   trabalho de motion, o mapa das telas e o `DESIGN.md` antigo. É registro. Não
   cite como regra, não retome plano de lá.
-- **Comentários em `src/`** que falam em "inegociáveis", "frente 1 a 4",
-  "direção D", "Instrumento", `docs/redesign/…` ou `docs/motion/…`. Descrevem
-  o código antigo em que estão; os caminhos mudaram para `docs/historico/…`.
-- **`tests/dominio/estilo.test.ts` e os testes de fluxo que olham classe ou
-  texto de tela.** Cobram o visual antigo enquanto ele existir. O que fazer
-  com cada um está na estratégia de testes do plano.
+- **Comentários em `src/main.jsx`** que falam em "inegociáveis", "frente 1 a
+  4", "direção D", "Instrumento", "o modo", "a tab bar", `docs/redesign/…` ou
+  `docs/motion/…`. Descrevem a regra de dado por trás de uma tela que já não
+  existe; a regra vale, a tela citada não. Os caminhos mudaram para
+  `docs/historico/…`.
 
-Onde o código é o visual antigo: `src/ui/` (menos `src/ui/v3/`), `src/base.css`,
-`src/componentes.css`, `src/treino.css`, `src/protocolo.css`, `src/tokens.css`.
-Onde é o novo: `src/ui/v3/` e `src/v3/`. Não misture: tela nova não usa classe
-`ins-*`, e tela antiga não ganha conserto visual, só de defeito.
+As telas moram em `src/ui/v3/` (a casca em `src/ui/app.jsx`), e os estilos em
+`src/v3/` (`global.css` é o que vale para a página inteira). Classe `ins-*` não
+existe mais. O que a Fase 5 tirou, e o que ficou para refazer, está em
+[docs/redesign-3/04-fase5.md](docs/redesign-3/04-fase5.md).
 
 ## O que continua valendo, de qualquer época
 
@@ -62,5 +61,3 @@ Isto não é desenho; é regra de dado e de engenharia:
   no `main`, um por peça inteira. Não criar branch.
 - **Push no `main` publica em produção.** Só a pedido do dono.
 - Testar uma vez, no fim da peça: `npm run tipos`, `npm test`.
-- O visual novo fica atrás do interruptor "Visual novo" em Ajustes até a
-  Fase 5.

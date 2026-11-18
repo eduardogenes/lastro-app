@@ -20,7 +20,6 @@ Treino B · Pernas completas + panturrilhas
 async function noPrograma() {
   const a = await app({ aba: 'agora' });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.v('ctx.abrePrograma');
   await a.esperar();
   return a;
@@ -103,7 +102,6 @@ test('a revisão do treinador: lê o texto, pergunta o que não reconhece, e mos
     logs: { 'cadeira-flexora-sentada': [{ t: t, sid: t, sets: [[45, 12, 1], [45, 11, 1]] }] },
     done: [{ day: 'B', t: t, sid: t, dur: 3600000 }] } });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.v('ctx.abreRevisao');
   await a.esperar();
   assert.ok(a.$('#revisao-texto'), 'o campo de colar');

@@ -19,7 +19,6 @@ async function comTreinoPassado(extra) {
     S.done.push({ t: t, day: 'A', sid: 77, dur: 3600000, fim: 'manual' });
     S.logs[logKey('A', 0)] = [{ t: t, sid: 77, sets: [[40, 10], [40, 9]] }];
   })()`);
-  a.E('CTX.alternaVisual()');
   a.v('ctx.fechaModoDeSessao');
   a.v('ctx.comecaAqui');
   await a.esperar();

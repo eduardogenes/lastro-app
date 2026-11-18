@@ -187,32 +187,6 @@ test('as portas rápidas só existem no dia aberto', async () => {
   a.fechar();
 });
 
-test('a lista rápida registra a aula inteira sem abrir cartão', async () => {
-  const a = await noSabado(comSabadoAnterior());
-  a.v('repetirUltimaAula');
-  await a.esperar(60);
-  a.v('abrirRapido');
-  await a.esperar();
-
-  const linhas = a.$$('.rapl');
-  assert.strictEqual(linhas.length, 4, 'a aula inteira cabe numa tela');
-  assert.strictEqual(a.$$('.ex').length, 0, 'e os cartões saem do caminho');
-
-  // cinco valores, cada um com um toque para abrir e um por dígito
-  await pelaLista(a, 'fr0', 104);   // corrida 400 m
-  await pelaLista(a, 'fr1', 108);   // remo 500 m
-  await pelaLista(a, 'fw2', 9);     // wall balls 9 kg
-  await pelaLista(a, 'fr2', 20);
-  await pelaLista(a, 'fr3', 60);    // bike 15 cal
-
-  assert.strictEqual(a.v('seriesFeitasHoje', 'HX'), 7,
-    'as passadas de cada movimento entram no histórico na hora, sem salvar');
-  const corrida = a.log('HX', 0);
-  assert.deepStrictEqual(corrida[corrida.length - 1].sets, [[0, 104], [0, 104]],
-    'o valor vale para as duas passadas, e a linha diz isso na tela');
-  a.fechar();
-});
-
 test('a lista rápida diz que o valor vale para todas as passadas', async () => {
   const a = await noSabado(comSabadoAnterior());
   a.v('repetirUltimaAula');
@@ -247,96 +221,6 @@ async function listaAberta() {
   return a;
 }
 
-test('a lista rápida não abre o teclado do sistema: carga e medida são botões', async () => {
-  const a = await listaAberta();
-  assert.strictEqual(a.$$('.rapl input').length, 0,
-    'nenhum campo na lista: qualquer um abriria o teclado do sistema por cima dela');
-
-  a.clicar(a.doc.getElementById('fw2'));
-  await a.esperar();
-  const linhas = a.$$('.rapl');
-  assert.strictEqual(a.$$('.tcl').length, 1, 'um painel só');
-  assert.ok(linhas[2].querySelector('.tcl'), 'e ele abre na linha do movimento que o pediu');
-  assert.ok(a.doc.getElementById('fw2').classList.contains('on'),
-    'o botão que abriu fica marcado: é como ele sabe em que grandeza está digitando');
-  a.fechar();
-});
-
-test('a vírgula só existe na carga, e a carga entra em todas as passadas', async () => {
-  const a = await listaAberta();
-  const grade = function () {
-    return a.$$('.rapl .tcl-grade > *').map(function (el) { return el.textContent.trim(); });
-  };
-
-  a.clicar(a.doc.getElementById('fr2'));
-  await a.esperar();
-  assert.strictEqual(grade()[9], '', 'repetição é inteira: o lugar da vírgula fica vazio');
-
-  await pelaLista(a, 'fw2', '9,5');
-  assert.strictEqual(grade()[9], ',', 'a carga tem a tecla');
-  assert.deepStrictEqual(a.vJ('draftPeek', 2).s.map(function (s) { return s[0]; }), [9.5, 9.5],
-    'o valor vale para as duas passadas, como a linha diz por extenso');
-  a.fechar();
-});
-
-test('a vírgula no meio da digitação não apaga o que já estava registrado', async () => {
-  const a = await listaAberta();
-  await pelaLista(a, 'fw2', '9');
-  assert.strictEqual(a.vJ('draftPeek', 2).s[0][0], 9);
-
-  const virgula = a.$$('.rapl .tcl-grade > *').find(function (el) { return el.textContent.trim() === ','; });
-  a.clicar(virgula);
-  await a.esperar();
-  assert.strictEqual(a.vJ('draftPeek', 2).s[0][0], 9,
-    '"9," ainda não é número: gravar nesse instante apagaria a carga por um passo');
-  a.fechar();
-});
-
-test('reabrir parte do valor registrado, porque o teclado é o único editor dele', async () => {
-  const a = await listaAberta();
-  await pelaLista(a, 'fr0', 104);
-  a.clicar(a.doc.getElementById('fr0'));       // o mesmo botão fecha
-  await a.esperar();
-  assert.strictEqual(a.$$('.tcl').length, 0, 'tocar no mesmo botão fecha o painel');
-
-  a.clicar(a.doc.getElementById('fr0'));
-  await a.esperar();
-  assert.ok(a.texto('.rapl .tcl-visor').includes('104'),
-    'abrir vazio faria um valor já registrado parecer ausente — aqui não há stepper mostrando o número');
-  a.fechar();
-});
-
-test('tocar noutro botão troca o painel, e fechar a lista fecha o teclado', async () => {
-  const a = await listaAberta();
-  a.clicar(a.doc.getElementById('fr0'));
-  await a.esperar();
-  a.clicar(a.doc.getElementById('fr3'));
-  await a.esperar();
-  const linhas = a.$$('.rapl');
-  assert.strictEqual(a.$$('.tcl').length, 1, 'continua um painel só');
-  assert.ok(linhas[3].querySelector('.tcl'), 'agora na linha da bike');
-
-  a.v('abrirRapido');                            // fecha a lista
-  await a.esperar();
-  assert.strictEqual(a.vista().teclado, null,
-    'um painel aberto sem a linha que o abriu ficaria escrevendo num movimento fora da tela');
-  a.fechar();
-});
-
-test('digitar num dia aberto não troca a métrica do topo por uma meta', async () => {
-  const a = await noSabado(comSabadoAnterior());
-  a.v('repetirUltimaAula');
-  await a.esperar(60);
-  assert.strictEqual(a.texto('#daymeta'), '4', 'o dia aberto conta movimentos');
-
-  a.v('abrirRapido');
-  await a.esperar();
-  await pelaLista(a, 'fr0', 104);
-  assert.strictEqual(a.texto('#daymeta'), '4',
-    'atualizaEstado escrevia "feitas/prescritas" por cima — meta que o box nunca prometeu');
-  a.fechar();
-});
-
 // Os dois fechos de sessão, no dia ABERTO.
 //
 // `finalizarSessao` tem a guarda `!diaAberto(...)` com a razão escrita ao lado:
@@ -365,27 +249,3 @@ test('aula que fecha sozinha não enfileira os movimentos como mudança pendente
   a.fechar();
 });
 
-test('e a aula encerrada no toque também não — os dois fechos concordam', async () => {
-  const a = await noSabado(comSabadoAnterior());
-  a.v('repetirUltimaAula');
-  await a.esperar(60);
-  a.v('abrirRapido');
-  await a.esperar();
-  await pelaLista(a, 'fr0', 104);
-  await pelaLista(a, 'fr1', 108);
-  await pelaLista(a, 'fw2', 9);
-  await pelaLista(a, 'fr2', 20);
-  await pelaLista(a, 'fr3', 60);
-  assert.ok(a.vJ('modsDoDia', 'HX').length > 0, 'os mods continuam lá');
-
-  await a.v('finalizarSessao');
-  await a.esperar();
-
-  // A primeira asserção falava de `view.promo`, que saiu com a tela de decisão.
-  // A segunda é a que vale, e é mais forte: num dia ABERTO o que foi
-  // acrescentado É o dia, não uma emenda a ele — não há conteúdo permanente
-  // para aquilo virar, e por isso nada é enfileirado.
-  assert.deepStrictEqual(a.S().promoPendente, [], 'nada ficou esperando decisão');
-  assert.strictEqual(a.S().sessao, null, 'a sessão encerrou');
-  a.fechar();
-});

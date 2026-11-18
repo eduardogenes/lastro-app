@@ -28,7 +28,6 @@ function comSabadoAnterior() {
 async function naAula() {
   const a = await app(comSabadoAnterior());
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.E('view.day = "HX"');
   a.v('ctx.abreModoDeSessao');
   await a.esperar();

@@ -1,7 +1,7 @@
-/* O visual novo (direção 3). Tudo aqui vive sob `.v3` ou `html[data-visual="3"]`
-   e não toca nas telas antigas. Regras e valores: DESIGN.md. */
+/* O visual do app (direção 3). Regras e valores: DESIGN.md. */
 @import './tokens.css';
 @import './fontes.css';
+@import './global.css';
 @import './base.css';
 @import './componentes.css';
 @import './fotos.css';

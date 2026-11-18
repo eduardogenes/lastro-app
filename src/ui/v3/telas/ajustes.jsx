@@ -59,7 +59,6 @@ export function AjustesV3({ ctx }) {
         <Apoio>{d.resumo}. Guardado em: {d.onde}.</Apoio>
       </Secao>
       <Secao titulo="Visual">
-        <Chave titulo="Visual novo" apoio="desligar volta ao visual antigo neste aparelho" ligada={ctx.visualNovo()} data-a="visual-novo" aoMudar={ctx.alternaVisual} />
       </Secao>
       <Secao titulo="Voltar ao começo">
         <div>

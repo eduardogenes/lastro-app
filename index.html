@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-visual="3" data-theme="light">
 <head>
 <meta charset="utf-8">
 <!-- user-scalable=no e maximum-scale=1.
@@ -36,14 +36,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/icone-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icone-192.png">
 <title>Lastro</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="/src/base.css">
-<link rel="stylesheet" href="/src/componentes.css">
-<link rel="stylesheet" href="/src/treino.css">
-<link rel="stylesheet" href="/src/protocolo.css">
-<!-- O visual novo (direção 3): tudo sob `.v3`, inerte nas telas antigas. -->
+<!-- O visual (direção 3). As fontes vêm de dentro do app (src/v3/fontes.css). -->
 <link rel="stylesheet" href="/src/v3/v3.css">
 <!-- A bancada: o modo de mesa. Inerte fora dela — toda regra está
      trancada atrás de [data-palco="bancada"]. Ver src/palco.js. -->
@@ -74,32 +67,14 @@
      no mesmo instante. Como a confirmação visual já existe, o que falta é só o
      anúncio — então ele é invisível de propósito.
      `polite` e não `assertive`: informa, não interrompe. -->
-<div id="serie-dita" role="status" aria-live="polite" class="ins-so-leitor"></div>
+<div id="serie-dita" role="status" aria-live="polite" class="so-leitor"></div>
 
 <!-- O aviso de telefone deitado. Fica no HTML e não no Preact porque não
      depende de estado nenhum: quem o liga e desliga é a media query, e assim
      ele aparece mesmo antes de o app terminar de carregar. -->
 <div id="deitado" role="alert">
-  <span class="ins-label">retrato</span>
   <b>Gire o telefone</b>
-  <p>Fora do treino, o app foi desenhado de pé, para uma mão. No meio da sessão
-     ele se arruma deitado também, em duas colunas.</p>
-</div>
-
-<!-- O cronômetro de descanso. Fica fora do #app de propósito: ele repinta 4×
-     por segundo, e redesenhar a árvore nesse ritmo roubaria o foco do campo
-     que está sendo preenchido no meio da série.
-     A linha de cima diz de ONDE veio este descanso — sem ela, o número flutua
-     sem referência depois de rolar a tela ou reabrir o app. -->
-<div id="timer">
-  <div id="tctx" class="ins-label"></div>
-  <div id="tlinha">
-    <div id="tval">0:00</div>
-    <div id="tbar"><div id="tfill"></div></div>
-    <button id="tmenos" aria-label="tirar 15 segundos do descanso">−15</button>
-    <button id="tmais" aria-label="somar 15 segundos ao descanso">+15</button>
-    <button id="tstop">parar</button>
-  </div>
+  <p>O app foi desenhado de pé, para uma mão.</p>
 </div>
 
 <!-- Uma entrada só. Quem decide se esta janela é o aparelho ou a BANCADA onde

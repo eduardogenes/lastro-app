@@ -10,7 +10,6 @@ import { dataLocal } from '../../src/dominio/protocolo';
 async function emDias(hist) {
   const a = await app({ aba: 'dias', agora: agoraEstavel(10), estado: { logs: {}, done: [], comidaHist: hist || [] } });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.v('ctx.fechaModoDeSessao');
   await a.esperar();
   return a;

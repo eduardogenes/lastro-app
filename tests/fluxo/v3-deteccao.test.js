@@ -33,7 +33,6 @@ function motorFalso(a, { falha = false } = {}) {
 async function camera(opcoes = {}) {
   const a = await app({ aba: 'corpo' });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   cacheFalso(a);
   cameraFalsa(a);
   motorFalso(a, opcoes);

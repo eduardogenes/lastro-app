@@ -5,14 +5,22 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { app } from './harness.js';
 
+/** O descanso como a tela do treino em foco o mostra: o que falta, em m:ss, ou null sem descanso. */
+function falta(a) {
+  const d = a.vJ('ctx.descansoV3');
+  if (!d) return null;
+  const s = Math.max(0, Math.ceil((d.fim - a.E('Date.now()')) / 1000));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
 test('conta a partir do instante-alvo', async () => {
   const a = await app();
   a.v('startTimer', 180);
-  assert.strictEqual(a.texto('#tval'), '3:00');
+  assert.strictEqual(falta(a), '3:00');
 
   a.viajar(30000);
   a.v('pintaTimer');
-  assert.strictEqual(a.texto('#tval'), '2:30');
+  assert.strictEqual(falta(a), '2:30');
   a.relogioNormal();
   a.fechar();
 });
@@ -28,11 +36,10 @@ test('sobrevive à tela apagada', async () => {
   // simulação de plataforma, e não há verbo do app que faça isso.
   a.E('clearInterval(timer); timer = null;');
   a.viajar(175000);
-  assert.strictEqual(a.texto('#tval'), '2:30', 'a tela fica congelada enquanto suspenso');
+  assert.strictEqual(falta(a), '0:05', 'o alvo é um instante: ao desbloquear, o que falta é o tempo real');
 
   a.doc.dispatchEvent(new a.window.Event('visibilitychange'));
   await a.esperar();
-  assert.strictEqual(a.texto('#tval'), '0:05', 'ao desbloquear, pula para o tempo real');
   assert.ok(a.dado('timer') !== null, 'o intervalo é religado');
   a.relogioNormal();
   a.fechar();
@@ -44,7 +51,7 @@ test('avisa uma vez só ao zerar', async () => {
   a.viajar(181000);
   a.v('pintaTimer');
 
-  assert.strictEqual(a.texto('#tval'), 'vai');
+  assert.strictEqual(falta(a), '0:00');
   assert.strictEqual(a.registro.bipes, 2, 'bipe duplo por Web Audio');
   // Array.from normaliza: o array vem do realm do jsdom
   assert.deepStrictEqual(Array.from(a.vibrou[a.vibrou.length - 1]), [420, 140, 420]);
@@ -81,7 +88,7 @@ test('o som nasce logo depois de entrar no modo, e o toque da primeira série n�
 
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);             // a 1ª série: o descanso começa
-  assert.ok(a.$('#timer').classList.contains('on'), 'o descanso começou');
+  assert.ok(a.vJ('ctx.descansoV3'), 'o descanso começou');
   assert.strictEqual(a.E('audioCtx === window.__som'), true, 'o toque da série não criou outro');
   a.fechar();
 });
@@ -109,14 +116,14 @@ test('descanso automático na última série usa o tempo do exercício', async (
   a.v('toggle', 0);
   const n = a.v('setsFor', a.vJ('treino', 'B').ex[0]);
   for (let k = 0; k < n; k++) a.preencher(0, k, 100, 8);
-  assert.ok(a.doc.getElementById('timer').className.includes('on'));
-  assert.strictEqual(a.texto('#tval'), '3:00');
+  assert.ok(a.vJ('ctx.descansoV3'), 'o descanso começou');
+  assert.strictEqual(falta(a), '3:00');
 
   // adutora: isolador, 1:45, e não os 3 min genéricos de antes
   a.v('stopTimer');
   a.v('toggle', 6);
   for (let k = 0; k < 2; k++) a.preencher(6, k, 60, 12);
-  assert.strictEqual(a.texto('#tval'), '1:45');
+  assert.strictEqual(falta(a), '1:45');
   a.fechar();
 });
 
@@ -148,10 +155,10 @@ test('bi-set encadeia em vez de descansar', async () => {
   a.v('toggle', 4);
   for (let k = 0; k < 2; k++) a.preencher(4, k, 15, 12);
   assert.strictEqual(a.vista().open, 5, 'vai direto para o próximo do par');
-  assert.ok(!a.doc.getElementById('timer').className.includes('on'), 'sem pausa no meio do par');
+  assert.strictEqual(a.vJ('ctx.descansoV3'), null, 'sem pausa no meio do par');
 
   for (let k = 0; k < 2; k++) a.preencher(5, k, 20, 12);
-  assert.ok(a.doc.getElementById('timer').className.includes('on'), 'o descanso é no segundo');
+  assert.ok(a.vJ('ctx.descansoV3'), 'o descanso é no segundo');
   a.fechar();
 });
 
@@ -161,20 +168,21 @@ test('esticar e encurtar o descanso mexe no instante-alvo', async () => {
   // cronômetro e perder a conta.
   const a = await app();
   a.v('startTimer', 180);
-  assert.strictEqual(a.texto('#tval'), '3:00');
+  assert.strictEqual(falta(a), '3:00');
 
   a.v('ajustaTimer', 15);
-  assert.strictEqual(a.texto('#tval'), '3:15', '+15 estica');
+  assert.strictEqual(falta(a), '3:15', '+15 estica');
 
   a.v('ajustaTimer', -30);
-  assert.strictEqual(a.texto('#tval'), '2:45', '−15 encurta');
+  assert.strictEqual(falta(a), '2:45', '−15 encurta');
 
-  // A barra é `restante / total`. Sem subir o total junto ao esticar, a escala
-  // passaria de 1 e o preenchimento vazaria da calha.
+  // A tela enche a cor por `restante / total`. Sem subir o total junto ao
+  // esticar, a proporção passaria de 1.
   a.v('startTimer', 60);
   a.v('ajustaTimer', 120);
-  const escala = parseFloat(a.$('#tfill').style.transform.match(/[\d.]+/)[0]);
-  assert.ok(escala <= 1.001, 'a barra não vaza da calha ao esticar: ' + escala);
+  const d = a.vJ('ctx.descansoV3');
+  const proporcao = (d.fim - a.E('Date.now()')) / d.total;
+  assert.ok(proporcao <= 1.001, 'a proporção não passa de 1 ao esticar: ' + proporcao);
 
   a.relogioNormal();
   a.fechar();
@@ -184,8 +192,7 @@ test('encurtar abaixo de zero para o descanso em vez de deixá-lo negativo', asy
   const a = await app();
   a.v('startTimer', 10);
   a.v('ajustaTimer', -15);
-  assert.ok(!a.$('#timer').classList.contains('on'),
-    'o cronômetro some em vez de contar para trás');
+  assert.strictEqual(a.vJ('ctx.descansoV3'), null, 'o descanso acaba em vez de contar para trás');
   a.relogioNormal();
   a.fechar();
 });
@@ -195,37 +202,11 @@ test('o cronômetro diz de onde veio o descanso', async () => {
   // reabrir o app.
   const a = await app();
   a.v('startTimer', 180, 'descanso · série 2 · Pulldown');
-  assert.strictEqual(a.texto('#tctx'), 'descanso · série 2 · Pulldown');
+  assert.strictEqual(a.vJ('ctx.descansoV3').rotulo, 'descanso · série 2 · Pulldown');
 
   a.v('stopTimer');
-  assert.strictEqual(a.texto('#tctx'), '', 'e o rótulo sai junto com o descanso');
+  assert.strictEqual(a.vJ('ctx.descansoV3'), null, 'e o rótulo sai junto com o descanso');
   a.relogioNormal();
   a.fechar();
 });
 
-test('o cronômetro publica a própria altura para quem se empilha nele', async () => {
-  // Duas coisas do rodapé dependem disso, e as duas quebravam sem ele: o toast
-  // nascia INTEIRO atrás do cronômetro (e some, porque o cronômetro tem z-index
-  // maior), e o último elemento da página ficava 52px atrás dele — no fim da
-  // rolagem, sem como trazer à vista.
-  //
-  // Geometria não dá para cobrar no jsdom, que não faz layout. O que se cobra
-  // aqui é o CONTRATO de que os dois lados dependem: a medida publicada na raiz.
-  //
-  // No navegador quem publica é um ResizeObserver, no desenho seguinte (peça 2
-  // do motion: ler a altura no meio do toque montava o layout duas vezes). O
-  // jsdom não tem ResizeObserver, e aí a medida é publicada na hora, como antes
-  // — que é o caminho que este caso cobra.
-  const a = await app();
-  const medida = () => a.doc.documentElement.style.getPropertyValue('--ins-timer-h');
-
-  a.v('startTimer', 180, 'descanso · série 2 · Pulldown');
-  assert.notStrictEqual(medida(), '', 'entrou em descanso: a altura foi publicada');
-  assert.match(medida(), /^\d+px$/, 'e é uma medida em px: ' + medida());
-
-  a.v('stopTimer');
-  assert.strictEqual(medida(), '0px', 'saiu do descanso: volta a zero, sem espaço morto');
-
-  a.relogioNormal();
-  a.fechar();
-});

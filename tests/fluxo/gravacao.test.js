@@ -11,73 +11,6 @@ import { app } from './harness.js';
 
 const painel = a => a.$('.falhou-w [role="alert"]');
 
-test('a gravação que falha diz que não guardou, por quê, e até quando o valor vale', async () => {
-  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
-  a.aba('corpo');
-  a.encheCota();
-  a.m.ctx.setPeso(73.6);
-  a.m.ctx.registraPeso();
-  await a.esperar(60);
-
-  assert.ok(painel(a), 'o painel de falha abriu, com role="alert": ele interrompe');
-  const frase = a.texto('.falhou-w .pare-t');
-  assert.strictEqual(frase.indexOf('Não guardei o peso de hoje.'), 0, 'abre pelo verbo negado no passado — ' + frase);
-  assert.ok(/recusou a gravação: ele está cheio/.test(frase), 'diz a causa em palavra');
-  assert.ok(/Nada foi apagado e nada saiu do aparelho/.test(frase), 'diz o que NÃO aconteceu');
-  assert.ok(/O valor continua aqui, 73,6 kg, enquanto o app estiver aberto/.test(frase), 'e até quando vale');
-
-  assert.strictEqual(a.S().body.peso.length, 1, 'na memória o peso está');
-  const disco = a.gravado();
-  assert.ok(!disco || !(disco.body && disco.body.peso && disco.body.peso.length), 'no disco, não');
-  a.fechar();
-});
-
-test('fechar o aviso não apaga a marca, e tentar de novo guarda quando houver espaço', async () => {
-  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
-  a.aba('corpo');
-  a.encheCota();
-  a.m.ctx.setPeso(73.6);
-  a.m.ctx.registraPeso();
-  await a.esperar(60);
-
-  // Esc é "Fechar este aviso": o painel é camada, e dispensar não escolhe por ele.
-  a.window.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape' }));
-  await a.esperar();
-  assert.strictEqual(painel(a), null, 'o Esc fechou o aviso');
-  assert.ok(/Não guardado neste aparelho · o peso de hoje/.test(a.texto('.ng-faixa')),
-    'e a marca ficou: é o estado do dado, não do aviso');
-
-  // Com o aparelho ainda cheio, a próxima falha NÃO reabre o painel — um
-  // alerta por gravação ensinaria a fechar sem ler. A marca acompanha.
-  a.m.ctx.setCintura(84.5);
-  a.m.ctx.registraCintura();
-  await a.esperar(60);
-  assert.strictEqual(painel(a), null, 'o painel abre uma vez por episódio');
-  assert.ok(/a medida de cintura/.test(a.texto('.ng-faixa')), 'a marca diz o que ficou por último');
-
-  a.encheCota(false);
-  a.clicar(a.$('[data-a="ng-tenta"]'));
-  await a.esperar(60);
-  assert.strictEqual(a.$('.ng-faixa'), null, 'gravou: a marca sai sozinha');
-  assert.strictEqual(a.gravado().body.peso.length, 1, 'e o peso está no disco');
-  assert.strictEqual(a.gravado().body.cintura.length, 1, 'com a cintura');
-  a.fechar();
-});
-
-test('a série que não foi guardada é dita pelo número dela, com o valor', async () => {
-  const a = await app();
-  a.v('iniciarSessao');
-  await a.esperar();
-  a.encheCota();
-  a.v('anotaSerie', 0, 1, 0, 45);
-  a.v('anotaSerie', 0, 1, 1, 10);
-  await a.esperar(800);       // a gravação da série é represada (700 ms)
-  const frase = a.texto('.falhou-w .pare-t');
-  assert.strictEqual(frase.indexOf('Não guardei a série 2.'), 0, frase);
-  assert.ok(/O valor continua aqui, 45 × 10,/.test(frase), frase);
-  a.fechar();
-});
-
 test('copiar o registro inteiro leva a cópia de segurança completa', async () => {
   const a = await app({ estado: { body: { peso: [], cintura: [] } } });
   let copiado = null;
@@ -109,30 +42,3 @@ test('no modo privado o painel não abre: o Agora já diz que nada vai ficar', a
   a.fechar();
 });
 
-test('no meio do detalhe, o aviso diz que a presença continua guardada — só quando continua', async () => {
-  // A D (`aula.html`, estado 12; `momento-1.html`, estado 10): a tela separa o
-  // que ficou gravado do que não ficou. A presença é o registro que importa, e
-  // dizer que está a salvo é verdade com hora — mas só se ela gravou de fato.
-  const a = await app();
-  await a.v('iniciarSessao');
-  await a.esperar();
-  const inicio = a.S().sessao.inicio;
-  a.encheCota();
-  a.v('anotaSerie', 0, 0, 0, 45);
-  a.v('anotaSerie', 0, 0, 1, 10);
-  await a.esperar(800);
-  const frase = a.texto('.falhou-w .pare-t');
-  const h = new Date(inicio);
-  const hora = h.getHours() + 'h' + String(h.getMinutes()).padStart(2, '0');
-  assert.ok(new RegExp('A presença do Treino [A-Z]+, guardada às ' + hora + ', continua lá\\.').test(frase), frase);
-  assert.ok(a.$('[data-a="falhou-baixa"]'), 'e oferece baixar a cópia de segurança');
-  a.fechar();
-
-  const b = await app();
-  b.encheCota();                       // cheio desde antes de abrir a sessão
-  await b.v('iniciarSessao');
-  await b.esperar(60);
-  assert.ok(!/continua lá/.test(b.texto('.falhou-w .pare-t')),
-    'a presença não gravou, então o aviso não diz que ela está a salvo: ' + b.texto('.falhou-w .pare-t'));
-  b.fechar();
-});

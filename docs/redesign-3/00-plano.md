@@ -139,8 +139,13 @@ A guarda `tests/dominio/cobertura-v3.test.ts` reprova camada ou folha do app
 sem versão no visual novo (fora as três dispensadas acima), para que isto não
 volte a abrir até a Fase 5.
 
-Depois disso, a **Fase 5** (apagar o visual antigo e o interruptor) espera o
-dono usar o visual novo, como está no plano.
+### Fase 5
+
+**Feita** em 17/11/2026, a pedido do dono ("pode apagar tudo do visual antigo,
+quero focar 100% no novo"): o visual antigo, o interruptor e os testes de
+movimento dele saíram. O que saiu, o que mudou de lugar e o que ficou para
+refazer estão em [04-fase5.md](04-fase5.md). A revisão final do app inteiro com
+os dados reais continua por fazer.
 
 Observação de teste: `enche`, `sobe` e `troca` (os que abrem um navegador de
 verdade) às vezes falham quando a suíte inteira roda em paralelo nesta

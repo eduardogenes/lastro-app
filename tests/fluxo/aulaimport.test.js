@@ -124,18 +124,6 @@ test('a grandeza é do movimento, nunca do bloco', async () => {
   a.fechar();
 });
 
-// ---------- o quadro ----------
-
-test('o quadro aparece na tela enquanto a aula acontece', async () => {
-  const a = await noBox();
-  await cola(a, HYROX_MZ);
-  await a.esperar();
-  const q = a.$('.tr-quadro-t');
-  assert.ok(q, 'o quadro está no alto do dia');
-  assert.ok(q.textContent.includes('T.C 20MIN'), 'com o que o app não modela');
-  a.fechar();
-});
-
 test('ao encerrar, o quadro vira a nota da sessão', async () => {
   // É a única chance: o quadro não se reconstrói depois a partir da
   // prescrição, como o treino de musculação se reconstrói.

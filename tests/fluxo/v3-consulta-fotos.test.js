@@ -20,7 +20,6 @@ const POSE = 'frente-relaxado';
 async function comTresSessoes() {
   const a = await app({ aba: 'corpo' });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   cacheFalso(a);
   a.E(`S.protocolo.sessoes = [
     { d: ${JSON.stringify(atras(28))}, t: 1, m: 1, fotos: { '${POSE}': { v: 1, ext: 'webp' }, 'perfil-direito': { v: 2, ext: 'webp' } } },
@@ -60,7 +59,6 @@ test('o centro das fotos: a próxima sessão, a última com o selo, e as entrada
 test('sem sessão, o centro convida e não oferece o que ainda não existe', async () => {
   const a = await app({ aba: 'corpo' });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.v('ctx.abreCentroDasFotos');
   await a.esperar();
   assert.strictEqual(a.texto('.v3-bloco-t'), 'A primeira sessão');

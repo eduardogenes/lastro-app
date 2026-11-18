@@ -1,0 +1,157 @@
+/* O que vale para a página inteira: o documento, os campos, o foco, a moldura
+   do #app, a trava das camadas e as peças fora do app (o aviso, o "gire o
+   telefone", o anúncio da série para leitor de tela).
+
+   Veio do base.css do visual antigo na Fase 5, com os tokens do visual novo.
+   Cada regra tem um motivo do Safari do iPhone, que o app é usado instalado na
+   tela de início, de pé, com uma mão. */
+
+:root {
+  --sa-top:    max(env(safe-area-inset-top), 0px);
+  --sa-bottom: max(env(safe-area-inset-bottom), 0px);
+  --sa-left:   max(env(safe-area-inset-left), 0px);
+  --sa-right:  max(env(safe-area-inset-right), 0px);
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* os únicos gestos do navegador são rolar: sem zoom por toque duplo no meio
+     de uma série (quem precisa arrastar, como o quadro de ajuste, pede `none`) */
+  touch-action: pan-x pan-y;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--f-texto);
+  /* sem o "puxar e soltar" que mostra fundo onde não devia, e sem puxar para
+     recarregar, que num app instalado só perde o que estava na tela */
+  overscroll-behavior: none;
+}
+/* gestos de página que num app não fazem sentido: menu de copiar ao segurar
+   um rótulo, o piscar cinza do toque, arrastar uma foto para fora */
+body {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  min-height: 100vh;
+  min-height: 100svh;
+  /* `clip`, e não `hidden`: não cria contêiner de rolagem, e o que é
+     `sticky` continua preso à janela */
+  overflow-x: clip;
+}
+p, input, textarea { -webkit-user-select: text; user-select: text; }
+img { -webkit-user-drag: none; user-drag: none; }
+a { color: var(--tinta); }
+::-webkit-scrollbar { display: none; }
+
+/* A faixa da área segura de cima: o app declara a barra do sistema como
+   translúcida, e rolando, o relógio e a bateria ficariam sobre o texto. */
+body::before {
+  content: "";
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--sa-top); z-index: 90;
+  background: var(--papel);
+  pointer-events: none;
+}
+
+/* A TRAVA do fundo com uma camada aberta (`src/ui/v3/camada.js`):
+   `overflow: hidden` sozinho não segura o toque no iOS. */
+body.travado { position: fixed; inset: 0; overflow: hidden; }
+
+/* Os campos: 16px, senão o Safari dá zoom ao focar e a tela fica torta. */
+input, textarea, select {
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--tinta);
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input::placeholder, textarea::placeholder { color: var(--tinta-3); }
+input[type="range"] { touch-action: none; }
+button:disabled { cursor: default; }
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible {
+  outline: 2.5px solid var(--tinta);
+  outline-offset: 3px;
+}
+
+/* A MOLDURA do app: uma coluna de telefone, com a goteira e o espaço da doca
+   embaixo, para o último item da página não ficar atrás dela. */
+#app {
+  max-width: 460px;
+  margin: 0 auto;
+  background: var(--papel);
+  padding-left: max(20px, var(--sa-left));
+  padding-right: max(20px, var(--sa-right));
+  padding-bottom: calc(var(--doca-h) + 46px + var(--sa-bottom));
+  -webkit-font-smoothing: antialiased;
+}
+/* "Abrindo o registro…": o que o index.html mostra até o app montar. */
+.msg {
+  padding: 34px 20px;
+  text-align: center;
+  font: 400 13px/1.5 var(--f-texto);
+  color: var(--tinta-3);
+}
+
+/* As transições de vista do navegador ficam secas: o movimento do visual
+   novo é das próprias folhas e telas (DESIGN.md, Movimento). */
+::view-transition-group(*),
+::view-transition-image-pair(*),
+::view-transition-old(*),
+::view-transition-new(*) { animation: none; }
+
+/* O AVISO curto ("Sincronizado", "Foto na lixeira"): a região fica sempre na
+   página, vazia quando não há aviso, para o leitor de tela anunciar o que
+   chegar. Com "Desfazer" ao lado quando a ação volta atrás. */
+#toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--doca-h) + 30px + var(--sa-bottom));
+  width: calc(100% - 28px); max-width: 432px; z-index: 75;
+  pointer-events: none;
+}
+#toast > .aviso {
+  background: var(--tinta); color: var(--branco);
+  border-radius: var(--r-bloco);
+  box-shadow: var(--sombra-flutua);
+  font: 500 14px/1.4 var(--f-texto);
+  padding: 14px 18px;
+  text-align: center;
+  pointer-events: auto;
+}
+#toast > .aviso.sai { opacity: 0; pointer-events: none; }
+#toast > .aviso.com-acao {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  text-align: left; padding-top: 6px; padding-bottom: 6px;
+}
+.aviso-acao {
+  flex: 0 0 auto; min-height: var(--alvo); padding: 0 6px;
+  background: none; border: 0; color: var(--lima);
+  font: 700 14px/1 var(--f-texto); cursor: pointer;
+}
+@media (prefers-reduced-motion: no-preference) {
+  #toast > .aviso { animation: v3-entra var(--t-entra) var(--mola) both; }
+}
+
+/* Para leitor de tela: presente na árvore de acessibilidade, invisível. */
+.so-leitor {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+}
+
+/* GIRE O TELEFONE: fora do treino, o app é desenhado de pé. */
+#deitado { display: none; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #deitado {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; padding: 24px; text-align: center; background: var(--papel);
+  }
+  #deitado b { font: 600 27px/1.1 var(--f-titulo); color: var(--tinta); }
+  #deitado p { margin: 0; max-width: 46ch; font: 400 14px/1.5 var(--f-texto); color: var(--tinta-2); }
+}

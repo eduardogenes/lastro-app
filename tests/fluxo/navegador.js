@@ -121,47 +121,13 @@ export async function abreNavegador({ reduz = false, preparo = null } = {}) {
   const erros = [];
   p.on('pageerror', e => erros.push(String(e)));
   await p.goto('http://127.0.0.1:' + srv.address().port + '/');
-  await p.waitForFunction(() => !!(window.__escopo && document.querySelector('.ins-tabbar, .ins-modo')));
+  await p.waitForFunction(() => !!(window.__escopo && document.querySelector('.v3-doca, #app .v3')));
 
   const nav = {
     p, erros,
     /** avalia dentro do escopo do app, como o `a.E` do harness */
     E: codigo => p.evaluate(c => window.__escopo(c), codigo),
     espera: ms => p.waitForTimeout(ms),
-    /**
-     * O treino de hoje no modo de sessão, com a semana passada inteira no
-     * histórico (há coluna ANTERIOR em toda série) e, se `sessao`, uma sessão
-     * aberta há dez minutos. Devolve o dia.
-     */
-    treinoDeHoje: async ({ sessao = false } = {}) => {
-      const dia = await nav.E(`(function () {
-        const DIA = 86400000, t = Date.now() - 7 * DIA;
-        const DD = nextDay(), P = treino(DD);
-        S.logs = {}; S.sessao = null; S.draft = null;
-        P.ex.forEach(function (ex, i) {
-          const sets = [];
-          for (let k = 0; k < ex.s; k++) sets.push([40 + 5 * i, 9 - k, 1]);
-          S.logs[ex.id] = [{ t: t + i * 600000, sid: t, sets: sets }];
-        });
-        S.done = [{ day: DD, t: t, sid: t, dur: 3600000, fim: 'manual' }];
-        ${sessao ? `const ag = Date.now() - 600000;
-        S.sessao = { day: DD, inicio: ag, ultima: ag, sid: ag, manual: 1, pausas: [], pulados: [] };
-        S.done.push({ day: DD, t: ag, sid: ag, ini: 'manual' });` : ''}
-        diaDeComida().cadencia = 'treino';
-        view.day = DD; view.open = null; view.regua = null; view.rir = null; view.teclado = null;
-        CTX.abreModoDeSessao();
-        render();
-        window.scrollTo(0, 0);
-        return view.day;
-      })()`);
-      await nav.espera(150);
-      // Entrar no modo é troca de camada (peça 5): o desenho novo entra ~1
-      // quadro depois, dentro de uma transição de vista de 350 ms. Os casos
-      // medem o modo parado, então esperam a troca acabar — sob carga, no
-      // WebKit desta máquina, ela começa centenas de ms depois.
-      await p.waitForFunction(() => !document.activeViewTransition && !!document.querySelector('.ins-modo'), null, { timeout: 8000 });
-      return dia;
-    },
     /** a caixa do `n`-ésimo elemento que casa `sel`, ou null se não está desenhado */
     caixa: (sel, n = 0) => p.evaluate(([s, n]) => {
       const e = document.querySelectorAll(s)[n];
@@ -169,12 +135,6 @@ export async function abreNavegador({ reduz = false, preparo = null } = {}) {
       const r = e.getBoundingClientRect();
       return { x: r.x, y: r.y, w: r.width, h: r.height, cx: r.x + r.width / 2, cy: r.y + r.height / 2 };
     }, [sel, n]),
-    /** o topo da linha da série `k` do exercício `i` */
-    topoDaLinha: (i, k) => p.evaluate(([i, k]) => {
-      const c = document.querySelector('[data-ex="' + i + '"]');
-      const l = c && c.querySelectorAll('.setrow')[k];
-      return l && l.getClientRects().length ? l.getBoundingClientRect().top : null;
-    }, [i, k]),
     /**
      * O que está sob o dedo no ponto (x, y): o controle (botão, rótulo, o topo
      * do cartão) que um segundo toque ali acionaria, ou o nó de texto.
@@ -182,7 +142,7 @@ export async function abreNavegador({ reduz = false, preparo = null } = {}) {
     sobODedo: (x, y) => p.evaluate(([x, y]) => {
       const e = document.elementFromPoint(x, y);
       if (!e) return null;
-      const c = e.closest('button, label, [role="button"], .ex-top, input, select, textarea');
+      const c = e.closest('button, label, [role="button"], input, select, textarea');
       const desc = n => n.tagName.toLowerCase() + (n.id ? '#' + n.id : '') +
         (n.className && typeof n.className === 'string' ? '.' + n.className.trim().split(/\s+/).join('.') : '') +
         (n.dataset && n.dataset.a ? '[' + n.dataset.a + ']' : '');

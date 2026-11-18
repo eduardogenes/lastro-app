@@ -22,9 +22,6 @@ test('treino do plano lançado sem detalhar: um toque grava', async () => {
   assert.strictEqual(m.hora, undefined, 'sem hora inventada');
   assert.strictEqual(m.dur, undefined, 'nem duração');
   assert.ok(a.vista().add, 'a folha fica, dizendo o que gravou');
-  assert.ok(/gravado às/.test(a.texto('.ln-gravado')), a.texto('.ln-gravado'));
-  assert.ok(/dias com treino nas últimas 4 semanas: 1, eram 0/.test(a.texto('.ln-gravado')),
-    'e o que mudou por causa dele: ' + a.texto('.ln-gravado'));
   // depois de D vem E desde o plano 5, quando as letras foram alfabetizadas
   assert.strictEqual(a.v('nextDay'), 'E', 'a rotação segue o treino lançado');
   assert.ok(/A sequência anda/.test(a.vJ('ctx.retroativo').sequencia), 'e a folha diz isso');
@@ -190,49 +187,6 @@ test('sessão retroativa esquecida encerra na virada do dia de uso', async () =>
   b.fechar();
 });
 
-test('dia vazio do mês é atalho para lançar, pelo dia aberto', async () => {
-  const a = await app({ agora: agoraEstavel() });
-  a.aba('dias');
-  const vazios = a.$$('.dc').filter(function (c) {
-    return !c.disabled && !c.classList.contains('hoje') && !c.querySelector('.dc-p');
-  });
-  assert.ok(vazios.length > 0);
-  a.clicar(vazios[0]);
-  await a.esperar();
-  a.clicar('[data-a="dia-registrar"]');
-  await a.esperar();
-  assert.ok(a.vista().add, 'o dia vazio leva ao lançamento retroativo daquele dia');
-  a.fechar();
-});
-
-test('de Dias, um dia passado vira descanso pelo dedo, e o mês mostra a marca', async () => {
-  // §1.2 da frente 1: marcar um dia passado como descanso é capacidade de Dias.
-  // O caminho INTEIRO, do mês de volta à marca no mês: um lugar novo que
-  // deixasse de ligar o botão passaria verde nos pedaços. Pela D, o "Foi
-  // descanso" está no próprio dia, sem passar pelo lançamento.
-  const a = await app({ agora: agoraEstavel() });
-  a.aba('dias');
-  const vazio = a.$$('.dc').filter(function (c) {
-    return !c.disabled && !c.classList.contains('hoje') && !c.querySelector('.dc-p');
-  })[0];
-  assert.ok(vazio, 'pré-condição: há um dia passado sem registro no mês');
-  const iso = vazio.getAttribute('data-dia');
-  a.clicar(vazio);
-  await a.esperar();
-
-  a.clicar('[data-a="dia-descanso"]');
-  await a.esperar(60);
-  assert.ok(a.$('[data-a="dia-tira-descanso"]'), 'o dia mostra a marca, com a saída');
-  assert.strictEqual(a.$('[data-a="dia-descanso"]'), null, 'e não oferece marcar de novo');
-
-  a.v('ctx.fechaDia');
-  await a.esperar();
-  const cel = a.$('[data-dia="' + iso + '"]');
-  assert.ok(cel.classList.contains('desc'), 'o mês mostra o dia ' + iso + ' como descanso');
-  assert.strictEqual(Object.keys(a.S().descanso).length, 1, 'uma marca, e só uma');
-  a.fechar();
-});
-
 test('apagar registro avulso', async () => {
   const a = await app();
   const t = Date.now() - 2 * DIA;
@@ -244,7 +198,6 @@ test('apagar registro avulso', async () => {
 
   const marca = a.S().done[0];
   a.v('abrirSessao', marca.t);
-  assert.strictEqual(a.texto('.htitle'), 'costas');
 
   // pelo mesmo caminho da tela: o botão de apagar chama CTX.editaSessao
   await a.v('ctx.editaSessao', marca.t);

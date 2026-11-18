@@ -7,7 +7,6 @@ import { app, abrirApp, agoraEstavel, DIA } from './harness.js';
 test('não existe mais função de salvar', async () => {
   const a = await app();
   assert.strictEqual(a.E('typeof finish'), 'undefined');
-  assert.ok(a.texto('.tr-nota').includes('Não há nada para salvar'));
   a.fechar();
 });
 
@@ -54,11 +53,6 @@ test('a sessão aberta não vira referência de si mesma', async () => {
   a.preencher(0, 0, 40, 10);
   a.v('render');
 
-  // placeholder da série 2 não pode repetir o que acabou de ser digitado.
-  // Vazio é o estado de 'sem referência': a unidade mora no rótulo ao lado.
-  assert.strictEqual(a.doc.getElementById('w0_1').textContent, '·',
-    'a célula da carga é botão, e vazia mostra o ponto');
-  assert.ok(a.texto('.ex.open .lastline').includes('primeira vez'));
   assert.deepStrictEqual(a.vJ('historico', 'A0'), []);
   a.fechar();
 });
@@ -80,7 +74,7 @@ test('sessão encerra por inatividade, grava duração e avança a rotação', a
   assert.strictEqual(b.S().sessao, null, 'sessão deveria ter encerrado sozinha');
   assert.strictEqual(b.S().done[0].dur, 3600 * 1000, 'uma hora de treino');
   assert.strictEqual(b.S().draft, null);
-  assert.strictEqual(b.texto('.ins-estado-v'), 'B', 'rotação deveria ter avançado');
+  assert.strictEqual(b.v('nextDay'), 'B', 'rotação deveria ter avançado');
   assert.strictEqual(b.log('A',0)[0].sets.filter(Boolean).length, 1, 'histórico preservado');
   b.fechar();
 });
@@ -95,7 +89,6 @@ test('sessão do mesmo dia com pouca pausa continua aberta', async () => {
 
   const b = await app({ estado });
   assert.ok(b.S().sessao !== null, 'não deveria encerrar por 30 minutos');
-  assert.strictEqual(b.texto('.ins-estado-v'), 'A');
   b.fechar();
 });
 
@@ -112,10 +105,6 @@ test('trocar de dia no meio do treino não perde nem sobrescreve série', async 
   a.v('go', 'A');
   a.v('toggle', 0);
 
-  assert.strictEqual(a.doc.getElementById('w0_0').textContent, '40',
-    'a carga deveria voltar preenchida');
-  assert.strictEqual(a.doc.getElementById('r0_2').textContent, '9',
-    'a repetição é botão desde a régua, e o valor é o texto dele');
 
   a.preencher(0, 0, 45, 10);
   assert.strictEqual(a.log('A',0)[0].sets.filter(Boolean).length, 3, 'as outras séries continuam');
@@ -140,8 +129,6 @@ test('registrar em outro dia e voltar não apaga as séries do dia de antes', as
 
   a.v('go', 'A');
   a.v('toggle', 0);
-  assert.strictEqual(a.doc.getElementById('w0_0').textContent, '40',
-    'o A volta preenchido mesmo não sendo mais o dia da sessão');
   a.preencher(0, 0, 45, 10);
 
   const sets = a.log('A', 0)[0].sets;
@@ -180,8 +167,6 @@ test('hidratação recupera observação, dor e substituto', async () => {
   const a = await app();
   a.v('toggle', 1);
   a.v('setAlt', 1, 'crucifixo-inclinado-no-cabo');
-  a.v('abrirNota', 1);
-  a.digitar('o1', 'ombro ok hoje');
   a.v('toggleDor', 1, 'ombro');
   a.preencher(1, 0, 32, 10);
 
@@ -192,29 +177,7 @@ test('hidratação recupera observação, dor e substituto', async () => {
   assert.strictEqual(a.v('altOf', 1), 'crucifixo-inclinado-no-cabo');
   assert.strictEqual(a.v('logKey', 'A', 1), 'crucifixo-inclinado-no-cabo',
     'o registro vai para o histórico do substituto, não para uma chave derivada');
-  assert.strictEqual(a.doc.getElementById('o1').value, 'ombro ok hoje');
-  assert.strictEqual(a.texto('.ex.open .chip.on'), 'ombro anterior');
-  a.fechar();
-});
-
-test('o contador de séries acompanha a digitação sem re-render', async () => {
-  // inp() não chama render() de propósito: o campo é controlado pelo valor já
-  // parseado, e redesenhar a cada tecla reescreveria "22," como "22" — deixando
-  // impossível digitar decimal. O contador é AVISADO e se redesenha sozinho (um
-  // escritor só, desde a peça 2 do motion: ver `contador.test.js`), e este
-  // teste é o que garante que ele não vire texto morto. O Preact agenda esse
-  // desenho para antes do próximo quadro — daí a espera de um tique.
-  const a = await app();
-  assert.match(a.texto('#daymeta'), /^0\/\d+$/, a.texto('#daymeta'));
-
-  a.v('toggle', 0);
-  a.preencher(0, 0, 40, 10);
-  await a.esperar(0);
-  assert.match(a.texto('#daymeta'), /^1\//, a.texto('#daymeta'));
-
-  a.preencher(0, 1, 40, 10);
-  await a.esperar(0);
-  assert.match(a.texto('#daymeta'), /^2\//, 'contador acompanha a digitação');
+  assert.ok((a.log('A', 1)[0].dor || []).indexOf('ombro') >= 0, 'a dor foi junto com a série');
   a.fechar();
 });
 
@@ -260,8 +223,7 @@ test('deload corta as séries pela metade e marca a sessão', async () => {
   a.v('go', 'A');
   a.v('toggle', 0);
 
-  assert.strictEqual(a.$$('.ex.open .setrow').length, 2, 'quatro séries viram duas');
-  assert.strictEqual(a.$('.up'), null, 'selo de subir carga fica suspenso');
+  assert.strictEqual(a.E('setsFor(treino("A").ex[0])'), Math.max(1, Math.ceil(a.E('treino("A").ex[0].s') / 2)), 'as séries caem à metade');
 
   a.preencher(0, 0, 40, 10);
   assert.strictEqual(a.log('A',0)[0].dl, 1);
@@ -374,76 +336,6 @@ test('sem sessão, trocar de aba não mexe no dia escolhido', async () => {
   a.fechar();
 });
 
-test('o relógio da sessão é filho direto do main, senão o sticky descola', async () => {
-  // sticky se prende ao bloco que o contém: dentro da seção ele sairia da tela
-  // junto com ela, a uns dois exercícios de rolagem
-  const agora = agoraEstavel();
-  const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
-  const rel = a.$('.day-rel');
-  assert.ok(rel, 'o relógio está na tela');
-  assert.strictEqual(rel.parentElement.tagName, 'MAIN',
-    'saiu para o <main>: dentro da <section> o sticky se prenderia a ela');
-  assert.ok(a.$('.ins-secao.continua'), 'e a seção partida não desenha fio');
-  a.fechar();
-});
-
-test('dentro do modo o relógio continua filho direto de um main', async () => {
-  // O modo devolve a tela cheia ANTES da casca (`app.jsx`: `if
-  // (ctx.emTelaCheia()) return ctx.telaCheia()`), então o `<main>` da casca não
-  // entra — e sem um `<main>` do modo o relógio passava a ser filho do
-  // invólucro, que é um flex column. O sticky se prende ao bloco que o contém:
-  // trocar o pai é trocar a âncora dele, exatamente a quebra que o caso de cima
-  // segura para a aba. E o `<main>` também é o marco da página: no modo, o modo
-  // É a página.
-  const agora = agoraEstavel();
-  const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
-  assert.strictEqual(a.vista().modoSessao, true, 'pré-condição: o boot entrou no modo');
-
-  const rel = a.$('.day-rel');
-  assert.ok(rel, 'o relógio está na tela do modo');
-  assert.strictEqual(rel.parentElement.tagName, 'MAIN',
-    'e é filho direto de um <main>, como na aba');
-  assert.strictEqual(a.$$('main').length, 1,
-    'de UM só: dois <main> na mesma página não é marco, é ruído');
-  a.fechar();
-});
-
-test('a barra do modo não repete a hora do iPhone: tem a saída e o ···', async () => {
-  // A hora de parede saiu da barra a pedido do dono (21/10): o iPhone já a mostra
-  // logo acima. O relógio DA SESSÃO, que é outra coisa, continua.
-  const a = await app({ agora: agoraEstavel(14, 37), estado: emTreino('B', agoraEstavel(14, 37)), aba: 'treino' });
-  assert.strictEqual(a.vista().modoSessao, true, 'pré-condição: dentro do modo');
-  assert.strictEqual(a.$('#hora'), null, 'a hora de parede não está na barra');
-  assert.ok(a.$('.ins-modo-sair'), 'a saída continua');
-  assert.ok(a.$('.ins-modo-mais'), 'e o ··· também');
-  a.fechar();
-});
-
-test('entrar no modo de outra aba não congela o relógio da sessão', async () => {
-  // O relógio decorrido anda por fora do Preact (`tickRelogio`), e o motor dele
-  // era ligado só com `view.aba === 'treino'`. As portas 2 e 3 arrumam a aba
-  // antes de entrar, então o congelamento não aparecia — mas a porta 1 é o
-  // cartão do topo do Agora, e entra DE LÁ. O relógio pararia no meio do
-  // treino, mostrando a hora da entrada para sempre.
-  //
-  // Este caso espera tempo de verdade, 1,2 s, e é o único da suíte que faz
-  // isso: o harness congela `Date.now` quando recebe `agora`, e com ele
-  // congelado nenhum motor de relógio tem o que mostrar. Sem `agora`, o
-  // decorrido vira de segundo em segundo e 1,2 s garante a virada.
-  const a = await app({ estado: emTreino('B', Date.now()) });
-  a.v('ctx.vaiPara', 'comida');
-  a.v('ctx.abreModoDeSessao');
-  await a.esperar();
-  assert.strictEqual(a.vista().aba, 'comida', 'pré-condição: a aba por baixo NÃO é treino');
-
-  const antes = a.$('#relogio').textContent;
-  await a.esperar(1200);
-  assert.notStrictEqual(a.$('#relogio').textContent, antes,
-    'o decorrido virou: o motor ficou ligado dentro do modo, de onde quer ' +
-    'que se tenha entrado (parado em ' + antes + ')');
-  a.fechar();
-});
-
 // ---------- corrigir e apagar um treino registrado ----------
 // Registrar o treino errado e esquecer de finalizar são os dois enganos que
 // este app deixa acontecer sem atrito — e até aqui nenhum dos dois tinha saída:
@@ -459,25 +351,6 @@ function comTreinoRegistrado(agora) {
     t: t
   };
 }
-
-test('o detalhe de um treino do plano oferece corrigir e apagar', async () => {
-  const agora = agoraEstavel();
-  const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'semana' });
-  a.v('abrirSessao', f.t);
-
-  const d = a.vJ('ctx.detalheDaSessao');
-  assert.strictEqual(d.livre, false, 'é treino do plano, não avulso');
-  assert.strictEqual(d.corrigivel, true);
-  assert.ok(d.duracoes.length >= 4, 'os degraus de duração estão lá');
-  const botoes = a.$$('.tc button').map(x => x.textContent.trim());
-  assert.ok(botoes.includes('Apagar este treino'), botoes.join(' | '));
-  assert.strictEqual(a.$$('.ss-tempo-c .ins-chip').length, 0, 'os degraus só abrem pelo "Corrigir"');
-  a.clicar('[data-a="sessao-corrige-tempo"]');
-  await a.esperar();
-  assert.strictEqual(a.$$('.ss-tempo-c .ins-chip').length, d.duracoes.length, 'e abrem ali, ao lado do fim');
-  a.fechar();
-});
 
 test('corrigir o tempo torna a duração declarada, e o aproximado some', async () => {
   // esquecer de finalizar deixa o tempo correndo até a última série
@@ -733,46 +606,6 @@ test('ctx.cancelaEdicao NÃO desfaz a dor já marcada — o escopo de hoje', asy
   a.fechar();
 });
 
-test('corrigir uma sessão de outro dia diz que não reabre aquele treino', async () => {
-  // §8.4: cada invariante da correção tem frase, e esta é a de outro dia.
-  const a = await umaLinha();
-  a.v('ctx.editaLinha', 0);
-  await a.esperar();
-  const data = a.vJ('ctx.historico').sessoes[0].data;
-  assert.strictEqual(a.texto('.ed-outrodia'), 'Esta sessão é de ' + data + '. Corrigir não reabre aquele treino.');
-  a.fechar();
-});
-
-test('ctx.salvaEdicao fecha a linha, carimba a correção e recusa deixá-la sem série', async () => {
-  const a = await umaLinha();
-  a.v('ctx.editaLinha', 0);
-  const antes = a.log('A', 0)[0].m;
-  assert.strictEqual(antes, undefined, 'a sessão original não tem carimbo de correção');
-
-  await a.v('ctx.salvaEdicao');
-  await a.esperar();
-  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, false, 'salvar fecha a linha');
-  assert.ok(a.log('A', 0)[0].m > 0, 'e carimba quando foi corrigida, que é o que a fusão compara');
-  assert.strictEqual(a.toast(), 'Sessão corrigida.');
-
-  // A guarda do fim: uma sessão sem nenhuma série não é correção, é engano.
-  // Alcançada pelos campos porque `salvaEdicao` relê o DOM por dentro — sem
-  // isso o verbo restauraria os valores da tela e a guarda nunca dispararia.
-  a.v('ctx.editaLinha', 0);
-  a.digitar('ed0_1', '');
-  a.digitar('ed1_1', '');
-  a.digitar('ed2_1', '');
-  await a.v('ctx.salvaEdicao');
-  await a.esperar();
-
-  assert.match(a.toast(), /sem nenhuma série\. Use apagar/,
-    'manda apagar em vez de guardar um fantasma: ' + a.toast());
-  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, true,
-    'e a linha fica aberta, para ele desfazer o que digitou');
-  assert.strictEqual(a.log('A', 0).length, 1, 'sem apagar nada por conta própria');
-  a.fechar();
-});
-
 test('ctx.histKey troca para o histórico do substituto e fecha a edição aberta', async () => {
   // Fechar a edição ao trocar de chave não é cosmético: `view.edit` é índice
   // na lista DAQUELA chave. Levá-lo para a outra lista apontaria para a linha
@@ -832,252 +665,3 @@ async function abreSerie(agora, k) {
   return { a: a, idEx: ex.idEx };
 }
 
-test('tocar a série abre a régua, e o toque grava a correção', async () => {
-  const { a, idEx } = await abreSerie(agoraEstavel(), 2);
-  assert.ok(a.$('.ss-ed'), 'a série abriu ali mesmo');
-  assert.ok(/Série 3 · guardada: 40 × 8/.test(a.texto('.ss-ed-h')), a.texto('.ss-ed-h'));
-  const carimbo = a.S().logs[idEx][0].m || 0;
-
-  a.clicar('[data-a="regua-9"]');
-  await a.esperar(60);
-
-  assert.deepStrictEqual(a.S().logs[idEx][0].sets[2], [40, 9], 'a série 3 virou 40 × 9');
-  assert.deepStrictEqual(a.S().logs[idEx][0].sets[0], [40, 10], 'e as outras não mudaram');
-  assert.ok(a.S().logs[idEx][0].m > carimbo, 'carimbada, para a sincronia saber que mudou');
-  assert.deepStrictEqual(a.gravado().logs[idEx][0].sets[2], [40, 9], 'e está no disco');
-  assert.ok(/Gravado às \d+h\d\d: 40 × 9\./.test(a.texto('.ss-ed-ok')), a.texto('.ss-ed-ok'));
-  assert.ok(/era/.test(a.texto('[data-a="regua-8"]')), 'o 8 fica dito como "era"');
-  assert.ok(a.texto('[data-a="serie-' + idEx + '-2"]').includes('40 × 9'), 'o botão já mostra o novo');
-  a.fechar();
-});
-
-test('a carga abre o teclado do app, com vírgula', async () => {
-  const { a, idEx } = await abreSerie(agoraEstavel(), 0);
-  a.clicar('[data-a="sessao-carga"]');
-  await a.esperar();
-  assert.ok(/vírgula/.test(a.$('.ss-ed').innerHTML), 'o teclado do app, com a tecla da vírgula');
-  ['⌫', '⌫', '4', '2', ',', '5'].forEach(function (t) { a.v('ctx.tecla', t); });
-  await a.esperar(60);
-  assert.strictEqual(a.S().logs[idEx][0].sets[0][0], 42.5, '42,5 com a vírgula do teclado');
-  assert.strictEqual(a.S().logs[idEx][0].sets[0][1], 10, 'a repetição não mudou');
-  assert.strictEqual(a.gravado().logs[idEx][0].sets[0][0], 42.5);
-  a.fechar();
-});
-
-test('o RIR da série passada marca e desmarca', async () => {
-  const { a, idEx } = await abreSerie(agoraEstavel(), 1);
-  a.clicar('[data-a="sessao-rir"]');
-  await a.esperar();
-  a.clicar('[data-a="sessao-rir-2"]');
-  await a.esperar(60);
-  assert.deepStrictEqual(a.S().logs[idEx][0].sets[1], [40, 10, 2]);
-  assert.ok(/RIR 2/.test(a.texto('[data-a="serie-' + idEx + '-1"]')), 'o botão diz o RIR');
-  a.clicar('[data-a="sessao-rir"]');
-  await a.esperar();
-  a.clicar('[data-a="sessao-rir-nenhum"]');
-  await a.esperar(60);
-  assert.deepStrictEqual(a.S().logs[idEx][0].sets[1], [40, 10], '"nenhum" tira');
-  a.fechar();
-});
-
-test('apagar uma série passa pelo painel e deixa as outras na posição', async () => {
-  const { a, idEx } = await abreSerie(agoraEstavel(), 0);
-  a.recusar();
-  a.clicar('[data-a="sessao-apaga-serie"]');
-  await a.esperar(60);
-  assert.deepStrictEqual(a.S().logs[idEx][0].sets[0], [40, 10], 'recusar o painel não apaga');
-
-  assert.ok(a.$('.ss-ed'), 'e a série continua aberta');
-  a.aceitar();
-  a.clicar('[data-a="sessao-apaga-serie"]');
-  await a.esperar(60);
-  const sets = a.S().logs[idEx][0].sets;
-  assert.strictEqual(sets[0], null, 'a série 1 vira "não feita"');
-  assert.deepStrictEqual(sets.slice(1), [[40, 10], [40, 8]], 'e as outras continuam série 2 e série 3');
-  assert.ok(a.vJ('ctx.detalheDaSessao').exercicios[0].series[0].nao, 'a tela diz "não feito" na posição');
-  a.fechar();
-});
-
-test('apagar a única série leva o registro do exercício, com lápide', async () => {
-  const agora = agoraEstavel();
-  const t = agora - 3 * 60 * 60000;
-  const a = await app({ agora: agora, aba: 'dias', estado: {
-    logs: { A0: [{ t: t, sid: t, sets: [[40, 10]] }] },
-    done: [{ day: 'A', t: t, sid: t, dur: 3600000, fim: 'manual' }]
-  } });
-  a.v('abrirSessao', t);
-  const idEx = a.vJ('ctx.detalheDaSessao').exercicios[0].idEx;
-  a.clicar('[data-a="serie-' + idEx + '-0"]');
-  await a.esperar();
-  a.clicar('[data-a="sessao-apaga-serie"]');
-  await a.esperar(60);
-  assert.strictEqual(a.S().logs[idEx], undefined, 'o exercício sai do histórico');
-  assert.ok(Object.keys(a.S().apagados).some(function (k) { return k.indexOf('log:' + idEx + ':') === 0; }),
-    'e a lápide impede o outro aparelho de trazê-lo de volta');
-  assert.strictEqual(a.S().done.length, 1, 'a presença do dia fica');
-  a.fechar();
-});
-
-test('se a gravação falha, a série continua a guardada e o toque fica dito como tocado', async () => {
-  const { a, idEx } = await abreSerie(agoraEstavel(), 2);
-  a.encheCota();
-  a.clicar('[data-a="regua-9"]');
-  await a.esperar(60);
-
-  assert.deepStrictEqual(a.S().logs[idEx][0].sets[2], [40, 8], 'a série continua o que está guardado');
-  assert.ok(a.$('.regua-v.tocado'), 'o 9 fica à parte, tracejado');
-  assert.ok(/tocado/.test(a.texto('[data-a="regua-9"]')));
-  assert.ok(/Não foi gravado/.test(a.texto('.ss-ed-falhou')), a.texto('.ss-ed-falhou'));
-  assert.strictEqual(a.$('.ss-ed-ok'), null, 'e não diz "Gravado"');
-
-  a.encheCota(false);
-  a.clicar('[data-a="sessao-tenta"]');
-  await a.esperar(60);
-  assert.deepStrictEqual(a.S().logs[idEx][0].sets[2], [40, 9], '"Tentar de novo" grava o toque');
-  assert.strictEqual(a.$('.ss-ed-falhou'), null);
-  a.fechar();
-});
-
-test('"Tentar de novo" depois de o RIR falhar grava o RIR, e não zera as repetições', async () => {
-  // Regressão (docs/mapa, risco D9): o botão repetia sempre a repetição; com o
-  // RIR recusado não havia repetição tocada, e a série virava "40 × 0".
-  const { a, idEx } = await abreSerie(agoraEstavel(), 2);
-  a.encheCota();
-  a.v('ctx.rirDaPassada', 2);
-  await a.esperar(60);
-  assert.deepStrictEqual(a.S().logs[idEx][0].sets[2], [40, 8], 'recusado: continua o guardado');
-
-  a.encheCota(false);
-  a.clicar('[data-a="sessao-tenta"]');
-  await a.esperar(60);
-  assert.deepStrictEqual(a.S().logs[idEx][0].sets[2], [40, 8, 2], 'grava o RIR que falhou, e só ele');
-  a.fechar();
-});
-
-test('"Tentar de novo" depois de a carga falhar grava a carga', async () => {
-  const { a, idEx } = await abreSerie(agoraEstavel(), 2);
-  a.encheCota();
-  await a.E(`cargaDaPassada('42,5')`);
-  await a.esperar(60);
-  a.encheCota(false);
-  a.clicar('[data-a="sessao-tenta"]');
-  await a.esperar(60);
-  assert.deepStrictEqual(a.S().logs[idEx][0].sets[2], [42.5, 8]);
-  a.fechar();
-});
-
-test('a correção acha o registro pela chave, mesmo com a lista do exercício mudando', async () => {
-  // Entre o toque que abre e o que grava, a sincronia pode pôr outra entrada
-  // na lista do exercício. Achar pela posição corrigiria o registro errado.
-  const { a, idEx } = await abreSerie(agoraEstavel(), 2);
-  const outro = a.S().logs[idEx][0].t - 7 * 86400000;
-  a.E('S.logs[' + JSON.stringify(idEx) + '].unshift({ t: ' + outro + ', sid: ' + outro + ', sets: [[30, 8], [30, 8], [30, 8]] })');
-  a.clicar('[data-a="regua-9"]');
-  await a.esperar(60);
-  const lista = a.S().logs[idEx];
-  assert.deepStrictEqual(lista[0].sets[2], [30, 8], 'a entrada que chegou não foi tocada');
-  assert.deepStrictEqual(lista[1].sets[2], [40, 9], 'a da sessão aberta foi');
-  a.fechar();
-});
-
-// "Não feito" tocável: se ele fez e não registrou, a série entra ali (estado 3).
-
-test('a série não feita entra pela régua, na posição dela, com a carga da anterior', async () => {
-  const agora = agoraEstavel();
-  const t = agora - 2 * DIA;
-  const a = await app({ agora: agora, aba: 'dias', estado: {
-    logs: { A0: [{ t: t, sid: t, sets: [[40, 10], [40, 10]] }] },
-    done: [{ day: 'A', t: t, sid: t, dur: 3600000, fim: 'manual' }]
-  } });
-  a.v('abrirSessao', t);
-  const ex = a.vJ('ctx.detalheDaSessao').exercicios[0];
-  assert.ok(ex.series[2].nao && ex.series[2].lanca, 'a série 3 está "não feito", e é tocável');
-  a.clicar('[data-a="serie-' + ex.idEx + '-2"]');
-  await a.esperar();
-  assert.ok(/não registrada/.test(a.texto('.ss-ed-h')), a.texto('.ss-ed-h'));
-  a.clicar('[data-a="regua-9"]');
-  await a.esperar(60);
-
-  const reg = a.S().logs[ex.idEx];
-  assert.strictEqual(reg.length, 1, 'no mesmo registro, sem criar outro');
-  assert.deepStrictEqual(reg[0].sets, [[40, 10], [40, 10], [40, 9]], 'na posição 3, com a carga da série anterior');
-  assert.ok(reg[0].m > 0, 'carimbado');
-  assert.ok(/Lançada às \d+h\d\d: 40 × 9\./.test(a.texto('.ss-ed-ok')), a.texto('.ss-ed-ok'));
-  assert.deepStrictEqual(a.gravado().logs[ex.idEx][0].sets[2], [40, 9], 'e está no disco');
-  a.fechar();
-});
-
-test('exercício inteiro não feito ganha registro, entre os outros pela ordem do tempo', async () => {
-  // A lista do exercício é lida pela POSIÇÃO: o fim é a "última vez" que a
-  // próxima sessão usa. A entrada de um dia passado não pode ir para o fim.
-  const agora = agoraEstavel();
-  const t = agora - 3 * DIA, hoje = agora - 3600000;
-  const a = await app({ agora: agora, aba: 'dias', estado: {
-    logs: { A0: [{ t: t, sid: t, sets: [[40, 10]] }], A1: [{ t: hoje, sid: hoje, sets: [[20, 12]] }] },
-    done: [{ day: 'A', t: t, sid: t, dur: 3600000, fim: 'manual' }, { day: 'A', t: hoje, sid: hoje, dur: 3600000, fim: 'manual' }]
-  } });
-  const id1 = a.vJ('treino', 'A').ex[1].id;
-  a.v('abrirSessao', t);
-  a.clicar('[data-a="serie-' + id1 + '-0"]');
-  await a.esperar();
-  assert.ok(/sem referência/.test(a.texto('.ss-ed-h')), 'nada antes daquele dia para servir de referência');
-  a.clicar('[data-a="sessao-carga"]');
-  await a.esperar();
-  ['⌫', '⌫', '1', '8'].forEach(function (k) { a.v('ctx.tecla', k); });
-  assert.strictEqual(a.S().logs[id1].length, 1, 'a carga sozinha não lança nada');
-  const alvo = a.$$('.regua-v')[1];
-  const reps = +alvo.getAttribute('data-a').replace('regua-', '');
-  a.clicar(alvo);
-  await a.esperar(60);
-
-  const lista = a.S().logs[id1];
-  assert.strictEqual(lista.length, 2, 'um registro novo');
-  assert.strictEqual(lista[0].sid, t, 'o do dia passado vem PRIMEIRO');
-  assert.deepStrictEqual(lista[0].sets, [[18, reps]], 'com a carga do teclado e a repetição da régua');
-  assert.strictEqual(lista[1].sid, hoje, 'e o de hoje continua sendo o último');
-  const h = a.vJ('historico', id1);
-  assert.strictEqual(h[h.length - 1].sid, hoje, 'a "última vez" da próxima sessão não muda');
-  a.fechar();
-});
-
-test('se lançar a série falha, ela continua não feita', async () => {
-  const agora = agoraEstavel();
-  const t = agora - 2 * DIA;
-  const a = await app({ agora: agora, aba: 'dias', estado: {
-    logs: { A0: [{ t: t, sid: t, sets: [[40, 10]] }] },
-    done: [{ day: 'A', t: t, sid: t, dur: 3600000, fim: 'manual' }]
-  } });
-  const id1 = a.vJ('treino', 'A').ex[1].id;
-  a.v('abrirSessao', t);
-  a.clicar('[data-a="serie-' + id1 + '-0"]');
-  await a.esperar();
-  a.encheCota();
-  a.clicar(a.$$('.regua-v')[1]);
-  await a.esperar(60);
-  assert.strictEqual(a.S().logs[id1], undefined, 'nenhum registro ficou na memória sem estar no disco');
-  assert.ok(a.$('.regua-v.tocado'), 'o toque fica dito como tocado');
-  assert.ok(/continua não feita/.test(a.texto('.ss-ed-falhou')));
-  a.encheCota(false);
-  a.clicar('[data-a="sessao-tenta"]');
-  await a.esperar(60);
-  assert.strictEqual(a.S().logs[id1].length, 1, '"Tentar de novo" lança');
-  a.fechar();
-});
-
-test('lançar a série 3 com a 2 não feita deixa a 2 não feita', async () => {
-  const agora = agoraEstavel();
-  const t = agora - 2 * DIA;
-  const a = await app({ agora: agora, aba: 'dias', estado: {
-    logs: { A0: [{ t: t, sid: t, sets: [[40, 10]] }] },
-    done: [{ day: 'A', t: t, sid: t, dur: 3600000, fim: 'manual' }]
-  } });
-  a.v('abrirSessao', t);
-  const ex = a.vJ('ctx.detalheDaSessao').exercicios[0];
-  a.clicar('[data-a="serie-' + ex.idEx + '-2"]');
-  await a.esperar();
-  a.clicar('[data-a="regua-9"]');
-  await a.esperar(60);
-  assert.deepStrictEqual(a.S().logs[ex.idEx][0].sets, [[40, 10], null, [40, 9]], 'cada série na posição dela');
-  assert.ok(a.vJ('ctx.detalheDaSessao').exercicios[0].series[1].nao, 'e a 2 continua "não feito"');
-  a.fechar();
-});

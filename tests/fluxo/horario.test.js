@@ -10,41 +10,6 @@ function emHoje(h, m) {
   return d.getTime();
 }
 
-test('o relógio diz desde que horas', async () => {
-  const a = await app();
-  await a.v('iniciarSessao');
-  a.E('S.sessao.inicio = ' + emHoje(6, 22));
-  a.v('render');
-  assert.strictEqual(a.texto('.day-rel em'), 'desde 06:22');
-  a.fechar();
-});
-
-test('detalhe da sessão mostra início e fim', async () => {
-  const t = emHoje(6, 22) - DIA;
-  const a = await app({ estado: {
-    logs: { A0: [{ t: t, sid: t, sets: [[40, 10]] }] },
-    done: [{ day: 'A', t: t, sid: t, dur: 69 * 60000, fim: 'manual' }]
-  } });
-  a.v('abrirSessao', t);
-  const linha = a.texto('.ss-tempo');
-  assert.ok(/6h22/.test(linha), linha);
-  assert.ok(/7h31/.test(linha), 'fim derivado da duração: ' + linha);
-  a.fechar();
-});
-
-test('sessão em andamento mostra só o começo', async () => {
-  const a = await app();
-  await a.v('iniciarSessao');
-  a.E('S.sessao.inicio = ' + emHoje(6, 5));
-  a.E('S.done[0].t = ' + emHoje(6, 5));
-  const t = a.S().done[0].t;
-  a.v('abrirSessao', t);
-  const linha = a.texto('.ss-tempo');
-  assert.ok(/Começo/.test(linha) && /6h05/.test(linha), linha);
-  assert.strictEqual(a.vJ('ctx.detalheDaSessao').fim, null, 'em andamento não tem fim');
-  a.fechar();
-});
-
 test('o dia aberto mostra a hora da sessão', async () => {
   // A lista do mês saiu (a D: o mês é a entrada, o dia é o lugar). A hora mora
   // na linha da sessão, em prosa: "6h40", sem o zero da frente (frente 3, §7.7).
@@ -57,30 +22,6 @@ test('o dia aberto mostra a hora da sessão', async () => {
   a.v('ctx.abreDia', t);
   await a.esperar();
   assert.ok(a.texto('[data-a="dia-sessao"]').includes('6h40 → 7h30'), a.texto('[data-a="dia-sessao"]'));
-  a.fechar();
-});
-
-test('horário típico do mês, com o mais cedo e o mais tarde', async () => {
-  const agora = agoraEstavel();
-  const hoje = new Date(agora);
-  const dia = function (d, h, m) {
-    return new Date(hoje.getFullYear(), hoje.getMonth(), d, h, m).getTime();
-  };
-  const done = [
-    { day: 'A', t: dia(2, 6, 0), sid: 1, dur: 50 * 60000 },
-    { day: 'B', t: dia(3, 6, 30), sid: 2, dur: 50 * 60000 },
-    { day: 'C', t: dia(4, 7, 0), sid: 3, dur: 50 * 60000 }
-  ];
-  const a = await app({ agora: agora, estado: { logs: {}, done: done } });
-  a.aba('dias');
-
-  const h = a.vJ('ctx.mes').horario;
-  assert.strictEqual(h.mediana, '6h30', 'a do meio das três (mediana, decisão de 14/10)');
-  assert.strictEqual(h.cedo, '6h00');
-  assert.strictEqual(h.tarde, '7h00');
-  assert.deepStrictEqual(h.pontos, [360, 390, 420], 'e os pontos, para a média não enganar');
-  const linha = a.$$('.dm-tres').map(function (x) { return x.textContent; }).find(function (x) { return /mediana/.test(x); });
-  assert.ok(linha && /6h30/.test(linha) && /mais cedo/.test(linha) && /mais tarde/.test(linha), 'na tela: ' + linha);
   a.fechar();
 });
 
@@ -155,32 +96,6 @@ test('treino avulso não entra na conta de horário', async () => {
   await a.esperar();
   assert.strictEqual(a.v('temHora', a.S().done[0]), false);
   assert.strictEqual(a.$('[data-a="lanca-por-hora"]'), null, 'e a folha nem oferece a hora');
-  a.fechar();
-});
-
-test('o período voltou às células, com a legenda; o horário de início continua com os pontos', async () => {
-  // A marca de manhã/tarde/noite nas células tinha saído no redesenho (`dias.html`,
-  // estado 1) e voltou a pedido do dono (21/10), como era: o canto da célula e a
-  // legenda embaixo do mês. O treino sem hora não diz período.
-  const agora = agoraEstavel();
-  const hoje = new Date(agora);
-  const dia = function (d, h) {
-    return new Date(hoje.getFullYear(), hoje.getMonth(), d, h, 15).getTime();
-  };
-  const done = [
-    { day: 'A', t: dia(2, 6), sid: 1, dur: 50 * 60000, hora: 1 },
-    { day: 'B', t: dia(3, 14), sid: 2, dur: 50 * 60000, hora: 1 },
-    { day: 'C', t: dia(4, 20), sid: 3, dur: 50 * 60000, hora: 1 }
-  ];
-  const a = await app({ agora: agora, estado: { logs: {}, done: done } });
-  a.aba('dias');
-
-  const celula = function (d) { return a.$('[data-dia="' + a.v('hojeISO', dia(d, 12)) + '"]'); };
-  assert.ok(celula(2).querySelector('.dc-per.manha'), 'o dia 2, às 6h15, é de manhã');
-  assert.ok(celula(3).querySelector('.dc-per.tarde'), 'o dia 3, às 14h15, é de tarde');
-  assert.ok(celula(4).querySelector('.dc-per.noite'), 'o dia 4, às 20h15, é de noite');
-  assert.strictEqual(a.$$('.dc-legenda .dc-per').length, 3, 'e a legenda tem os três períodos');
-  assert.strictEqual(a.$$('.dm-eixo-p').length, 3, 'o horário de início continua com um ponto por sessão');
   a.fechar();
 });
 

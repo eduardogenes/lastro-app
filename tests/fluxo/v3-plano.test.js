@@ -9,7 +9,6 @@ import { app, agoraEstavel } from './harness.js';
 async function noPlano() {
   const a = await app({ aba: 'prescricao', agora: agoraEstavel(10), estado: { logs: {}, done: [] } });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.v('ctx.fechaModoDeSessao');
   await a.esperar();
   return a;

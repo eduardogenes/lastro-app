@@ -35,22 +35,6 @@ test('todas as telas renderizam com estado antigo', async () => {
   a.fechar();
 });
 
-test('sessão sem sid abre no detalhe e mostra traço na duração', async () => {
-  const a = await app({ estado: ANTIGO });
-  a.v('abrirSessao', ANTIGO.done[0].t);
-  assert.ok(a.$$('.ss-ex').length > 0, 'exercícios do dia aparecem');
-  assert.strictEqual(a.vJ('ctx.detalheDaSessao').fim.hora, 'não medido', 'aquele tempo nunca foi medido');
-  a.fechar();
-});
-
-test('a referência do exercício vem do histórico antigo', async () => {
-  const a = await app({ estado: ANTIGO });
-  a.v('go', 'A');
-  a.v('toggle', 0);
-  assert.match(a.texto('.ex.open .setrow .setant'), /^30 × /);
-  a.fechar();
-});
-
 test('exportar carrega todos os campos do estado', async () => {
   const a = await app();
   a.v('toggle', 0);
@@ -58,7 +42,7 @@ test('exportar carrega todos os campos do estado', async () => {
   a.aba('ajustes');
   a.v('showJSON');
 
-  const bkp = JSON.parse(a.doc.getElementById('jout').value);
+  const bkp = JSON.parse(a.v('payload'));
   assert.strictEqual(bkp.app, 'lastro');
   assert.deepStrictEqual(
     Object.keys(bkp.data).sort(),
@@ -119,7 +103,7 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
 
   a.aba('ajustes');
   a.v('showJSON');
-  const bkp = a.doc.getElementById('jout').value;
+  const bkp = a.v('payload');
   const antes = JSON.parse(bkp).data;
 
   await a.v('wipe');
@@ -174,26 +158,6 @@ test('histórico longo não é truncado', async () => {
   const a = await app({ estado: { logs: logs, done: done } });
   assert.strictEqual(a.log('A',0).length, 40);
   assert.strictEqual(a.log('A',0)[0].sets[0][0], 30, 'a primeira sessão continua lá');
-  a.fechar();
-});
-
-test('abrir o JSON conta como backup', async () => {
-  const a = await app({ estado: { logs: {}, done: [{ day: 'A', t: Date.now() - 60 * DIA }] } });
-  assert.ok(a.v('diasSemBackup') > 30);
-  // A cobrança mudou de endereço: vinha do GUIA, uma tela de referência que
-  // ninguém abre sem motivo, e aviso de perda que depende de alguém ir olhar é
-  // aviso que não se lê. Agora é o topo do AGORA, junto do aviso de aparelho
-  // que não está guardando — a mesma natureza, causas diferentes.
-  a.aba('agora');
-  await a.esperar();
-  assert.ok(a.$('.ins-aviso-perda'), 'o AGORA cobra o backup quando passou de 30 dias');
-  assert.match(a.texto('.ins-aviso-perda'), /backup|exportou|segurança/);
-
-  a.v('showJSON');
-  await a.esperar();
-  assert.ok(a.S().export > 0, 'quem copia o texto na mão também fez backup');
-  a.aba('ajustes');
-  assert.strictEqual(a.$('.gu-cobra'), null, 'e para de cobrar depois que ele exporta');
   a.fechar();
 });
 
@@ -278,25 +242,6 @@ test('substituto antigo passa a viver no histórico do próprio exercício', asy
   const h = a.S().logs['crossover-na-polia-baixa'];
   assert.ok(h, 'saiu da chave derivada');
   assert.strictEqual(h[0].sl, a.k('A', 1), 'guardando de que posição do treino veio');
-  a.fechar();
-});
-
-test('exercício novo não herda a carga do que ocupava a posição', async () => {
-  const t = Date.now() - 10 * DIA;
-  const a = await app({ estado: {
-    plano: 1,
-    logs: { A0: [{ t: t, sid: t, sets: [[30, 10], [30, 10], [30, 10]] }] },
-    done: [{ day: 'F', t: t, sid: t }]
-  } });
-  await a.esperar();
-  a.v('go', 'A');
-  a.v('toggle', 0);
-  // vazio, não 'kg': a unidade fica no rótulo ao lado, e o placeholder é
-  // reservado para o dado — a carga da última vez. Sem histórico, sem número.
-  assert.strictEqual(a.doc.getElementById('w0_0').textContent, '·',
-    'sem referência: é outro exercício, e a célula da carga é botão desde o teclado próprio');
-  assert.strictEqual(a.log('A', 0), null, 'o chest press não herdou nada do supino');
-  assert.strictEqual(a.$('.up'), null, 'e sem selo de subir carga herdado');
   a.fechar();
 });
 
@@ -404,7 +349,7 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
 
   a.aba('ajustes');
   a.v('showJSON');
-  const bkp = a.doc.getElementById('jout').value;
+  const bkp = a.v('payload');
   const antes = JSON.parse(bkp).data;
 
   await a.v('wipe');
@@ -472,7 +417,7 @@ test('o que o ajuste deu a cada prato sai e volta nas duas listas brancas', asyn
 
   a.aba('ajustes');
   a.v('showJSON');
-  const bkp = a.doc.getElementById('jout').value;
+  const bkp = a.v('payload');
   assert.ok(/"ajq":\s*60/.test(bkp), 'a exportação leva o estado inteiro');
 
   // `wipe` apaga histórico de TREINO e preserva o plano nutricional, de
@@ -516,7 +461,7 @@ test('as doze medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
 
   a.aba('ajustes');
   a.v('showJSON');
-  const bkp = a.doc.getElementById('jout').value;
+  const bkp = a.v('payload');
   assert.deepStrictEqual(Object.keys(JSON.parse(bkp).data.body).sort(), chaves.slice().sort(),
     'a exportação leva o estado inteiro, então as sete saem');
 
@@ -986,7 +931,7 @@ test('ctx.importaArquivo lê o arquivo, importa e esvazia o campo', async () => 
   // novo não dispara `change`, e a segunda importação não acontece.
   const a = await app({ estado: UMA_SESSAO, aba: 'ajustes' });
   a.v('ctx.mostraJSON');
-  const bkp = a.doc.getElementById('jout').value;
+  const bkp = a.v('payload');
 
   await a.v('wipe');
   await a.esperar(60);

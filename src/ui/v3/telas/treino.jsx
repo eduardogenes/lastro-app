@@ -11,7 +11,7 @@ import { useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
 import { Acoes, Apoio, Bloco, Botao, Chave, Folha, Linha, Pergunta, Saida, Secao, Segmentos, Selo, TelaDeAcao } from '../base.jsx';
 import { Regua } from '../regua.jsx';
-import { useAgora } from '../../instrumento/primitivos.jsx';
+import { useAgora } from '../agora.js';
 
 const virgula = n => String(Math.round(n * 100) / 100).replace('.', ',');
 const relogio = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };

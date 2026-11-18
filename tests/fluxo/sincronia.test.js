@@ -266,32 +266,6 @@ test('a folha de lançamento não grava "descanso" como treino', async () => {
   a.fechar();
 });
 
-test('o descanso aparece no mês e no dia, e do mesmo jeito', async () => {
-  // A faixa da semana saiu de Dias (a D: o mês já mostra a semana). As duas
-  // histórias que não podem divergir agora são a célula do mês e o dia aberto.
-  // E sem marca o domingo fica VAZIO: não vira descanso sozinho.
-  const agora = agoraEstavel();
-  const a = await app({ aba: 'dias', agora: agora, estado: { logs: {}, done: [] } });
-  const dom = a.v('weekStart', agora);
-  const iso = a.v('hojeISO', dom);
-  const cel = function () { return a.$('[data-dia="' + iso + '"]'); };
-
-  assert.strictEqual(cel().querySelector('.dc-p'), null, 'sem marca, o domingo não diz nada');
-  assert.ok(!cel().classList.contains('desc'));
-
-  await a.v('alternaDescanso', dom);
-  await a.esperar();
-
-  assert.strictEqual(cel().querySelector('.dc-p').textContent, 'desc.', 'a célula diz "desc."');
-  assert.ok(cel().classList.contains('desc'));
-  assert.ok(/descanso marcado/.test(cel().getAttribute('aria-label')), 'também para o leitor de tela');
-  a.v('ctx.abreDia', dom);
-  const d = a.vJ('ctx.diaAberto');
-  assert.strictEqual(d.descanso, true, 'o dia diz a mesma coisa');
-  assert.strictEqual(d.procedencia, 'descanso, marcado por você');
-  a.fechar();
-});
-
 // ===========================================================================
 // Entrar e sair da conta, pelas chaves de `CTX`
 // ===========================================================================
@@ -701,30 +675,3 @@ test('voltar o tipo de carga ao padrão não é desfeito pelo outro aparelho', a
   cel.fechar(); note.fechar();
 });
 
-test('login expirado não é sem rede: o Agora diz, e sem rede continua em silêncio', async () => {
-  // A D (`prescricao.html`, estado 11). Sem rede a sincronia falha calada, de
-  // propósito. O 401 derruba a sessão — e dali em diante a sincronia parava em
-  // silêncio como se fosse falta de rede, com o outro aparelho vendo o velho.
-  const a = await app({ aba: 'agora' });
-  nuvemFalsa(a, null);
-  a.E('globalThis.__nuvem.falha = "rede"');
-  await a.v('sincroniza');
-  await a.esperar();
-  assert.strictEqual(a.$('[data-a="login-entra"]'), null, 'sem rede, nada aparece');
-  assert.strictEqual(a.dado('sync').expirou || 0, 0, 'e falta de rede não é sessão expirada');
-
-  a.E('globalThis.__nuvem.falha = "auth"');
-  a.v('toggle', 0);
-  a.preencher(0, 0, 60, 8);
-  await a.esperar();
-  await a.v('sincroniza');
-  a.E('NUVEM.sessao = function () { return null; }');   // o 401 derruba a sessão
-  a.aba('agora');
-  await a.esperar();
-  assert.ok(/A sua sessão de login expirou/.test(a.texto('.ins-aviso-perda')), a.texto('.ins-aviso-perda'));
-  assert.ok(/continua gravado neste aparelho/.test(a.texto('.ins-aviso-perda')), 'diz o que está a salvo');
-  assert.ok(a.$('[data-a="login-copia"]'), 'e oferece a cópia que não depende de conta');
-  const guardado = JSON.parse(a.window.localStorage.getItem('treino-sync-v1') || '{}');
-  assert.ok(guardado.expirou > 0, 'o fato fica GRAVADO, para sobreviver a fechar o app: ' + JSON.stringify(guardado));
-  a.fechar();
-});

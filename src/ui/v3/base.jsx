@@ -7,7 +7,7 @@ import { ic } from './icones.jsx';
 // O comportamento de camada é o mesmo do visual antigo, e por isso vem de lá:
 // a trava de rolagem é um contador só, e o isolamento acha a camada de cima
 // entre as folhas dos dois visuais.
-import { trava, destrava, abreCamada, LugarNaPilha } from '../instrumento/folha.jsx';
+import { trava, destrava, abreCamada, LugarNaPilha } from './camada.js';
 
 const cls = (...p) => p.filter(Boolean).join(' ');
 

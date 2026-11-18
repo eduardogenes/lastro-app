@@ -21,10 +21,8 @@
 // ---- Por que o portão é de FONTE, e não de tipo ----
 //
 // A assinatura seria o lugar certo ("a assinatura não permite omitir a
-// escolha", §8), e o primitivo existe: `Campo` em `src/ui/folhas/editores.jsx`
-// recebe `modo`. Mas `modo` é opcional e sem padrão — esquecer é legal —, e
-// `tsconfig.json` tem `checkJs: false`, porque o casco migra na fase 3. Até lá
-// o compilador não vê `.jsx`, e quem cobra a escolha é este arquivo.
+// escolha", §8), mas `tsconfig.json` tem `checkJs: false`: o compilador não vê
+// `.jsx`, e quem cobra a escolha é este arquivo.
 //
 // ---- Duas coisas que me enganaram ao medir, e que o analisador trata ----
 //
@@ -143,12 +141,6 @@ const TIPO_DECIDE = new Set([
 // O limite, dito: clonar um campo de texto já declarado passa calado, porque a
 // chave é a mesma. O que o portão pega é campo cuja ESCOLHA nunca foi feita.
 const TEXTO: Record<string, string> = {
-  'src/ui/instrumento/edicao.jsx · addq':
-    'busca de exercício ou grupo — §6.1 "busca: do sistema, SEMPRE", e há caso que cobra que o teclado não feche a cada letra',
-  'src/ui/instrumento/edicao.jsx · nxn':
-    'nome do exercício novo — §6.1 "criar exercício (6 campos): do sistema; seis campos, dois deles texto; é cadastro, não registro"',
-  'src/ui/telas/historico.jsx · exnome':
-    'renomear o exercício no histórico — é texto, e é sentado',
   'src/ui/v3/telas/hoje.jsx · registrar-texto':
     'o texto livre do "+" ("almocei e tomei 2 copos") — é frase, e o teclado é o das letras',
   'src/ui/v3/telas/plano.jsx · alimentos-busca':
@@ -165,37 +157,19 @@ const TEXTO: Record<string, string> = {
     'nome do alimento no visual novo — é texto, e é cadastro',
   'src/ui/v3/telas/diaaberto.jsx · lanca-nome':
     'nome do treino avulso no visual novo — o mesmo caso do de baixo: é texto',
-  'src/ui/telas/retroativo.jsx · add-nome':
-    'nome do treino avulso — §6.1 "do sistema; é texto"',
-  'src/ui/telas/protocolo.jsx · pr-obs':
-    'nota da sessão de fotos — §6.1 "nota da sessão: do sistema; é texto"',
-  'src/ui/telas/medidas.jsx · onde-':
-    'o ponto onde mediu, nas medidas com fita e dobras — §6.1 "próprio para o número, do sistema para o texto"',
-  'src/ui/telas/prescricao.jsx · pr-motivo':
-    'motivo da mudança do programa — §6.1 "do sistema", e a frente 1 escreveu por quê: "porque é texto e ele está sentado"'
 };
 
 // OS CAMPOS DE NÚMERO da tabela, com o painel que ela manda. Esta lista não
 // depende do registro acima: é a §6.1 escrita como asserção, e é ela que sobra
 // se alguém reescrever o registro sem ler a tabela.
 const NUMERO: Record<string, 'decimal' | 'numeric'> = {
-  // A CARGA DA SÉRIE SAIU DAQUI, e é o veredito da §6.1 sendo cumprido: ela é
-  // teclado PRÓPRIO, não "do sistema com painel decimal". O campo virou botão
-  // que abre o teclado de doze teclas, então não há `inputmode` a cobrar — e a
-  // linha sai do registro em vez de mentir sobre um campo que não existe.
-  'src/ui/exercicio.jsx · r*_*': 'numeric',        // repetições da série
-  'src/ui/exercicio.jsx · q*': 'decimal',        // quantidade de alimento
-  // A LISTA RÁPIDA DA AULA SAIU DAQUI pelo mesmo motivo da carga da série: a
-  // §6.1 manda próprio nas duas grandezas dela, e os dois campos viraram botões
-  // que abrem o teclado de doze teclas. Não há `inputmode` a cobrar.
-  'src/ui/instrumento/edicao.jsx · nxq': 'decimal',   // prescrição do exercício novo
-  'src/ui/telas/historico.jsx · ed*_0': 'decimal',    // correção da carga
-  'src/ui/telas/historico.jsx · ed*_1': 'numeric',    // correção das reps
-  'src/ui/telas/retroativo.jsx · ahora': 'numeric',   // §6.1 diz o modo com letra: "do sistema, inputmode=numeric"
-  'src/ui/folhas/bio.jsx · bio-': 'decimal',         // os cinco da bioimpedância, um nó
-  // as leituras de fita e dobra: um formulário de até 9 campos, com o painel
-  // numérico do sistema e o "seguinte" entre eles (docs/corpo/02, §2.4)
-  'src/ui/telas/medidas.jsx · med-': 'decimal'
+  // carga e quantidade aceitam vírgula; hora, minutos e repetições são inteiros
+  'src/ui/v3/telas/catalogo.jsx · novo-ex-q': 'decimal',     // carga do exercício novo
+  'src/ui/v3/telas/treino.jsx · rapida-c-': 'decimal',     // carga na lista rápida da aula
+  'src/ui/v3/telas/treino.jsx · rapida-v-': 'numeric',     // repetições na lista rápida
+  'src/ui/v3/telas/comida.jsx · alimento-cru': 'decimal',   // quantidade crua do alimento
+  'src/ui/v3/telas/diaaberto.jsx · scomeco': 'numeric',     // hora em que a sessão passada começou
+  'src/ui/v3/telas/diaaberto.jsx · ahora': 'numeric'        // hora do treino lançado depois
 };
 
 const nome = (c: Campo) => c.arq + ' · ' + c.chave;
@@ -211,33 +185,6 @@ test('todo campo do app declara o teclado que abre', () => {
     'campo sem `inputmode` abre o teclado ALFABÉTICO. Se é número, declare o painel ' +
     '(`decimal` ou `numeric`); se é texto, acrescente a linha em TEXTO com a razão — ' +
     'o que não pode é a escolha não ter sido feita');
-});
-
-test('todo campo que escolhe pelo primitivo diz o modo na chamada', () => {
-  // `Campo` recebe `modo` e o repassa. Então o `<input>` dele SEMPRE declara, e
-  // o caso de cima não vê nada: quem escolhe é o chamador, e é lá que se
-  // esquece. Hoje os cinco campos de macro passam `modo="decimal"` e os de
-  // texto omitem — o que este caso congela é que a omissão seja VISÍVEL.
-  const src = semComentario(fs.readFileSync(path.join(RAIZ, 'src/ui/folhas/editores.jsx'), 'utf8'));
-  assert.ok(/function Campo\(\{[^}]*\bmodo\b/.test(src),
-    'o primitivo `Campo` deixou de receber `modo`: se o teclado passou a ser decidido ' +
-    'dentro dele, este caso tem de mudar junto');
-
-  const chamadas = [...src.matchAll(/<Campo\b/g)].map(m => tagDoCampo(src, m.index));
-  assert.ok(chamadas.length >= 8, 'achei só ' + chamadas.length + ' chamadas de Campo: o leitor quebrou');
-
-  // Texto por rótulo, declarado: é a mesma regra do registro, na outra ponta.
-  const TEXTO_NO_PRIMITIVO = ['nome', 'etiqueta'];
-  const muadas = chamadas.filter(t => {
-    if (/\bmodo=/.test(t)) return false;
-    const tipo = (t.match(/tipo=["{]?([a-z-]+)/) || [, 'text'])[1]!;
-    if (TIPO_DECIDE.has(tipo)) return false;          // `tipo="time"` escolhe sozinho
-    const rotulo = (t.match(/rotulo=["{]?([^"'}]*)/) || [, '?'])[1]!;
-    return !TEXTO_NO_PRIMITIVO.includes(rotulo.trim());
-  });
-  assert.deepStrictEqual(muadas.map(t => (t.match(/rotulo=["{]?([^"'}]*)/) || [, '?'])[1]), [],
-    'chamada de `Campo` sem `modo`: a assinatura permite esquecer (`modo` é opcional e ' +
-    'sem padrão) e o `tsc` não vê `.jsx`, então é aqui que a escolha é cobrada');
 });
 
 test('os campos de número da tabela têm o painel que a tabela manda', () => {

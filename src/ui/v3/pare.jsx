@@ -10,7 +10,7 @@
 
 import { useEffect, useRef } from 'preact/hooks';
 import { Acoes, Botao, Saida } from './base.jsx';
-import { trava, destrava, abreCamada } from '../instrumento/folha.jsx';
+import { trava, destrava, abreCamada } from './camada.js';
 
 // `foco` é o seletor do botão seguro: o Botao é componente, não leva ref.
 function Moldura({ rotulo, papel, foco, refCaixa, children, ...resto }) {

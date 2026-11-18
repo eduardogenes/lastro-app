@@ -9,7 +9,6 @@ test('as séries da semana somam as feitas e as que ainda vêm, por região', as
   const agora = agoraEstavel(10);
   const a = await app({ aba: 'semana', agora: agora, estado: { logs: {}, done: [] } });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.v('ctx.fechaModoDeSessao');
   await a.esperar();
   const s = a.vJ('ctx.semanaV3');
@@ -31,7 +30,6 @@ test('com a adesão faltando, o caminho é responder os dias', async () => {
   const a = await app({ aba: 'semana', agora: agoraEstavel(10), estado: { logs: {}, done: [],
     body: { peso: Array.from({ length: 28 }, (_, i) => ({ t: agoraEstavel(7) - (27 - i) * 86400000, v: 77, m: 1 })), cintura: [] } } });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.v('ctx.fechaModoDeSessao');
   await a.esperar();
   const p = a.vJ('ctx.semanaV3').veredito.portoes;
@@ -45,7 +43,6 @@ test('com a adesão faltando, o caminho é responder os dias', async () => {
 test('a retrospectiva do bloco abre da Semana, na tela nova, e fechar volta', async () => {
   const a = await app({ aba: 'semana', agora: agoraEstavel(10), estado: { logs: {}, done: [] } });
   await a.pronto();
-  a.E('CTX.alternaVisual()');
   a.v('ctx.fechaModoDeSessao');
   await a.esperar();
   a.clicar('[data-a="semana-retro"]');

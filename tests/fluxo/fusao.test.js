@@ -3,18 +3,6 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { app, agoraEstavel, DIA } from './harness.js';
 
-test('estado migra para o plano 4 e a nutrição nasce semeada', async () => {
-  const a = await app();
-  assert.deepStrictEqual(a.erros, []);
-  assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'));
-  assert.strictEqual(a.S().comida.plano.length, a.dado('PLANO_BASE').length, 'plano nutricional semeado');
-  assert.strictEqual(a.S().cadencia.length, 7, 'cadência da semana nasce com 7 posições');
-  assert.strictEqual(a.S().ajuste, 0);
-  assert.strictEqual(a.S().perfManual, null, 'o app calcula a força até ele dizer o contrário');
-  assert.ok(a.$$('.ex').length > 0, 'a tela de treino continua montando');
-  a.fechar();
-});
-
 test('o backup leva a metade de comida e devolve ela igual', async () => {
   // Sem isto, trocar de celular perderia o plano nutricional, a cadência e o
   // ajuste em vigor — e a importação é whitelist, então campo novo só passa se
@@ -28,7 +16,7 @@ test('o backup leva a metade de comida e devolve ela igual', async () => {
 
   a.aba('ajustes');
   a.v('showJSON');
-  const json = a.doc.getElementById('jout').value;
+  const json = a.v('payload');
   const bkp = JSON.parse(json);
   assert.strictEqual(bkp.data.ajuste, 1);
   assert.strictEqual(bkp.data.perfManual, false);
@@ -52,142 +40,6 @@ test('backup antigo, sem a metade de comida, abre semeado em vez de vazio', asyn
   assert.strictEqual(a.S().comida.plano.length, a.dado('PLANO_BASE').length, 'a nutrição nasce da prescrição');
   assert.strictEqual(a.S().cadencia.length, 7);
   assert.strictEqual(a.S().ajuste, 0, 'sem ajuste herdado de lugar nenhum');
-  a.fechar();
-});
-
-test('HOJE mostra comida e treino na MESMA timeline, em ordem de relógio', async () => {
-  // É o argumento inteiro da fusão: o pré-treino das 5h45 e a sessão das 6h15
-  // são uma sequência só. Em eixos separados, pareciam dois apps.
-  //
-  // A cadência vem semeada treinando em todos os sete dias: a padrão descansa
-  // domingo (`CADENCIA_PADRAO`, índice 0), e no domingo esta tela não tem linha
-  // de treino nenhuma — o teste passava seis dias por semana e quebrava no
-  // sétimo. Quem afirma "treino e comida na mesma lista" semeia o treino.
-  const a = await app({ aba: 'agora', estado: { cadencia: ['treino','treino','treino','treino','treino','treino','treino'] } });
-  const linhas = a.$$('.ag-l');
-  assert.ok(linhas.length >= 5, 'as refeições do dia estão na tela: ' + linhas.length);
-
-  const minutos = linhas.map(l => {
-    const [h, m] = l.querySelector('.ag-l-h').textContent.split('h');
-    return +h * 60 + +m;
-  });
-  assert.deepStrictEqual(minutos, minutos.slice().sort((x, y) => x - y), 'ordenadas por relógio');
-
-  const nomes = linhas.map(l => l.querySelector('.ag-l-n').textContent);
-  assert.ok(nomes.some(n => /pré-treino/i.test(n)), 'a refeição está lá: ' + nomes.join(' · '));
-  assert.ok(nomes.some(n => /peito|dorsais|quadríceps|espessura|deltoides|posterior/i.test(n)),
-    'e o treino está na mesma lista, pelo nome da sessão: ' + nomes.join(' · '));
-  a.fechar();
-});
-
-test('o cartão-foco responde "e agora?" antes de qualquer resumo', async () => {
-  // Relógio E tipo de dia fixos, e isto passou a ser necessário: o cartão vem
-  // da regra de `dominio/agora.ts`, e o `null` dela é resposta LEGÍTIMA — dia
-  // de descanso fora de qualquer janela não tem cartão. Com o relógio real, o
-  // caso dependia da hora em que a suíte rodasse, e com a cadência prevista
-  // pela semana dependia do dia em que ela rodasse. Às 12h10 de um dia de
-  // treino a janela do treino já passou e o almoço das 12h30 está a 20 min:
-  // há cartão, sempre.
-  const agora = agoraEstavel(12, 10);
-  const a = await app({
-    aba: 'agora', agora: agora,
-    estado: { logs: {}, done: [],
-              dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
-                     escala: {}, cadencia: 'treino', alta: 0 } }
-  });
-  const foco = a.$('.ins-foco');
-  assert.ok(foco, 'o foco é a primeira coisa da tela');
-  assert.ok(a.$('.ins-live-dot'), 'com o ponto ao vivo');
-  // A sobrancelha é a procedência do cartão, não "agora" de novo (§1.1).
-  assert.strictEqual(a.texto('.ins-foco .ins-label'), 'no plano às 12h30', a.texto('.ins-foco .ins-label'));
-
-  // as linhas do dia vêm DEPOIS do foco, nunca antes
-  const html = a.doc.getElementById('app').innerHTML;
-  assert.ok(html.indexOf('ins-foco') < html.indexOf('ag-linhas'), 'a lista não pode vir antes da próxima ação');
-  a.fechar();
-});
-
-test('marcar uma refeição pela linha grava e persiste', async () => {
-  // O bloco de energia saiu pela D (a adesão se conta em marcas e dias). O que
-  // este caso guarda é o dado: o toque na linha aberta grava no dia, e o dia
-  // vai para o disco carimbado com a data.
-  const a = await app({ aba: 'agora' });
-  const linha = a.$$('.ag-l').filter(function (l) { return l.querySelector('.ag-l-b').getAttribute('data-a') !== 'linha-treino'; })[0];
-  const id = linha.querySelector('.ag-l-b').getAttribute('data-a').replace('linha-', '');
-  a.clicar(linha.querySelector('.ag-l-b'));
-  await a.esperar();
-  a.clicar('[data-a="tudo-' + id + '"]');
-  await a.esperar();
-  assert.ok(Object.keys(a.S().dia.done).length === 1, 'ficou gravado no dia');
-  assert.ok(/comi tudo/.test(a.texto('[data-a="linha-' + id + '"]')), 'e a linha diz: ' + a.texto('[data-a="linha-' + id + '"]'));
-  // o salvamento é debounced em 700 ms: sem esperar, o disco ainda está vazio
-  await a.esperar(800);
-  assert.strictEqual(a.gravado().dia.data, a.S().dia.data, 'e foi para o disco carimbado com a data');
-  a.fechar();
-});
-
-test('a água sobe no toque e se corrige tocando o número', async () => {
-  // A D (`agora-descanso.html`, estado 3): "+1 copo" é um toque e grava; tocar
-  // no número corrige no lugar, sem prazo — o 7º copo não vira 6 sozinho, e um
-  // copo a mais não exige apagar nada.
-  const a = await app({ aba: 'agora' });
-  assert.strictEqual(a.$$('.ag-copos i').length, 14, '14 copos de 250 ml');
-  ['agua-mais', 'agua-mais', 'agua-mais'].forEach(function (x) { a.clicar('[data-a="' + x + '"]'); });
-  await a.esperar(60);
-  assert.strictEqual(a.S().dia.agua, 3);
-  assert.ok(/Água · 3 de 14 copos/.test(a.texto('.ag-agua-t')), a.texto('.ag-agua-t'));
-  assert.ok(/750 ml de 3\.500 ml/.test(a.texto('.ag-agua-t')), 'a conta diz quanto já foi');
-  assert.strictEqual(a.$$('.ag-copos i.f').length, 3, 'e o desenho da conta também');
-
-  a.clicar('[data-a="agua-corrige"]');
-  await a.esperar();
-  a.clicar('.ag-agua-c [aria-label="diminuir"]');
-  await a.esperar();
-  assert.strictEqual(a.S().dia.agua, 2, 'tocar no número corrige para baixo');
-  a.fechar();
-});
-
-test('abrir uma refeição mostra o que tem dentro e o ajuste só de hoje', async () => {
-  // A linha abre no lugar (a D); as outras porções — ¾, 1¼, 1½ — continuam na
-  // folha da refeição, pela porta "Outra porção" da linha aberta.
-  const a = await app({ aba: 'agora' });
-  const linha = a.$$('.ag-l').filter(function (l) { return !l.classList.contains('tudo') && l.querySelector('[data-a^="linha-"]').getAttribute('data-a') !== 'linha-treino'; })[0];
-  a.clicar(linha.querySelector('.ag-l-b'));
-  await a.esperar();
-  assert.ok(a.$('.ag-l-itens'), 'a linha aberta mostra os itens');
-  a.clicar('[data-a^="porcao-"]');
-  // efeito do Preact roda depois do paint; 20 ms não bastam no jsdom
-  await a.esperar(150);
-  const folha = a.$('.ins-folha');
-  assert.ok(folha, 'a folha abriu');
-  assert.ok(a.texto('.ins-folha .ins-rotulo').includes('A porção de hoje'),
-    'o rótulo diz que a porção é de hoje (frente 3 §2, o exemplo dela)');
-  assert.ok(a.texto('.ins-folha').includes('não muda o plano'), 'e a procedência, que não muda o plano');
-  assert.ok(a.$$('.ins-folha .ins-linha').length > 0, 'lista os itens');
-
-  // e o corpo fica travado enquanto ela está aberta
-  assert.ok(a.doc.body.className.includes('ins-travado'), 'no iOS é a única trava que segura');
-  a.v('ctx.fechaFolha');
-  await a.esperar(150);
-  assert.ok(!a.doc.body.className.includes('ins-travado'), 'e destrava ao fechar');
-  a.fechar();
-});
-
-test('o dia previsto se identifica como previsão, e confirmar muda o alvo', async () => {
-  // Mesma semeadura da timeline, pelo mesmo motivo: o teste tira o treino do dia
-  // e cobra que o alvo caia. No domingo não há treino para tirar.
-  const a = await app({ aba: 'agora', estado: { cadencia: ['treino','treino','treino','treino','treino','treino','treino'] } });
-  const previsto = a.vJ('ctx.hoje').diaHoje.previsto;
-  if (previsto) {
-    assert.ok(a.texto('.ins-secao-nota') || a.texto('.ins-provenance'),
-      'a tela avisa que o dia é palpite');
-  }
-  const alvoAntes = Math.round(a.vJ('ctx.hoje').alvo.kcal);
-  a.v('ctx.setCadenciaDeHoje', 'descanso');
-  await a.esperar();
-  const alvoDepois = Math.round(a.vJ('ctx.hoje').alvo.kcal);
-  assert.ok(alvoDepois < alvoAntes, 'sem treino saem o pré e o intra: ' + alvoAntes + ' → ' + alvoDepois);
-  assert.strictEqual(a.vJ('ctx.hoje').diaHoje.previsto, false, 'ele disse, então não é mais palpite');
   a.fechar();
 });
 
@@ -221,119 +73,6 @@ test('apagar o histórico não apaga o plano nutricional', async () => {
   a.fechar();
 });
 
-test('a cadência da semana é editável e só fala de cadência', async () => {
-  const a = await app({ aba: 'prescricao' });
-  // A cadência MUDOU DE LADO nesta passada, e a razão está registrada: o GUIA a
-  // punha na máquina do app ("a cadência é ajuste, não referência"), e a frente
-  // 1 a lista como posse de Prescrição — em que dias costumo treinar é
-  // prescrição de rotina, e é contra ela que o palpite do dia se calcula.
-  await a.modo('semana');
-  const dias = a.$$('.gu-dia');
-  assert.strictEqual(dias.length, 7);
-
-  const antes = a.S().cadencia.slice();
-  a.clicar(dias[1]);            // segunda: o índice 1, agora a SEGUNDA coluna
-  await a.esperar();
-  assert.notStrictEqual(a.S().cadencia[1], antes[1], 'alternou');
-
-  // e não guarda letra de treino: qual sessão vem é sempre da rotação
-  a.S().cadencia.forEach(function (c) {
-    assert.ok(c === 'treino' || c === 'descanso', 'cadência guardou letra: ' + c);
-  });
-  a.fechar();
-});
-
-test('o alvo calórico sai do plano, não de um número escrito à parte', async () => {
-  const a = await app({ aba: 'prescricao' });
-  const antes = a.texto('.ins-linha-v');
-  a.E('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens[0].q += 500');
-  a.v('render');
-  assert.notStrictEqual(a.texto('.ins-linha-v'), antes, 'mexer no plano recalcula o alvo na hora');
-  a.fechar();
-});
-
-test('a unidade é rótulo de coluna; a referência é a coluna ANTERIOR', () => {
-  // A unidade sempre foi ESTRUTURA e por isso fica sempre — mudou de lugar,
-  // de dentro do campo para o cabeçalho da tabela.
-  //
-  // A referência do que foi feito na última vez saiu do placeholder e virou
-  // coluna. O placeholder sumia no instante em que ele começava a digitar:
-  // escrever a carga apagava a referência das repetições justamente na hora
-  // de escrevê-las. A coluna diz as três coisas e não sai da tela.
-  return app().then(async a => {
-    a.v('toggle', 0);
-    const unidades = a.$$('.ex.open .sethead .f').map(u => u.textContent);
-    assert.ok(unidades.includes('kg'), 'a carga declara a unidade: ' + unidades.join(','));
-    assert.ok(unidades.includes('reps'), 'a repetição também: ' + unidades.join(','));
-    assert.strictEqual(a.texto('.ex.open .setrow .setant'), '–', 'sem histórico, nada a referenciar');
-
-    a.preencher(0, 0, 55, 8);
-    a.E('S.sessao = null');
-    a.v('render');
-    assert.strictEqual(a.texto('.ex.open .setrow .setant'), '55 × 8', 'com histórico, o que ele fez');
-    a.fechar();
-  });
-});
-
-test('o placeholder de carregamento some quando o app monta', async () => {
-  // O Preact não remove filhos pré-existentes do container no primeiro render:
-  // ele não tem árvore antiga para comparar e só insere a dele. O "Carregando
-  // seu histórico…" ficava no topo da tela para sempre, e resíduo de troca de
-  // módulo pelo HMR ficava junto.
-  const a = await app({ aba: 'agora' });
-  const app_ = a.doc.getElementById('app');
-  assert.strictEqual(app_.querySelector('.msg'), null, 'placeholder ficou na tela');
-  assert.ok(!app_.textContent.includes('Carregando'), app_.textContent.slice(0, 80));
-  assert.ok(!/undefined/.test(app_.textContent), 'texto "undefined" vazou para a tela');
-
-  // e sobrevive a re-render: limpar só pode acontecer no primeiro mount
-  a.v('render');
-  assert.ok(a.$('.ins-cab'), 'o cabeçalho continua depois de re-renderizar');
-  assert.ok(a.$$('.ins-tab').length === 5);
-  a.fechar();
-});
-
-// ---------- os editores de COMIDA ----------
-
-test('editar a quantidade de um item muda o plano para todo dia', async () => {
-  // A distinção que separa este app de um rastreador genérico: aqui é o PLANO,
-  // e vale amanhã também. O controle de porção da folha de refeição é o outro
-  // lado — "só de hoje" — e os dois dizem qual é na tela.
-  const a = await app({ aba: 'prescricao' });
-  a.v('ctx.editaRefeicao', 'almoco');
-  await a.esperar(150);
-  assert.ok(a.$('.ins-folha'), 'a folha de edição abriu');
-
-  const antes = a.S().comida.plano.filter(function (r) { return r.id === 'almoco'; })[0].itens[0].q;
-  a.v('ctx.setQuantidade', 'almoco', 0, antes + 50);
-  await a.esperar();
-  assert.strictEqual(
-    a.S().comida.plano.filter(function (r) { return r.id === 'almoco'; })[0].itens[0].q,
-    antes + 50, 'a quantidade do plano mudou');
-  assert.deepStrictEqual(a.S().dia.escala, {}, 'e não virou ajuste de hoje');
-  a.fechar();
-});
-
-test('as folhas empilham em três níveis e voltam uma a uma', async () => {
-  const a = await app({ aba: 'prescricao' });
-  a.v('ctx.editaRefeicao', 'almoco');
-  a.v('ctx.abreFolha', { k: 'seletor', ref: 'almoco', idx: null });
-  a.v('ctx.abreFolha', { k: 'editaAlimento', id: null });
-  await a.esperar(150);
-  assert.strictEqual(a.$$('.ins-folha').length, 3, 'três folhas na pilha');
-
-  a.v('ctx.fechaFolha');
-  await a.esperar(150);
-  assert.strictEqual(a.$$('.ins-folha').length, 2, 'fecha uma, volta para a de baixo');
-  assert.ok(a.doc.body.className.includes('ins-travado'), 'o corpo segue travado com folha aberta');
-
-  a.v('ctx.fechaTudo');
-  await a.esperar(150);
-  assert.strictEqual(a.$$('.ins-folha').length, 0);
-  assert.ok(!a.doc.body.className.includes('ins-travado'), 'e destrava quando a última fecha');
-  a.fechar();
-});
-
 test('adicionar alimento a uma refeição entra no plano e no total do dia', async () => {
   const a = await app({ aba: 'prescricao' });
   const antes = Math.round(a.vJ('ctx.hoje').alvo.kcal);
@@ -356,63 +95,6 @@ test('cadastrar alimento cria id próprio e aparece na biblioteca', async () => 
   assert.strictEqual(id, 'pasta-de-castanha', 'id derivado do nome, como nos exercícios');
   assert.strictEqual(a.S().comida.alimentos["pasta-de-castanha"].meu, 1, 'marcado como dele');
   assert.ok(a.vJ('ctx.alimentosFiltrados', 'castanha').length === 1);
-  a.fechar();
-});
-
-test('escolher um alimento na busca põe ele na refeição', async () => {
-  // O caminho do usuário, que nenhum teste fazia: todos chamavam `adicionaItem`
-  // direto. A folha recebia a refeição de destino numa prop chamada `ref` —
-  // reservada do Preact, que nunca chega ao componente —, então escolher na
-  // lista não fazia nada. Sem erro, sem toast, sem nada (`9914199`).
-  const a = await app({ aba: 'prescricao' });
-  a.v('ctx.editaRefeicao', 'almoco');
-  a.v('ctx.abreFolha', { k: 'seletor', ref: 'almoco', idx: null });
-  await a.esperar(150);
-
-  const itens = () => a.S().comida.plano.filter(function (r) { return r.id === 'almoco'; })[0].itens;
-  const antes = itens().length;
-  const opcao = a.$$('.ins-folha button').filter(function (b) { return /^Aveia/.test(b.textContent); })[0];
-  assert.ok(opcao, 'a aveia está na lista da busca');
-  a.clicar(opcao);
-  await a.esperar(150);
-
-  assert.strictEqual(itens().length, antes + 1, 'entrou na refeição');
-  assert.strictEqual(itens()[antes].f, 'aveia');
-  assert.strictEqual(a.vista().pilha.length, 1, 'e a busca fechou, voltando para a refeição');
-  a.fechar();
-});
-
-test('cadastrar a partir da busca não abre a quarta folha, e já põe na refeição', async () => {
-  // O caminho que chegava a quatro: refeição → ··· → trocar → cadastrar. Agora o
-  // cadastro TOMA o lugar da busca que não achou, e salvar põe o alimento na
-  // refeição — antes ele era criado e ficava em lugar nenhum, e quem pediu
-  // "trocar" ainda tinha que achar na lista o que acabou de digitar.
-  const a = await app({ aba: 'prescricao' });
-  a.v('ctx.editaRefeicao', 'almoco');
-  a.v('ctx.abreFolha', { k: 'seletor', ref: 'almoco', idx: null });
-  await a.esperar(150);
-  assert.strictEqual(a.vista().pilha.length, 2, 'editar a refeição e a busca');
-
-  const cadastrar = a.$$('.ins-folha .ins-btn-add')
-    .filter(function (b) { return /Cadastrar/.test(b.textContent); })[0];
-  assert.ok(cadastrar, 'o botão de cadastrar está na folha da busca');
-  a.clicar(cadastrar);
-  await a.esperar(150);
-
-  assert.strictEqual(a.vista().pilha.length, 2, 'o cadastro tomou o lugar da busca');
-  assert.strictEqual(a.vista().pilha[1].k, 'editaAlimento');
-  assert.strictEqual(a.$$('.ins-folha').length, 2, 'e na tela também são duas');
-
-  const antes = a.S().comida.plano.filter(function (r) { return r.id === 'almoco'; })[0].itens.length;
-  a.v('ctx.salvaAlimento', null, { n: 'Tapioca de teste', cat: 'mercearia',
-                    u: 'g', kcal: 240, p: 0.5, c: 58, g: 0.2, cru: 0 });
-  await a.esperar(150);
-
-  const itens = a.S().comida.plano.filter(function (r) { return r.id === 'almoco'; })[0].itens;
-  assert.strictEqual(itens.length, antes + 1, 'o alimento novo entrou na refeição');
-  assert.strictEqual(itens[itens.length - 1].f, 'tapioca-de-teste');
-  assert.strictEqual(a.vista().pilha.length, 1, 'e voltou para a refeição que ele estava editando');
-  assert.ok(/posto em/.test(a.toast()), 'o aviso diz onde ele foi parar: ' + a.toast());
   a.fechar();
 });
 
@@ -574,41 +256,6 @@ test('ctx.removeItem tira UM item, e nada além daquele item', async () => {
   a.fechar();
 });
 
-test('ctx.trocaItem troca o alimento, preserva a quantidade e não mexe em mais nada', async () => {
-  const a = await app({ aba: 'prescricao' });
-  const noCafe = a.vJ('ctx.refeicaoParaEditar', 'pos').itens.map(function (i) { return i.f; });
-  const versaoAntes = a.S().comida.v;
-
-  // uma folha aberta, para medir que o verbo a fecha
-  a.v('ctx.editaRefeicao', 'almoco');
-  a.v('ctx.abreFolha', { k: 'seletor', ref: 'almoco', idx: 2 });
-  await a.esperar(150);
-  assert.strictEqual(a.$$('.ins-folha').length, 2, 'duas folhas na pilha — pré-condição');
-
-  a.v('ctx.trocaItem', 'almoco', 2, 'suino');
-  await a.esperar(150);
-
-  const depois = a.vJ('ctx.refeicaoParaEditar', 'almoco').itens;
-  assert.deepStrictEqual(depois.map(function (i) { return i.f; }),
-    ['arroz', 'feijao', 'suino', 'legumes', 'azeite', 'kiwi'],
-    'o terceiro item virou suíno, na mesma posição');
-  assert.strictEqual(depois[2].q, 80,
-    'e A QUANTIDADE É A DO ITEM ANTIGO: trocar não faz ele digitar 80 g de novo');
-  assert.strictEqual(depois.length, 6, 'nenhum item entrou nem saiu');
-  assert.deepStrictEqual(depois.filter(function (i) { return i.idx !== 2; }).map(function (i) { return i.q; }),
-    [250, 50, 100, 15, 100], 'os outros cinco não foram tocados');
-
-  assert.deepStrictEqual(a.vJ('ctx.refeicaoParaEditar', 'pos').itens.map(function (i) { return i.f; }),
-    noCafe, 'o frango do café da manhã fica: a troca é daquele item, não do alimento');
-  assert.strictEqual(a.vJ('ctx.alimentosParaSeletor', 'frango').length, 1,
-    'e o frango continua na biblioteca, sem ter sido apagado por falta de uso');
-
-  assert.strictEqual(a.$$('.ins-folha').length, 1,
-    'o verbo fecha a folha de onde a escolha veio, e só ela');
-  assert.ok(a.S().comida.v > (versaoAntes || 0), 'e carimba o plano como mudado');
-  a.fechar();
-});
-
 test('ctx.trocaItem derruba a marca do arroz e preserva a de alta demanda', async () => {
   // O corte do dono, de 08/10, e é pela NATUREZA da marca:
   //
@@ -694,43 +341,6 @@ test('removeItem e trocaItem com refeição ou índice que não existe não perg
   a.fechar();
 });
 
-// ---------------------------------------------------------------------------
-// O editor de refeição, por valor: abrir, ler, salvar, duplicar, marcar, buscar
-// ---------------------------------------------------------------------------
-//
-// O QUE ESTE GRUPO PROVA: que o editor de refeição é alcançável inteiro pelo
-// MODELO — abrir a folha certa, ler a refeição na forma que o editor consome,
-// gravar campo por campo, duplicar, marcar item de alta demanda e buscar
-// alimento — sem ler um `<input>` e sem `a.E('…')`.
-//
-// O QUE ESTE GRUPO NÃO PROVA: que a tela nova tenha um `···` que chame essas
-// chaves, nem que o formulário mande para `salvaRefeicao` o que ele mostra.
-// Entre o verbo e o dedo há uma fiação que nenhum caso daqui atravessa: a
-// casca que lê os campos continua fora do contrato da superfície, de propósito.
-// Se o redesenho ligar o botão "duplicar" em `salvaRefeicao`, tudo aqui segue
-// verde.
-
-test('ctx.abreRefeicao e ctx.novaRefeicao empilham a folha certa, e nada mais', async () => {
-  const a = await app({ aba: 'prescricao' });
-  assert.ok(!a.vista().pilha || a.vista().pilha.length === 0, 'nasce sem folha');
-
-  a.v('ctx.abreRefeicao', 'almoco');
-  await a.esperar(150);
-  assert.deepStrictEqual(a.vista().pilha, [{ k: 'refeicao', id: 'almoco' }],
-    'abreRefeicao empilha a folha de LEITURA daquela refeição');
-
-  a.v('ctx.novaRefeicao');
-  await a.esperar(150);
-  assert.deepStrictEqual(a.vista().pilha,
-    [{ k: 'refeicao', id: 'almoco' }, { k: 'editaRefeicao', id: null }],
-    'novaRefeicao empilha o EDITOR sem id — é o que diz ao editor que é nova');
-  assert.strictEqual(a.$$('.ins-folha').length, 2, 'e as duas estão na tela');
-
-  assert.strictEqual(a.S().comida.plano.length, 7,
-    'abrir não cria refeição: a refeição nova só nasce em salvaRefeicao');
-  a.fechar();
-});
-
 test('ctx.refeicaoParaEditar traduz a refeição para o editor, e acusa o alimento sumido', async () => {
   const a = await app({ aba: 'prescricao' });
   const vazia = a.vJ('ctx.refeicaoParaEditar', null);
@@ -784,35 +394,6 @@ test('ctx.salvaRefeicao cria sem id e corrige com id, sem tocar nos itens', asyn
   assert.deepStrictEqual(plano.map(function (x) { return x.t; }),
     ['05:45', '06:15', '08:00', '10:00', '13:15', '16:00', '19:30', '21:30'],
     'e entra em ordem de relógio, entre o café das 08:00 e o almoço já remarcado');
-  a.fechar();
-});
-
-test('ctx.duplicaRefeicao copia o conteúdo, e a cópia é independente do original', async () => {
-  const a = await app({ aba: 'prescricao' });
-  a.v('ctx.abreRefeicao', 'ceia');
-  await a.esperar(150);
-  assert.strictEqual(a.$$('.ins-folha').length, 1, 'uma folha aberta — pré-condição');
-
-  a.v('ctx.duplicaRefeicao', 'ceia');
-  await a.esperar(150);
-
-  const plano = a.S().comida.plano;
-  assert.strictEqual(plano.length, 8, 'a cópia entrou no plano');
-  const copia = plano[plano.length - 1];
-  assert.strictEqual(copia.n, 'Ceia (cópia)',
-    'com o nome marcado: duas "Ceia" na lista seriam indistinguíveis');
-  assert.notStrictEqual(copia.id, 'ceia', 'e com id próprio');
-  assert.deepStrictEqual(copia.itens, plano.filter(function (r) { return r.id === 'ceia'; })[0].itens,
-    'o conteúdo veio inteiro');
-  assert.strictEqual(a.toast(), 'Refeição duplicada.', 'e o app diz que duplicou');
-  assert.strictEqual(a.$$('.ins-folha').length, 0, 'a folha fecha: o gesto acabou');
-
-  // independência: mexer na cópia não mexe no original
-  a.v('ctx.removeItem', copia.id, 0);
-  await a.esperar();
-  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', copia.id).itens.length, 1, 'a cópia perdeu um item');
-  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', 'ceia').itens.length, 2,
-    'e a ORIGINAL não: a cópia é profunda, não um apelido para os mesmos itens');
   a.fechar();
 });
 
@@ -1046,44 +627,3 @@ test('ctx.setHorizonteCompras muda o horizonte e a lista recalcula em cima dele'
   a.fechar();
 });
 
-test('o copo que não foi gravado não aparece como gravado', async () => {
-  // O estado ruim da D (`agora-descanso.html`, estado 8): com o armazenamento
-  // cheio, a conta fica no que está guardado e a linha diz qual copo não entrou,
-  // com as duas saídas ao lado do toque.
-  const a = await app({ aba: 'agora' });
-  a.clicar('[data-a="agua-mais"]');
-  await a.esperar(60);
-  a.encheCota();
-  a.clicar('[data-a="agua-mais"]');
-  await a.esperar(60);
-  assert.strictEqual(a.S().dia.agua, 1, 'a conta continua no que está guardado');
-  assert.ok(/O 2º copo não foi gravado/.test(a.texto('.ag-agua-f')), a.texto('.ag-agua-f'));
-  assert.ok(/continua em 1/.test(a.texto('.ag-agua-f')));
-  assert.ok(a.$('[data-a="agua-copia"]'), 'e oferece baixar a cópia');
-  a.encheCota(false);
-  a.clicar('[data-a="agua-tenta"]');
-  await a.esperar(60);
-  assert.strictEqual(a.S().dia.agua, 2, '"Tentar de novo" grava o copo');
-  assert.strictEqual(a.$('.ag-agua-f'), null);
-  a.fechar();
-});
-
-test('a unidade se escreve junto do número, e some quando não há número', async () => {
-  // R4 da frente 3 §2: "KCAL · 3.007" era a caixa alta fazendo trabalho de
-  // estrutura em cima de uma unidade. Passa a "3.007 kcal" e "37 g" com o nome
-  // do número ao lado. E "– cm" diria que há uma medida: sem número, sem unidade.
-  const a = await app({ aba: 'agora' });
-  a.v('ctx.abreRefeicao', 'almoco');
-  await a.esperar(150);
-  const celulas = a.$$('.ins-folha .ins-grade-c').map(c => c.textContent.replace(/\s+/g, ' ').trim());
-  assert.ok(/^[\d.]+ kcal$/.test(celulas[0]), 'kcal junto do número: ' + celulas[0]);
-  assert.ok(/^proteína ?\d+ g$/.test(celulas[1]), 'o nome e o número com a unidade: ' + celulas[1]);
-  a.fechar();
-
-  const b = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] } } });
-  await b.esperar();
-  // sem pesagem na semana, o número grande do peso é só o traço, sem "kg"
-  const peso = b.$('.co-peso-n').textContent.replace(/\s+/g, ' ').trim();
-  assert.strictEqual(peso, '—', 'sem medida, só o traço: ' + peso);
-  b.fechar();
-});

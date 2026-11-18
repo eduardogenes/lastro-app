@@ -16,7 +16,6 @@ async function comDados(semente) {
   const a = await app({ aba: 'corpo' });
   await a.pronto();
   a.E(semente);
-  a.E('CTX.alternaVisual()');
   await a.esperar();
   return a;
 }

@@ -45,47 +45,6 @@ async function pelaLista(a, id, valor) {
   }
 }
 
-test('um toque fotografa a lousa: a foto fica no dia, e os bytes no cache próprio', async () => {
-  const a = await noBox();
-  assert.ok(a.$('[data-a="lousa-foto"]'), 'no dia aberto há "Fotografar a lousa"');
-  await fotografa(a);
-  await a.esperar(60);
-  const l = a.S().lousa;
-  assert.strictEqual(l.day, 'HX');
-  assert.strictEqual(l.d, hoje());
-  assert.deepStrictEqual(guardadasEm(a, 'lastro-lousa'), ['./lousa/' + hoje() + '-' + l.v + '.' + l.ext]);
-  assert.deepStrictEqual(a.gravado().lousa, l, 'a referência está no disco');
-  const t = a.vJ('ctx.treino').lousa;
-  assert.strictEqual(t.tem, true);
-  assert.ok(/^foto da lousa · \d\d\/\d\d \d+h\d\d$/.test(t.quando), t.quando);
-  assert.ok(a.$('.tr-lousa-img'), 'e a foto aparece');
-  assert.ok(a.$('[data-a="lousa-refaz"]'), 'com "Refazer a foto"');
-  a.fechar();
-});
-
-test('quando a aula termina, a lousa vira parte da sessão', async () => {
-  // a sessão nasce da primeira série, como no uso: é ela que cria a marca
-  const a = await noBox(sabado(), false);
-  await fotografa(a);
-  await a.esperar(60);
-  const v = a.S().lousa.v;
-  a.v('repetirUltimaAula');
-  await a.esperar(60);
-  a.v('abrirRapido');
-  await a.esperar();
-  await pelaLista(a, 'fw0', 9);
-  await pelaLista(a, 'fr0', 20);
-  assert.ok(a.S().sessao, 'pré-condição: a série abriu a sessão');
-  await a.v('finalizarSessao');
-  await a.esperar(60);
-  assert.strictEqual(a.S().sessao, null, 'pré-condição: a sessão encerrou');
-  assert.strictEqual(a.S().lousa, null, 'a pendente saiu');
-  const marca = a.gravado().done.filter(x => x.day === 'HX').slice(-1)[0];
-  assert.deepStrictEqual(marca.lousa, { d: hoje(), v: v, ext: marca.lousa.ext }, 'e está na marca da aula, no disco');
-  assert.ok(marca.m >= v, 'com o carimbo novo, para a fusão');
-  a.fechar();
-});
-
 test('foto tirada depois de a aula de hoje encerrar vai direto para ela', async () => {
   const o = sabado();
   const hojeT = o.agora - 3600000;
@@ -139,23 +98,3 @@ test('fora do dia aberto não há lousa', async () => {
   a.fechar();
 });
 
-test('"Mandar para transcrever" entrega a foto ao compartilhar do sistema; sem ele, diz o caminho', async () => {
-  const a = await noBox();
-  a.E(`globalThis.__compartilhado = [];
-       Object.defineProperty(navigator, 'share', { configurable: true, value: async (d) => { globalThis.__compartilhado.push({ n: d.files.length, nome: d.files[0].name, t: d.title }); } });
-       Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => true });`);
-  await fotografa(a);
-  await a.esperar(60);
-  a.clicar('[data-a="lousa-manda"]');
-  await a.esperar(60);
-  const c = a.J('globalThis.__compartilhado');
-  assert.strictEqual(c.length, 1);
-  assert.ok(/^lousa-\d{4}-\d\d-\d\d\.webp$/.test(c[0].nome), c[0].nome);
-  assert.ok(/^Lousa de \d\d\/\d\d$/.test(c[0].t), c[0].t);
-
-  a.E(`Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => false });`);
-  await a.v('ctx.mandaLousa');
-  assert.ok(/abra a foto e compartilhe pelo sistema/.test(a.toast()), a.toast());
-  assert.strictEqual(a.J('globalThis.__compartilhado').length, 1, 'e não fingiu que mandou');
-  a.fechar();
-});

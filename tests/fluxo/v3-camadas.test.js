@@ -11,7 +11,6 @@ import { app } from './harness.js';
 async function comVisualNovo() {
   const a = await app({ aba: 'agora' });
   await a.pronto();
-  a.E(`CTX.alternaVisual()`);
   await a.esperar();
   return a;
 }
@@ -35,10 +34,9 @@ test('a folha nova abre pela pilha, isola o fundo, leva o foco e devolve tudo ao
 
   const folha = a.$('.v3-folha');
   assert.ok(folha, 'a folha do visual novo abriu');
-  assert.ok(!a.$('.ins-folha'), 'e não a antiga');
   assert.strictEqual(folha.getAttribute('role'), 'dialog');
   assert.strictEqual(a.doc.activeElement, folha, 'o foco entrou na folha');
-  assert.ok(a.doc.body.classList.contains('ins-travado'), 'a rolagem do corpo travou');
+  assert.ok(a.doc.body.classList.contains('travado'), 'a rolagem do corpo travou');
   const inertes = a.$$('#app > [inert]');
   assert.ok(inertes.length > 0 && inertes.every(el => !el.contains(folha)), 'o fundo ficou inerte, e só ele');
 
@@ -46,7 +44,7 @@ test('a folha nova abre pela pilha, isola o fundo, leva o foco e devolve tudo ao
   await a.esperar(60);
   assert.ok(!a.$('.v3-folha'), 'fechou');
   assert.strictEqual((a.vista().pilha || []).length, 0);
-  assert.ok(!a.doc.body.classList.contains('ins-travado'), 'a rolagem destravou');
+  assert.ok(!a.doc.body.classList.contains('travado'), 'a rolagem destravou');
   assert.strictEqual(a.$$('#app > [inert]').length, 0, 'o fundo voltou a ser alcançável');
   assert.strictEqual(a.doc.activeElement, acionador, 'e o foco voltou para quem abriu');
   a.fechar();
@@ -78,12 +76,3 @@ test('na confirmação segura, o principal é voltar e a ação arriscada é a s
   a.fechar();
 });
 
-test('com o interruptor desligado nada do visual novo aparece', async () => {
-  const a = await app({ aba: 'agora' });
-  await a.pronto();
-  assert.ok(a.$('.ins-tabbar') && !a.$('.v3-doca'));
-  a.E(aviso());
-  await a.esperar(40);
-  assert.ok(!a.$('.v3-folha'), 'a folha nova não abre no visual antigo');
-  a.fechar();
-});
