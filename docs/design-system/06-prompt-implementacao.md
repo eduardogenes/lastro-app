@@ -42,7 +42,7 @@ pasta montada (`npm run espelho`).
    - `tokens.css` é a fonte de cor, letra, espaço, forma, sombra e movimento.
    - `01-fundamentos.md`, `02-componentes.md`, `03-padroes-e-voz.md` dizem o
      porquê de cada valor e de cada comportamento.
-   - `05-auditoria.md` é **o seu plano de trabalho**: 35 achados, tela por
+   - `05-auditoria.md` é **o seu plano de trabalho**: 39 achados, tela por
      tela, com a correção e o arquivo.
 2. **Os protótipos** em `docs/redesign-3/prototipos/`, só para o que o design
    system não cobrir.
