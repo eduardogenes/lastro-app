@@ -266,6 +266,14 @@ recomendação; enquanto não vierem respostas, vale a coluna "se não responder
 | 2 | Revisão do treinador: escolher mudança por mudança, ou treino inteiro? | O código aplica os treinos inteiros; o protótipo deixava ligar e desligar cada mudança. | desenho treino por treino, mostrando cada mudança dentro dele |
 | 3 | "Comi outra coisa": guardar o tamanho (parecido, bem mais, bem menos)? | Só fica marcado "fora do plano". O protótipo pedia o tamanho, que não existe no dado. | desenho sem o tamanho |
 
+## As respostas do dono (17/11/2026)
+
+1. Primeira vez: **três passos, como o protótipo.**
+2. Revisão do treinador: **mudança por mudança.** Pede regra nova no app.
+3. "Comi outra coisa": **guardar o tamanho.** Pede dado novo, com migração.
+
+As três estão desenhadas na página viva e entram na auditoria.
+
 ## O que vem depois
 
 Etapa 2, fundamentos e tokens, aplicando as decisões D1 a D13 e as correções
