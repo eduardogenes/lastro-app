@@ -8645,6 +8645,7 @@ CTX.semanaV3 = function () {
     veredito: D.veredito,
     dia: Math.min(7, Math.floor((agora - semana) / 86400000) + 1),
     vemDias: vemDias,
+    cardio: (function () { const n = (S.cardio || []).filter(function (x) { return x.t >= semana; }).length; return n + ' de ' + CARDIO_ALVO + ' nesta semana'; })(),
     regioes: Object.keys(porRegiao).map(function (k) { return porRegiao[k]; })
       .sort(function (a, b) { return (b.feitas + b.vem) - (a.feitas + a.vem); })
   };

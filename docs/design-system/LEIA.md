@@ -45,7 +45,7 @@ marcado em `05-auditoria.md` com o commit.
 | 2. O que se perde, e a fluidez | feita (`f5df85a`): Ajustes alcançável, a tira do treino aberto, o aviso com "Desfazer", a porta do movimento religada, as âncoras da tela de ação |
 | 3. Tokens e componentes base | feita (`933171b`), depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
 | 4. Treino | feita (`318532f`), depois da revisão: a série com o par e uma régua só, sem rolar; o descanso com o "a seguir" e "Água +1"; o fim; pôr em dia como tela; a aula do box como tela de ação. O principal tem o mesmo retângulo em série, descanso e fim |
-| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | em curso: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada, `e6a969c`); Corpo, o bloco do peso e medir |
+| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | em curso: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada, `e6a969c`); Corpo (`7418d77`); Semana |
 | 6. Os três de dado | a fazer |
 | 7. Revisão final | a fazer |
 
@@ -147,6 +147,15 @@ que já foi diz "medida hoje às … · medir de novo substitui".
 - "Guardado hoje" no Corpo abre a correção da pesagem; na referência ele
   desfaz. Decisão de desenho tomada aqui: corrigir serve aos dois casos (o
   número errado e o apagar) sem precisar do desfazer de um apagar.
+
+Pendências da Semana:
+
+- as barras das séries mostram feitas e as que ainda vêm, na escala da maior
+  região; o "alvo 28" da referência não aparece, porque o app calcula o alvo
+  por rotação, não por semana (mostrar um como o outro enganaria). O design
+  system precisa dizer qual alvo a Semana mostra;
+- o terceiro critério da regra ("Força: ainda sem dado") só aparece se o dado
+  da regra o trouxer.
 
 ## As páginas publicadas
 

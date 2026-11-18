@@ -6,6 +6,18 @@
 import { ic } from '../icones.jsx';
 import { Acoes, Apoio, Bloco, Botao, Cabecalho, Folha, Linha, Quadros, Saida, Secao, Vazio } from '../base.jsx';
 
+/**
+ * Uma região (ou um músculo) em barra: as feitas em tinta e as que ainda vêm
+ * tracejadas, na mesma escala de todas as linhas.
+ */
+function Barra({ nome, feitas, vem, max, aoTocar, ...resto }) {
+  const dentro = <>
+    <span class="v3-mus-l"><b>{nome}</b><span class="v3-n">{feitas} feitas{vem ? ' · ' + vem + ' ainda vêm' : ''}</span></span>
+    <span class="v3-mus-b" aria-hidden="true"><i class="f" style={'width:' + (feitas / max * 100) + '%'} /><i class="v" style={'width:' + (vem / max * 100) + '%'} /></span>
+  </>;
+  return aoTocar ? <button class="v3-mus" onClick={aoTocar} {...resto}>{dentro}</button> : <div class="v3-mus" {...resto}>{dentro}</div>;
+}
+
 export function SemanaV3({ ctx }) {
   const s = ctx.semanaV3();
   const v = s.veredito;
@@ -13,6 +25,7 @@ export function SemanaV3({ ctx }) {
   const comida = ctx.moduloLigado('comida');
   const feitas = s.regioes.reduce((n, r) => n + r.feitas, 0);
   const vem = s.regioes.reduce((n, r) => n + r.vem, 0);
+  const maxSeries = Math.max(1, ...s.regioes.map(r => r.feitas + r.vem));
   return (
     <div class="v3">
       {!comida && (
@@ -24,10 +37,10 @@ export function SemanaV3({ ctx }) {
       <Bloco cor={v.k === 'mais' ? 'treino' : 'semana'} chave={'semana-' + v.t} linha0={<><span>Semana</span><span>o que fazer com a comida</span></>}
              titulo={v.t} apoio={v.p}>
         <Acoes>
-          {v.podeAplicar && v.acaoTxt && <Botao data-a="semana-aplica" onClick={ctx.aplicaAjuste}>{v.acaoTxt.charAt(0).toUpperCase() + v.acaoTxt.slice(1)}</Botao>}
-          {precisaDias && <Botao tipo={v.podeAplicar ? 'contorno' : 'principal'} data-a="semana-responder" onClick={ctx.abreResponderDias}>Responder os dias</Botao>}
+          {/* aplicar abre a folha que diz o que muda, antes do toque */}
+          {v.podeAplicar && v.acaoTxt && <Botao data-a="semana-aplica" onClick={() => ctx.abreFolha({ k: 'aplicar' })}>Aplicar no plano</Botao>}
+          {precisaDias && <Botao tipo={v.podeAplicar ? 'contorno' : 'principal'} data-a="semana-responder" onClick={ctx.abreResponderDias}>Responder os dias {ic.seta}</Botao>}
         </Acoes>
-        {v.naoVolta && <p class="v3-bloco-a">{v.naoVolta}</p>}
         {v.podeDesfazer && <Saida data-a="semana-desfaz" onClick={ctx.desfazAjuste}>Desfazer o último ajuste</Saida>}
       </Bloco>
       {v.portoes && (
@@ -45,43 +58,60 @@ export function SemanaV3({ ctx }) {
       )}
       {v.estado && <Secao><Apoio>{v.estado}</Apoio></Secao>}
       </>}
-      <Secao titulo="Séries da semana" nota={'dia ' + s.dia + ' de 7' + (s.vemDias.length ? ' · ainda vêm: ' + s.vemDias.join(', ') : '')}>
+      <Secao titulo="Séries da semana" nota={'dia ' + s.dia + ' de 7'}>
         <div>
           {s.regioes.map(r => (
-            <Linha key={r.regiao} titulo={r.regiao.charAt(0).toUpperCase() + r.regiao.slice(1)}
-                   apoio={r.feitas + ' feitas' + (r.vem ? ' · ' + r.vem + ' ainda vêm' : '')}
-                   valor={String(r.feitas + r.vem)} unidade="na semana" data-a={'semana-' + r.regiao}
-                   aoTocar={() => ctx.abreFolha({ k: 'musculos', regiao: r.regiao })} />
+            <Barra key={r.regiao} nome={r.regiao.charAt(0).toUpperCase() + r.regiao.slice(1)} feitas={r.feitas} vem={r.vem} max={maxSeries}
+                   data-a={'semana-' + r.regiao} aoTocar={() => ctx.abreFolha({ k: 'musculos', regiao: r.regiao })} />
           ))}
         </div>
-        <Apoio>"Ainda vêm" são as séries dos treinos que faltam nesta semana, pela rotação e pelos dias de treino.</Apoio>
+        <div class="v3-legm" role="group" aria-label="Legenda das séries">
+          <span><i class="t" />feitas</span><span><i class="vem" />nos treinos que faltam</span>
+        </div>
+        <Apoio>{s.vemDias.length ? 'Ainda vêm os treinos ' + s.vemDias.join(', ') + ', pela rotação e pelos dias de treino. ' : ''}Só vira aviso o que não couber nos treinos que ainda faltam.</Apoio>
       </Secao>
       <Secao>
-        <Linha titulo="Retrospectiva do bloco" apoio="o que evoluiu e o que ficou parado desde o começo do bloco"
-               data-a="semana-retro" aoTocar={ctx.abreRetro} />
+        <div>
+          {ctx.moduloLigado('cardio') && <Linha titulo="Cardio" apoio={s.cardio} data-a="semana-cardio" aoTocar={ctx.abreCardio} />}
+          <Linha titulo="Progressão de carga" apoio="quem está pronto para subir, ganhando repetição ou parado" data-a="semana-progressao" aoTocar={() => ctx.abreProgressao()} />
+          <Linha titulo="Retrospectiva do bloco" apoio="o que evoluiu e o que ficou parado desde o começo do bloco"
+                 data-a="semana-retro" aoTocar={ctx.abreRetro} />
+        </div>
       </Secao>
       <div class="v3-fim-da-tela" />
     </div>
   );
 }
 
-/** Os músculos de uma região: feitas e as que ainda vêm. */
+/** Os músculos de uma região: feitas e as que ainda vêm, nas mesmas barras. */
 export function FolhaMusculos({ ctx, f }) {
   const r = ctx.semanaV3().regioes.filter(x => x.regiao === f.regiao)[0];
   if (!r) return null;
+  const max = Math.max(1, ...r.musculos.map(m => m.feitas + m.vem));
   return (
-    <Folha titulo={r.regiao.charAt(0).toUpperCase() + r.regiao.slice(1)} sub={r.feitas + ' séries feitas e ' + r.vem + ' que ainda vêm nesta semana.'} aoFechar={() => ctx.fechaFolha()}>
-      <div>
-        {r.musculos.map(m => (
-          <div key={m.g} class="v3-musc">
-            <span class="v3-lin-t"><b>{m.g}</b><span>{m.feitas} feitas{m.vem ? ' · ' + m.vem + ' ainda vêm' : ''}</span></span>
-            <span class="v3-musc-b" aria-hidden="true">
-              <i class="f" style={'flex:' + m.feitas} /><i class="v" style={'flex:' + m.vem} />
-            </span>
-          </div>
-        ))}
+    <Folha titulo={r.regiao.charAt(0).toUpperCase() + r.regiao.slice(1)} sub={r.feitas + ' feitas e ' + r.vem + ' ainda vêm nesta semana.'} aoFechar={() => ctx.fechaFolha()}>
+      <div class="v3-opcoes">
+        {r.musculos.map(m => <Barra key={m.g} nome={m.g} feitas={m.feitas} vem={m.vem} max={max} />)}
       </div>
-      <Acoes><Botao onClick={() => ctx.fechaFolha()}>Fechar</Botao></Acoes>
+    </Folha>
+  );
+}
+
+/**
+ * APLICAR NO PLANO: o que muda, antes do toque, e o que não volta sozinho.
+ * Aplicado, o aviso oferece desfazer (o restaurar do plano, um nível acima).
+ */
+export function FolhaAplicar({ ctx }) {
+  const v = ctx.semanaV3().veredito;
+  if (!v || !v.podeAplicar) return null;
+  const aplica = () => {
+    ctx.fechaFolha();
+    ctx.aplicaAjuste();
+    ctx.avisaComDesfazer('Aplicado: ' + v.acaoTxt.replace(/^aplicar /, '') + ' por dia.', ctx.desfazAjuste);
+  };
+  return (
+    <Folha titulo={v.acaoTxt.charAt(0).toUpperCase() + v.acaoTxt.slice(1)} sub={v.naoVolta || 'Fica anotado quando e por quê.'} aoFechar={() => ctx.fechaFolha()}>
+      <Acoes><Botao data-a="aplicar-ok" onClick={aplica}>Aplicar</Botao><Botao tipo="contorno" data-a="aplicar-nao" onClick={() => ctx.fechaFolha()}>Agora não</Botao></Acoes>
     </Folha>
   );
 }

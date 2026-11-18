@@ -598,3 +598,15 @@
 .v3-medido .v3-acao-links { justify-content: center; }
 .v3-leituras { min-height: 34px; justify-content: center; }
 .v3-medir-f { min-height: 2.8em; }
+
+/* a Semana: uma região em barra, feitas em tinta e as que ainda vêm tracejadas */
+.v3 .v3-mus { display: block; width: 100%; padding: 10px 0; border-top: var(--fio-fino) solid var(--divisoria); text-align: left; min-height: var(--alvo); }
+.v3-mus:first-child { border-top: 0; }
+.v3-mus-l { display: flex; justify-content: space-between; align-items: baseline; gap: var(--e-3); }
+.v3-mus-l b { font: 700 15px var(--f-titulo); }
+.v3-mus-l span { font: 600 12px var(--f-texto); color: var(--texto-legenda); }
+.v3-mus-b { display: flex; height: 10px; border-radius: 9px; overflow: hidden; background: var(--superficie-quieta); margin-top: var(--e-2); }
+.v3-mus-b i { display: block; height: 100%; }
+.v3-mus-b .f { background: var(--acao); }
+.v3-mus-b .v { background: repeating-linear-gradient(135deg, var(--texto-legenda) 0 3px, var(--superficie-quieta) 3px 6px); }
+.v3-legm i.vem { background: repeating-linear-gradient(135deg, var(--texto-legenda) 0 3px, var(--superficie-quieta) 3px 6px); }

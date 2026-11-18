@@ -14,7 +14,7 @@ import { ExercicioV3, FolhaFotoV3, FolhaRenomeiaEx, Progressao } from './telas/p
 import { ProgramaV3, RevisaoV3 } from './telas/programa.jsx';
 import { FolhaCardioV3, FolhaOQueAparece, FolhaRefeicaoV3, FolhaRegistrar, FolhaTipoDoDia, HojeV3 } from './telas/hoje.jsx';
 import { DiasV3, ResponderDias } from './telas/dias.jsx';
-import { FolhaMusculos, RetrospectivaV3, SemanaV3 } from './telas/semana.jsx';
+import { FolhaAplicar, FolhaMusculos, RetrospectivaV3, SemanaV3 } from './telas/semana.jsx';
 import { FolhaAlimentos, FolhaCompras, FolhaRefeicaoDoPlano, PlanoV3 } from './telas/plano.jsx';
 import { AjustesV3 } from './telas/ajustes.jsx';
 import { FolhaCatalogo } from './telas/catalogo.jsx';
@@ -78,5 +78,5 @@ export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoCompara
   listaTreino: FolhaListaTreino, mudarEx: FolhaMudarEx, menuSessao: FolhaMenuSessaoV3,
   renomeiaEx: FolhaRenomeiaEx,
   registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, poeODia: FolhaPoeODiaV3, poeODiaGeral: FolhaPoeODiaGeralV3, seriePassada: FolhaSeriePassada,
-  editaRefeicao: FolhaEditaRefeicaoV3, seletor: FolhaSeletorV3, editaAlimento: FolhaEditaAlimentoV3, catalogo: FolhaCatalogo, foto: FolhaFotoV3, refeicao: FolhaRefeicaoV3, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos,
+  editaRefeicao: FolhaEditaRefeicaoV3, seletor: FolhaSeletorV3, editaAlimento: FolhaEditaAlimentoV3, catalogo: FolhaCatalogo, foto: FolhaFotoV3, refeicao: FolhaRefeicaoV3, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos, aplicar: FolhaAplicar,
   refeicaoDoPlano: FolhaRefeicaoDoPlano, alimentos: FolhaAlimentos, compras: FolhaCompras };

@@ -22,7 +22,7 @@ test('as séries da semana somam as feitas e as que ainda vêm, por região', as
   const r0 = s.regioes[0].regiao;
   a.clicar(`[data-a="semana-${r0}"]`);
   await a.esperar(40);
-  assert.ok(a.$$('.v3-musc').length > 0, 'os músculos da região');
+  assert.ok(a.$$('.v3-folha .v3-mus').length > 0, 'os músculos da região, em barras');
   a.fechar();
 });
 
