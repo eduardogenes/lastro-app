@@ -19,6 +19,8 @@ plano da próxima fase.
 | [05-auditoria.md](05-auditoria.md) | o que o app construído faz diferente, com a correção (gerado de `ds-auditoria.js`) |
 | `lastro.html` + `ds-*.js` | a página viva: galeria, telas navegáveis, mapa dos fluxos, auditoria. Abre sozinha no navegador (precisa de `tokens.css` e dos `ds-*.js` ao lado) |
 | `inventario.html` | a página da etapa 1, com as perguntas |
+| [06-prompt-implementacao.md](06-prompt-implementacao.md) | o prompt do chat que implementa o design system no app |
+| `.claude/agents/revisor-de-design.md` (na raiz) | o agente que revisa cada peça implementada contra o design system |
 
 ## Andamento
 
