@@ -4,11 +4,11 @@
 
 import { useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Bloco, Botao, Chave, Folha, Linha, Secao, Segmentos, TelaDeAcao } from '../base.jsx';
+import { Acoes, Apoio, Bloco, Botao, Chave, Folha, Linha, Secao, Segmentos, Selo, TelaDeAcao } from '../base.jsx';
 import { Regua } from '../regua.jsx';
 import { Foto } from '../foto.jsx';
 
-const virgula = n => String(Math.round(n * 10) / 10).replace('.', ',');
+const virgula = n => (Math.round(n * 10) / 10).toFixed(1).replace('.', ',');
 
 /** A linha pequena de uma série, só a forma: sem eixo, sem número. */
 function Mini({ serie }) {
@@ -34,20 +34,23 @@ export function CorpoV3({ ctx }) {
   return (
     <div class="v3">
       <Bloco cor="corpo" chave="corpo" linha0={<><span>Corpo</span><span>{c.peso.ultima}</span></>}>
-        <div class="v3-gigante v3-n" aria-live="polite">{virgula(v)}<small>kg</small></div>
+        <div class="v3-gigante v3-n v3-corpo-peso" aria-live="polite">{virgula(v)}<small>kg</small></div>
         <Regua min={Math.max(20, Math.floor(c.peso.valor - 20))} max={Math.ceil(c.peso.valor + 20)} passo={0.1} cada={1} largura={12}
-               valor={v} aoMudar={setPeso} rotulo="peso em kg" />
+               valor={v} aoMudar={setPeso} rotulo="peso em kg" passos={false} />
+        {/* antes de mexer, a espera diz o que fazer; mexida, grava; já pesado,
+            o principal cheio abre a correção da pesagem de hoje */}
         <Acoes>
-          {mexeu || !c.peso.hoje
-            ? <Botao data-a="corpo-pesa" espera={!mexeu && !c.peso.hoje}
-                     onClick={() => { ctx.pesaHoje(v); setPeso(null); }}>
-                {mexeu || c.peso.hoje ? (c.peso.hoje ? 'Corrigir para ' : 'Guardar ') + virgula(v) + ' kg' : 'Guardar ' + virgula(v) + ' kg hoje'}
+          {mexeu
+            ? <Botao data-a="corpo-pesa" onClick={() => { ctx.pesaHoje(v); setPeso(null); }}>
+                {(c.peso.hoje ? 'Corrigir para ' : 'Guardar ') + virgula(v) + ' kg'}
               </Botao>
-            : <Botao data-a="corpo-pesa" espera disabled>{ic.ok} Guardado hoje</Botao>}
+            : c.peso.hoje
+              ? <Botao data-a="corpo-pesa" aria-label={'Guardado hoje, ' + virgula(c.peso.valor) + ' quilos. Corrigir'} onClick={() => ctx.corrigePesoDeHoje()}>{ic.ok} Guardado hoje</Botao>
+              : <Botao data-a="corpo-pesa" espera aria-disabled="true">Arraste a régua para pesar hoje</Botao>}
         </Acoes>
       </Bloco>
 
-      <Secao titulo="Evolução" nota="toque para ver">
+      <Secao titulo="Evolução" nota="8 semanas">
         <div class="v3-quadros" style="--v3-col:2">
           {c.quadros.map(q => (
             <button key={q.k} class="v3-quadro" data-a={'corpo-' + q.k} onClick={() => abreQuadro(q.k)}>
@@ -131,9 +134,9 @@ export function MedirAgora({ ctx }) {
   const ultimaLeitura = d.passo === 'pronta';
   const frase = d.passo === 3 ? 'As duas diferem ' + d.diferenca + ' ' + m.u + '. Meça mais uma: fica a média das próximas.'
     : m.dobra && d.leituras.length ? 'Solte, pince de novo e leia. O app grava a do meio das três.'
-    : d.leituras.length === 1 ? 'Primeira guardada. Tire a fita, passe de novo e guarde a segunda.'
+    : d.leituras.length === 1 ? 'Primeira lida. Tire a fita, passe de novo e guarde a segunda: a medida fecha com as duas.'
     : ultimaLeitura ? (m.dobra ? 'Três lidas. Fica a do meio.' : 'As duas batem. Fica a média.')
-    : d.ultima ? 'da última vez: ' + d.ultima : 'primeira vez: comece perto de ' + d.partida;
+    : d.hoje ? d.hoje : d.ultima ? 'da última vez: ' + d.ultima : 'primeira vez: comece perto de ' + d.partida;
   const rotuloGuarda = d.passo === 1 ? 'Guardar a 1ª' : d.passo === 2 ? 'Guardar a 2ª' : 'Guardar a 3ª';
   return (
     <TelaDeAcao cor={m.dobra ? 'semana' : 'corpo'}
@@ -141,7 +144,7 @@ export function MedirAgora({ ctx }) {
               <span>{m.dobra ? 'adipômetro' : 'fita'} · <span class="v3-n">{d.i + 1} de {d.total}</span></span><span class="v3-vazio-alvo" /></>}
       pe={ultimaLeitura
         ? <Botao grande data-a="medir-segue" onClick={() => ctx.seguirMedida()}>{d.i + 1 < d.total ? 'Próxima' : 'Terminar'} {ic.seta}</Botao>
-        : <Botao grande data-a="medir-guarda" onClick={ctx.guardaLeitura}>{ic.ok} {rotuloGuarda}</Botao>}
+        : <Botao grande data-a="medir-guarda" onClick={() => { ctx.guardaLeitura(); const n = ctx.medirV3(); if (n && n.passo === 'pronta') ctx.seguirMedida(); }}>{ic.ok} {rotuloGuarda}</Botao>}
       links={<>
         {!m.dobra && d.leituras.length === 1
           ? <button data-a="medir-so-esta" onClick={() => ctx.seguirMedida()}>Guardar só esta</button>
@@ -155,12 +158,10 @@ export function MedirAgora({ ctx }) {
       <Regua min={d.regua.min} max={d.regua.max} passo={d.regua.passo} cada={d.regua.cada} largura={m.dobra ? 14 : 12}
              valor={d.valor} aoMudar={ctx.setValorDaMedida} rotulo={m.n + ' em ' + m.u} />
       <p class="v3-medir-f">{frase}</p>
-      {d.leituras.length > 0 && (
-        <div class="v3-leituras">
-          {d.leituras.map((l, j) => <span key={j} class="v3-n">{j + 1}ª · {l}</span>)}
-          {d.leituras.length > 1 && <span class="m v3-n">grava {d.grava}</span>}
-        </div>
-      )}
+      {/* sempre desenhada, com a altura reservada: a régua não sobe quando a primeira leitura entra */}
+      <div class="v3-leituras">
+        {d.leituras.map((l, j) => <span key={j} class="v3-n">{j + 1}ª · {l}</span>)}
+      </div>
     </TelaDeAcao>
   );
 }
@@ -177,22 +178,26 @@ function SemMedidas({ ctx }) {
 }
 
 function Medido({ ctx, d }) {
+  const sair = () => { ctx.fechaMedidas(); };
   return (
-    <>
-      <Bloco cor="feito" chave="medido" medio quando="guardadas"
-             titulo={d.feitas.length + (d.feitas.length === 1 ? ' medida, com a hora de agora' : ' medidas, com a hora de agora')}>
-        <Acoes><Botao data-a="medido-fecha" onClick={ctx.fechaMedidas}>Fechar</Botao></Acoes>
-      </Bloco>
-      <Secao>
-        <div>
-          {d.feitas.map(f => (
-            <Linha key={f.k} titulo={f.n} valor={f.valor}
-                   apoio={f.dif + (f.dobra ? ' · a do meio de ' + f.leituras : f.leituras > 1 ? ' · média de ' + f.leituras + ' leituras' : ' · uma leitura só')} />
-          ))}
-        </div>
-        {d.conferir.length > 0 && <Apoio>Mudou mais que o comum desde a última: confira {d.conferir.map(c => c.n.toLowerCase()).join(', ')}. Se estiver errada, corrija na tela da medida.</Apoio>}
-      </Secao>
-    </>
+    <TelaDeAcao cor="feito" cima
+      topo={<><button onClick={sair} aria-label="Fechar" data-a="medido-sair">{ic.x}</button><span>medidas de hoje</span><span class="v3-vazio-alvo" /></>}
+      pe={<Botao grande data-a="medido-fecha" onClick={sair}>Fechar</Botao>}
+      links={<button data-a="medido-corpo" onClick={sair}>Ver no Corpo</button>}
+      classe="v3-medido">
+      <p class="v3-acao-q">{ctx.naoGuardado() ? 'não guardadas neste aparelho · veja o aviso no topo' : 'guardadas · agora'}</p>
+      <h1 class="v3-fim-t" tabindex="-1">{d.feitas.length + (d.feitas.length === 1 ? ' medida, com a hora de agora' : ' medidas, com a hora de agora')}</h1>
+      <div class="v3-medido-l">
+        {d.feitas.map(f => {
+          const [num, un] = String(f.valor).split(' ');
+          return (
+            <Linha key={f.k} titulo={f.n} valor={num} unidade={un}
+                   apoio={<>{f.dif}{f.dobra ? ' · a do meio de ' + f.leituras : f.leituras > 1 ? ' · média de ' + f.leituras + ' leituras' : <> · <Selo tom="atencao">uma leitura só</Selo></>}</>} />
+          );
+        })}
+      </div>
+      {d.conferir.length > 0 && <Apoio>Mudou mais que o comum desde a última: confira {d.conferir.map(c => c.n.toLowerCase()).join(', ')}. Se estiver errada, corrija na tela da medida.</Apoio>}
+    </TelaDeAcao>
   );
 }
 

@@ -286,7 +286,7 @@
 .v3-medir-n { font: 800 34px/1 var(--f-titulo); letter-spacing: -.03em; margin-top: 6px; text-wrap: balance; }
 .v3-medir-f { font-size: 15px; line-height: 1.4; margin-top: 10px; min-height: 42px; }
 .v3-leituras { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.v3-leituras span { min-height: 30px; padding: 0 11px; display: inline-flex; align-items: center; border-radius: var(--r-pilula); background: var(--superficie); font: 700 13px var(--f-titulo); }
+.v3-leituras span { min-height: 34px; padding: 0 12px; display: inline-flex; align-items: center; border-radius: var(--r-pilula); background: var(--acao); color: var(--assunto-treino); font: 700 14px var(--f-titulo); }
 .v3-leituras span.m { background: var(--acao); color: var(--texto-sobre-acao); }
 .v3-vazio-alvo { min-width: var(--alvo); }
 .v3-gigante.v3-gigante-m { font-size: 64px; margin: 4px 0 10px; }
@@ -591,3 +591,10 @@
 .v3-legenda { color: var(--texto-legenda); }
 /* a nota do cabeçalho não esmaga o título */
 .v3-cab .v3-cab-n { flex: 0 1 auto; max-width: 45%; }
+
+/* o corpo: o respiro do número do peso; o fim de medir; as leituras reservadas */
+.v3-corpo-peso { margin: var(--e-3) 0; }
+.v3-medido-l { margin-top: var(--e-6); }
+.v3-medido .v3-acao-links { justify-content: center; }
+.v3-leituras { min-height: 34px; justify-content: center; }
+.v3-medir-f { min-height: 2.8em; }

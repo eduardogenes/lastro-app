@@ -24,7 +24,7 @@ const txt = v => String(v).replace('.', ',');
  *                              pela própria régua, que é um `slider`)
  */
 const DITA = { kg: 'quilos', cm: 'centímetros', mm: 'milímetros', g: 'gramas', ml: 'mililitros', min: 'minutos', s: 'segundos',
-               reps: 'repetições', seg: 'segundos', m: 'metros', cal: 'calorias' };
+               reps: 'repetições', seg: 'segundos', m: 'metros', cal: 'calorias', L: 'litros', '%': 'por cento' };
 /** Uma unidade como se fala: "kg" → "quilos", "kg/lado" → "quilos por lado". */
 export function dita(u) {
   if (!u) return '';

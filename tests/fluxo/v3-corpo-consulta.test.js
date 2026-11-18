@@ -35,7 +35,7 @@ test('peso: a linha da semana com as pesagens, 4 semanas ou tudo, e corrigir uma
   const t = a.S().body.peso.slice(-1)[0].t;
   a.clicar(`[data-a="pesagem-${t}"]`);
   await a.esperar(40);
-  assert.strictEqual(a.$('[data-a="corrige-ok"]').disabled, true, 'sem mudar, nada a guardar');
+  assert.ok(/Pesagem de/.test(a.texto('.v3-folha h2')), 'a folha diz o que corrige: ' + a.texto('.v3-folha h2'));
   a.clicar('.v3-folha .v3-regua-p button:last-child');
   await a.esperar(10);
   a.clicar('.v3-folha .v3-regua-p button:last-child');

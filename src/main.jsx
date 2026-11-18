@@ -9138,7 +9138,24 @@ CTX.abreMedidas = function (foco) {
   iniciaMedirV3(view.medidas, foco);
   entraNoDestino('medidas'); render(); rola(0);
 };
-CTX.fechaMedidas = function () { view.medidas = null; view.bodyOnde = {}; render(); saiDoDestino('medidas'); };
+/**
+ * RECOLHER "MEDIR AGORA": cada medida já foi gravada quando FECHOU pela regra
+ * (`gravaMedidaQueFechou`), então recolher não perde o que foi confirmado e não
+ * grava nada: a medida em curso, incompleta (uma leitura da dobra, duas fitas
+ * que divergem), não vira registro, e não substitui a do mesmo dia.
+ */
+CTX.fechaMedidas = function () {
+  const v = view.medidas;
+  // a medida em curso, com leitura lida e ainda não fechada, não vira registro: o aviso diz
+  if (v && v.v3 && !v.v3.feitas) {
+    const k = v.v3.fila[v.v3.i], m = k && medidaDoCorpo(k);
+    const n = ((v.leituras || {})[k] || []).filter(function (t) { return String(t).trim() !== ''; }).length;
+    if (m && n && !(v.v3.gravadas && v.v3.gravadas[k])) {
+      toast(maiuscula(m.n) + ' ficou com ' + (n === 1 ? 'uma leitura' : n + ' leituras') + ' e não foi guardada.');
+    }
+  }
+  view.medidas = null; view.bodyOnde = {}; render(); saiDoDestino('medidas');
+};
 CTX.setLeitura = function (k, i, txt) {
   const v = view.medidas; if (!v) return;
   const l = (v.leituras[k] || ['', '', '']).slice(); l[i] = String(txt);
@@ -9372,6 +9389,12 @@ CTX.corpoV3 = function () {
 };
 
 /** A pesagem de hoje, pela régua: grava agora; pesar de novo no mesmo dia corrige. */
+/** "Guardado hoje", no Corpo: a correção da pesagem de hoje (o número certo, ou apagar). */
+CTX.corrigePesoDeHoje = function () {
+  const p = (S.body.peso || []).filter(function (x) { return sameDay(x.t, Date.now()); }).slice(-1)[0];
+  if (!p) return;
+  CTX.abreFolha({ k: 'corrigeMarca', marca: 'peso', t: p.t, data: 'hoje às ' + horaHHMM(p.t).replace(':', 'h'), u: 'kg', valor: p.v });
+};
 CTX.pesaHoje = async function (v) {
   const n = Math.round(Number(v) * 10) / 10;
   if (!isFinite(n) || n <= 0) return false;
@@ -9394,14 +9417,19 @@ CTX.medidasParaLigar = function () {
 
 /**
  * MEDIR AGORA, uma medida por tela. Usa o mesmo rascunho do formulário antigo
- * (`view.medidas.leituras`) e o mesmo `salvaMedidas`: muda a forma, não a
+ * (`view.medidas.leituras`) e grava cada medida quando ela fecha (`gravaMedidaQueFechou`); o `salvaMedidas` é do formulário de antes: muda a forma, não a
  * regra. `foco` mede uma só (a da tela "uma medida").
  */
 CTX.abreMedirAgora = function (foco) { CTX.abreMedidas(foco); };
 function iniciaMedirV3(v, foco) {
   const fila = foco && medidaDoCorpo(foco) ? [foco] : medidasLigadasV3().map(function (m) { return m.k; });
   v.dobras = fila.some(function (k) { const m = medidaDoCorpo(k); return m && m.dobra; });
-  v.v3 = { fila: fila, i: 0, valor: valorInicialDaMedida(fila[0]), feitas: null };
+  // reabrir para continuar começa pela primeira que ainda não foi medida hoje
+  // (medir de novo a de hoje substitui: só se a pessoa for até ela)
+  const hoje = Date.now();
+  let i = fila.findIndex(function (k) { return !(S.body[k] || []).some(function (y) { return sameDay(y.t, hoje); }); });
+  if (i < 0) i = 0;
+  v.v3 = { fila: fila, i: i, valor: valorInicialDaMedida(fila[i]), feitas: null };
 }
 function valorInicialDaMedida(k) {
   const m = k && medidaDoCorpo(k);
@@ -9433,6 +9461,8 @@ CTX.medirV3 = function () {
     diferenca: ls.length >= 2 ? fmtDec(Math.abs(ls[0] - ls[1])) : null,
     grava: ls.length ? fmtDec(m.dobra ? doMeio(ls) : mediaDaFita(ls)) : null,
     ultima: ult ? fmtDec(ult.v) + ' ' + m.u + ' em ' + fmtDate(ult.t) : null,
+    // já medida hoje: guardar de novo substitui a de hoje, e a tela diz
+    hoje: ult && sameDay(ult.t, Date.now()) ? 'medida hoje às ' + horaHHMM(ult.t).replace(':', 'h') + ' · medir de novo substitui' : null,
     partida: !ult ? fmtDec(centro) + ' ' + m.u : null,
     regra: m.dobra ? REGRA_DA_DOBRA : REGRA_DA_FITA
   };
@@ -9441,6 +9471,7 @@ CTX.setValorDaMedida = function (n) { const v = view.medidas; if (v && v.v3) { v
 /** Guarda a leitura que está na régua como a próxima da medida em tela. */
 CTX.guardaLeitura = function () {
   const v = view.medidas; if (!v || !v.v3) return;
+  if (travadoNaMedicao(v.v3)) return;
   const k = v.v3.fila[v.v3.i];
   const l = (v.leituras[k] || []).filter(function (t) { return String(t).trim() !== ''; });
   if (l.length >= 3) return;
@@ -9449,33 +9480,81 @@ CTX.guardaLeitura = function () {
 /** Pula a medida em tela: o que foi lido dela sai, e ela não é gravada. */
 CTX.pulaMedida = function () {
   const v = view.medidas; if (!v || !v.v3) return;
+  if (travadoNaMedicao(v.v3)) return;
   const k = v.v3.fila[v.v3.i];
   v.leituras = Object.assign({}, v.leituras, { [k]: [] });
   return CTX.seguirMedida();
 };
-/** A próxima medida da fila; depois da última, grava tudo de uma vez e mostra o resumo. */
+/**
+ * GRAVA A MEDIDA QUE FECHOU, na hora em que fecha (as leituras batem, a
+ * terceira decide, ou "Guardar só esta" com uma leitura da fita), pela mesma
+ * porta de sempre (`gravaMarca`, no instante da medição, e `save`). Antes,
+ * tudo esperava o fim da fila, e sair no meio (ou o iPhone fechar o app em
+ * segundo plano) perdia até as medidas já fechadas. Só se chega aqui pela
+ * regra: `seguirMedida` é chamado quando a medida fecha, ou depois de "Pular"
+ * (que tira as leituras, e aí nada se grava). Devolve a linha do resumo.
+ */
+async function gravaMedidaQueFechou(v, k) {
+  const m = medidaDoCorpo(k);
+  if (!m) return null;
+  const ls = (v.leituras[k] || []).map(numeroDaLeitura).filter(function (n) { return typeof n === 'number' && !isNaN(n); });
+  if (!ls.length) return null;
+  const val = m.dobra ? doMeio(ls) : mediaDaFita(ls);
+  let t = instanteDasMedidas(v);
+  if (isNaN(t) || t > Date.now() + 60000) t = Date.now();
+  const ant = (S.body[k] || []).filter(function (y) { return y.t < t && !sameDay(y.t, t); }).slice(-1)[0];
+  const lim = CONFERIR_ACIMA[m.u];
+  const nome = m.n.charAt(0).toUpperCase() + m.n.slice(1);
+  if (ant && lim != null && Math.abs(val - ant.v) > lim + 1e-9) (v.v3.conferir = v.v3.conferir || []).push({ k: k, n: nome });
+  const linha = { k: k, n: nome, valor: fmtDec(val) + ' ' + m.u, leituras: ls.length, dobra: !!m.dobra,
+                  dif: ant ? fmtSig(Math.round((val - ant.v) * 10) / 10) + ' ' + m.u + ' desde ' + fmtDate(ant.t) : 'primeira medida' };
+  const typed = view.bodyOnde && typeof view.bodyOnde[k] === 'string' ? view.bodyOnde[k].trim() : '';
+  gravaMarca(k, val, t, typed || ondeMediu(S.body[k]) || m.onde || null, false, m.dobra ? null : ls.length);
+  declaraGravacao(m.n.toLowerCase(), fmtDec(val) + ' ' + m.u);
+  await save();
+  // mudou mais que o comum: dito quando fecha, não só no resumo do fim
+  if (v.v3.conferir && v.v3.conferir.some(function (c) { return c.k === k; })) {
+    toast(nome + ': ' + linha.dif + '. Confira se mediu certo; dá para corrigir na tela da medida.');
+  }
+  return linha;
+}
+/**
+ * Quanto tempo os botões da medição ignoram toques depois de a tela seguir
+ * sozinha: o segundo toque de um toque duplo não vira a 1ª leitura da medida
+ * seguinte, nem um "Pular esta" que a pessoa não decidiu. Pelo relógio
+ * monotônico: um ajuste de hora do aparelho não silencia o botão.
+ */
+const TRAVA_DO_AVANCO_MS = 400;
+const relogioMono = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
+function travadoNaMedicao(x) { return !!(x && x.travadoAte && relogioMono() < x.travadoAte); }
+/** A medida da tela fechou (ou foi pulada): grava a que fechou, e segue para a próxima; depois da última, o resumo. */
 CTX.seguirMedida = async function () {
   const v = view.medidas; if (!v || !v.v3) return;
   const x = v.v3;
+  if (x.seguindo || travadoNaMedicao(x)) return;
+  x.seguindo = true;
+  const kAgora = x.fila[x.i];
+  if (!x.gravadas) x.gravadas = {};
+  try {
+    if (!x.gravadas[kAgora]) {
+      const linha = await gravaMedidaQueFechou(v, kAgora);
+      if (view.medidas !== v) return;
+      if (linha) { x.gravadas[kAgora] = linha; }
+    }
+  } finally { x.seguindo = false; }
+  x.travadoAte = relogioMono() + TRAVA_DO_AVANCO_MS;
   if (x.i < x.fila.length - 1) {
     x.i++;
     x.valor = valorInicialDaMedida(x.fila[x.i]);
     render(); rola(0);
     return;
   }
-  // o resumo nasce antes de gravar: depois, a "última" já é a de hoje
-  const feitas = x.fila.map(function (k) {
-    const m = medidaDoCorpo(k);
-    const ls = (v.leituras[k] || []).map(numeroDaLeitura).filter(function (n) { return typeof n === 'number' && !isNaN(n); });
-    if (!ls.length) return null;
-    const val = m.dobra ? doMeio(ls) : mediaDaFita(ls);
-    const ant = (S.body[k] || []).filter(function (y) { return !sameDay(y.t, Date.now()); }).slice(-1)[0];
-    return { k: k, n: m.n.charAt(0).toUpperCase() + m.n.slice(1), valor: fmtDec(val) + ' ' + m.u, leituras: ls.length, dobra: !!m.dobra,
-             dif: ant ? fmtSig(Math.round((val - ant.v) * 10) / 10) + ' ' + m.u + ' desde ' + fmtDate(ant.t) : 'primeira medida' };
-  }).filter(Boolean);
-  if (!feitas.length) { CTX.fechaMedidas(); return; }
-  const r = await CTX.salvaMedidas();
-  if (r && r.ok && view.medidas) { view.medidas.v3.feitas = feitas; render(); rola(0); }
+  // o resumo é o que foi gravado ao longo da fila, medida a medida
+  const feitas = x.fila.map(function (k) { return x.gravadas[k] || null; }).filter(Boolean);
+  if (!feitas.length) { view.medidas = null; view.bodyOnde = {}; render(); saiDoDestino('medidas'); return; }
+  x.feitas = feitas;
+  v.salvo = { n: feitas.length, conferir: x.conferir || [] };
+  render(); rola(0);
 };
 
 /**

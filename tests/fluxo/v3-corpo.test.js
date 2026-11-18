@@ -16,7 +16,13 @@ async function corpo(antes) {
   return a;
 }
 const hojeNoPeso = a => a.S().body.peso.filter(x => new Date(x.t).toDateString() === new Date(Date.now()).toDateString());
-const mais = async (a, n = 1) => { for (let i = 0; i < n; i++) { a.clicar('.v3-regua-p button:last-child'); await a.esperar(5); } };
+// a régua do bloco não tem os passos (como a referência): a seta do teclado anda um passo
+const mais = async (a, n = 1) => {
+  for (let i = 0; i < n; i++) {
+    a.E(`document.querySelector('.v3-acao .v3-regua-r, .v3-bloco .v3-regua-r').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))`);
+    await a.esperar(5);
+  }
+};
 const leituras = (a, k) => a.S().body[k].slice(-1)[0];
 
 test('pesar pela régua: guarda a de hoje, e mexer de novo corrige a mesma', async () => {
@@ -77,10 +83,9 @@ test('medir agora: a segunda sempre pedida, a terceira quando diferem, e "guarda
   await a.esperar();
   assert.strictEqual(a.vJ('ctx.medirV3').passo, 3, 'diferem mais de 0,5: a terceira');
   assert.ok(/diferem 1/.test(a.texto('.v3-medir-f')), 'frase: ' + a.texto('.v3-medir-f'));
-  a.clicar('[data-a="medir-guarda"]');                      // 3ª: 36,0
-  await a.esperar();
-  a.clicar('[data-a="medir-segue"]');
-  await a.esperar();
+  a.clicar('[data-a="medir-guarda"]');                      // 3ª: 36,0 — fecha a medida, grava e já segue
+  await a.esperar(450);                                     // o "Guardar" ignora o toque logo depois de seguir
+  assert.strictEqual(a.S().body.braco.length, 1, 'o braço foi gravado quando fechou, antes do fim da fila');
 
   assert.strictEqual(a.vJ('ctx.medirV3').m.k, 'cintura', 'a próxima medida');
   assert.ok(/da última vez: 85/.test(a.texto('.v3-medir-f')), 'parte da última: ' + a.texto('.v3-medir-f'));
@@ -91,7 +96,7 @@ test('medir agora: a segunda sempre pedida, a terceira quando diferem, e "guarda
 
   assert.strictEqual(leituras(a, 'braco').n, 3, 'braço com três leituras');
   assert.strictEqual(leituras(a, 'cintura').n, 1, 'cintura com uma só');
-  assert.ok(a.texto('.v3-sec').includes('uma leitura só'), 'e o resumo diz');
+  assert.ok(a.texto('.v3-medido').includes('uma leitura só'), 'e o resumo diz');
   a.clicar('[data-a="medido-fecha"]');
   await a.esperar();
   assert.strictEqual(a.vista().medidas, null);
@@ -115,7 +120,11 @@ test('dobra: três leituras sempre, sem "guardar só esta", e grava a do meio', 
   await a.esperar();
   a.clicar('[data-a="medir-guarda"]');
   await a.esperar();
-  assert.strictEqual(a.vJ('ctx.medirV3').grava, '13,0', 'a do meio de 12, 13 e 15');
+  // a terceira fecha a dobra e a tela já segue para a próxima; a que fica é a do meio
+  assert.strictEqual(a.vJ('ctx.medirV3').i, 1, 'seguiu para a próxima dobra');
+  assert.strictEqual(a.E('doMeio(view.medidas.leituras[view.medidas.v3.fila[0]].map(Number))'), 13, 'a do meio de 12, 13 e 15');
+  const k0 = a.E('view.medidas.v3.fila[0]');
+  assert.strictEqual(a.S().body[k0].slice(-1)[0].v, 13, 'e é a do meio que foi gravada, quando a dobra fechou');
   a.fechar();
 });
 
@@ -126,5 +135,36 @@ test('o fim das fotos leva ao medir agora do visual novo', async () => {
   await a.esperar();
   assert.ok(a.vJ('ctx.medirV3'), 'o mesmo fluxo de uma por tela');
   assert.ok(a.$('.v3-acao'));
+  a.fechar();
+});
+
+test('recolher "Medir agora" no meio: o que fechou já está gravado, e o incompleto não vira registro', async () => {
+  const manha = new Date(); manha.setHours(7, 0, 0, 0);
+  const a = await corpo(x => x.E(`S.body.cintura = [{ t: ${manha.getTime()}, v: 85, m: 1, n: 2 }]; S.body.braco = [];`));
+  a.clicar('[data-a="corpo-medir"]');
+  await a.esperar();
+  a.clicar('[data-a="medir-guarda"]');                      // braço: 1ª
+  await a.esperar();
+  a.clicar('[data-a="medir-guarda"]');                      // braço: 2ª, bate: fecha, grava e segue
+  await a.esperar(60);
+  assert.strictEqual(a.S().body.braco.length, 1, 'o braço fechado já está gravado, antes de sair');
+  assert.strictEqual(a.gravado().body.braco.length, 1, 'e no disco, não só na memória');
+  assert.strictEqual(a.vJ('ctx.medirV3').m.k, 'cintura', 'na segunda medida');
+  // um toque duplo logo depois de seguir não vira a 1ª leitura da cintura
+  a.clicar('[data-a="medir-guarda"]');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.medirV3').leituras.length, 0, 'o segundo toque do toque duplo foi ignorado');
+  await a.esperar(450);
+  a.clicar('[data-a="medir-guarda"]');                      // cintura: só a 1ª, e sai
+  await a.esperar();
+  a.clicar('[data-a="medir-sair"]');
+  await a.esperar(60);
+  assert.strictEqual(a.vista().medidas, null, 'recolheu');
+  assert.strictEqual(a.S().body.braco.length, 1, 'o braço continua');
+  const cint = a.S().body.cintura;
+  assert.strictEqual(cint.length, 1, 'a leitura solta da cintura não virou registro');
+  assert.strictEqual(cint[0].t, manha.getTime(), 'a medida da manhã continua a mesma (não foi substituída)');
+  assert.strictEqual(cint[0].n, 2, 'com as duas leituras dela');
+  assert.ok(/Cintura ficou com uma leitura e não foi guardada/.test(a.toast()), 'e o aviso diz o que ficou de fora: ' + a.toast());
   a.fechar();
 });

@@ -11,8 +11,16 @@ import { Grafico } from '../grafico.jsx';
 import { Regua } from '../regua.jsx';
 import { Foto } from '../foto.jsx';
 
-const virgula = n => String(Math.round(n * 10) / 10).replace('.', ',');
-const TOM = { 'no alvo': undefined, 'abaixo do alvo': 'atencao', 'acima do alvo': 'atencao' };
+const virgula = n => (Math.round(n * 10) / 10).toFixed(1).replace('.', ',');
+const duas = n => (Math.round(n * 100) / 100).toFixed(2).replace('.', ',');
+/** O nome do gráfico diz a conclusão: "de 74,3 para 77,6 kg em 8 semanas". */
+const conclusao = (nome, serie, u) => {
+  if (!serie || serie.length < 2) return nome;
+  const a = serie[0], b = serie[serie.length - 1];
+  const sem = Math.max(1, Math.round((b.t - a.t) / (7 * 864e5)));
+  return nome + ', de ' + virgula(a.v) + ' para ' + virgula(b.v) + ' ' + u + ' em ' + sem + (sem === 1 ? ' semana' : ' semanas');
+};
+const TOM = { 'no alvo': undefined, 'abaixo do alvo': 'quieto', 'acima do alvo': 'atencao' };
 
 // ---------- peso ----------
 
@@ -31,10 +39,10 @@ export function PesoV3({ ctx }) {
             <Seletor rotulo="Quanto tempo" valor={p.faixa} aoMudar={ctx.setFaixaDoPeso}
                      opcoes={[{ k: '4', t: '4 semanas' }, { k: 'tudo', t: 'Tudo' }]} />
             <Grafico linha={p.semanas} pontos={p.pontos} alvo={p.faixa === 'tudo' ? p.alvo : null} de={p.de} ate={p.ate}
-                     altura={150} bolas rotulo="Média semanal do peso, com as pesagens do dia" />
+                     altura={150} bolas rotulo={conclusao('Média semanal do peso', p.semanas, 'kg')} />
             <div class="v3-leg">
               <span><i class="l" />média da semana</span><span><i class="p" />pesagem do dia</span>
-              {p.faixa === 'tudo' && p.alvo && <span><i class="a" />alvo: +{virgula(p.alvo.min)} a +{virgula(p.alvo.max)} por semana</span>}
+              {p.faixa === 'tudo' && p.alvo && <span><i class="a" />alvo: +{duas(p.alvo.min)} a +{duas(p.alvo.max)} por semana</span>}
             </div>
           </div>
           <Secao titulo="Por semana" nota="kg em relação à anterior">
@@ -69,15 +77,17 @@ export function FolhaCorrigeMarca({ ctx, f }) {
   const [v, setV] = useState(f.valor);
   const passo = f.u === 'mm' ? 0.5 : 0.1;
   return (
-    <Folha titulo={'Corrigir ' + f.data} sub="Digitou errado? Arraste até o número certo. O dia e a hora ficam." aoFechar={() => ctx.fechaFolha()}>
-      <div class="v3-gigante v3-n v3-gigante-m">{virgula(v)}<small>{f.u}</small></div>
+    <Folha titulo={(f.marca === 'peso' ? 'Pesagem de ' : 'Medida de ') + f.data}
+           sub={f.marca === 'peso' ? 'Digitou errado? Arraste até o número certo. A média da semana se refaz sozinha.' : 'Digitou errado? Arraste até o número certo. O dia e a hora ficam.'}
+           aoFechar={() => ctx.fechaFolha()}>
+      <div class="v3-gigante v3-n">{virgula(v)}<small>{f.u}</small></div>
       <Regua min={Math.max(0.5, Math.floor(f.valor - 15))} max={Math.ceil(f.valor + 15)} passo={passo} cada={f.u === 'mm' ? 5 : 1}
-             valor={v} aoMudar={setV} rotulo={'valor em ' + f.u} />
+             valor={v} aoMudar={setV} rotulo={(f.marca === 'peso' ? 'peso' : 'medida') + ' em ' + f.u} />
       <Acoes>
-        <Botao data-a="corrige-ok" disabled={Math.abs(v - f.valor) < 0.001}
-               onClick={() => { ctx.fechaFolha(); ctx.corrigeMarca(f.marca, f.t, v); }}>Guardar {virgula(v)} {f.u}</Botao>
+        <Botao data-a="corrige-ok"
+               onClick={() => { ctx.fechaFolha(); if (Math.abs(v - f.valor) >= 0.001) ctx.corrigeMarca(f.marca, f.t, v); }}>{ic.ok} Guardar</Botao>
       </Acoes>
-      <Saida data-a="corrige-apaga" onClick={() => { ctx.fechaFolha(); ctx.apagaMedida(f.marca, f.t); }}>Apagar esta medida</Saida>
+      <Saida data-a="corrige-apaga" onClick={() => { ctx.fechaFolha(); ctx.apagaMedida(f.marca, f.t); }}>{f.marca === 'peso' ? 'Apagar esta pesagem' : 'Apagar esta medida'}</Saida>
     </Folha>
   );
 }
@@ -101,7 +111,7 @@ export function MedidaV3({ ctx }) {
         {serie.length > 1 && (
           <>
             <Grafico linha={serie} marcas={d.fotosNoTempo} de={de} ate={ate} altura={110} bolas
-                     rotulo={'Evolução: ' + d.n + ', com as sessões de fotos marcadas'} />
+                     rotulo={conclusao(d.n, serie, d.u || '')} />
             <div class="v3-leg"><span><i class="m" />sessão de fotos</span></div>
           </>
         )}
@@ -209,7 +219,7 @@ export function NaMesmaData({ ctx }) {
       <div class="v3-pad">
         <h2 class="v3-data-g">{d.data}</h2>
         <input class="v3-faixa-r" type="range" min="0" max={n} step="1" value={i} data-a="mesma-data"
-               aria-label="O dia" onInput={e => ctx.setDiaNaMesmaData(d.inicio + Number(e.currentTarget.value) * DIA)} />
+               aria-label="Data" aria-valuetext={d.data} onInput={e => ctx.setDiaNaMesmaData(d.inicio + Number(e.currentTarget.value) * DIA)} />
         <Apoio>Arraste para escolher o dia. Cada número é o último até ele, com a data em que foi medido.</Apoio>
       </div>
       {d.sessao && (

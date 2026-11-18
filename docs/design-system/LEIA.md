@@ -45,7 +45,7 @@ marcado em `05-auditoria.md` com o commit.
 | 2. O que se perde, e a fluidez | feita (`f5df85a`): Ajustes alcançável, a tira do treino aberto, o aviso com "Desfazer", a porta do movimento religada, as âncoras da tela de ação |
 | 3. Tokens e componentes base | feita (`933171b`), depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
 | 4. Treino | feita (`318532f`), depois da revisão: a série com o par e uma régua só, sem rolar; o descanso com o "a seguir" e "Água +1"; o fim; pôr em dia como tela; a aula do box como tela de ação. O principal tem o mesmo retângulo em série, descanso e fim |
-| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | em curso: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada) |
+| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | em curso: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada, `e6a969c`); Corpo, o bloco do peso e medir |
 | 6. Os três de dado | a fazer |
 | 7. Revisão final | a fazer |
 
@@ -120,6 +120,33 @@ vêm em seguida, na mesma peça):
   dia de hoje); "Corrigir refeição por refeição" leva à folha do dia passado;
 - o quadro tocável tem contorno de divisória (1,3:1), na referência e no app;
   o design system precisa decidir o contorno de quadro que se toca.
+
+Pendências que a revisão do Corpo deixou. O que perdia registro foi corrigido,
+com duas rodadas do revisor de dado: cada medida é gravada quando FECHA pela
+regra (as leituras batem, a terceira decide, ou "Guardar só esta"); recolher
+no meio não grava a medida em curso, incompleta, e o aviso diz que ela ficou de
+fora; reabrir começa pela primeira medida que ainda não foi medida hoje, e a
+que já foi diz "medida hoje às … · medir de novo substitui".
+
+- a medida em curso não guarda rascunho para retomar depois de recolher (o 03
+  pede que a tela de onde veio mostre como retomar);
+
+- apagar pesagem, medida ou leitura de bioimpedância ainda pede confirmação;
+  a referência apaga na hora com "Desfazer". Desfazer um apagar precisa de
+  devolver o registro passando pela lápide da fusão: é peça de dado;
+- uma leitura de bioimpedância ainda não se corrige (só se apaga);
+- telas ainda no desenho antigo, para refazer como a referência: o cartão com
+  o boneco e a fita desenhada em "Medir" e na medida; o Corpo vazio ("Uma
+  pesagem não faz linha" e "Também dá para acompanhar"); a bioimpedância (4
+  quadros, a mini-linha, os textos); a nova leitura de bioimpedância como tela
+  de ação de 3 números; "Tudo na mesma data" com o gráfico, o cursor e a foto;
+  as datas no eixo dos gráficos; a folha "O que medir";
+- a hora com dois-pontos ("06:46") em pesagens e medidas;
+- o número grande usa algarismo tabular (o 07 pede, para 57,5 virar 60 sem
+  sacudir); a referência usa o proporcional. O design system precisa escolher;
+- "Guardado hoje" no Corpo abre a correção da pesagem; na referência ele
+  desfaz. Decisão de desenho tomada aqui: corrigir serve aos dois casos (o
+  número errado e o apagar) sem precisar do desfazer de um apagar.
 
 ## As páginas publicadas
 
