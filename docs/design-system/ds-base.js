@@ -234,44 +234,94 @@ const topo = () => P.pilha[P.pilha.length - 1];
 const atual = () => P.folha || topo();
 function hashDe() { const a = atual(); return '#t-' + a.id + (a.e && TELAS[a.id].es && a.e !== TELAS[a.id].es[0][0] ? '--' + a.e : ''); }
 
+/* O tipo de troca diz o movimento (07-fluidez-e-estabilidade.md, regra 4). */
+let ULT = { chave: null, id: null, n: 0, faixas: null };
+/* O toque durante uma transição vale (regra 5): o Safari entrega o toque à camada da
+   transição, e não ao botão; então o toque encerra a transição e vai para quem está
+   embaixo do dedo. */
+let VT = null, tocouNaTransicao = false;
+document.addEventListener('pointerdown', () => { if (VT) { tocouNaTransicao = true; VT.skipTransition(); } }, true);
+document.addEventListener('click', ev => {
+  if (!tocouNaTransicao) return;
+  tocouNaTransicao = false;
+  const alvo = document.elementFromPoint(ev.clientX, ev.clientY);
+  // o clique caiu num contêiner porque o dedo desceu sobre a imagem da transição: entrega a quem está embaixo
+  if (alvo && alvo !== ev.target && ev.target.contains(alvo)) { ev.stopImmediatePropagation(); ev.preventDefault(); alvo.click(); }
+}, true);
+const reduzMovimento = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function tipoDe(b) {
+  if (!ULT.id) return null;
+  const a = TELAS[ULT.id], t = TELAS[b.id], n = P.pilha.length;
+  if (ULT.id === b.id) return t.c === 'acao' ? 'passo' : 'estado';
+  if (a.c === 'acao' && t.c === 'acao') return 'passo';
+  if (n > ULT.n) return t.c === 'acao' ? 'sobe' : 'entra';
+  if (n < ULT.n) return a.c === 'acao' ? 'desce' : 'sai';
+  if (a.c === 'acao') return 'desce';
+  return 'lugar';
+}
+/* Âncoras: o mesmo nome antes e depois mantém o elemento no lugar. */
+function nomeia(el, tipo) {
+  el.querySelectorAll('[data-vt]').forEach(x => { x.style.viewTransitionName = ''; delete x.dataset.vt; });
+  const poe = (x, n) => { if (x) { x.style.viewTransitionName = n; x.dataset.vt = n; } };
+  el.style.viewTransitionName = 'tela';
+  poe(el.querySelector('.pe-a, .pe-f'), 'pe'); poe(el.querySelector('.topo-a'), 'topo'); poe(el.querySelector('.segs'), 'segs');
+  if (tipo === 'estado' || tipo === 'passo') {
+    poe(el.querySelector('.momento'), 'momento'); poe(el.querySelector('.cab'), 'cab');
+    el.querySelectorAll(':scope > .secao').forEach((x, i) => poe(x, 'sec' + i));
+  }
+}
 function desenhaAparelho(primeira) {
-  const raiz = $('#raiz'), b = topo(), tb = TELAS[b.id], f = P.folha ? TELAS[P.folha.id] : null;
-  const lugar = tb.c === 'lugar', cur = atual(), tc = TELAS[cur.id];
+  const raiz = $('#raiz');
   if (primeira || !$('#fone')) {
+    ULT = { chave: null, id: null, n: 0, faixas: null };
     raiz.innerHTML = `<div class="palco"><div class="fone" id="fone">
         <div class="sim" role="group" aria-label="Navegação da página, não é do app"><a href="#indice" aria-label="Voltar ao índice do design system">${ic.volta}Índice</a><span class="nm" id="sim-nm"></span><select id="sim-e" aria-label="Estado desta tela"></select></div>
         <div class="meio" id="meio"><main class="tela" id="tela"></main><div class="gruda" id="gruda"></div><div id="tira"></div><div class="doca" id="doca"></div><div class="faixas" id="faixas"></div><div id="desf"></div>
           <div class="veu" id="veu"></div><section class="folha" id="folha" role="dialog" aria-modal="true" aria-labelledby="folha-t"></section></div></div>
       <aside class="lado" id="lado"></aside></div>`;
   }
-  const el = $('#tela'), y = el.scrollTop;
-  el.className = 'tela' + (lugar ? ' com-doca' : '') + (tb.c === 'acao' ? ' acao' : '');
-  el.innerHTML = tb.r(b.e || '', P);
-  el.scrollTop = P.manter ? y : 0; P.manter = false;
-  armaReguas(el); if (window.armaExtras) armaExtras(el);
-  // doca
-  $('#doca').innerHTML = lugar ? `<nav class="nav" aria-label="Lugares">${LUGARES.map(l => `<button data-lugar="${l[0]}" aria-label="${l[1]}" ${l[0] === b.id ? 'aria-current="page"' : ''}>${ic[l[0]]}<span>${l[1]}</span></button>`).join('')}</nav><button class="mais" data-folha="f-registrar" aria-label="Registrar">${ic.mais}</button>` : '';
-  $('#doca').classList.remove('mini');
-  // tira do treino aberto
-  const andamento = b.id === 'hoje' && (b.e === 'andamento' || b.e === 'parado');
-  el.classList.toggle('com-tira', !!(P.glob.treino && lugar && !andamento));
-  $('#tira').innerHTML = P.glob.treino && lugar && !andamento ? `<button class="tira" data-ir="serie" aria-label="Voltar ao treino B, 8 de 22 séries">${'<i></i>'}<span>Treino B · 8 de 22</span>${ic.seta}</button>` : '';
-  // faixas
-  $('#faixas').innerHTML = (P.glob.falha ? `<div class="faixa" role="alert">${ic.atencao}<span>1 série não foi guardada</span><button data-folha="f-falhou">Ver</button></div>` : '') + (P.glob.rede ? `<div class="faixa rede" role="status">${ic.semrede}<span>Sem rede. Tudo fica guardado neste aparelho.</span></div>` : '');
-  // desfazer
-  $('#desf').innerHTML = P.desfazer ? `<div class="desfazer ${lugar ? 'sobe' : ''}" role="status"><span>${P.desfazer}</span><button data-desfaz>Desfazer</button></div>` : '';
-  // gruda (só no Hoje)
-  const g = $('#gruda'); g.innerHTML = tb.gruda ? tb.gruda(b.e) : ''; g.classList.remove('on');
-  // folha
-  const fo = $('#folha'), veu = $('#veu');
-  if (f) { fo.innerHTML = f.r(P.folha.e || '', P); armaReguas(fo); if (window.armaExtras) armaExtras(fo); fo.classList.add('on'); veu.classList.add('on'); fo.scrollTop = 0; }
-  else { fo.classList.remove('on'); veu.classList.remove('on'); }
-  // tira de simulação
-  $('#sim-nm').textContent = tc.n;
-  const se = $('#sim-e'); se.innerHTML = (tc.es || [['', 'um estado só']]).map(e => `<option value="${e[0]}" ${e[0] === (cur.e || '') ? 'selected' : ''}>${e[1]}</option>`).join(''); se.disabled = !tc.es;
-  desenhaLado();
+  const b = topo(), tb = TELAS[b.id], lugar = tb.c === 'lugar';
+  const chave = b.id + '|' + b.e + '|' + P.glob.treino;
+  const mudouTela = chave !== ULT.chave;
+  const tipo = mudouTela ? tipoDe(b) : null;
+  const el = $('#tela');
+  const pinta = () => {
+    if (mudouTela) {
+      const y = el.scrollTop;
+      el.className = 'tela' + (lugar ? ' com-doca' : '') + (tb.c === 'acao' ? ' acao' : '');
+      el.innerHTML = tb.r(b.e || '', P);
+      // posição de leitura: o mesmo lugar ao mudar de estado, a de antes ao voltar, o topo ao entrar
+      el.scrollTop = tipo === 'estado' ? y : (tipo === 'sai' || tipo === 'desce') ? (b.y || 0) : 0;
+      armaReguas(el); if (window.armaExtras) armaExtras(el);
+      nomeia(el, tipo);
+      $('#doca').innerHTML = lugar ? `<nav class="nav" aria-label="Lugares">${LUGARES.map(l => `<button data-lugar="${l[0]}" aria-label="${l[1]}" ${l[0] === b.id ? 'aria-current="page"' : ''}>${ic[l[0]]}<span>${l[1]}</span></button>`).join('')}</nav><button class="mais" data-folha="f-registrar" aria-label="Registrar">${ic.mais}</button>` : '';
+      $('#doca').classList.remove('mini');
+      const andamento = b.id === 'hoje' && (b.e === 'andamento' || b.e === 'parado');
+      el.classList.toggle('com-tira', !!(P.glob.treino && lugar && !andamento));
+      $('#tira').innerHTML = P.glob.treino && lugar && !andamento ? `<button class="tira" data-ir="serie" aria-label="Voltar ao treino B, 8 de 22 séries"><i></i><span>Treino B · 8 de 22</span>${ic.seta}</button>` : '';
+      const g = $('#gruda'); g.innerHTML = tb.gruda ? tb.gruda(b.e) : ''; g.classList.remove('on');
+    }
+    // faixas: só redesenha quando mudam, para não reanimar a cada navegação
+    const fx = (P.glob.falha ? `<div class="faixa" role="alert">${ic.atencao}<span>1 série não foi guardada</span><button data-folha="f-falhou">Ver</button></div>` : '') + (P.glob.rede ? `<div class="faixa rede" role="status">${ic.semrede}<span>Sem rede. Tudo fica guardado neste aparelho.</span></div>` : '');
+    if (fx !== ULT.faixas) { $('#faixas').innerHTML = fx; ULT.faixas = fx; }
+    $('#desf').innerHTML = P.desfazer ? `<div class="desfazer ${lugar ? 'sobe' : ''}" role="status"><span>${P.desfazer}</span><button data-desfaz>Desfazer</button></div>` : '';
+    const f = P.folha ? TELAS[P.folha.id] : null, fo = $('#folha'), veu = $('#veu');
+    if (f) { fo.innerHTML = f.r(P.folha.e || '', P); armaReguas(fo); if (window.armaExtras) armaExtras(fo); fo.classList.add('on'); veu.classList.add('on'); fo.scrollTop = 0; }
+    else { fo.classList.remove('on'); veu.classList.remove('on'); }
+    const cur = atual(), tc = TELAS[cur.id];
+    $('#sim-nm').textContent = tc.n;
+    const se = $('#sim-e'); se.innerHTML = (tc.es || [['', 'um estado só']]).map(e => `<option value="${e[0]}" ${e[0] === (cur.e || '') ? 'selected' : ''}>${e[1]}</option>`).join(''); se.disabled = !tc.es;
+    desenhaLado();
+    ULT.chave = chave; ULT.id = b.id; ULT.n = P.pilha.length;
+  };
+  if (tipo && document.startViewTransition && !reduzMovimento()) {
+    nomeia(el, tipo);
+    document.documentElement.dataset.vt = tipo;
+    const vt = VT = document.startViewTransition(() => { try { pinta(); } catch (e) { console.error('pinta', e); throw e; } });
+    vt.finished.finally(() => { if (VT === vt) VT = null; if (document.documentElement.dataset.vt === tipo) delete document.documentElement.dataset.vt; });
+  } else pinta();
   history.replaceState(null, '', hashDe());
-  if (f) setTimeout(() => { const t = $('#folha-t'); if (t) { t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } }, 60);
+  if (P.folha) setTimeout(() => { const t = $('#folha-t'); if (t) { t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } }, 60);
 }
 
 function desenhaLado() {
@@ -294,12 +344,17 @@ function vaiPara(alvo, empilha = true) {
   const [id, e] = alvo.split('--'), t = TELAS[id]; if (!t) return;
   P.desfazer = null;
   if (t.c === 'folha') { if (t.base !== topo().id && !empilha) abreTela(id, e); P.folha = { id, e: e || (t.es ? t.es[0][0] : null) }; }
-  else { P.folha = null; P.pilha.push({ id, e: e || (t.es ? t.es[0][0] : null) }); }
+  else {
+    P.folha = null; const el = $('#tela'), novo = { id, e: e || (t.es ? t.es[0][0] : null) };
+    // passo da mesma tarefa (tela de ação para tela de ação) troca o topo: o Voltar recolhe a tarefa inteira
+    if (TELAS[topo().id].c === 'acao' && t.c === 'acao') P.pilha[P.pilha.length - 1] = novo;
+    else { if (el) topo().y = el.scrollTop; P.pilha.push(novo); }
+  }
   desenhaAparelho();
 }
 function voltar() {
-  if (P.folha) { P.folha = null; P.manter = true; desenhaAparelho(); return; }
-  if (P.pilha.length > 1) { P.pilha.pop(); P.manter = false; desenhaAparelho(); return; }
+  if (P.folha) { P.folha = null; desenhaAparelho(); return; }
+  if (P.pilha.length > 1) { P.pilha.pop(); desenhaAparelho(); return; }
   const t = TELAS[topo().id];
   if (t.c !== 'lugar') { P.pilha = [{ id: t.lugar || 'hoje', e: null }]; const l = TELAS[P.pilha[0].id]; P.pilha[0].e = l.es ? l.es[0][0] : null; desenhaAparelho(); }
 }
@@ -317,9 +372,9 @@ document.addEventListener('click', ev => {
   if (d.marca != null) { b.setAttribute('aria-checked', b.getAttribute('aria-checked') !== 'true'); return; }
   if (d.passo) { const r = document.getElementById(d.r); r.scrollLeft += +d.passo * +r.dataset.px; return; }
   if (d.par) { const p = b.closest('.par'); p.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); return; }
-  if (d.glob) { P.glob[d.glob] = !P.glob[d.glob]; P.manter = true; desenhaAparelho(); return; }
+  if (d.glob) { P.glob[d.glob] = !P.glob[d.glob]; desenhaAparelho(); return; }
   if (d.desfaz != null) { P.desfazer = null; $('#desf').innerHTML = ''; return; }
-  if (d.est != null && b.closest('#lado, #fone')) { const a = atual(); a.e = d.est; P.manter = !!b.closest('#lado'); desenhaAparelho(); return; }
+  if (d.est != null && b.closest('#lado, #fone')) { const a = atual(); a.e = d.est; desenhaAparelho(); return; }
   if (d.desfazer) { P.folha = null; desenhaAparelho(); P.desfazer = d.desfazer; $('#desf').innerHTML = `<div class="desfazer ${TELAS[topo().id].c === 'lugar' ? 'sobe' : ''}" role="status"><span>${d.desfazer}</span><button data-desfaz>Desfazer</button></div>`; return; }
   if (d.fecha != null) { voltar(); return; }
   if (d.voltar != null) { voltar(); return; }
@@ -327,7 +382,7 @@ document.addEventListener('click', ev => {
   if (d.folha) { vaiPara(d.folha); return; }
   if (d.ir) { vaiPara(d.ir); }
 });
-document.addEventListener('change', ev => { if (ev.target.id === 'sim-e') { atual().e = ev.target.value; P.manter = true; desenhaAparelho(); } });
+document.addEventListener('change', ev => { if (ev.target.id === 'sim-e') { atual().e = ev.target.value; desenhaAparelho(); } });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && $('#fone')) voltar(); });
 let ultY = 0;
 document.addEventListener('scroll', ev => {

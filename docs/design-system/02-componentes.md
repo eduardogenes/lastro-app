@@ -226,6 +226,13 @@ Duas, com papéis diferentes:
   e o relógio no meio, a lista à direita; segmentos embaixo do topo; o
   conteúdo empurrado para baixo, perto do polegar; o botão grande embaixo de
   tudo; as saídas sublinhadas embaixo dele.
+- **Âncoras da tela de ação.** O botão principal é **um só, de largura toda**,
+  e fica no mesmo lugar em todos os passos da tarefa (série, descanso, fim;
+  cada leitura da medição; cada dia em "responder os dias"; cada pose). A linha
+  das saídas é sempre reservada (44 px), mesmo vazia, para o principal não
+  descer quando ela some. Ajuste (−15 s, +15 s) vai para a linha das saídas,
+  nunca dividindo o lugar do principal. Ver
+  [07-fluidez-e-estabilidade.md](07-fluidez-e-estabilidade.md).
 
 ## 10. Confirmação
 

@@ -15,6 +15,7 @@ plano da próxima fase.
 | [tokens.css](tokens.css) | os tokens, nomeados pelo papel, prontos para a implementação |
 | [02-componentes.md](02-componentes.md) | 24 componentes: anatomia, variantes, estados, conteúdo, acessibilidade, o que não fazer |
 | [03-padroes-e-voz.md](03-padroes-e-voz.md) | os padrões de comportamento e a voz |
+| [07-fluidez-e-estabilidade.md](07-fluidez-e-estabilidade.md) | como as telas se movem, o que nunca sai do lugar, e as fontes (livros, Apple, Material, NN/g) |
 | [04-telas-e-fluxos.md](04-telas-e-fluxos.md) | as 84 telas, com estados e de onde se chega (gerado da página viva) |
 | [05-auditoria.md](05-auditoria.md) | o que o app construído faz diferente, com a correção (gerado de `ds-auditoria.js`) |
 | `lastro.html` + `ds-*.js` | a página viva: galeria, telas navegáveis, mapa dos fluxos, auditoria. Abre sozinha no navegador (precisa de `tokens.css` e dos `ds-*.js` ao lado) |
@@ -30,7 +31,7 @@ plano da próxima fase.
 | 2. Fundamentos e tokens | feita |
 | 3. Componentes, com a galeria | feita |
 | 4. Telas e fluxos | feita: 84 telas, 174 estados |
-| 5. Auditoria da implementação | feita: 35 achados, 3 de dado |
+| 5. Auditoria da implementação | feita: 39 achados, 3 de dado (4 de fluidez, acrescentados depois) |
 | 6. Revisão final | feita: Chromium e WebKit a 414 × 896, sem erro, sem rolagem lateral, sem alvo abaixo de 44 nem texto abaixo de 12 |
 
 ## As páginas publicadas

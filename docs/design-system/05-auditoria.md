@@ -2,9 +2,18 @@
 
 O que o app construído (`src/ui/v3/`, `src/v3/`, `src/main.jsx`) faz diferente do design system, tela por tela, com a correção. Conferido no código em 17/11/2026. É o que a próxima fase implementa.
 
-35 achados. Os marcados **dado** (3) mexem em dado ou regra: pedem migração, fusão, cópia de segurança, espelho dos agentes e teste de domínio, como manda o `CLAUDE.md`. Os outros são de tela e se conferem olhando.
+39 achados. Os marcados **dado** (3) mexem em dado ou regra: pedem migração, fusão, cópia de segurança, espelho dos agentes e teste de domínio, como manda o `CLAUDE.md`. Os outros são de tela e se conferem olhando.
 
-Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino aberto), depois os tokens e componentes base (corrigem dezenas de telas de uma vez), depois o treino, e por fim os três de **dado**, cada um com seu teste.
+Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino aberto) e a fluidez (a porta do movimento religada aos tokens novos, as âncoras), depois os tokens e componentes base (corrigem dezenas de telas de uma vez), depois o treino, e por fim os três de **dado**, cada um com seu teste.
+
+## Fluidez e estabilidade (07-fluidez-e-estabilidade.md)
+
+| Tipo | O quê | Hoje | Correção | Onde |
+|---|---|---|---|---|
+| fluxo | **Toda troca de tela é seca** | src/v3/global.css:104 zera todas as animações de transição de vista. A porta do movimento (src/ui/movimento.js, trocaDeCamada, chamada por src/main.jsx:7806 em toda troca de camada) continua lá, mas lê tokens de duração que saíram na Fase 5 (--ins-dur-entra, --ins-dur-sai, --ins-dur-dissolve), então o tempo dá zero. | Reaproveitar a porta, não reescrever: trocar os tokens pelos de tokens.css (--d-navega, --d-sai, --d-passo, --d-acao, --d-fecha, --mola, --mola-sai), mapear os sentidos dela para a tabela do 07 (lugar, entra, sai, sobe, desce, passo, estado), escrever as animações ::view-transition-old/new por sentido e tirar o animation:none do global.css. O que a porta já resolve fica: o toque no meio da transição (aoDescer), o desenho atrasado e "reduzir movimento" por adesão. | src/ui/movimento.js, src/v3/global.css, src/main.jsx:7737-7806 |
+| hierarquia | **O "Feito" muda de lugar** | Na série, as duas réguas empilhadas fazem a tela rolar e o botão fica onde o conteúdo acabar; no descanso, o principal ("Pular o descanso") está numa tela sem a linha de links da série, então fica em outra altura. | Âncoras da tela de ação: um principal de largura toda no mesmo y em série, descanso e fim; a linha das saídas sempre reservada (44 px); ajustes do descanso (−15 s, +15 s) na linha das saídas. Conferir com getBoundingClientRect nos três estados. | Serie, Descanso, FimDoTreino em treino.jsx; TelaDeAcao em base.jsx |
+| hierarquia | **Nenhuma âncora com nome de transição** | Nenhum view-transition-name no app: numa troca, o botão principal, o topo e a doca seriam fotografados junto com o resto e se mexeriam. | view-transition-name dado por quem desenha: o principal da tela de ação, o topo, os segmentos, a doca; por seção nos estados da mesma tela. Um nome por âncora (nome repetido cancela a transição). | base.jsx (TelaDeAcao, Bloco, Secao, Doca) |
+| estado | **Folha fecha no mesmo tempo em que abre** | A folha só tem a animação de subir (v3-sobe); ao fechar, some. | Sobe em 340 ms com --mola; desce em 240 ms com --mola-sai. O véu acompanha. | .v3-folha, .v3-veu em componentes.css |
 
 ## O app inteiro (tokens e componentes base)
 

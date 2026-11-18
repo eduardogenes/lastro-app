@@ -124,8 +124,13 @@
   --camada-faixa: 10;
 
   /* ---------- movimento: uma curva só ---------- */
-  --mola: cubic-bezier(.2, .9, .25, 1);
-  --d-toque: 120ms;      /* botão encolhe 3% */
+  --mola: cubic-bezier(.2, .9, .25, 1);      /* o que entra e o que muda: chega rápido, pousa macio */
+  --mola-sai: cubic-bezier(.4, 0, 1, 1);     /* o que sai: parte devagar e some (07-fluidez-e-estabilidade.md) */
+  --d-toque: 100ms;      /* botão encolhe 3% */
+  --d-sai: 140ms;        /* a tela que sai, num destino */
+  --d-passo: 180ms;      /* o miolo que troca entre passos da mesma tarefa; o lugar que entra */
+  --d-navega: 260ms;     /* a tela que entra num destino */
+  --d-fecha: 240ms;      /* folha que desce */
   --d-estado: 200ms;     /* troca de estado de um controle */
   --d-chave: 250ms;      /* a bolinha da chave */
   --d-folha: 340ms;      /* folha sobe */
@@ -133,11 +138,13 @@
   --d-entra: 420ms;      /* conteúdo do bloco entra em sequência, 40 ms entre peças */
   --d-cor: 450ms;        /* troca de cor do bloco */
   --d-veu: 220ms;
+  --desliza: 24px;       /* quanto uma tela inteira anda ao entrar ou sair: diz a direção, não cansa */
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --d-toque: 0ms; --d-estado: 0ms; --d-chave: 0ms; --d-folha: 0ms;
+    --d-toque: 0ms; --d-estado: 0ms; --d-chave: 0ms; --d-folha: 0ms; --d-fecha: 0ms;
     --d-acao: 0ms; --d-entra: 0ms; --d-cor: 0ms; --d-veu: 0ms;
+    --d-sai: 0ms; --d-passo: 0ms; --d-navega: 0ms; --desliza: 0px;
   }
 }

@@ -55,8 +55,22 @@ seu trabalho é achar o que está errado antes do dono achar.
   escolha única como `radiogroup`; régua como `slider` com valor falado.
 - Sem rolagem lateral; `100svh` na cadeia toda; nenhum ancestral com
   `overflow` não visível entre `sticky` e quem rola; sem `backdrop-filter`.
-- Movimento só com `--mola`; bloco do momento anima só quando o momento muda;
-  "reduzir movimento" respeitado.
+- **Fluidez e estabilidade** (`docs/design-system/07-fluidez-e-estabilidade.md`):
+  - nas tarefas de vários passos, o `getBoundingClientRect()` do botão
+    principal é idêntico em todos os passos (série, descanso, fim; leituras da
+    medição; dias em "responder os dias"; poses; passos da primeira vez); a
+    linha das saídas está reservada mesmo vazia;
+  - o que foi tocado não se move; nada desloca o conteúdo sem toque (aviso
+    entra por cima, espaço reservado para o que carrega);
+  - cada troca usa o movimento da tabela (lugar *fade through*, destino eixo
+    horizontal de 24 px, tela de ação sobe e desce, passo com âncoras paradas,
+    folha 340/240 ms), com `--mola` na entrada e `--mola-sai` na saída, entre
+    100 e 380 ms;
+  - um toque no meio da transição chega ao botão sob o dedo (testar no WebKit,
+    que é onde falha);
+  - grave a troca (vídeo do `playwright-core` ou quadros a cada 16 ms) e
+    procure piscar, salto, elemento que aparece fora do lugar;
+  - "reduzir movimento" ligado: nada desliza nem escala.
 
 ## O que devolver
 

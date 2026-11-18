@@ -32,6 +32,26 @@ for (const [id, e] of lista) {
   if (fotos) await pg.screenshot({ path: `${out}/${id}${e ? '--' + e : ''}.png` });
 }
 for (const p of ['indice', 'fundamentos', 'componentes', 'fluxos', 'auditoria']) { await pg.goto(ARQ + '#' + p); await pg.waitForTimeout(500); const o = await pg.evaluate(() => document.documentElement.scrollWidth - innerWidth); if (o > 0) achados.push(p + ' rolagem lateral ' + o); if (fotos) await pg.screenshot({ path: `${out}/doc-${p}.png`, fullPage: true }); }
+
+// âncoras (07-fluidez-e-estabilidade.md): o botão principal não sai do lugar entre os passos de uma tarefa
+const TAREFAS = {
+  treino: [['serie', 'normal'], ['serie', 'subir'], ['serie', 'intervalo'], ['serie', 'meio'], ['serie', 'trocado'], ['descanso', 'normal'], ['descanso', 'fim'], ['fim-treino', 'mudou'], ['fim-treino', 'igual'], ['fim-treino', 'vazio']],
+  medir: [['medir', 'primeira'], ['medir', 'segunda'], ['medir', 'terceira'], ['medir', 'dobra'], ['medir', 'fim']],
+  bio: [['bio-nova', 'gordura'], ['bio-nova', 'musculo'], ['bio-nova', 'agua']],
+  responder: [['responder', 'meio'], ['responder', 'fim']],
+  'primeira vez': [['pv-treino', ''], ['pv-comida', ''], ['pv-acompanhar', '']],
+  camera: ['nivel', 'altura', 'certo', 'pose', 'gira', 'sozinho', 'torta', 'forcado', 'permissao', 'negada', 'carregando', 'ninguem'].map(e => ['camera', e])
+};
+await pg.goto(ARQ + '#t-hoje'); await pg.waitForTimeout(600);
+for (const [g, l] of Object.entries(TAREFAS)) {
+  const r = [];
+  for (const [id, e] of l) {
+    await pg.evaluate(([id, e]) => { abreTela(id, e || undefined); desenhaAparelho(true); }, [id, e]); await pg.waitForTimeout(60);
+    r.push(await pg.evaluate(() => { const x = document.querySelector('#tela .pe-a .vai, #tela .pe-f .vai, #tela .botao'); if (!x) return 'sem principal'; const q = x.getBoundingClientRect(); return [q.top, q.left, q.width, q.height].map(Math.round).join(','); }));
+  }
+  const u = [...new Set(r)];
+  achados.push((u.length === 1 ? 'âncora ok: ' : 'ÂNCORA MOVE: ') + g + ' ' + (u.length === 1 ? u[0] : l.map((x, i) => x.join('--') + '=' + r[i]).join('  ')));
+}
 console.log('telas', lista.length, 'erros', [...new Set(erros)].slice(0, 10));
 console.log(achados.join('\n'));
 await b.close();

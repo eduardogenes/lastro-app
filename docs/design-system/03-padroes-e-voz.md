@@ -60,6 +60,14 @@ Não se confirma ação comum: confirmação repetida deixa de ser lida.
 O protótipo fazia "Pôr em dia" em tela e o código em folha: fica **tela**
 (destino), porque é uma lista com marcação e carga por exercício, e rola.
 
+### Fluidez e estabilidade
+
+O que se repete fica parado; o que muda se mostra mudando, rápido e com
+motivo. O botão principal não muda de lugar entre os passos de uma tarefa, o
+que foi tocado não se move, nada muda sozinho de lugar, e cada tipo de troca
+tem o seu movimento. As regras, os valores e as fontes estão em
+[07-fluidez-e-estabilidade.md](07-fluidez-e-estabilidade.md).
+
 ### O Voltar
 
 **Voltar desfaz exatamente uma camada**, igual para a seta da tela, o toque no

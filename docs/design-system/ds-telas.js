@@ -133,7 +133,7 @@ tela({ id: 'descanso', n: 'Descanso', g: 'treino', c: 'acao', lugar: 'hoje', glo
     <div class="meio-a c"><p class="linha-a" style="text-align:center">descanso</p><div class="contagem n" role="timer" aria-label="faltam ${e === 'fim' ? '12 segundos' : '1 minuto e 50 segundos'}">${e === 'fim' ? '0:12' : '1:50'}</div>
       <div class="sobrou"><p>Sobraram quantas repetições? Se quiser dizer.</p>${H.resp(['0', '1', '2', '3+'], e === 'fim' ? '1' : null, { nome: 'Repetições que sobraram' })}</div>
       <div class="prox"><div class="tx"><span>a seguir · série 2 de 2</span><b>Agachamento no Smith</b><span class="n">60 × 10</span></div><button class="peq" data-desfazer="Copo somado: 7 de 14.">Água +1</button></div></div>
-    <div class="pe-a">${H.alt('−15 s')}${H.alt('+15 s')}${H.vai('Começar já', { g: 1, ir: 'serie--meio' })}</div></div>` });
+    <div class="pe-a">${H.vai('Começar já', { g: 1, ir: 'serie--meio' })}</div><div class="saidas c">${H.peq('−15 s', { c: 1 })}${H.peq('+15 s', { c: 1 })}</div></div>` });
 
 tela({ id: 'f-lista-treino', n: 'A lista do treino', g: 'treino', c: 'folha', base: 'serie',
   d: 'O ícone de lista no topo. Ir a um exercício, mudar a ordem de hoje (só os que ainda vêm), deload, abrir as opções e encerrar.',
@@ -187,7 +187,7 @@ tela({ id: 'fim-treino', n: 'Fim do treino', g: 'treino', c: 'acao', lugar: 'hoj
         <div class="decide"><p>Trocou agachamento no Smith por hack machine</p><small>Treino B · mesmas séries e faixa</small>${H.resp(['Só hoje', 'Passa a valer'], 'Só hoje', { nome: 'Trocou agachamento' })}</div>
         <div class="decide"><p>Mais uma série em cadeira flexora</p><small>4 → 5 séries · muda as séries de posterior na semana</small>${H.resp(['Só hoje', 'Passa a valer'], 'Só hoje', { nome: 'Mais uma série' })}</div>
         <p class="txt">Sem resposta, fica só hoje. O que passar a valer aparece no Plano como diferença do treinador.</p>` : ''}
-      <div class="pe-a" style="margin-top:auto;padding-top:18px">${H.vai('Fechar', { g: 1, lugar: 'hoje' })}</div></div>` });
+      <div class="pe-a" style="margin-top:auto;padding-top:18px">${H.vai('Fechar', { g: 1, lugar: 'hoje' })}</div><div class="saidas c">${H.saida('Ver as séries', { ir: 'sessao-passada' })}</div></div>` });
 
 tela({ id: 'aula', n: 'Aula do box', g: 'treino', c: 'acao', lugar: 'hoje',
   d: 'Lacuna do protótipo. A aula não tem prescrição fixa: começa vazia e se monta de quatro jeitos (repetir a última, um modelo, colar o texto, foto da lousa). Depois, a lista rápida: um número por movimento, no fim da aula. Cor lilás: aula é do corpo, não do programa.',
@@ -204,7 +204,7 @@ tela({ id: 'aula', n: 'Aula do box', g: 'treino', c: 'acao', lugar: 'hoje',
       ${e === 'lousa' ? `<div class="caixa" style="margin-top:10px"><p>“2 rounds: 1000 m remo, 75 wall ball 9 kg, 80 m burpee broad jump…”<small>lido da foto de 07h02 · ${H.saida('ver a foto')}</small></p></div>` : ''}
       <div class="lista" style="margin-top:8px">${mv.map(m => `<div class="it" style="border-color:rgba(15,15,13,.18)"><span class="tx"><b>${m[0]}</b><span style="color:var(--texto)">${m[3]}</span></span><button class="qt n" style="background:var(--superficie)" data-folha="f-quantidade">${milhar(m[2])}</button></div>`).join('')}</div>
       <div class="acoes" style="margin-top:10px">${H.alt(ic.mais + ' Movimento', { cheio: 1, folha: 'f-catalogo' })}${H.alt('Série por série', { cheio: 1, ir: 'serie' })}</div>
-      <div class="pe-a" style="margin-top:auto;padding-top:16px">${H.vai(ic.ok + ' Guardar a aula', { g: 1, ir: 'fim-treino--igual' })}</div></div>`;
+      <div class="pe-a" style="margin-top:auto;padding-top:16px">${H.vai(ic.ok + ' Guardar a aula', { g: 1, ir: 'fim-treino--igual' })}</div><div class="saidas c">${H.saida('Guardar como modelo')}</div></div>`;
   } });
 
 tela({ id: 'f-aula-texto', n: 'Colar o texto da aula', g: 'treino', c: 'folha', base: 'aula',
@@ -256,9 +256,9 @@ tela({ id: 'responder', n: 'Responder os dias', g: 'dias', c: 'acao', lugar: 'di
     const topo = H.topoA(`<button class="ico" data-voltar aria-label="Fechar">${ic.x}</button>`, `<span class="n">${e === 'fim' ? '14' : '6'} de 14</span>`, e === 'fim' ? '' : '<button class="saida" style="min-width:44px">voltar um</button>');
     return e === 'fim'
       ? `<div class="acao-t" style="--cor:var(--assunto-feito)">${topo}${segs}<div class="meio-a c"><h2 class="heroi">13 dias respondidos.</h2><p class="apoio">Já dá para a regra do nutricionista decidir. O que ficou como “não lembro” não conta contra você.</p></div>
-        <div style="display:grid;gap:8px">${H.vai('Ver o veredito ' + ic.seta, { g: 1, lugar: 'semana' })}${H.alt('Voltar aos dias', { voltar: 1 })}</div></div>`
+        <div class="pe-a" style="display:grid;gap:8px">${H.vai('Ver o veredito ' + ic.seta, { g: 1, lugar: 'semana' })}${H.alt('Voltar aos dias', { voltar: 1 })}</div><div class="saidas c"></div></div>`
       : `<div class="acao-t" style="--cor:var(--assunto-corpo)">${topo}${segs}<div class="meio-a c"><h2 class="heroi">quarta, 11</h2><p class="linha-a" style="margin-top:10px">Dia de Treino C, de manhã. A comida foi como o plano?</p></div>
-        <div style="display:grid;gap:8px">${H.vai('Foi, sim', { g: 1, est: 'fim' })}<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${H.alt('Quase')}${H.alt('Não lembro')}</div><div class="saidas c">${H.saida('Todos os que faltam foram como o plano', { est: 'fim' })}</div></div></div>`; } });
+        <div class="pe-a" style="display:grid;gap:8px">${H.vai('Foi, sim', { g: 1, est: 'fim' })}<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${H.alt('Quase')}${H.alt('Não lembro')}</div></div><div class="saidas c">${H.saida('Todos os que faltam foram como o plano', { est: 'fim' })}</div></div>`; } });
 
 tela({ id: 'dia-aberto', n: 'O dia aberto', g: 'dias', c: 'destino', lugar: 'dias',
   d: 'Tudo o que aconteceu num dia, para conferir e corrigir: o treino (que abre a sessão), o cardio, o peso, a comida refeição por refeição.',

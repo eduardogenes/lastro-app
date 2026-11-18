@@ -205,31 +205,21 @@ objetos vem de preenchimento (superfície sobre fundo) ou de contorno.
 
 ## Movimento
 
-Curva única, `--mola` (`cubic-bezier(.2, .9, .25, 1)`): sai rápido e pousa
-macio, como algo que tem peso.
+Duas curvas: `--mola` (`cubic-bezier(.2, .9, .25, 1)`) para o que entra e o
+que muda, que chega rápido e pousa macio; `--mola-sai` (`cubic-bezier(.4, 0,
+1, 1)`) para o que sai, que parte devagar e some. Durações de 100 a 380 ms;
+nada passa de 450 ms, exceto o enchimento do descanso.
 
-| O quê | Duração | Como |
-|---|---|---|
-| Botão ao toque | 120 ms | encolhe 3% (o "+" encolhe 8% e gira 45°) |
-| Estado de controle (escolha, ficha) | 200 ms | cor e contorno |
-| Chave | 250 ms | a bolinha desliza |
-| Véu | 220 ms | aparece |
-| Folha | 340 ms | sobe de baixo, 105% → 0 |
-| Tela de ação | 380 ms | sobe de baixo, 102% → 0 |
-| Conteúdo do bloco | 420 ms | entra de 10 px abaixo, em sequência de 40 ms, **só quando o momento muda** |
-| Cor do bloco | 450 ms | troca de cor |
-| Descanso | linear, 1 s por passo | a cor enche a tela de baixo para cima, no tempo do descanso |
-| Doca | 320 a 360 ms | encolhe ao rolar para baixo, volta ao rolar para cima |
-| Clarão da câmera | 350 ms | branco a 90% → 0 |
+Como cada troca se move (trocar de lugar, entrar num destino, voltar, abrir e
+recolher a tela de ação, passo da mesma tarefa, estado, folha, aviso), o que
+**nunca** sai do lugar e as fontes de cada regra estão em
+[07-fluidez-e-estabilidade.md](07-fluidez-e-estabilidade.md).
 
-**Nunca anima:** número que o dedo está mexendo (a régua responde na hora,
-sem easing), troca de lugar (a tela troca seca e vai ao topo), dado que
-atualiza na mesma tela, lista que cresce, e nada que comemore (sem confete,
-sem pulo de "parabéns"; a bolinha da água que "pula" ao somar um copo saiu).
+**Nunca anima:** o número que o dedo está mexendo, dado que atualiza sem
+toque, e nada que comemore.
 
-**Reduzir movimento:** todas as durações vão a zero. Nada desliza nem
-escala; troca seca. O descanso continua enchendo, porque ali o movimento é a
-informação, mas em passos de 10% em vez de contínuo.
+**Reduzir movimento:** nada desliza nem escala; troca seca ou *crossfade*
+curto. O descanso continua enchendo, em passos de 10%.
 
 ## Toque
 

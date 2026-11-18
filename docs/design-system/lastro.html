@@ -275,7 +275,7 @@ button.q{min-height:var(--alvo)}
 .gruda button{height:44px;padding:0 18px;border-radius:var(--r-pilula);background:var(--acao);color:var(--texto-sobre-acao);font:var(--t-botao-p)}
 .faixas{position:absolute;left:12px;right:12px;top:8px;z-index:var(--camada-faixa);display:grid;gap:6px;pointer-events:none}
 .faixas > *{pointer-events:auto}
-.faixa{display:flex;align-items:center;gap:10px;border-radius:var(--r-pilula);background:var(--atencao);box-shadow:inset 0 0 0 2px var(--texto);min-height:48px;padding:0 6px 0 16px;font:700 14px var(--f-titulo)}
+.faixa{animation:desce-de-cima 200ms var(--mola) both;display:flex;align-items:center;gap:10px;border-radius:var(--r-pilula);background:var(--atencao);box-shadow:inset 0 0 0 2px var(--texto);min-height:48px;padding:0 6px 0 16px;font:700 14px var(--f-titulo)}
 .faixa span{flex:1}
 .faixa svg{width:20px;height:20px;flex:0 0 auto}
 .faixa button{min-height:var(--alvo);padding:0 16px;border-radius:var(--r-pilula);background:var(--acao);color:var(--texto-sobre-acao);font:700 13px var(--f-titulo)}
@@ -289,7 +289,8 @@ button.q{min-height:var(--alvo)}
 .veu{position:absolute;inset:0;background:var(--veu);z-index:var(--camada-veu);opacity:0;visibility:hidden;transition:opacity var(--d-veu)}
 .veu.on{opacity:1;visibility:visible}
 .folha{overflow-x:hidden;position:absolute;left:0;right:0;bottom:0;z-index:var(--camada-folha);background:var(--fundo);border-radius:var(--r-folha) var(--r-folha) 0 0;padding:10px var(--margem) calc(20px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform var(--d-folha) var(--mola);max-height:90%;overflow-y:auto;visibility:hidden;scrollbar-width:none}
-.folha.on{transform:none;visibility:visible}
+.folha{transition:transform var(--d-fecha) var(--mola-sai),visibility 0s linear var(--d-fecha)}
+.folha.on{transform:none;visibility:visible;transition:transform var(--d-folha) var(--mola),visibility 0s}
 .puxa{width:44px;height:5px;border-radius:99px;background:var(--contorno);margin:0 auto 16px;opacity:.6}
 .folha h2.ft{font:var(--t-folha);letter-spacing:var(--e-titulo);text-wrap:balance}
 .folha .fs{font:var(--t-apoio);font-size:15px;color:var(--texto-2);margin-top:6px}
@@ -320,7 +321,7 @@ button.q{min-height:var(--alvo)}
 .diga input::placeholder{color:var(--texto-legenda)}
 .diga button{flex:0 0 48px;height:48px;border-radius:50%;background:var(--acao);color:var(--texto-sobre-acao);display:flex;align-items:center;justify-content:center}
 .diga svg{width:22px;height:22px}
-.eco{margin-top:12px;font:600 14px/1.35 var(--f-texto);min-height:20px;display:flex;gap:8px;align-items:flex-start}
+.eco{margin-top:12px;font:600 14px/1.35 var(--f-texto);min-height:38px;display:flex;gap:8px;align-items:flex-start}
 .eco svg{width:18px;height:18px;flex:0 0 auto;margin-top:1px}
 .itens > div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1.5px solid var(--divisoria);font:500 15px var(--f-texto)}
 .itens > div:first-child{border-top:0}
@@ -677,6 +678,51 @@ input[type=range]::-moz-range-thumb{width:30px;height:30px;border-radius:50%;bac
 .aud .ach .co{margin-top:4px}
 .aud .ach .tp{display:inline-block;font:700 11px var(--f-titulo);border-radius:99px;padding:1px 8px;margin-right:6px;background:var(--superficie-quieta)}
 .aud .ach .tp.dado{background:var(--atencao)}
+
+
+/* ================= fluidez (07-fluidez-e-estabilidade.md) ================= */
+@keyframes desce-de-cima{from{opacity:0;transform:translateY(-10px)}}
+/* só a tela do aparelho e as âncoras participam da transição; o resto troca no lugar */
+:root{view-transition-name:none}
+/* o toque durante a transição vale: a camada da transição não segura o dedo */
+::view-transition{pointer-events:none}
+::view-transition-group(*){animation-duration:220ms;animation-timing-function:var(--mola)}
+::view-transition-group(tela){overflow:clip}
+::view-transition-old(*),::view-transition-new(*){animation-duration:180ms}
+@keyframes vt-some{to{opacity:0}}
+@keyframes vt-aparece{from{opacity:0}}
+@keyframes vt-entra-dir{from{opacity:0;transform:translateX(var(--desliza))}}
+@keyframes vt-entra-esq{from{opacity:0;transform:translateX(calc(-1 * var(--desliza)))}}
+@keyframes vt-sai-esq{to{opacity:0;transform:translateX(calc(-1 * var(--desliza)))}}
+@keyframes vt-sai-dir{to{opacity:0;transform:translateX(var(--desliza))}}
+@keyframes vt-sobe{from{transform:translateY(100%)}}
+@keyframes vt-desce{to{transform:translateY(100%)}}
+/* lugar: fade through, sem deslizar (lugares não têm ordem espacial) */
+html[data-vt=lugar]::view-transition-old(tela){animation:vt-some 90ms var(--mola-sai) both}
+html[data-vt=lugar]::view-transition-new(tela){animation:vt-aparece var(--d-passo) var(--mola) 60ms both}
+/* destino: eixo horizontal curto; voltar é o mesmo ao contrário */
+html[data-vt=entra]::view-transition-old(tela){animation:vt-sai-esq 100ms var(--mola-sai) both}
+html[data-vt=entra]::view-transition-new(tela){animation:vt-entra-dir var(--d-navega) var(--mola) 40ms both}
+html[data-vt=sai]::view-transition-old(tela){animation:vt-sai-dir 100ms var(--mola-sai) both}
+html[data-vt=sai]::view-transition-new(tela){animation:vt-entra-esq 220ms var(--mola) 40ms both}
+/* tela de ação: sobe por cima do que fica; ao recolher, desce e revela o que estava embaixo */
+html[data-vt=sobe]::view-transition-old(tela){animation:none}
+html[data-vt=sobe]::view-transition-new(tela){animation:vt-sobe var(--d-acao) var(--mola) both}
+html[data-vt=desce]::view-transition-old(tela){animation:vt-desce 260ms var(--mola-sai) both;z-index:2}
+html[data-vt=desce]::view-transition-new(tela){animation:none}
+/* passo da mesma tarefa: âncoras paradas, o miolo troca em crossfade curto */
+html[data-vt=passo]::view-transition-old(tela){animation:vt-some 120ms var(--mola-sai) both}
+html[data-vt=passo]::view-transition-new(tela){animation:vt-aparece var(--d-passo) var(--mola) both}
+/* a doca não se move entre lugares: troca no lugar, sem fantasma */
+::view-transition-old(pe),::view-transition-new(pe){animation-duration:160ms}
+@media (prefers-reduced-motion:reduce){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
+
+/* âncoras da tela de ação: a linha das saídas é sempre reservada, para o principal não mudar de altura */
+.acao-t > .saidas{min-height:var(--alvo-saida);align-items:center}
+.passo-f{flex:1 0 auto;display:flex;flex-direction:column}
+.passo-f .pe-f{margin-top:auto;padding:16px var(--margem) 0}
+.passo-f .pe-f .vai{width:100%}
+.passo-f .pe-f .saidas{min-height:var(--alvo-saida)}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:0ms!important}}
 </style>
