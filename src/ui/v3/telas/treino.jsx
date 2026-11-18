@@ -233,8 +233,8 @@ function TreinoEncerrado({ ctx, f }) {
               <p>{m.txt}</p>
               {m.impacto && <small>{m.impacto}</small>}
               <div class="v3-perg-r" role="radiogroup" aria-label={m.txt}>
-                <button role="radio" aria-checked="false" data-a={'regra-hoje-' + i} onClick={() => ctx.respondeMudanca(f.sid, i, false)}>Só hoje</button>
-                <button role="radio" aria-checked="false" tabindex="-1" data-a={'regra-sempre-' + i} onClick={() => ctx.respondeMudanca(f.sid, i, true)}>Passa a valer</button>
+                <button role="radio" aria-checked="false" data-a={'regra-hoje-' + i} onClick={() => ctx.respondeMudancaPeloToque(f.sid, i, false)}>Só hoje</button>
+                <button role="radio" aria-checked="false" data-a={'regra-sempre-' + i} onClick={() => ctx.respondeMudancaPeloToque(f.sid, i, true)}>Passa a valer</button>
               </div>
             </div>
           ))}

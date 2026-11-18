@@ -94,7 +94,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   padding-bottom: calc(28px + var(--sa-bottom));
   -webkit-font-smoothing: antialiased;
 }
-#app:has(.v3-acao) { padding-bottom: 0; }
+#app:has(.v3-acao, .v3-cam) { padding-bottom: 0; }
 /* "Abrindo o registro…": o que o index.html mostra até o app montar. */
 .msg {
   padding: 34px 20px;

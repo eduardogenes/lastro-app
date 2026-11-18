@@ -588,3 +588,22 @@ test('ctx.edicaoDoDia traz o seletor de troca só no índice aberto, e a proced�
   assert.strictEqual(depois.linhas[2].mexido, true);
   a.fechar();
 });
+
+test('o toque duplo numa resposta do Plano não responde a mudança de baixo', async () => {
+  // responder tira a decisão da tela e o resto sobe: o segundo toque cairia na seguinte
+  const a = await app();
+  a.v('toggle', 0);
+  for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 4, 1);
+  a.v('setAlt', 2, 'elevacao-lateral-com-halteres');
+  a.v('modoEdicao', false);
+  await a.v('finalizarSessao');
+  await a.esperar(60);
+  const sid = a.S().promoPendente[0].sid;
+  a.v('ctx.respondeMudancaPeloToque', sid, 0, false);
+  a.v('ctx.respondeMudancaPeloToque', sid, 0, false);
+  await a.esperar(80);
+  assert.strictEqual(a.S().promoPendente[0].mods.length, 1, 'só a primeira foi respondida');
+  a.fechar();
+});

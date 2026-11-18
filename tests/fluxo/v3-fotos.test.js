@@ -43,7 +43,7 @@ const comSessaoAnterior = a => a.E(`S.protocolo.sessoes = [{ d: ${JSON.stringify
 test('nova sessão: três cenários, e "alguém que nunca fez" passa pelos três passos antes da câmera', async () => {
   const a = await novaSessao();
   assert.strictEqual(a.$$('.v3-esc').length, 3);
-  assert.strictEqual(a.$('[data-a="quem-sempre"]').getAttribute('aria-pressed'), 'true', 'o padrão é a pessoa de sempre');
+  assert.strictEqual(a.$('[data-a="quem-sempre"]').getAttribute('aria-checked'), 'true', 'o padrão é a pessoa de sempre');
   assert.ok(a.$('[data-a="sessao-camera"]'));
 
   a.clicar('[data-a="quem-novo"]');

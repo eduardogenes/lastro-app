@@ -561,3 +561,22 @@ test('com uma semana sozinha fora da faixa, não há portão nenhum', async () =
   a.fechar();
 });
 
+
+test('a folha "Aplicar no plano": o aviso com Desfazer só depois de gravar, e desfazer volta o passo', async () => {
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  a.aba('semana');
+  a.v('ctx.fechaModoDeSessao');
+  await a.esperar();
+  a.v('ctx.abreFolha', { k: 'aplicar' });
+  await a.esperar();
+  a.clicar('[data-a="aplicar-ok"]');
+  await a.esperar(120);
+  assert.strictEqual(a.S().ajuste, 1, 'aplicou');
+  assert.ok(/^Aplicado/.test(a.toast()), 'o aviso é o da folha, e não o "Apliquei" que o cobria: ' + a.toast());
+  const desfazer = a.$('#toast button');
+  assert.ok(desfazer, 'com Desfazer');
+  a.clicar(desfazer);
+  await a.esperar(120);
+  assert.strictEqual(a.S().ajuste, 0, 'desfeito');
+  a.fechar();
+});

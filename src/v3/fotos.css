@@ -28,12 +28,12 @@
   transition: scale var(--d-toque);
 }
 .v3-esc:active { scale: .98; }
-.v3 .v3-esc[aria-pressed="true"] { background: var(--selecionado); box-shadow: inset 0 0 0 2.5px var(--texto); }
+.v3 .v3-esc[aria-pressed="true"], .v3 .v3-esc[aria-checked="true"] { background: var(--selecionado); box-shadow: inset 0 0 0 2.5px var(--texto); }
 .v3-esc-o {
   flex: 0 0 44px; height: 44px; border-radius: 50%; background: var(--superficie-quieta);
   display: flex; align-items: center; justify-content: center;
 }
-.v3-esc[aria-pressed="true"] .v3-esc-o { background: var(--acao); color: var(--selecionado); }
+.v3-esc[aria-pressed="true"] .v3-esc-o, .v3-esc[aria-checked="true"] .v3-esc-o { background: var(--acao); color: var(--selecionado); }
 .v3-esc-o svg { width: 22px; height: 22px; }
 .v3-esc-t { flex: 1; min-width: 0; }
 .v3-esc-t b { display: block; font: 700 18px/1.15 var(--f-titulo); letter-spacing: -.01em; }
@@ -96,7 +96,7 @@
 }
 .v3-cam-aviso.ok { background: var(--assunto-treino); }
 .v3-cam-aviso svg { width: 26px; height: 26px; flex: 0 0 auto; }
-.v3-cam-aviso small { display: block; font: 600 13px var(--f-texto); color: var(--texto-2); margin-top: 2px; }
+.v3-cam-aviso small { display: block; font: 600 13px var(--f-texto); margin-top: 2px; }
 
 /* O quadro vivo, 3:4 como a foto guardada: a altura que sobra para ele
    decide a largura, e no iPhone grande ele fica com quase toda a largura. */
@@ -163,8 +163,8 @@
 }
 .v3 .v3-luz.ok { background: var(--assunto-treino); }
 .v3-luzes svg { width: 18px; height: 18px; flex: 0 0 auto; }
-.v3-luzes small { display: block; font: 500 12px var(--f-texto); color: var(--texto-2); }
-.v3 .v3-luzes.mini .v3-luz { min-height: 38px; border-radius: var(--r-pilula); justify-content: center; box-shadow: inset 0 0 0 1.5px var(--texto); }
+.v3-luzes small { display: block; font: 500 12px var(--f-texto); }
+.v3 .v3-luzes.mini .v3-luz { min-height: var(--alvo); border-radius: var(--r-pilula); justify-content: center; box-shadow: inset 0 0 0 1.5px var(--texto); }
 .v3-luzes.mini small { display: none; }
 
 /* a fala da pose, para quem fotografa ler */
@@ -175,19 +175,21 @@
 .v3-cam-fala svg { width: 22px; height: 22px; }
 
 /* o disparo: a foto anterior à esquerda, o botão no meio, o que falta à direita */
-.v3-disparo { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 8px; }
+/* a linha de "Tirar mesmo assim" fica reservada, vazia ou não: o disparo não muda de lugar ao destravar */
+.v3-cam-mesmo { margin-top: auto; min-height: var(--alvo); display: flex; justify-content: center; align-items: center; }
+.v3-disparo { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 4px; }
 .v3-disparo-l { flex: 0 0 88px; min-height: 46px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 13px; font-weight: 700; color: var(--texto-2); }
 .v3 .v3-anterior { border-radius: var(--r-pilula); color: var(--texto); box-shadow: inset 0 0 0 1.5px var(--contorno); }
 .v3 .v3-anterior[aria-pressed="true"] { background: var(--acao); color: var(--texto-sobre-acao); box-shadow: none; }
 .v3 .v3-disparo-b {
-  flex: 0 0 80px; width: 80px; height: 80px; border-radius: 50%; background: var(--acao); color: var(--texto-sobre-acao);
+  flex: 0 0 84px; width: 84px; height: 84px; border-radius: 50%; background: var(--acao); color: var(--texto-sobre-acao);
   box-shadow: 0 0 0 5px var(--fundo), 0 0 0 7.5px var(--texto);
   display: flex; align-items: center; justify-content: center; transition: scale .1s, background .3s;
 }
 .v3-disparo-b:active { scale: .92; }
-.v3 .v3-disparo-b:disabled { background: var(--tracejado); color: var(--texto-2); box-shadow: 0 0 0 5px var(--fundo), 0 0 0 7.5px var(--tracejado); }
+.v3 .v3-disparo-b:disabled { background: var(--fundo); color: var(--texto); box-shadow: none; outline: 2px dashed var(--contorno); outline-offset: -2px; }
 .v3-disparo-b svg { width: 30px; height: 30px; }
-.v3-cam .v3-saida { margin: 4px auto 0; text-align: center; }
+.v3-cam .v3-saida { margin: 0 auto; text-align: center; }
 
 .v3-cam-erro { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
 
@@ -197,10 +199,10 @@
 .v3-poses::-webkit-scrollbar { display: none; }
 .v3-poses.v3-poses-dentro { padding: 0; margin: 0 calc(-1 * var(--margem)); padding-inline: var(--margem); }
 .v3 .v3-poses button {
-  flex: 0 0 auto; min-height: 40px; padding: 0 14px; border-radius: var(--r-pilula);
+  flex: 0 0 auto; min-height: var(--alvo); padding: 0 14px; border-radius: var(--r-pilula);
   box-shadow: inset 0 0 0 1.5px var(--contorno); font-size: 14px; font-weight: 600; white-space: nowrap;
 }
-.v3 .v3-poses button[aria-pressed="true"] { background: var(--assunto-corpo); box-shadow: inset 0 0 0 2px var(--texto); }
+.v3 .v3-poses button[aria-checked="true"] { background: var(--selecionado); box-shadow: inset 0 0 0 2px var(--texto); }
 
 .v3-fita { display: flex; gap: 5px; }
 .v3-fita .v3-foto { flex: 1; border-radius: 9px; }
@@ -234,9 +236,9 @@
 .v3-datas b { font: 800 18px/1.1 var(--f-titulo); color: var(--texto); letter-spacing: -.02em; }
 
 /* a linha das sessões: as pontas do par grandes, a ressalva em tangerina */
-.v3-trilha { position: relative; display: flex; justify-content: space-between; margin: 12px var(--margem) 0; min-height: 52px; }
+.v3-trilha { position: relative; display: flex; justify-content: space-between; margin: 12px var(--margem) 0; min-height: 58px; }
 .v3-trilha::before { content: ""; position: absolute; left: 14px; right: 14px; top: 21px; height: 2px; background: var(--divisoria); }
-.v3 .v3-trilha button { position: relative; flex: 0 0 auto; min-width: 28px; min-height: 48px; display: flex; flex-direction: column; align-items: center; gap: 6px; font: 600 12px var(--f-titulo); color: var(--texto-legenda); }
+.v3 .v3-trilha button { position: relative; flex: 0 0 auto; min-width: var(--alvo); min-height: 58px; margin: 0 -6px; display: flex; flex-direction: column; align-items: center; gap: 6px; font: 600 12px var(--f-titulo); color: var(--texto-legenda); }
 .v3-trilha i { width: 14px; height: 14px; margin-top: 14px; border-radius: 50%; background: var(--fundo); box-shadow: inset 0 0 0 2px var(--texto-legenda); transition: scale .2s var(--mola); }
 .v3-trilha i.r { box-shadow: inset 0 0 0 3px var(--atencao); }
 .v3 .v3-trilha .de, .v3 .v3-trilha .ate { color: var(--texto); }
@@ -425,7 +427,7 @@
 .v3 .v3-tile-b { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
 .v3-tile-l { flex: 0 0 44px; height: 44px; border-radius: 14px; background: var(--assunto-treino); display: flex; align-items: center; justify-content: center; font: 800 20px var(--f-titulo); box-shadow: inset 0 0 0 2px var(--texto); }
 .v3-tile-m, .v3-ed-m { display: flex; flex-direction: column; justify-content: center; }
-.v3 .v3-tile-m button, .v3 .v3-ed-m button { min-width: var(--alvo); min-height: 32px; display: flex; align-items: center; justify-content: center; }
+.v3 .v3-tile-m button, .v3 .v3-ed-m button { min-width: var(--alvo); min-height: var(--alvo); display: flex; align-items: center; justify-content: center; }
 .v3-tile-m button:disabled, .v3-ed-m button:disabled { color: var(--marca); }
 .v3-tile-m svg, .v3-ed-m svg { width: 20px; height: 20px; }
 .v3-vol { display: flex; gap: 6px; overflow-x: auto; padding: 8px var(--margem) 2px; scrollbar-width: none; }
@@ -439,7 +441,7 @@
 .v3-ed-n b { display: block; font: 700 16px/1.15 var(--f-titulo); }
 .v3-ed-n span { font-size: 13px; color: var(--texto-legenda); }
 .v3-ed-s { display: flex; align-items: center; gap: 4px; }
-.v3 .v3-ed-s button { min-width: 40px; min-height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--tracejado); font: 800 18px var(--f-titulo); }
+.v3 .v3-ed-s button { min-width: var(--alvo); min-height: var(--alvo); border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--tracejado); font: 800 18px var(--f-titulo); }
 .v3-ed-s b { min-width: 24px; text-align: center; font: 800 18px var(--f-titulo); }
 .v3-ed-troca { flex: 0 0 100%; padding: 4px 0 10px 50px; }
 .v3 .v3-texto { min-height: 180px; padding: 12px 14px; line-height: 1.45; resize: vertical; }
@@ -520,11 +522,11 @@
 /* ---- Semana (Fase 4) ---------------------------------------------------- */
 .v3-crit { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1.5px solid var(--divisoria); }
 .v3-crit:first-child { border-top: 0; }
-.v3-crit .g { flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--assunto-feito); display: flex; align-items: center; justify-content: center; }
+.v3-crit .g { flex: 0 0 38px; height: 38px; border-radius: 50%; background: var(--assunto-feito); display: flex; align-items: center; justify-content: center; }
 .v3-crit .g.n { background: var(--atencao); }
 .v3-crit .g svg { width: 18px; height: 18px; }
-.v3-crit b { display: block; font: 700 16px/1.2 var(--f-titulo); }
-.v3-crit span { font-size: 13px; color: var(--texto-2); line-height: 1.4; }
+.v3-crit b { display: block; font: 700 17px/1.15 var(--f-titulo); }
+.v3-crit span { font-size: 14px; color: var(--texto-2); line-height: 1.4; }
 .v3-musc { display: flex; align-items: center; gap: 12px; min-height: 56px; border-top: 1.5px solid var(--divisoria); }
 .v3-musc:first-child { border-top: 0; }
 .v3-musc-b { flex: 0 0 96px; height: 10px; border-radius: 9px; overflow: hidden; display: flex; background: var(--superficie-quieta); }
@@ -533,11 +535,12 @@
 
 /* ---- Plano (Fase 4) ----------------------------------------------------- */
 .v3-semana-c { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.v3-semana-c .v3-dia { aspect-ratio: auto; min-height: 58px; font: 700 12px var(--f-titulo); padding-top: 14px; }
-.v3-semana-c .v3-dia small { display: block; font: 600 12px var(--f-texto); }
+/* os dias de treino: a letra do dia num círculo; treino em tinta, folga contornada */
+.v3 .v3-semana-c .v3-dia { aspect-ratio: 1; width: 100%; min-height: var(--alvo); border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 1.5px var(--contorno); color: var(--texto); font: 700 14px var(--f-titulo); display: flex; align-items: center; justify-content: center; }
+.v3 .v3-semana-c .v3-dia.t { background: var(--acao); color: var(--texto-sobre-acao); box-shadow: none; }
 .v3-item { display: flex; align-items: center; gap: 10px; min-height: 56px; border-top: 1.5px solid var(--divisoria); }
 .v3-item:first-child { border-top: 0; }
-.v3 .v3-qtd { min-height: 40px; padding: 0 14px; border-radius: var(--r-pilula); background: var(--superficie-quieta); font: 800 15px var(--f-titulo); }
+.v3 .v3-qtd { min-height: var(--alvo); padding: 0 14px; border-radius: var(--r-pilula); background: var(--superficie-quieta); font: 800 15px var(--f-titulo); }
 .v3-compras { margin-top: 10px; }
 .v3 .v3-compra { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; border-top: 1.5px solid var(--divisoria); text-align: left; }
 .v3-compra:first-child { border-top: 0; }
@@ -610,3 +613,6 @@
 .v3-mus-b .f { background: var(--acao); }
 .v3-mus-b .v { background: repeating-linear-gradient(135deg, var(--texto-legenda) 0 3px, var(--superficie-quieta) 3px 6px); }
 .v3-legm i.vem { background: repeating-linear-gradient(135deg, var(--texto-legenda) 0 3px, var(--superficie-quieta) 3px 6px); }
+
+/* o Plano: cada decisão em areia, com as respostas */
+.v3-plano-espera .v3-decide { margin-top: var(--e-3); padding: 12px 14px; border: 0; border-radius: var(--r-caixa); background: var(--superficie-quieta); }

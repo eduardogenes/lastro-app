@@ -45,7 +45,7 @@ marcado em `05-auditoria.md` com o commit.
 | 2. O que se perde, e a fluidez | feita (`f5df85a`): Ajustes alcançável, a tira do treino aberto, o aviso com "Desfazer", a porta do movimento religada, as âncoras da tela de ação |
 | 3. Tokens e componentes base | feita (`933171b`), depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
 | 4. Treino | feita (`318532f`), depois da revisão: a série com o par e uma régua só, sem rolar; o descanso com o "a seguir" e "Água +1"; o fim; pôr em dia como tela; a aula do box como tela de ação. O principal tem o mesmo retângulo em série, descanso e fim |
-| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | em curso: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada, `e6a969c`); Corpo (`7418d77`); Semana (`0d32ca0`); Ajustes; em revisão: Fotos e Plano |
+| 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | feita: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada, `e6a969c`); Corpo (`7418d77`); Semana (`0d32ca0`); Ajustes (`053e632`); Plano, e Semana e Fotos depois da revisão: o que vence hoje em destaque, o toque duplo nas respostas travado, "Aplicar no plano" com Desfazer, os dias de treino como círculos, a câmera sem rolar e com o disparo parado, apagar foto sem pergunta e com Desfazer, rádios e alvos de 44 |
 | 6. Os três de dado | a fazer |
 | 7. Revisão final | a fazer |
 
@@ -120,6 +120,60 @@ vêm em seguida, na mesma peça):
   dia de hoje); "Corrigir refeição por refeição" leva à folha do dia passado;
 - o quadro tocável tem contorno de divisória (1,3:1), na referência e no app;
   o design system precisa decidir o contorno de quadro que se toca.
+
+Pendências que a revisão do Plano e da Semana deixou (desenho que ainda não é
+o da referência; nada perde dado):
+
+- os treinos ainda em lista vertical; a referência é a fita de cartões grandes,
+  o de hoje em lima, com "· 1 diferença";
+- criar treino ainda abre o `prompt()` do navegador; a referência é a folha
+  com o nome e "Do zero / Copiando um" (copiar não existe no app);
+- responder uma mudança "Passa a valer" ainda não tem Desfazer (desfazer
+  mexe no programa: entra com a revisão mudança por mudança, peça 6); o toque
+  duplo está travado;
+- a linha da mudança não diz de que sessão veio ("no treino B de 09/11");
+- a comida do Plano ainda com o número gigante e os botões Alimentos/Compras;
+  a referência tem a nota de kcal e a linha "Lista de compras"; a comida
+  desligada como linha apagada;
+- a Semana: título do veredito curto ("Pode subir.") com o porquê no apoio,
+  a saída "Ainda não", o alvo por região nas barras, os atalhos com o dado,
+  "O que a regra olha" na voz da referência e nos três estados, a folha
+  "Aplicar" dizendo o que muda no arroz;
+- a retrospectiva sem o mini gráfico, o selo "parado" e "Copiar para o
+  treinador";
+- diferenças e histórico de mudanças do programa sem "Desfazer" por linha;
+- editor, progressão e exercício: "Voltar ao do treinador", o mini gráfico, as
+  datas no gráfico;
+- quantidade da comida: título do alimento, kcal, "Usar esta quantidade"; o
+  foco ainda cai no corpo da página ao abrir a régua; tirar alimento ainda
+  pergunta em vez de desfazer;
+- folhas da refeição, nova refeição (hora pela régua), alimentos (lupa,
+  "Criar “tapioca”"), alimento (vírgula nos números) e compras (marca redonda,
+  `checkbox`, "Copiar a lista").
+
+Pendências que a revisão de Fotos deixou:
+
+- a câmera: a tela de permissão antes de pedir, "abrindo" e "bloqueada"
+  dentro do visor com o mesmo esqueleto; o visor que absorve a altura (as luzes
+  e a fala ainda andam conforme o aviso);
+- o centro das fotos: o título grande, "Quinta, 26 de novembro.", a primeira
+  vez com "Começar" e "Ainda sem foto", a sessão pela metade com título
+  próprio ("6 de 11 fotos", "Continuar") e a grade de 11 com "Encerrar com 6
+  de 11";
+- o fim da sessão com "Comparar com 06/07" como principal, a duração, e o fim
+  "Próxima";
+- nova sessão: a ficha "lente 1×" e "O preparo" como linha antes do principal;
+- comparar: quadros de data em 22, a foto dentro da folha da foto comparada,
+  "Mandar" com Desfazer e o estado sem rede;
+- galeria com 6 por sessão e "ver as 11"; lixeira com "Restaurar", "some em 27
+  dias" e a folha "Apagar as 2 de vez?";
+- a sugestão de alinhamento com o texto concreto e "Ver como fica / Aceitar /
+  Agora não".
+
+Protocolo (só apontado; nada sai sem o dono): as falas das poses, "O preparo"
+e as guias do Ajustar divergem entre o app e a referência. O app segue o
+protocolo atual (`docs/fotos/01-captura.md`); a referência parece mais velha.
+É o design system que precisa ser corrigido, com o dono.
 
 Pendências que a revisão do Corpo deixou. O que perdia registro foi corrigido,
 com duas rodadas do revisor de dado: cada medida é gravada quando FECHA pela

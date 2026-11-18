@@ -133,9 +133,9 @@ test('galeria: o selo por sessão, a foto aberta com a ressalva, apagar e devolv
     await c.put('./corpo/${atras(28)}/perfil-direito.webp', new Response(new Blob(['x'], { type: 'image/webp' })));
   })()`);
   a.clicar('[data-a="foto-apagar"]');
-  await a.esperar(40);
-  a.clicar('[data-a="aviso-sim"]');
   await a.esperar(120);
+  assert.ok(!a.$('[data-a="aviso-sim"]'), 'apagar não pergunta: a lixeira guarda, e o aviso desfaz');
+  assert.ok(/lixeira/.test(a.toast()), a.toast());
   assert.ok(!a.S().protocolo.sessoes[0].fotos['perfil-direito'], 'saiu da sessão');
   a.clicar('[data-a="galeria-lixeira"]');
   await a.esperar(60);
@@ -173,10 +173,10 @@ test('mandar para os agentes: escolhe a pose ou as onze, grava o pedido, e manda
   await a.esperar();
   a.clicar('[data-a="mandar"]');
   await a.esperar(40);
-  assert.strictEqual(a.$('[data-a="mandar-pose"]').getAttribute('aria-pressed'), 'true', 'o padrão é só esta pose');
+  assert.strictEqual(a.$('[data-a="mandar-pose"]').getAttribute('aria-checked'), 'true', 'o padrão é só esta pose');
   a.clicar('[data-a="mandar-todas"]');
   await a.esperar();
-  assert.strictEqual(a.$('[data-a="mandar-todas"]').getAttribute('aria-pressed'), 'true');
+  assert.strictEqual(a.$('[data-a="mandar-todas"]').getAttribute('aria-checked'), 'true');
   a.clicar('[data-a="mandar-ok"]');
   await a.esperar(40);
   assert.ok(!a.$('.v3-folha'), 'a folha fechou');

@@ -12,7 +12,7 @@ import { Acoes, Apoio, Bloco, Botao, Cabecalho, Folha, Linha, Quadros, Saida, Se
  */
 function Barra({ nome, feitas, vem, max, aoTocar, ...resto }) {
   const dentro = <>
-    <span class="v3-mus-l"><b>{nome}</b><span class="v3-n">{feitas} feitas{vem ? ' · ' + vem + ' ainda vêm' : ''}</span></span>
+    <span class="v3-mus-l"><b>{nome}</b>{' '}<span class="v3-n">{feitas} feitas{vem ? ' · ' + vem + ' ainda vêm' : ''}</span></span>
     <span class="v3-mus-b" aria-hidden="true"><i class="f" style={'width:' + (feitas / max * 100) + '%'} /><i class="v" style={'width:' + (vem / max * 100) + '%'} /></span>
   </>;
   return aoTocar ? <button class="v3-mus" onClick={aoTocar} {...resto}>{dentro}</button> : <div class="v3-mus" {...resto}>{dentro}</div>;
@@ -48,7 +48,7 @@ export function SemanaV3({ ctx }) {
           <div>
             {v.portoes.map(g => (
               <div key={g.k} class="v3-crit">
-                <span class={'g' + (g.ok ? '' : ' n')}>{g.ok ? ic.ok : ic.x}</span>
+                <span class={'g' + (g.ok ? '' : ' n')} aria-hidden="true">{g.ok ? ic.ok : ic.x}</span>
                 <div><b>{g.t}</b><span>{g.d}</span></div>
               </div>
             ))}
@@ -104,9 +104,10 @@ export function FolhaMusculos({ ctx, f }) {
 export function FolhaAplicar({ ctx }) {
   const v = ctx.semanaV3().veredito;
   if (!v || !v.podeAplicar) return null;
-  const aplica = () => {
+  const aplica = async () => {
     ctx.fechaFolha();
-    ctx.aplicaAjuste();
+    // o aviso só depois de o aparelho aceitar; se recusar, a faixa de falha diz
+    if (!(await ctx.aplicaAjuste(true))) return;
     ctx.avisaComDesfazer('Aplicado: ' + v.acaoTxt.replace(/^aplicar /, '') + ' por dia.', ctx.desfazAjuste);
   };
   return (
@@ -119,7 +120,7 @@ export function FolhaAplicar({ ctx }) {
 /** Uma linha da retrospectiva: o exercício, de onde saiu e aonde chegou. */
 function LinhaDoBloco({ x }) {
   const meta = Array.isArray(x.meta) ? x.meta.join(' · ') : x.meta;
-  return <Linha quieta titulo={x.nome} apoio={x.series.filter(Boolean).join(' · ') + (meta ? ' · ' + meta : '')} valor={x.delta} />;
+  return <Linha titulo={x.nome} apoio={x.series.filter(Boolean).join(' · ') + (meta ? ' · ' + meta : '')} valor={x.delta} />;
 }
 
 /**

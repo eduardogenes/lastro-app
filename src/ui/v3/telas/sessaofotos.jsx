@@ -4,7 +4,7 @@
 // vai fotografar" e o fim). Decisões da captura: docs/redesign-3/02-captura.md.
 
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Botao, Cabecalho, Bloco, Faixa, Folha, Linha, Saida, Secao, Segmentos, Selo } from '../base.jsx';
+import { Acoes, Apoio, Botao, Cabecalho, Bloco, Faixa, Folha, Linha, Saida, Secao, Segmentos, Selo, Radios, radio } from '../base.jsx';
 import { Foto } from '../foto.jsx';
 
 const QUEM = [
@@ -37,13 +37,15 @@ function NovaSessao({ ctx, s }) {
     <>
       <Cabecalho titulo="Nova sessão" nota={'~4 min · ' + n.total + ' fotos'} aoVoltar={ctx.fechaProtocolo} />
       <Secao titulo="Quem vai segurar o celular?">
-        {QUEM.map(q => (
-          <button key={q.k} class="v3-esc" aria-pressed={n.quem === q.k ? 'true' : 'false'}
+        <Radios rotulo="Quem vai segurar o celular?">
+        {QUEM.map((q, i) => (
+          <button key={q.k} class="v3-esc" {...radio(n.quem === q.k, i === 0, QUEM.some(o => o.k === n.quem))}
                   data-a={'quem-' + q.k} onClick={() => ctx.setQuemSegura(q.k)}>
             <span class="v3-esc-o">{q.icone}</span>
             <span class="v3-esc-t"><b>{q.t}</b><span>{q.a}</span></span>
           </button>
         ))}
+        </Radios>
       </Secao>
       {n.temAnterior && (
         <Secao titulo="Tudo como da última vez?" nota="toque no que mudou">

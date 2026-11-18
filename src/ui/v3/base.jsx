@@ -81,9 +81,9 @@ export function Botao({ tipo = 'principal', grande, cheio, espera, children, ...
 export function Saida({ children, ...resto }) { return <button class="v3-saida" {...resto}>{children}</button>; }
 
 /** Uma seção: título de uma linha, nota opcional à direita. */
-export function Secao({ titulo, nota, children }) {
+export function Secao({ titulo, nota, classe, children }) {
   return (
-    <section class="v3-sec">
+    <section class={cls('v3-sec', classe)}>
       {titulo && <div class="v3-sec-h"><h2>{titulo}</h2>{nota && <small>{nota}</small>}</div>}
       <div>{children}</div>
     </section>
@@ -138,7 +138,7 @@ export function Segmentos({ total, feitos, grupos, rotulo }) {
  * selecionado" (`radiogroup` com `radio` e `aria-checked`), e as setas andam
  * entre elas, como num grupo de rádio do sistema.
  */
-function Radios({ classe, rotulo, children }) {
+export function Radios({ classe, rotulo, children }) {
   const anda = e => {
     const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
     if (!d) return;
@@ -152,7 +152,7 @@ function Radios({ classe, rotulo, children }) {
   return <div class={classe} role="radiogroup" aria-label={rotulo} onKeyDown={anda}>{children}</div>;
 }
 /** O botão de uma escolha única: só o escolhido (ou o primeiro, sem escolha) entra no Tab. */
-const radio = (on, primeiro, algum) => ({ role: 'radio', 'aria-checked': on ? 'true' : 'false', tabindex: on || (!algum && primeiro) ? 0 : -1 });
+export const radio = (on, primeiro, algum) => ({ role: 'radio', 'aria-checked': on ? 'true' : 'false', tabindex: on || (!algum && primeiro) ? 0 : -1 });
 
 /** O SELETOR: duas a quatro opções curtas lado a lado. `opcoes`: `[{ k, t }]`. */
 export function Seletor({ opcoes, valor, aoMudar, rotulo, prefixo }) {

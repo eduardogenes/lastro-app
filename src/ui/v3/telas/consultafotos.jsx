@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Bloco, Botao, Cabecalho, Folha, Linha, Pergunta, Saida, Secao, Seletor, Selo, Vazio } from '../base.jsx';
+import { Acoes, Apoio, Bloco, Botao, Cabecalho, Folha, Linha, Pergunta, Saida, Secao, Seletor, Selo, Vazio, Radios, radio } from '../base.jsx';
 import { Foto } from '../foto.jsx';
 import { GIRO_MAX, ZOOM_MAX, zoomMinimo } from '../../../dominio/enquadramento';
 
@@ -19,11 +19,11 @@ function SeloDaSessao({ noPadrao, txt }) {
 /** As poses numa fileira que rola de lado. */
 function Poses({ poses, valor, aoMudar }) {
   return (
-    <div class="v3-poses" role="group" aria-label="Pose">
-      {poses.map(p => (
-        <button key={p.k} aria-pressed={p.k === valor ? 'true' : 'false'} onClick={() => aoMudar(p.k)}>{p.t}</button>
+    <Radios classe="v3-poses" rotulo="Pose">
+      {poses.map((p, i) => (
+        <button key={p.k} {...radio(p.k === valor, i === 0, poses.some(o => o.k === valor))} onClick={() => aoMudar(p.k)}>{p.t}</button>
       ))}
-    </div>
+    </Radios>
   );
 }
 
@@ -198,11 +198,13 @@ export function FolhaMandar({ ctx, f }) {
   return (
     <Folha titulo="Mandar para os agentes" aoFechar={() => ctx.fechaFolha()}
            sub="Vai o par, com data, hora, peso da semana e o que mudou em cada sessão. Sempre no mesmo formato, para a leitura ser comparável.">
-      {op.map(o => (
-        <button key={o.k} class="v3-esc" aria-pressed={qual === o.k ? 'true' : 'false'} data-a={'mandar-' + o.k} onClick={() => escolhe(o.k)}>
+      <Radios rotulo="O que mandar">
+      {op.map((o, i) => (
+        <button key={o.k} class="v3-esc" {...radio(qual === o.k, i === 0, true)} data-a={'mandar-' + o.k} onClick={() => escolhe(o.k)}>
           <span class="v3-esc-o">{o.icone}</span><span class="v3-esc-t"><b>{o.t}</b><span>{o.a}</span></span>
         </button>
       ))}
+      </Radios>
       <Acoes><Botao data-a="mandar-ok" onClick={() => { ctx.fechaFolha(); ctx.mandaParaOsAgentes(qual); }}>Mandar</Botao></Acoes>
     </Folha>
   );
@@ -287,10 +289,8 @@ export function GaleriaFotoV3({ ctx }) {
   if (!f) return null;
   const chave = f.d + '|' + f.pose;
   const vendo = previa === chave && !!f.sug;
-  const apaga = () => ctx.abreFolha({
-    k: 'aviso', titulo: 'Apagar esta foto?', texto: 'Ela vai para a lixeira e fica 30 dias. Dá para devolver de lá.',
-    sim: 'Apagar', nao: 'Manter', aoSim: () => ctx.apagaDaGaleria(f.d, f.pose)
-  });
+  // sem pergunta: vai para a lixeira, e o aviso traz Desfazer
+  const apaga = () => ctx.apagaDaGaleria(f.d, f.pose);
   return (
     <>
       <Cabecalho titulo={f.data} aoVoltar={ctx.fechaFotoDaGaleria}
@@ -386,13 +386,13 @@ export function AjustarV3({ ctx }) {
       </div>
       {d.datas.length > 0 && (
         <Secao titulo="Alinhar contra" nota={d.fantasma ? 'a outra foto aparece por cima' : null}>
-          <div class="v3-poses v3-poses-dentro" role="group" aria-label="Alinhar contra">
-            <button aria-pressed={!d.fantasma ? 'true' : 'false'} onClick={() => ctx.setFantasmaDoAjuste(false)}>nenhuma</button>
+          <Radios classe="v3-poses v3-poses-dentro" rotulo="Alinhar contra">
+            <button {...radio(!d.fantasma, true, true)} onClick={() => ctx.setFantasmaDoAjuste(false)}>nenhuma</button>
             {d.datas.map(o => (
-              <button key={o.d} aria-pressed={d.fantasma && d.fantasmaD === o.d ? 'true' : 'false'}
+              <button key={o.d} {...radio(d.fantasma && d.fantasmaD === o.d, false, true)}
                       onClick={() => { ctx.setFantasmaDoAjuste(true); ctx.setDataDoFantasma(o.d); }}>{o.txt}</button>
             ))}
-          </div>
+          </Radios>
         </Secao>
       )}
       <Secao>

@@ -8131,7 +8131,7 @@ CTX.planoV3 = function () {
       return { d: d, nome: P.name, hoje: d === hoje, aberto: diaAberto(d),
                series: P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0), n: P.ex.length };
     }),
-    cadencia: DIAS_CURTOS.map(function (rotulo, i) { return { i: i, rotulo: rotulo, treino: cad[i] === 'treino' }; }),
+    cadencia: DIAS_CURTOS.map(function (rotulo, i) { return { i: i, rotulo: rotulo, nome: DIAS_LONGOS[i], treino: cad[i] === 'treino' }; }),
     refeicoes: CTX.planoCompleto(),
     resumo: CTX.resumoDoPlano(),
     esperam: CTX.mudancasQueEsperam()
@@ -8651,10 +8651,10 @@ CTX.semanaV3 = function () {
   };
 };
 
-CTX.aplicaAjuste = async function () {
+CTX.aplicaAjuste = async function (quieto) {
   const v = veredito();
   const passo = ajusteDoVeredito(v);
-  if (!passo) return;                   // observar e manter não propõem passo
+  if (!passo) return false;             // observar e manter não propõem passo
   const ok = await gravaOPasso(function () {
     const antes = S.ajuste || 0;
     const kde = kcalDeTreinoCom(antes);
@@ -8670,7 +8670,9 @@ CTX.aplicaAjuste = async function () {
   }, { verbo: 'aplicado', passo: passo });
   // "Apliquei", e não "Ajuste aplicado": aplicar é ato do registro, e o agente
   // é o app (V8). Só depois de o aparelho aceitar.
-  if (ok) toast('Apliquei ' + sinalDoPasso(passo) + ' kcal. O arroz do plano foi para ' + arrozAtual() + ' g.');
+  // quieto: a folha "Aplicar no plano" dá o próprio aviso, com Desfazer
+  if (ok && quieto !== true) toast('Apliquei ' + sinalDoPasso(passo) + ' kcal. O arroz do plano foi para ' + arrozAtual() + ' g.');
+  return !!ok;
 };
 
 /**
@@ -10792,6 +10794,20 @@ CTX.editDor = function (k) { editDor(k); };
  * continua com o que foi registrado. O que ela decide é o PROGRAMA, e o
  * programa é o que vem depois.
  */
+/**
+ * O toque numa resposta do Plano: responder tira a decisão da tela e o resto
+ * sobe, então o segundo toque de um toque duplo cairia na de baixo. Por um
+ * instante, os toques nas respostas são ignorados. A trava é do toque, não da
+ * regra: quem chama `respondeMudanca` direto não passa por ela.
+ */
+const TRAVA_DA_RESPOSTA_MS = 600;
+let respostaTravadaAte = 0;
+CTX.respondeMudancaPeloToque = function (sid, i, permanente) {
+  const agoraMono = (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
+  if (agoraMono < respostaTravadaAte) return;
+  respostaTravadaAte = agoraMono + TRAVA_DA_RESPOSTA_MS;
+  return CTX.respondeMudanca(sid, i, permanente);
+};
 CTX.respondeMudanca = async function (sid, i, permanente, motivo) {
   if (!Array.isArray(S.promoPendente)) S.promoPendente = listaDePromo(S.promoPendente);
   const chave = chaveDePromo({ sid: sid, t: sid });

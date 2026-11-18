@@ -4,9 +4,10 @@
 // resto.html ("comida", "alimentos", "compras"). Dados: `ctx.planoV3`,
 // `ctx.refeicaoDoPlanoV3`, `ctx.comprasV3`, `ctx.alimentosFiltrados`.
 
+import { Fragment } from 'preact';
 import { useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Botao, Cabecalho, Folha, Linha, Saida, Secao, Seletor, Vazio } from '../base.jsx';
+import { Acoes, Apoio, Botao, Caixa, Cabecalho, Folha, Linha, Saida, Secao, Seletor, Vazio } from '../base.jsx';
 import { Regua } from '../regua.jsx';
 
 export function PlanoV3({ ctx }) {
@@ -18,17 +19,22 @@ export function PlanoV3({ ctx }) {
     <div class="v3">
       <Cabecalho titulo="Plano" raiz nota={p.treinos.length + ' treinos · ' + p.resumo.refeicoes + ' refeições'} />
       {p.esperam.length > 0 && (
-        <Secao titulo="Esperando você" nota="vira regra?">
-          {p.esperam.map(g => g.mudancas.map((m, i) => (
-            <div key={g.sid + '-' + i} class="v3-decide">
-              <p>{m.txt}</p>
-              <small>{g.vence}{m.impacto ? ' · ' + m.impacto : ''}</small>
-              <div class="v3-acoes">
-                <Botao tipo="contorno" data-a={'espera-hoje-' + i} onClick={() => ctx.respondeMudanca(g.sid, i, false)}>Só daquele dia</Botao>
-                <Botao tipo="contorno" data-a={'espera-sempre-' + i} onClick={() => ctx.respondeMudanca(g.sid, i, true)}>{g.entra}</Botao>
+        <Secao titulo="Esperando você" nota="vira regra?" classe="v3-plano-espera">
+          {p.esperam.map(g => <Fragment key={g.sid}>
+            {/* a que vence hoje se destaca: sem resposta até começar o treino, fica só daquele dia */}
+            {g.venceHoje && <Caixa tom="atencao" data-a={'vence-hoje-' + g.sid} titulo={'Vence hoje, no treino ' + g.dia}
+                                   nota={'Se você não responder até começar o ' + g.dia + ', a troca fica só daquele dia.'} />}
+            {g.mudancas.map((m, i) => (
+              <div key={g.sid + '-' + i} class="v3-decide">
+                <p>{m.txt}</p>
+                <small>{g.venceHoje ? 'vence hoje' : g.vence}</small>
+                <div class="v3-perg-r" role="radiogroup" aria-label={m.txt}>
+                  <button role="radio" aria-checked="false" data-a={'espera-hoje-' + i} onClick={() => ctx.respondeMudancaPeloToque(g.sid, i, false)}>Só aquele dia</button>
+                  <button role="radio" aria-checked="false" data-a={'espera-sempre-' + i} onClick={() => ctx.respondeMudancaPeloToque(g.sid, i, true)}>Passa a valer</button>
+                </div>
               </div>
-            </div>
-          )))}
+            ))}
+          </Fragment>)}
         </Secao>
       )}
       <Secao titulo="Treinos" nota="toque para editar">
@@ -52,8 +58,8 @@ export function PlanoV3({ ctx }) {
         <div class="v3-semana-c">
           {p.cadencia.map(d => (
             <button key={d.i} class={'v3-dia' + (d.treino ? ' t' : '')} aria-pressed={d.treino ? 'true' : 'false'} data-a={'cadencia-' + d.i}
-                    aria-label={d.rotulo + ': ' + (d.treino ? 'treino' : 'folga')} onClick={() => ctx.alternaCadencia(d.i)}>
-              <small>{d.rotulo}</small>{d.treino ? 'treino' : 'folga'}
+                    aria-label={d.nome + ': ' + (d.treino ? 'treino' : 'folga')} onClick={() => ctx.alternaCadencia(d.i)}>
+              {d.rotulo.charAt(0).toUpperCase()}
             </button>
           ))}
         </div>
@@ -70,7 +76,7 @@ export function PlanoV3({ ctx }) {
         <div class="v3-gigante v3-n v3-gigante-m">{total.kcal}<small>kcal · {total.macros}</small></div>
         <div>
           {refs.map(r => (
-            <Linha key={r.id} titulo={r.n} apoio={r.t + ' · ' + (r.itens || []).length + ' itens' + (r.quando === 'treino' ? ' · só em dia de treino' : '')}
+            <Linha key={r.id} titulo={r.n} apoio={String(r.t || '').replace(':', 'h') + ' · ' + (r.itens || []).length + ' itens' + (r.quando === 'treino' ? ' · só em dia de treino' : '')}
                    valor={String(r.kcal)} unidade="kcal" data-a={'plano-ref-' + r.id} aoTocar={() => ctx.abreFolha({ k: 'refeicaoDoPlano', id: r.id })} />
           ))}
         </div>

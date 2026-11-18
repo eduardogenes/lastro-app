@@ -227,6 +227,17 @@ export function CameraV3({ ctx }) {
         </div>
       )}
 
+      <div class="v3-cam-mesmo">
+        {!x.liberado && !x.forcado && d.pronta && (
+          <Saida data-a="cam-mesmo-assim" onClick={() => ctx.abreFolha({
+            k: 'aviso', seguro: true, titulo: 'Tirar mesmo assim?',
+            texto: 'As fotos saem e ficam guardadas, mas cada uma entra marcada como fora do padrão, com o que ficou sem acertar (' +
+              x.apagadas.map(k => NOME[k]).join(', ') + '). Na comparação ela aparece com esse aviso.',
+            nao: 'Voltar e acertar', sim: 'Tirar fora do padrão', aoSim: ctx.tiraMesmoAssim
+          })}>Tirar mesmo assim</Saida>
+        )}
+      </div>
+
       {x.completa && !correndo && !d.torta
         ? <Acoes><Botao data-a="cam-ver-sessao" onClick={ctx.fechaCamera}>Ver a sessão {ic.seta}</Botao></Acoes>
         : (
@@ -239,14 +250,6 @@ export function CameraV3({ ctx }) {
             <span class="v3-disparo-l v3-n">{direita}</span>
           </div>
         )}
-      {!x.liberado && !x.forcado && d.pronta && (
-        <Saida data-a="cam-mesmo-assim" onClick={() => ctx.abreFolha({
-          k: 'aviso', seguro: true, titulo: 'Tirar mesmo assim?',
-          texto: 'As fotos saem e ficam guardadas, mas cada uma entra marcada como fora do padrão, com o que ficou sem acertar (' +
-            x.apagadas.map(k => NOME[k]).join(', ') + '). Na comparação ela aparece com esse aviso.',
-          nao: 'Voltar e acertar', sim: 'Tirar fora do padrão', aoSim: ctx.tiraMesmoAssim
-        })}>Tirar mesmo assim</Saida>
-      )}
     </div>
   );
 }
