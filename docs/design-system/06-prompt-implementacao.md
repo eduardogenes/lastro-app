@@ -140,6 +140,23 @@ verificada, revisada e com um commit só.
 Ao fim de cada peça, atualize `05-auditoria.md` (marcando o achado como
 feito, com o commit) e o andamento no `LEIA.md` do design system.
 
+## O esforço de raciocínio
+
+A sessão roda em esforço `high`, que é o certo para quase todo o trabalho.
+Você não consegue mudar o próprio esforço (só o dono muda, com `/effort`),
+então:
+
+- **Antes da peça 6** (os três de dado), pare e escreva ao dono, numa linha:
+  "Vou começar a parte que mexe em dado salvo. Troque o esforço para `max`
+  com `/effort max` e me responda quando trocar." Espere a resposta.
+- **Antes da peça 7** (a revisão final), o mesmo pedido.
+- **Ao terminar cada uma**, peça para voltar: "Pode voltar para `high` com
+  `/effort high`."
+- **Toda peça que muda a forma do estado ou uma regra de domínio** passa,
+  antes do commit, pelo agente `revisor-de-dado` (em `.claude/agents/`), que
+  roda sempre em esforço máximo, mesmo que o dono não tenha trocado o da
+  sessão. Corrija o que ele achar ou escreva por que não procede.
+
 ## Como trabalhar uma peça
 
 1. **Entenda antes de mexer.** Abra as telas da peça no `lastro.html` e

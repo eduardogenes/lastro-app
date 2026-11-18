@@ -22,6 +22,7 @@ plano da próxima fase.
 | `inventario.html` | a página da etapa 1, com as perguntas |
 | [06-prompt-implementacao.md](06-prompt-implementacao.md) | o prompt do chat que implementa o design system no app |
 | `.claude/agents/revisor-de-design.md` (na raiz) | o agente que revisa cada peça implementada contra o design system |
+| `.claude/agents/revisor-de-dado.md` (na raiz) | o agente que revisa, em esforço máximo, toda peça que mexe em dado salvo ou regra |
 
 ## Andamento
 
