@@ -116,7 +116,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   bottom: calc(14px + var(--sa-bottom));
   width: calc(100% - 28px); max-width: 432px; z-index: 75;
   pointer-events: none;
-  /* a foto própria na troca de tela: anda junto em vez de saltar no fim */
+}
+/* A região vazia não tem foto na tela que sai. */
+#toast:not(:empty) {
   view-transition-name: aviso;
 }
 html:has(.v3-doca:not(.oculta)) #toast { bottom: calc(var(--doca) + 24px + var(--sa-bottom)); }

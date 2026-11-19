@@ -118,6 +118,12 @@ para a carga não pular de lugar quando muda de 57,5 para 60.
 | `--t-rotulo` | 13 / 1,25 | 600 | nota de seção, apoio de linha, rótulo de campo |
 | `--t-legenda` | 12 / 1,25 | 600 | **o piso.** Nada que se lê fica abaixo de 12 |
 
+### Campo de texto longo
+
+O rótulo fica a 5 px do campo (`--espaco-rotulo-campo`). A área de texto
+começa com 150 px de altura (`--campo-longo`) e cresce com o conteúdo.
+A letra segue `--t-campo`, com entrelinha de 1,45 (`--entrelinha-campo-longo`).
+
 ### Decisões de tipografia
 
 - **O título do bloco é 50, não 56** (o `hoje.html` usava 56; os lotes, 50).

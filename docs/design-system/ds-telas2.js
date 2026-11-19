@@ -297,7 +297,7 @@ tela({ id: 'f-renomear', n: 'Trocar o nome', g: 'plano', c: 'folha', base: 'exer
   r: () => H.folha('Trocar o nome', 'O histórico continua neste exercício. O nome muda em todos os treinos.', `${H.campo('Nome', 'text', 'Cadeira flexora sentada')}<div class="acoes">${H.vai('Guardar', { desfazer: 'Nome trocado.' })}</div>`) });
 
 tela({ id: 'revisao', n: 'Revisão do treinador', g: 'plano', c: 'destino', lugar: 'plano',
-  d: 'Decisão do dono (17/11): mudança por mudança. Cola o texto, o app lê, mostra cada mudança com a chave; o que ficar de fora continua como diferença sua. Pede regra nova no app (aplicar parte de um treino).',
+  d: 'Decisão do dono (17/11): mudança por mudança. Cola o texto, o app lê, mostra cada mudança com a chave; o que ficar de fora continua como diferença sua. Feito na peça 6: o app também pergunta, antes da lista, o nome que não reconhece com certeza ("é o mesmo / é outro"), diz na linha o que já está no programa dele, e tem o estado "nada muda" quando a revisão é igual ao programa do treinador.',
   es: [['colar', 'colar o texto'], ['lendo', 'lendo'], ['mudancas', 'as mudanças'], ['nada', 'nada lido']], vai: ['programa'],
   r: e => {
     if (e === 'colar' || e === 'lendo') return H.cab('Revisão do treinador', '') + `<section class="secao" style="padding-top:4px"><p class="txt" style="margin-top:0">Cole aqui o texto que o treinador mandou. O app lê, mostra cada mudança e você escolhe quais entram.</p>

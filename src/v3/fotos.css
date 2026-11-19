@@ -444,7 +444,6 @@
 .v3 .v3-ed-s button { min-width: var(--alvo); min-height: var(--alvo); border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--tracejado); font: 800 18px var(--f-titulo); }
 .v3-ed-s b { min-width: 24px; text-align: center; font: 800 18px var(--f-titulo); }
 .v3-ed-troca { flex: 0 0 100%; padding: 4px 0 10px 50px; }
-.v3 .v3-texto { min-height: 180px; padding: 12px 14px; line-height: 1.45; resize: vertical; }
 
 /* ---- Aula do box -------------------------------------------------------- */
 .v3-rapida { display: flex; align-items: center; gap: 8px; min-height: 64px; border-top: 1.5px solid var(--divisoria); }

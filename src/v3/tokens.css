@@ -107,6 +107,11 @@
   --fio-forte: 2px;      /* botão de contorno, campo, aviso */
   --fio-escolhido: 2.5px;/* o escolhido, o "agora", o foco */
 
+  /* ---------- campo de texto longo ---------- */
+  --espaco-rotulo-campo: 5px;
+  --entrelinha-campo-longo: 1.45;
+  --campo-longo: 150px;   /* altura mínima do texto colado */
+
   /* ---------- tamanho de toque ---------- */
   --alvo: 44px;          /* piso de qualquer coisa que se toca */
   --alvo-saida: 44px;    /* a saída discreta sublinhada também */
@@ -143,6 +148,7 @@
   --d-navega: 260ms;     /* a tela que entra num destino */
   --d-recolhe: 260ms;    /* a tela de ação desce */
   --d-fecha: 240ms;      /* folha que desce */
+  --d-estado-tela: 220ms; /* acomodar as seções dentro da mesma tela */
   --d-estado: 200ms;     /* troca de estado de um controle */
   --d-chave: 250ms;      /* a bolinha da chave */
   --d-folha: 340ms;      /* folha sobe */
@@ -155,7 +161,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --d-toque: 0ms; --d-estado: 0ms; --d-chave: 0ms; --d-folha: 0ms; --d-fecha: 0ms;
+    --d-toque: 0ms; --d-estado-tela: 0ms; --d-estado: 0ms; --d-chave: 0ms; --d-folha: 0ms; --d-fecha: 0ms;
     --d-acao: 0ms; --d-entra: 0ms; --d-cor: 0ms; --d-veu: 0ms;
     --d-sai: 0ms; --d-passo: 0ms; --d-navega: 0ms; --desliza: 0px;
     --d-lugar-sai: 0ms; --d-atraso-lugar: 0ms; --d-atraso: 0ms; --d-passo-sai: 0ms;

@@ -46,7 +46,7 @@ marcado em `05-auditoria.md` com o commit.
 | 3. Tokens e componentes base | feita (`933171b`), depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
 | 4. Treino | feita (`318532f`), depois da revisão: a série com o par e uma régua só, sem rolar; o descanso com o "a seguir" e "Água +1"; o fim; pôr em dia como tela; a aula do box como tela de ação. O principal tem o mesmo retângulo em série, descanso e fim |
 | 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | feita: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada, `e6a969c`); Corpo (`7418d77`); Semana (`0d32ca0`); Ajustes (`053e632`); Plano, e Semana e Fotos depois da revisão: o que vence hoje em destaque, o toque duplo nas respostas travado, "Aplicar no plano" com Desfazer, os dias de treino como círculos, a câmera sem rolar e com o disparo parado, apagar foto sem pergunta e com Desfazer, rádios e alvos de 44 |
-| 6. Os três de dado | em curso: o tamanho do "comi outra coisa" feito (a folha com quatro respostas e "✓ Guardar", a marca `'fora'` com o tamanho, a fusão, a cópia, a pasta dos agentes; e, achados nas revisões, a lápide antes da união, a correção do pôr em dia pela lápide, a porção que segue a marca). Faltam a revisão do treinador mudança por mudança e a primeira vez em três passos |
+| 6. Os três de dado | em curso: o tamanho do "comi outra coisa" feito (`f3f82c0`: a folha com quatro respostas e "✓ Guardar", a marca `'fora'` com o tamanho, a fusão, a cópia, a pasta dos agentes; e, achados nas revisões, a lápide antes da união, a correção do pôr em dia pela lápide, a porção que segue a marca). A revisão do treinador mudança por mudança (o programa do treinador é a revisão inteira, o dele recebe as marcadas, o que fica de fora é diferença; desfazer). Parte 2 feita, depois de três rodadas das revisões de dado e de design (o toque duplo em Aplicar, "Tentar de novo" que aplica, os carimbos restaurados na falha, a aula e a lista numa chave só). Falta a primeira vez em três passos |
 | 7. Revisão final | a fazer |
 
 Pendências que a revisão da peça 2 deixou para depois, de propósito:
@@ -150,6 +150,26 @@ o da referência; nada perde dado):
 - folhas da refeição, nova refeição (hora pela régua), alimentos (lupa,
   "Criar “tapioca”"), alimento (vírgula nos números) e compras (marca redonda,
   `checkbox`, "Copiar a lista").
+
+Pendências da peça 6, parte 2, após a terceira rodada de revisão:
+
+- Reconhecer a mudança de ordem que já está no programa pessoal. Hoje ela
+  entra na contagem de aplicadas e pode bloquear um treino aberto.
+- Durante os 6 s do Desfazer, uma fusão pode substituir o aviso por
+  “Do outro aparelho: …”. O dado fica preservado.
+- A fusão de `prog` usa o documento inteiro. Uma edição mais recente em
+  outro aparelho depois da revisão pode substituir o programa pessoal inteiro.
+- Medir o aviso compartilhado nas fotos e em “Pulado hoje”. O caminho do Hoje
+  foi conferido.
+- Antes do iOS 18.4, `match-element` não dá nomes às seções. A troca de
+  estado usa a dissolução da página inteira.
+- "Tentar de novo" sobre um estado mudado por fusão: se outra revisão chegou
+  do outro aparelho entre a falha e o toque, pode entrar uma mudança que a
+  pessoa não viu (marcada por padrão). O Desfazer funciona. Correção: guardar
+  as chaves confirmadas no toque que falhou e, se as recalculadas forem
+  outras, mostrar a lista em vez de aplicar.
+- O Desfazer não arquiva de novo um exercício com histórico que a revisão
+  desarquivou (`usado()` o protege); ele fica visível nas listas.
 
 Pendências que a revisão da peça 6 (o tamanho do "comi outra coisa") deixou:
 

@@ -49,7 +49,7 @@ window.AUDITORIA = [
     { t: 'cor', f: 'peça 3', o: 'Faixa do editor com a cor trocada', h: 'Menos séries que o treinador em tangerina.', c: 'Mais em tangerina (atenção: passou do prescrito), menos em céu.', l: 'src/v3/fotos.css:381' }
   ] },
   { g: 'Plano e revisão', a: [
-    { t: 'dado', o: 'Revisão aplica treinos inteiros', h: 'Cada treino que muda entra todo ou não entra.', c: 'Decisão do dono (17/11): mudança por mudança, com a chave em cada uma; o que ficar de fora continua como diferença sua. Pede a regra de aplicar parte de um treino (teste de domínio: aplicar 4 de 5 e conferir o programa e as diferenças).', l: 'RevisaoV3 em programa.jsx; a leitura da revisão em src/main.jsx' },
+    { t: 'dado', f: 'peça 6', o: 'Revisão aplica treinos inteiros', h: 'Cada treino que muda entra todo ou não entra.', c: 'Decisão do dono (17/11): mudança por mudança, com a chave em cada uma; o que ficar de fora continua como diferença sua. Pede a regra de aplicar parte de um treino (teste de domínio: aplicar 4 de 5 e conferir o programa e as diferenças).', l: 'RevisaoV3 em programa.jsx; a leitura da revisão em src/main.jsx' },
     { t: 'estado', f: 'peça 5, Plano', o: 'O que vence hoje não se destaca', h: 'O prazo aparece na linha pequena de cada mudança (g.vence), mas uma que vence hoje tem o mesmo peso das outras; venceHoje não é usado na tela.', c: 'Vencendo hoje, um aviso de atenção acima da mudança ("Vence hoje, no treino B"), e as respostas como fichas ("Só aquele dia" / "Passa a valer").', l: 'plano.jsx; src/main.jsx:10716' }
   ] },
   { g: 'Dias, Corpo, Fotos', a: [

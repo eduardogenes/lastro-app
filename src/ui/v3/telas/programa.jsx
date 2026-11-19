@@ -5,7 +5,7 @@
 // a faixa de séries por músculo é `ctx.faixaDoTreinoV3`.
 
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Botao, Cabecalho, Linha, Pergunta, Saida, Secao, Vazio } from '../base.jsx';
+import { Acoes, Apoio, Botao, Caixa, Cabecalho, Chave, Linha, Pergunta, Saida, Secao, Vazio } from '../base.jsx';
 
 export function ProgramaV3({ ctx }) {
   const p = ctx.programa();
@@ -129,6 +129,16 @@ function EditorV3({ ctx, p }) {
 
 // ---------- revisão do treinador ----------
 
+/** O tom do círculo de cada sinal: menta entra, atenção sai, o céu da semana o que muda. */
+const TOM_DO_SINAL = { '+': '', '−': 't' };
+const mudancasEm = n => n + (n === 1 ? ' mudança' : ' mudanças');
+
+/**
+ * A REVISÃO DO TREINADOR (ds-telas2.js, "revisao"): cola o texto, o app lê,
+ * pergunta o nome que não reconhece com certeza, e mostra cada mudança com a
+ * chave. Decisão do dono (17/11/2026): mudança por mudança; o que ficar de fora
+ * continua como diferença dele em relação ao programa do treinador.
+ */
 export function RevisaoV3({ ctx }) {
   const r = ctx.revisao();
   if (!r) return null;
@@ -136,36 +146,80 @@ export function RevisaoV3({ ctx }) {
     return (
       <>
         <Cabecalho titulo="Revisão do treinador" aoVoltar={ctx.fechaRevisao} />
-        <div class="v3-pad">
-          <Apoio>Cole aqui o texto que o treinador mandou. O app lê, mostra o que muda em cada treino, e você confirma.</Apoio>
-          <textarea id="revisao-texto" class="v3-campo v3-texto" aria-label="Texto da revisão" placeholder="Cole o texto da revisão"
+        <div class="v3-pad v3-revisao-colar">
+          <Apoio>Cole aqui o texto que o treinador mandou. O app lê, mostra cada mudança e você escolhe quais entram.</Apoio>
+          <label class="v3-rotulo" for="revisao-texto">Texto da revisão</label>
+          <textarea id="revisao-texto" class="v3-campo v3-texto" placeholder="Cole o texto da revisão"
                     onInput={e => ctx.textoDaRevisao(e.currentTarget)}>{r.texto}</textarea>
           <Acoes><Botao data-a="revisao-le" onClick={ctx.leRevisao}>Ler a revisão {ic.seta}</Botao></Acoes>
         </div>
       </>
     );
   }
+  const perguntas = r.perguntas.map(q => (
+    <Secao key={q.nome}>
+      <Pergunta pergunta={q.resposta === 'outro' ? '“' + q.nome + '” é outro exercício.'
+                : '“' + q.nome + '” é ' + q.candidato + (q.resposta ? '.' : '?')}
+                nota={q.candidato + ' ' + q.series + q.lugar + '.'}
+                respostas={[{ k: 'mesma', t: 'É o mesmo' }, { k: 'outro', t: 'É outro' }]}
+                valor={q.resposta} aoResponder={k => ctx.respondeRevisao(q.nome, k)} />
+    </Secao>
+  ));
+  const falha = r.falhou && <Caixa tom="atencao" titulo="A revisão não foi aplicada." nota="Suas escolhas continuam aqui." />;
+  if (r.vazia || r.igual) {
+    return (
+      <>
+        <Cabecalho titulo={r.vazia ? 'Nada lido' : 'Nada muda'} nota={r.data || ''} aoVoltar={ctx.fechaRevisao} />
+        {perguntas}
+        <Secao>
+          {falha}
+          <Vazio titulo={r.vazia ? 'O app não achou mudanças no texto' : 'A revisão é igual ao programa do treinador'}>
+            <p>{r.vazia ? 'Ele procura nome de treino, de exercício e séries (“3x8-12”). Confira se o texto veio inteiro, ou edite o programa à mão.'
+                        : 'Nenhum exercício, série, repetição ou descanso muda nos treinos que ela traz.'}</p>
+            <Acoes>
+              <Botao tipo="contorno" cheio data-a="revisao-edita" onClick={ctx.editaTextoDaRevisao}>Editar o texto</Botao>
+              <Botao tipo="contorno" cheio data-a="revisao-programa" onClick={() => { ctx.fechaRevisao(); ctx.abrePrograma(); }}>Abrir o programa</Botao>
+            </Acoes>
+          </Vazio>
+          {r.problemas && r.problemas.length > 0 && r.problemas.map(p => <Apoio key={p.linha}>“{p.linha}”: {p.motivo}.</Apoio>)}
+        </Secao>
+        <div class="v3-fim-curto" />
+      </>
+    );
+  }
   return (
     <>
-      <Cabecalho titulo={r.vazia ? 'Nada lido' : r.dias.length + (r.dias.length === 1 ? ' treino muda' : ' treinos mudam')} nota={r.data || ''} aoVoltar={ctx.fechaRevisao} />
-      {r.problemas && r.problemas.length > 0 && <div class="v3-pad">{r.problemas.map(p => <Apoio key={p}>{p}</Apoio>)}</div>}
-      {r.perguntas.map(q => (
-        <Secao key={q.nome}>
-          <Pergunta pergunta={'"' + q.nome + '" é ' + q.candidato + '?'} nota={q.series + (q.lugar ? ' ' + q.lugar : '')}
-                    respostas={[{ k: 'mesma', t: 'É o mesmo' }, { k: 'outro', t: 'É outro' }]}
-                    valor={q.resposta} aoResponder={k => ctx.respondeRevisao(q.nome, k)} />
-        </Secao>
-      ))}
-      {r.dias.map(d => (
-        <Secao key={d.dia} titulo={'Treino ' + d.dia + (d.novo ? ' · novo' : '')} nota={d.series}>
-          <div>{d.linhas.map((l, j) => <Linha key={j} titulo={l} />)}</div>
-          {d.suas.length > 0 && <Apoio>Suas mudanças neste treino saem: {d.suas.join('; ')}.</Apoio>}
+      <Cabecalho titulo={r.falta ? 'Revisão do treinador' : mudancasEm(r.total)} nota={r.falta ? null : r.marcadas + (r.marcadas === 1 ? ' marcada' : ' marcadas')} aoVoltar={ctx.fechaRevisao} />
+      {r.problemas && r.problemas.length > 0 && (
+        <div class="v3-pad">{r.problemas.map(p => <Apoio key={p.linha}>“{p.linha}”: {p.motivo}.</Apoio>)}</div>
+      )}
+      {perguntas}
+      {r.grupos.map(g => (
+        <Secao key={g.dia} titulo={g.titulo}>
+          <div>
+            {g.mudancas.map(m => (
+              <Chave key={m.k} sinal={m.sinal} tom={m.sinal in TOM_DO_SINAL ? TOM_DO_SINAL[m.sinal] : 'm'} titulo={m.titulo} apoio={m.detalhe}
+                     ligada={m.on} data-a={'mud-' + m.k} aoMudar={() => ctx.alternaMudanca(m.k)} />
+            ))}
+          </div>
         </Secao>
       ))}
       {r.novos.length > 0 && <div class="v3-pad"><Apoio>Exercícios novos no catálogo: {r.novos.join(', ')}.</Apoio></div>}
-      <Secao>
-        <Acoes><Botao data-a="revisao-aplica" disabled={!r.pode} onClick={ctx.incorporaRevisao}>Aplicar a revisão</Botao></Acoes>
-        <Apoio>O programa do treinador passa a ser este, nos treinos que a revisão traz. Dá para desfazer pelo histórico de mudanças.</Apoio>
+      <Secao classe="v3-revisao-confirmar">
+        {falha}
+        {r.bloqueio && (
+          <Caixa tom="atencao" data-a="revisao-bloqueio" titulo={'Treino ' + r.bloqueio + ' está aberto agora.'}
+                 nota={'Mudar o programa dele no meio do treino misturaria as séries de hoje. Aplique depois de encerrar, ou desmarque as mudanças do treino ' + r.bloqueio + '.'} />
+        )}
+        <Acoes class="v3-acoes-0">
+          <Botao data-a="revisao-aplica" disabled={!!r.bloqueio} aria-disabled={r.falta || undefined}
+                 aria-describedby={r.falta ? 'revisao-motivo' : undefined} onClick={ctx.incorporaRevisao}>
+            {r.falta ? 'Aplicar' : r.marcadas ? 'Aplicar ' + mudancasEm(r.marcadas) : 'Guardar a revisão'}
+          </Botao>
+        </Acoes>
+        {r.falta ? <p class="v3-apoio" id="revisao-motivo">
+          {r.perguntas.filter(q => !q.resposta).length > 1 ? 'Responda as perguntas acima para aplicar.' : 'Responda a pergunta acima para aplicar.'}
+        </p> : <Apoio>O programa do treinador passa a ser este. O que você deixar de fora continua aparecendo como diferença sua. Dá para desfazer.</Apoio>}
       </Secao>
       <div class="v3-fim-curto" />
     </>

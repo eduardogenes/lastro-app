@@ -82,7 +82,7 @@
 .v3-sec-h h2 { font: var(--t-secao); letter-spacing: -.02em; }
 .v3-sec-h small { font: var(--t-rotulo); color: var(--texto-legenda); text-align: right; }
 .v3-sec-h + * { margin-top: var(--e-4); }
-.v3-apoio { font: var(--t-apoio); color: var(--texto-2); margin-top: var(--e-3); text-wrap: pretty; }
+.v3-apoio { overflow-wrap: anywhere; font: var(--t-apoio); color: var(--texto-2); margin-top: var(--e-3); text-wrap: pretty; }
 
 .v3-lin {
   display: flex; align-items: center; gap: var(--e-6); width: 100%; min-height: var(--linha); padding: 8px 0;
@@ -109,7 +109,7 @@
    de fio não se via, 1,3:1); ligada: trilho de tinta e bolinha de superfície */
 .v3-chave { display: flex; align-items: center; gap: var(--e-6); width: 100%; min-height: 64px; padding: 8px 0; border-top: var(--fio-fino) solid var(--divisoria); }
 .v3-chave:first-child, .v3-chave:only-of-type { border-top: 0; }
-.v3-chave-t { flex: 1; min-width: 0; }
+.v3-chave-t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .v3-chave-t b { display: block; font: 600 16px/1.25 var(--f-texto); }
 .v3-chave-t span { font: 500 13px/1.3 var(--f-texto); color: var(--texto-legenda); }
 .v3-chave-k {
@@ -122,6 +122,12 @@
 }
 .v3-chave[aria-checked="true"] .v3-chave-k { background: var(--acao); box-shadow: none; }
 .v3-chave[aria-checked="true"] .v3-chave-k::after { transform: translateX(22px); background: var(--superficie); }
+/* a linha de uma mudança da revisão: o sinal num círculo, o título em 700 (a .mud de lá) */
+.v3-chave.v3-mud { gap: var(--e-5); }
+.v3-mud-s { flex: 0 0 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 800 18px var(--f-titulo); background: var(--assunto-feito); }
+.v3-mud-s.t { background: var(--atencao); }
+.v3-mud-s.m { background: var(--assunto-semana); }
+.v3-mud .v3-chave-t b { font: var(--t-nome-p); }
 
 /* ---- 5. Segmentos ----------------------------------------------------- */
 .v3-segs { display: flex; gap: 3px; }
@@ -217,7 +223,7 @@ button.v3-quadro { min-height: var(--alvo); }
 .v3-dupla-x { flex: 0 0 auto; font: 700 28px var(--f-titulo); padding-bottom: 22px; }
 
 /* ---- 18. Vazio -------------------------------------------------------- */
-.v3-vazio { border-radius: 28px; background: var(--superficie-quieta); padding: 22px 20px; }
+.v3-vazio { margin-top: var(--e-4); border-radius: 28px; background: var(--superficie-quieta); padding: 22px 20px; }
 .v3-vazio h3 { font: 800 26px/1.05 var(--f-titulo); letter-spacing: -.02em; }
 .v3-vazio p { font: 500 15px/1.45 var(--f-texto); color: var(--texto-2); margin-top: var(--e-3); }
 
@@ -368,3 +374,19 @@ button.v3-quadro { min-height: var(--alvo); }
 .v3-doca.mini .v3-doca-n { flex: 0 0 var(--doca); }
 .v3 .v3-doca.mini .v3-doca-n button:not([aria-current="page"]) { flex: 0 0 0; width: 0; opacity: 0; }
 .v3-doca.mini .v3-doca-n button[aria-current="page"] span { display: none; }
+
+/* ---- 14. Campo de texto longo ------------------------------------------ */
+.v3-pad.v3-revisao-colar { padding-top: var(--e-1); }
+.v3-revisao-colar > .v3-apoio { margin-top: 0; }
+.v3-rotulo:has(+ .v3-texto) { font: var(--t-rotulo); }
+.v3 .v3-campo.v3-texto {
+  field-sizing: content; min-height: var(--campo-longo); resize: none;
+  padding: var(--e-6); border: 0; border-radius: var(--r-caixa);
+  font: var(--t-campo); line-height: var(--entrelinha-campo-longo);
+  box-shadow: inset 0 0 0 var(--fio-forte) var(--texto);
+}
+.v3 .v3-campo.v3-texto:focus {
+  outline: none; box-shadow: inset 0 0 0 var(--fio-escolhido) var(--foco);
+}
+.v3-rotulo + .v3-campo.v3-texto { margin-top: var(--espaco-rotulo-campo); }
+.v3-revisao-confirmar .v3-caixa + .v3-acoes { margin-top: var(--e-5); }

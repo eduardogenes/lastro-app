@@ -2,7 +2,8 @@
 // dono, 14/10): ler, casar os nomes sem chutar, e dizer o que muda.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { lerRevisao, casaNomes, parecenca, mudancasDaRevisao } from '../../src/dominio/revisao';
+import { lerRevisao, casaNomes, parecenca, treinoDaRevisao, mudancasDoTreino, aplicaMudancas } from '../../src/dominio/revisao';
+import type { TreinoDoPrograma, MudancaDaRevisao } from '../../src/dominio/revisao';
 
 const TEXTO = `Revisão 21/09
 
@@ -47,7 +48,7 @@ Texto qualquer
 Treino A · de novo`);
   const motivos = r.problemas.map(p => p.motivo);
   assert.ok(motivos.includes('exercício antes de qualquer "Treino X"'));
-  assert.ok(motivos.some(m => /^não entendi: pesado demais, ombro$/.test(m)), motivos.join(' | '));
+  assert.ok(motivos.some(m => /^trecho não reconhecido: pesado demais, ombro$/.test(m)), motivos.join(' | '));
   assert.ok(motivos.includes('falta séries × repetições, como "3 x 8-12"'));
   assert.ok(motivos.includes('não é cabeçalho de treino nem exercício'));
   assert.ok(motivos.includes('o Treino A aparece duas vezes'));
@@ -94,15 +95,244 @@ test('o que muda no treino: entra, sai, e as séries de antes e depois', () => {
   const r = lerRevisao(TEXTO);
   const ids = { 'Agachamento no Smith': 'agachamento-no-smith', 'Flexora sentada': 'cadeira-flexora-sentada',
                 'Hip thrust máquina': 'elevacao-pelvica-na-maquina', 'Panturrilha em pé': 'panturrilha-em-pe' };
-  const m = mudancasDaRevisao(r, ids, ATUAL, id => (CAT as Record<string, { n: string }>)[id].n);
-  assert.deepStrictEqual(m[0].linhas, [
+  const velho = { name: 'Pernas completas + panturrilhas', tag: '', ex: [
+    { id: 'agachamento-no-smith', s: 2, r: '6–10', d: 180, rir: '1–2' }, { id: 'cadeira-flexora-sentada', s: 3, r: '8–12', d: 120, rir: '1' },
+    { id: 'elevacao-pelvica-na-maquina', s: 2, r: '8–12', d: 150, rir: '1' }, { id: 'leg-press', s: 2, r: '10–15', d: 150 }
+  ] };
+  const novo = treinoDaRevisao(r.dias[0], ids, velho, () => 90, 1);
+  const nome = (id: string) => (CAT as Record<string, { n: string }>)[id].n;
+  const m = mudancasDoTreino('B', velho, novo, velho, nome);
+  assert.deepStrictEqual(m.map(x => x.titulo), [
+    'Panturrilha em pé entra',
+    'Leg press sai',
     'Cadeira flexora sentada: 3 → 4 séries',
-    'Elevação pélvica na máquina: 2 → 3 séries',
-    'entra Panturrilha em pé, 3 séries',
-    'sai Leg press'
+    'Elevação pélvica na máquina: 2 → 3 séries'
   ]);
-  assert.deepStrictEqual([m[0].antes, m[0].depois], [9, 12]);
-  assert.strictEqual(m[1].novo, true, 'o HX não existia nesse programa de teste');
+  assert.strictEqual(m[0].detalhe, '3 × 6–10, no fim');
+  assert.strictEqual(m[1].detalhe, 'era 2 × 10–15');
+  assert.deepStrictEqual(m.map(x => x.sinal), ['+', '−', '↑', '↑']);
+});
+
+// ---------- mudança por mudança (peça 6, decisão do dono de 17/11/2026) ----------
+
+const nomes: Record<string, string> = {
+  agacha: 'Agachamento', hack: 'Hack machine', extensora: 'Cadeira extensora', flexora: 'Cadeira flexora',
+  lateral: 'Elevação lateral', facepull: 'Face pull', remada: 'Remada', rosca: 'Rosca direta', minha: 'A minha'
+};
+const nomeDe = (id: string) => nomes[id] || id;
+const sl = (id: string, s: number, r: string, extra: Record<string, unknown> = {}) => Object.assign({ id: id, s: s, r: r, d: 120, desde: 0 }, extra);
+const tr = (ex: ReturnType<typeof sl>[], name = 'Treino') => ({ name: name, tag: '', ex: ex }) as TreinoDoPrograma;
+/** as diferenças do programa dele contra o do treinador, como a `difDoDia` as conta (presença, séries, repetições, descanso, ordem) */
+function diferencas(meu: TreinoDoPrograma | undefined, base: TreinoDoPrograma) {
+  const out: string[] = [];
+  const m = (meu && meu.ex) || [], b = base.ex;
+  const bi: Record<string, typeof b[0]> = {}; b.forEach(x => { bi[x.id] = x; });
+  const mi: Record<string, typeof m[0]> = {}; m.forEach(x => { mi[x.id] = x; });
+  m.forEach(x => {
+    const o = bi[x.id];
+    if (!o) { out.push('só no seu: ' + x.id); return; }
+    if (x.s !== o.s) out.push(x.id + ' séries');
+    if (x.r !== o.r) out.push(x.id + ' repetições');
+    if (x.d !== o.d) out.push(x.id + ' descanso');
+  });
+  b.forEach(x => { if (!mi[x.id]) out.push('só no do treinador: ' + x.id); });
+  const a1 = m.filter(x => bi[x.id]).map(x => x.id).join('|'), a2 = b.filter(x => mi[x.id]).map(x => x.id).join('|');
+  if (a1 !== a2) out.push('ordem');
+  return out;
+}
+
+test('aplicar 4 de 5: o programa dele recebe as marcadas, e a que ficou de fora é a única diferença', () => {
+  // o exemplo do design system (ds-telas2.js, "revisao")
+  const velho = {
+    B: tr([sl('agacha', 2, '6–10'), sl('extensora', 1, '10–15'), sl('flexora', 4, '8–12')]),
+    C: tr([sl('remada', 3, '6–10'), sl('rosca', 2, '8–12')]),
+    D: tr([sl('lateral', 4, '12–15')])
+  };
+  const texto = `Revisão 18/11
+Treino B · Treino
+- Agacha · 2 x 6-10
+- Hack · 3 x 8-12
+- Flexora · 3 x 8-12
+Treino C · Treino
+- Remada · 3 x 6-10
+- Rosca · 2 x 8-12
+- Facepull · 2 x 12-15
+Treino D · Treino
+- Lateral · 5 x 12-15`;
+  const rev = lerRevisao(texto);
+  const ids = { Agacha: 'agacha', Hack: 'hack', Flexora: 'flexora', Remada: 'remada', Rosca: 'rosca', Facepull: 'facepull', Lateral: 'lateral' };
+  const dias = rev.dias.map(d => {
+    const v = (velho as Record<string, TreinoDoPrograma>)[d.dia];
+    const novo = treinoDaRevisao(d, ids, v, () => 90, 1000);
+    return { dia: d.dia, v: v, novo: novo, m: mudancasDoTreino(d.dia, v, novo, v, nomeDe) };
+  });
+  const todas = dias.reduce((a, d) => a.concat(d.m), [] as MudancaDaRevisao[]);
+  assert.deepStrictEqual(todas.map(m => m.titulo), [
+    'Hack machine entra', 'Cadeira extensora sai', 'Cadeira flexora: 4 → 3 séries', 'Face pull entra', 'Elevação lateral: 4 → 5 séries'
+  ], 'cinco mudanças, uma por linha');
+  assert.strictEqual(todas[0].detalhe, '3 × 8–12, depois de Agachamento');
+  assert.strictEqual(todas[3].detalhe, '2 × 12–15, no fim');
+  // a extensora fica de fora
+  const fora = todas.filter(m => m.k === 'B:sai:extensora');
+  assert.strictEqual(fora.length, 1);
+  const meu: Record<string, TreinoDoPrograma | undefined> = {};
+  dias.forEach(d => { meu[d.dia] = aplicaMudancas(d.v, d.v, d.novo, d.m.filter(m => m.k !== 'B:sai:extensora'), 5000); });
+  assert.deepStrictEqual(meu.B!.ex.map(x => x.id + ' ' + x.s), ['agacha 2', 'hack 3', 'extensora 1', 'flexora 3'],
+    'o hack entrou depois do agachamento, a flexora caiu para 3, e a extensora ficou');
+  assert.strictEqual(meu.B!.ex[1].desde, 5000, 'o que entra conta a partir de agora');
+  assert.deepStrictEqual(meu.C!.ex.map(x => x.id), ['remada', 'rosca', 'facepull'], 'o face pull no fim');
+  assert.strictEqual(meu.D!.ex[0].s, 5);
+  // e o que sobra como diferença é exatamente o que ficou de fora
+  assert.deepStrictEqual(diferencas(meu.B, dias[0].novo), ['só no seu: extensora']);
+  assert.deepStrictEqual(diferencas(meu.C, dias[1].novo), []);
+  assert.deepStrictEqual(diferencas(meu.D, dias[2].novo), []);
+  // aplicar tudo deixa o programa dele igual ao do treinador; nada, igual ao de antes
+  const tudo = aplicaMudancas(dias[0].v, dias[0].v, dias[0].novo, dias[0].m, 5000);
+  assert.deepStrictEqual(diferencas(tudo, dias[0].novo), []);
+  const nada = aplicaMudancas(dias[0].v, dias[0].v, dias[0].novo, [], 5000);
+  assert.deepStrictEqual(nada, dias[0].v, 'sem mudança marcada, o treino dele fica como estava');
+});
+
+test('o que ele já tinha mudado e a revisão não toca fica; a mudança aplica só o que muda', () => {
+  const velho = tr([sl('agacha', 2, '6–10'), sl('flexora', 4, '8–12')]);
+  // ele: 3 séries no agachamento e outra faixa na flexora, e um exercício só dele no meio
+  const meu = tr([sl('agacha', 3, '6–10'), sl('minha', 2, '10–12'), sl('flexora', 4, '10–12')]);
+  const novo = tr([sl('agacha', 2, '8–12'), sl('flexora', 3, '8–12')]);
+  const m = mudancasDoTreino('B', velho, novo, meu, nomeDe);
+  assert.deepStrictEqual(m.map(x => x.titulo), ['Agachamento: 6–10 → 8–12 repetições', 'Cadeira flexora: 4 → 3 séries']);
+  assert.deepStrictEqual(m[0].campos, ['r']);
+  assert.ok(/no seu programa: 3 × 6–10/.test(m[0].detalhe || ''), 'diz o que ele tem: ' + m[0].detalhe);
+  const t = aplicaMudancas(meu, velho, novo, m, 1)!;
+  assert.deepStrictEqual(t.ex.map(x => x.id + ' ' + x.s + ' ' + x.r), ['agacha 3 8–12', 'minha 2 10–12', 'flexora 3 10–12'],
+    'as séries dele no agachamento e a faixa dele na flexora ficam; o só dele fica no lugar');
+});
+
+test('a ordem: os da revisão trocam de lugar entre si, e o que é só dele não sai do lugar', () => {
+  const velho = tr([sl('agacha', 2, '6–10'), sl('flexora', 3, '8–12'), sl('lateral', 3, '12–15')]);
+  const novo = tr([sl('lateral', 3, '12–15'), sl('agacha', 2, '6–10'), sl('flexora', 3, '8–12')]);
+  const meu = tr([sl('agacha', 2, '6–10'), sl('minha', 2, '10–12'), sl('flexora', 3, '8–12'), sl('lateral', 3, '12–15')]);
+  const m = mudancasDoTreino('B', velho, novo, meu, nomeDe);
+  assert.deepStrictEqual(m.map(x => x.tipo), ['ordem']);
+  assert.strictEqual(m[0].detalhe, 'Elevação lateral passa para antes de Agachamento');
+  const t = aplicaMudancas(meu, velho, novo, m, 1)!;
+  assert.deepStrictEqual(t.ex.map(x => x.id), ['lateral', 'minha', 'agacha', 'flexora']);
+  assert.deepStrictEqual(aplicaMudancas(meu, velho, novo, [], 1)!.ex.map(x => x.id), ['agacha', 'minha', 'flexora', 'lateral'], 'sem a chave, a ordem dele');
+});
+
+test('o que ele já tem não muda nada, e a linha diz', () => {
+  const velho = tr([sl('agacha', 2, '6–10'), sl('extensora', 1, '10–15')]);
+  const meu = tr([sl('agacha', 2, '6–10'), sl('hack', 3, '8–12')]);     // ele já tirou a extensora e pôs o hack
+  const novo = tr([sl('agacha', 2, '6–10'), sl('hack', 3, '8–12')]);
+  const m = mudancasDoTreino('B', velho, novo, meu, nomeDe);
+  assert.deepStrictEqual(m.map(x => [x.titulo, !!x.jaEsta]), [['Hack machine entra', true], ['Cadeira extensora sai', true]]);
+  assert.ok(/já está no seu programa/.test(m[0].detalhe!) && /já não está no seu programa/.test(m[1].detalhe!));
+  assert.deepStrictEqual(aplicaMudancas(meu, velho, novo, m, 1)!.ex.map(x => x.id), ['agacha', 'hack'], 'aplicar não duplica nem tira nada');
+});
+
+test('treino novo é uma mudança só; sem marcar, ele não entra no programa dele', () => {
+  const rev = lerRevisao('Treino F · Braços\n- Rosca · 3 x 8-12\n- Lateral · 3 x 12-15');
+  const novo = treinoDaRevisao(rev.dias[0], { Rosca: 'rosca', Lateral: 'lateral' }, undefined, () => 90, 7);
+  const m = mudancasDoTreino('F', undefined, novo, undefined, nomeDe);
+  assert.deepStrictEqual(m.map(x => [x.tipo, x.titulo, x.detalhe]), [['dia', 'Treino F entra na rotação', '2 exercícios, 6 séries']]);
+  const t = aplicaMudancas(undefined, undefined, novo, m, 9)!;
+  assert.deepStrictEqual(t.ex.map(x => x.id), ['rosca', 'lateral']);
+  assert.ok(t.ex.every(x => x.desde === 9), 'conta a partir de agora');
+  assert.strictEqual(aplicaMudancas(undefined, undefined, novo, [], 9), undefined, 'desmarcado, o treino fica só no do treinador');
+});
+
+test('o treino do treinador: o que a revisão não diz (RIR, descanso) fica como estava', () => {
+  const velho = tr([sl('agacha', 2, '6–10', { d: 180, rir: '1–2', desde: 0 }), sl('flexora', 3, '8–12', { d: 120, rir: '1', desde: 33 })], 'Pernas');
+  const rev = lerRevisao('Treino B · Pernas\n- Agacha · 3 x 6-10\n- Flexora · 3 x 8-12 · RIR 0-1 · 90 s\n- Hack · 3 x 8-12');
+  const t = treinoDaRevisao(rev.dias[0], { Agacha: 'agacha', Flexora: 'flexora', Hack: 'hack' }, velho, () => 75, 500);
+  assert.deepStrictEqual(t.ex.map(x => [x.id, x.d, x.rir || null, x.desde]), [
+    ['agacha', 180, '1–2', 0], ['flexora', 90, '0–1', 33], ['hack', 75, null, 500]
+  ]);
+  assert.strictEqual(t.name, 'Pernas');
+  // só o RIR e o descanso que mudaram viram mudança
+  const m = mudancasDoTreino('B', velho, t, velho, nomeDe);
+  assert.deepStrictEqual(m.map(x => x.titulo), ['Hack machine entra', 'Agachamento: 2 → 3 séries', 'Cadeira flexora: sobrando 1 → 0–1']);
+  assert.strictEqual(m[2].detalhe, 'descanso 2 min → 1 min 30 s');
+});
+
+test('o nome do treino é uma mudança com chave: só muda se marcada, e diz o nome que ele deu', () => {
+  const velho = tr([sl('agacha', 2, '6–10')], 'Pernas');
+  const novo = tr([sl('agacha', 2, '6–10')], 'Pernas completas');
+  const meu = tr([sl('agacha', 2, '6–10')], 'Minhas pernas');
+  const m = mudancasDoTreino('B', velho, novo, meu, nomeDe);
+  assert.deepStrictEqual(m.map(x => [x.tipo, x.titulo]), [['nome', 'O treino B passa a se chamar “Pernas completas”']]);
+  assert.ok(/o seu se chama “Minhas pernas”/.test(m[0].detalhe!), m[0].detalhe!);
+  assert.strictEqual(aplicaMudancas(meu, velho, novo, m, 1)!.name, 'Pernas completas', 'marcada, o nome muda');
+  assert.strictEqual(aplicaMudancas(meu, velho, novo, [], 1)!.name, 'Minhas pernas', 'desmarcada, nada muda (nem o nome)');
+});
+
+test('a aula aberta que vira treino com exercícios é uma mudança com chave', () => {
+  const velho = { name: 'Aula', tag: '', aberto: 1 as const, ex: [] };
+  const novo = tr([sl('agacha', 3, '6–10')], 'Aula');
+  const m = mudancasDoTreino('HX', velho, novo, velho, nomeDe);
+  assert.deepStrictEqual(m.map(x => x.tipo), ['aberto']);
+  assert.match(m[0].detalhe!, /Agachamento/);
+  const t = aplicaMudancas(velho, velho, novo, m, 1)!;
+  assert.ok(!t.aberto && t.ex.length === 1, 'deixa de ser aula e ganha o exercício');
+  assert.deepStrictEqual(aplicaMudancas(velho, velho, novo, [], 1), velho);
+  const volta = mudancasDoTreino('HX', novo, velho, novo, nomeDe);
+  assert.deepStrictEqual(volta.map(x => x.tipo), ['aberto']);
+  assert.deepStrictEqual(aplicaMudancas(novo, novo, velho, volta, 2), velho);
+  assert.deepStrictEqual(aplicaMudancas(novo, novo, velho, [], 2), novo);
+  assert.deepStrictEqual(mudancasDoTreino('HX', novo, novo, velho, nomeDe), [], 'reler a mesma revisão não propõe mudanças');
+  const listaRevista = tr([sl('agacha', 4, '6–10')], 'Aula');
+  const recusadaAntes = mudancasDoTreino('HX', novo, listaRevista, velho, nomeDe);
+  assert.ok(recusadaAntes[0].desmarcada, 'continua como aula até escolher a lista fixa');
+});
+
+test('o treino que ele deixou de fora numa revisão anterior volta como uma mudança só, desmarcada', () => {
+  // sem isto, a revisão seguinte mostrava mudanças de exercício que não caíam em lugar nenhum
+  const velhoF = tr([sl('rosca', 3, '8–12')], 'Braços');
+  const novoF = tr([sl('rosca', 4, '8–12')], 'Braços');
+  const m = mudancasDoTreino('F', velhoF, novoF, undefined, nomeDe);
+  assert.deepStrictEqual(m.map(x => [x.tipo, x.titulo, !!x.desmarcada]), [['dia', 'Treino F entra na rotação', true]]);
+  assert.ok(/ficou de fora do seu programa antes/.test(m[0].detalhe!));
+  assert.strictEqual(aplicaMudancas(undefined, velhoF, novoF, m, 3)!.ex[0].s, 4, 'marcada, o treino entra como o treinador o mandou');
+});
+
+test('"entra" num exercício que ele já tem mexe só no que difere; "já está" não mexe em nada', () => {
+  const velho = tr([sl('agacha', 2, '6–10')]);
+  const meu = tr([sl('agacha', 2, '6–10'), sl('hack', 3, '8–12', { rir: '2', d: 150 })]);
+  const novo = tr([sl('agacha', 2, '6–10'), sl('hack', 3, '8–12', { rir: '1', d: 150 })]);
+  const m = mudancasDoTreino('B', velho, novo, meu, nomeDe);
+  assert.deepStrictEqual(m.map(x => [x.tipo, x.campos, !!x.jaEsta]), [['entra', ['rir'], false]]);
+  const t = aplicaMudancas(meu, velho, novo, m, 1)!;
+  assert.deepStrictEqual([t.ex[1].rir, t.ex[1].d, t.ex[1].desde], ['1', 150, 0], 'só o RIR muda; o descanso e o "desde" dele ficam');
+  const igual = tr([sl('agacha', 2, '6–10'), sl('hack', 3, '8–12', { rir: '1', d: 150, desde: 7 })]);
+  const m2 = mudancasDoTreino('B', velho, novo, igual, nomeDe);
+  assert.ok(m2[0].jaEsta && /já está no seu programa/.test(m2[0].detalhe!));
+  assert.deepStrictEqual(aplicaMudancas(igual, velho, novo, m2, 1), igual, 'aplicar "já está" não muda nada');
+});
+
+test('"sai" tira toda ocorrência, e o que entra sem um anterior vai antes do seguinte', () => {
+  const velho = tr([sl('agacha', 2, '6–10'), sl('extensora', 1, '10–15')]);
+  const meu = tr([sl('extensora', 1, '10–15'), sl('agacha', 2, '6–10'), sl('extensora', 1, '10–15')]);
+  const novo = tr([sl('hack', 3, '8–12'), sl('agacha', 2, '6–10')]);
+  const m = mudancasDoTreino('B', velho, novo, meu, nomeDe);
+  const t = aplicaMudancas(meu, velho, novo, m, 1)!;
+  assert.deepStrictEqual(t.ex.map(x => x.id), ['hack', 'agacha'], 'as duas extensoras saem, e o hack entra antes do agachamento');
+});
+
+test('a leitura recusa o mesmo exercício duas vezes no mesmo treino, e diz', () => {
+  const r = lerRevisao('Treino B · Pernas\n- Leg press · 3 x 8-12\n- Agachamento · 2 x 6-10\n- Leg press · 2 x 15-20\nTreino C · Costas\n- Leg press · 1 x 10');
+  assert.deepStrictEqual(r.dias[0].ex.map(x => x.n + ' ' + x.s), ['Leg press 3', 'Agachamento 2'], 'a primeira fica');
+  assert.ok(r.problemas.some(p => /Leg press aparece duas vezes no Treino B/.test(p.motivo)), JSON.stringify(r.problemas));
+  assert.strictEqual(r.dias[1].ex.length, 1, 'em outro treino, o mesmo exercício pode');
+});
+
+test('cada mudança guarda o registro inteiro, para o histórico do programa', () => {
+  const velho = tr([sl('flexora', 4, '8–12', { rir: '1' }), sl('extensora', 1, '10–15')]);
+  const novo = tr([sl('flexora', 3, '8–12', { rir: '0–1' }), sl('hack', 3, '8–12', { rir: '1', d: 150 })]);
+  const m = mudancasDoTreino('B', velho, novo, velho, nomeDe);
+  assert.deepStrictEqual(m.map(x => x.texto), [
+    'Hack machine entra (3 × 8–12, RIR 1, descanso 2:30, no fim)',
+    'Cadeira extensora sai (era 1 × 10–15)',
+    'Cadeira flexora: 4 → 3 séries, sobrando 1 → 0–1'
+  ]);
 });
 
 test('uma palavra em comum não faz candidato: "Rosca direta" não é a Rosca martelo', () => {

@@ -333,9 +333,9 @@ button.q{min-height:var(--alvo)}
 
 /* ---- campos ---- */
 .campo{display:block;margin-top:12px}
-.campo > span{display:block;font:var(--t-rotulo);color:var(--texto-2);margin-bottom:5px}
+.campo > span{display:block;font:var(--t-rotulo);color:var(--texto-2);margin-bottom:var(--espaco-rotulo-campo)}
 .campo input,.campo textarea{width:100%;min-height:54px;border:0;border-radius:var(--r-quadro);background:var(--superficie);box-shadow:inset 0 0 0 1.5px var(--contorno);padding:0 16px;font:var(--t-campo)}
-.campo textarea{border-radius:var(--r-caixa);box-shadow:inset 0 0 0 2px var(--texto);padding:14px;min-height:150px;resize:none;line-height:1.45}
+.campo textarea{border-radius:var(--r-caixa);box-shadow:inset 0 0 0 2px var(--texto);padding:14px;min-height:var(--campo-longo);resize:none;line-height:var(--entrelinha-campo-longo)}
 .campo input:focus,.campo textarea:focus{outline:none;box-shadow:inset 0 0 0 2.5px var(--texto)}
 .campo.erro input{box-shadow:inset 0 0 0 2.5px var(--texto)}
 .campo .msg{display:flex;gap:6px;align-items:flex-start;font:600 13px/1.35 var(--f-texto);margin-top:6px}

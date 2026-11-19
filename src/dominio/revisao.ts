@@ -14,6 +14,14 @@
 // muda. Quem grava é o casco, depois das respostas.
 
 import { slugEx } from './programa';
+import { fmtDesc } from './formato';
+
+/** Duração da prescrição na lista e no histórico da revisão. */
+function descansoEscrito(segundos: number): string {
+  const min = Math.floor(segundos / 60), s = segundos % 60;
+  if (!min) return s + ' s';
+  return min + ' min' + (s ? ' ' + s + ' s' : '');
+}
 
 /** Um exercício como a revisão o escreveu. */
 export interface ExDaRevisao {
@@ -73,6 +81,10 @@ export function lerRevisao(texto: string): LeituraDaRevisao {
   const out: LeituraDaRevisao = { dias: [], data: null, problemas: [] };
   let atual: DiaDaRevisao | null = null;
   const vistos: Record<string, 1> = {};
+  const nomePorSlug = new Map<string, string>();
+  // o mesmo exercício duas vezes no mesmo treino: o programa é por exercício, e
+  // as duas linhas virariam uma só sem ninguém dizer; o app guarda a primeira e diz
+  const exDoDia: Record<string, Record<string, 1>> = {};
   String(texto || '').split(/\r?\n/).forEach(function (cru) {
     const linha = limpa(cru);
     if (!linha) return;
@@ -106,11 +118,21 @@ export function lerRevisao(texto: string): LeituraDaRevisao {
       sobra.push(c);
     });
     if (sobra.length === 1 && /^[a-zà-ú ]+$/i.test(sobra[0])) ex.g = sobra[0].toLowerCase();
-    else if (sobra.length) out.problemas.push({ linha: linha, motivo: 'não entendi: ' + sobra.join(', ') });
+    else if (sobra.length) out.problemas.push({ linha: linha, motivo: 'trecho não reconhecido: ' + sobra.join(', ') });
     if (!ex.n || !ex.s || !ex.r) {
       out.problemas.push({ linha: linha, motivo: 'falta séries × repetições, como "3 x 8-12"' });
       return;
     }
+    const noDia = exDoDia[atual.dia] || (exDoDia[atual.dia] = {});
+    const chave = slugEx(ex.n);
+    if (noDia[chave]) {
+      out.problemas.push({ linha: linha, motivo: ex.n + ' aparece duas vezes no Treino ' + atual.dia + '; o app guarda só a primeira' });
+      return;
+    }
+    noDia[chave] = 1;
+    // Uma grafia por revisão mantém a pergunta e o id iguais em todos os treinos.
+    if (!nomePorSlug.has(chave)) nomePorSlug.set(chave, ex.n);
+    ex.n = nomePorSlug.get(chave)!;
     atual.ex.push(ex as ExDaRevisao);
   });
   return out;
@@ -213,48 +235,310 @@ export function casaNomes(
   return out;
 }
 
-// ---------- o que muda ----------
+// ---------- mudança por mudança (peça 6, 18/11/2026) ----------
+//
+// Decisão do dono (17/11/2026): a revisão entra mudança por mudança, com a
+// chave em cada uma. O programa do TREINADOR passa a ser a revisão inteira; o
+// programa DELE recebe só as mudanças marcadas, e o que ficar de fora continua
+// aparecendo como diferença dele em relação ao do treinador (a `difDoDia` de
+// sempre, que compara os dois). O que ele mudou e a revisão não toca fica como
+// está: antes, aplicar um treino apagava as mudanças dele naquele treino.
+//
+// Uma mudança é uma afirmação do treinador sobre UM exercício (entra, sai, ou
+// muda séries, repetições, RIR, descanso), sobre a ordem dos que ficam, ou
+// sobre um treino novo. Aplicar uma é aplicar o DELTA dela: "Flexora: 4 → 3
+// séries" muda as séries do slot dele e deixa as repetições que ele escolheu.
 
-export interface MudancaDoDia {
+/** Um slot do programa, como esta parte lê e escreve (os outros campos passam intactos). */
+export interface SlotDoPrograma { id: string; s: number; r: string; d?: number; rir?: string; desde?: number; [k: string]: unknown }
+/** Um treino do programa. */
+export interface TreinoDoPrograma { name?: string; tag?: string; aberto?: 1; ex: SlotDoPrograma[] }
+
+export type TipoDaMudanca = 'entra' | 'sai' | 'muda' | 'ordem' | 'dia' | 'nome' | 'aberto';
+/** O que uma mudança de exercício mexe no slot. */
+export type CampoDoSlot = 's' | 'r' | 'rir' | 'd';
+
+export interface MudancaDaRevisao {
+  /** chave estável dentro de uma leitura: 'B:entra:hack-machine', 'B:ordem', 'F:dia' */
+  k: string;
   dia: string;
-  /** "Agachamento no Smith, 2 séries" · "Cadeira flexora sentada: 3 → 4 séries" */
-  linhas: string[];
-  /** séries do dia, antes e depois */
-  antes: number;
-  depois: number;
-  novo: boolean;
+  tipo: TipoDaMudanca;
+  /** o exercício (entra, sai, muda) */
+  id?: string;
+  /** o que a mudança mexe no slot (só `muda`) */
+  campos?: CampoDoSlot[];
+  /** '+' entra, '−' sai, '↑' ou '↓' séries, '~' outro parâmetro, '⇅' a ordem */
+  sinal: string;
+  /** "Hack machine entra" · "Cadeira flexora: 4 → 3 séries" */
+  titulo: string;
+  /** "3 × 8–12, depois do agachamento" · "era 1 × 10–15" · o que já está no programa dele */
+  detalhe: string | null;
+  /** o programa dele já está como a mudança diz: aplicar não muda nada nele */
+  jaEsta?: boolean;
+  /** a mudança inteira, para o histórico do programa: todos os campos, sem as notas da tela */
+  texto: string;
+  /** começa desmarcada: o treino que ele deixou de fora numa revisão anterior */
+  desmarcada?: boolean;
+}
+
+function porIdDe(ex: SlotDoPrograma[] | undefined): Record<string, SlotDoPrograma> {
+  const m: Record<string, SlotDoPrograma> = {};
+  (ex || []).forEach(function (sl) { if (sl && sl.id && !m[sl.id]) m[sl.id] = sl; });
+  return m;
 }
 
 /**
- * O que a revisão muda em cada treino, contra o programa do treinador de agora:
- * o que entra, o que sai, e as séries que mudam. `ids` é a resposta já dada
- * para cada nome (o id final, existente ou novo).
+ * O treino como o TREINADOR o prescreve depois da revisão. O que a linha da
+ * revisão não diz (RIR, descanso) fica como estava no programa dele: omitir não
+ * é mudar. Exercício novo sem descanso dito ganha o padrão (`descansoDe`).
+ * `desde` vem do slot do treinador quando o exercício já estava lá.
  */
-export function mudancasDaRevisao(
-  rev: LeituraDaRevisao,
-  ids: Record<string, string>,
-  atual: Record<string, { ex: { id: string; s: number }[] }>,
-  nomeDe: (id: string) => string
-): MudancaDoDia[] {
-  return rev.dias.map(function (d) {
-    const antes = (atual[d.dia] && atual[d.dia].ex) || [];
-    const porId: Record<string, number> = {};
-    antes.forEach(function (sl) { porId[sl.id] = sl.s; });
-    const linhas: string[] = [];
-    const ficam: Record<string, 1> = {};
-    d.ex.forEach(function (x) {
-      const id = ids[x.n];
-      ficam[id] = 1;
-      if (porId[id] == null) linhas.push('entra ' + x.n + ', ' + x.s + (x.s === 1 ? ' série' : ' séries'));
-      else if (porId[id] !== x.s) linhas.push(nomeDe(id) + ': ' + porId[id] + ' → ' + x.s + ' séries');
-    });
-    antes.forEach(function (sl) { if (!ficam[sl.id]) linhas.push('sai ' + nomeDe(sl.id)); });
-    return {
-      dia: d.dia, linhas: linhas, novo: !atual[d.dia],
-      antes: antes.reduce(function (n, sl) { return n + sl.s; }, 0),
-      depois: d.ex.reduce(function (n, x) { return n + x.s; }, 0)
+export function treinoDaRevisao(
+  d: DiaDaRevisao, ids: Record<string, string>, velho: TreinoDoPrograma | undefined,
+  descansoDe: (id: string) => number, agora: number
+): TreinoDoPrograma {
+  const antes = porIdDe(velho && velho.ex);
+  const ex = d.ex.map(function (x) {
+    const id = ids[x.n];
+    const v = antes[id];
+    const sl: SlotDoPrograma = {
+      id: id, s: x.s, r: x.r,
+      d: x.d != null ? x.d : (v && typeof v.d === 'number' ? v.d : descansoDe(id)),
+      desde: v ? (typeof v.desde === 'number' ? v.desde : 0) : agora
     };
+    const rir = x.rir != null ? x.rir : (v ? v.rir : undefined);
+    if (rir) sl.rir = rir;
+    return sl;
   });
+  const t: TreinoDoPrograma = { name: d.nome || (velho && velho.name) || ('Treino ' + d.dia), tag: (velho && velho.tag) || '', ex: ex };
+  if (d.aberto) t.aberto = 1;
+  return t;
+}
+
+/** O que mudou num exercício que fica, campo a campo, na ordem em que se lê. */
+function camposQueMudam(v: SlotDoPrograma, n: SlotDoPrograma): CampoDoSlot[] {
+  const c: CampoDoSlot[] = [];
+  if (v.s !== n.s) c.push('s');
+  if (v.r !== n.r) c.push('r');
+  if ((v.rir || '') !== (n.rir || '')) c.push('rir');
+  if ((v.d || 0) !== (n.d || 0)) c.push('d');
+  return c;
+}
+
+function fraseDoCampo(c: CampoDoSlot, v: SlotDoPrograma, n: SlotDoPrograma): string {
+  if (c === 's') return v.s + ' → ' + n.s + ' séries';
+  if (c === 'r') return v.r + ' → ' + n.r + ' repetições';
+  if (c === 'rir') return 'sobrando ' + (v.rir || '—') + ' → ' + (n.rir || '—');
+  return 'descanso ' + descansoEscrito(v.d || 0) + ' → ' + descansoEscrito(n.d || 0);
+}
+
+/** "3 × 8–12, RIR 1, descanso 2min": a prescrição inteira, para o histórico. */
+function prescricao(x: SlotDoPrograma): string {
+  return x.s + ' × ' + x.r + (x.rir ? ', RIR ' + x.rir : '') + (typeof x.d === 'number' && x.d ? ', descanso ' + fmtDesc(x.d) : '');
+}
+
+/**
+ * As mudanças de UM treino, contra o programa do treinador de antes (`velho`).
+ * `meu` é o programa dele, para dizer o que ele já tem (`jaEsta`) e o que muda
+ * nele: a lista é do treinador, e é igual para qualquer pessoa com o mesmo
+ * programa base.
+ *
+ * Treino que não está no programa dele é uma mudança só ("Treino F entra na
+ * rotação"): metade de um treino não é um treino. Vale para o treino novo e
+ * para o que ele deixou de fora numa revisão anterior — este começa desmarcado
+ * (`desmarcada`), porque foi o que ele escolheu da última vez; sem isto, ele
+ * nunca mais entraria pela revisão.
+ *
+ * "Entra" num exercício que ele já tem é a diferença contra o slot DELE
+ * (`campos`): aplicar mexe só no que difere, e "já está no seu programa" não
+ * mexe em nada.
+ */
+export function mudancasDoTreino(
+  dia: string, velho: TreinoDoPrograma | undefined, novo: TreinoDoPrograma,
+  meu: TreinoDoPrograma | undefined, nomeDe: (id: string) => string
+): MudancaDaRevisao[] {
+  if (!meu) {
+    const series = novo.ex.reduce(function (n, x) { return n + x.s; }, 0);
+    const resumo = novo.aberto && !novo.ex.length ? 'o que o box programar'
+      : novo.ex.length + (novo.ex.length === 1 ? ' exercício, ' : ' exercícios, ') + series + (series === 1 ? ' série' : ' séries');
+    return [{
+      k: dia + ':dia', dia: dia, tipo: 'dia', sinal: '+',
+      titulo: 'Treino ' + dia + ' entra na rotação',
+      detalhe: resumo + (velho ? ' · ficou de fora do seu programa antes' : ''),
+      texto: 'Treino ' + dia + ' entra na rotação (' + resumo + ')',
+      desmarcada: velho ? true : undefined
+    }];
+  }
+  const V = (velho && velho.ex) || [];
+  const antes = porIdDe(V), depois = porIdDe(novo.ex), dele = porIdDe(meu.ex);
+  const out: MudancaDaRevisao[] = [];
+
+  // o nome e a aula aberta, contra o treinador de antes (ou o dele, sem treinador)
+  const nomeAntes = velho ? velho.name : meu.name;
+  if (novo.name && novo.name !== nomeAntes) {
+    out.push({ k: dia + ':nome', dia: dia, tipo: 'nome', sinal: '~',
+               titulo: 'O treino ' + dia + ' passa a se chamar “' + novo.name + '”',
+               detalhe: 'era “' + (nomeAntes || '') + '”' + (meu.name !== nomeAntes ? ' · o seu se chama “' + meu.name + '”' : ''),
+               texto: 'o treino ' + dia + ' passa a se chamar “' + novo.name + '”',
+               jaEsta: meu.name === novo.name || undefined });
+  }
+  const abertoAntes = !!(velho ? velho.aberto : meu.aberto);
+  const converte = !!novo.aberto !== !!meu.aberto;
+  if (converte || !!novo.aberto !== abertoAntes) {
+    // Uma revisão idêntica não reabre a conversão que ele já deixou de fora.
+    if (!!novo.aberto === abertoAntes && V.length === novo.ex.length &&
+        V.every((v, i) => v.id === novo.ex[i].id && !camposQueMudam(v, novo.ex[i]).length)) return out;
+    const t = novo.aberto ? 'O treino ' + dia + ' vira aula do box' : 'O treino ' + dia + ' deixa de ser aula do box';
+    const slots = novo.aberto ? meu.ex : novo.ex;
+    const efeito = novo.aberto ? 'a lista fixa sai' : 'entra a lista fixa';
+    const lista = slots.map(x => nomeDe(x.id) + ' (' + prescricao(x) + ')').join(', ');
+    out.push({ k: dia + ':aberto', dia: dia, tipo: 'aberto', sinal: '~', titulo: t,
+               detalhe: lista ? efeito + ': ' + slots.map(x => nomeDe(x.id)).join(', ') : efeito,
+               texto: t.charAt(0).toLowerCase() + t.slice(1) + (lista ? ': ' + lista : ''),
+               desmarcada: (converte && !!novo.aberto === abertoAntes) || undefined,
+               jaEsta: !converte || undefined });
+    if (converte) return out; // tipo e lista fixa são uma escolha só
+  }
+
+  novo.ex.forEach(function (x, i) {
+    const v = antes[x.id];
+    if (!v) {
+      const ant = i > 0 ? novo.ex[i - 1] : null;
+      const onde = !ant ? (novo.ex.length > 1 ? 'no começo' : null)
+        : i === novo.ex.length - 1 ? 'no fim' : 'depois de ' + nomeDe(ant.id);
+      const m = dele[x.id];
+      const camposDele = m ? camposQueMudam(m, x) : undefined;
+      const ja = !!m && !camposDele!.length;
+      out.push({ k: dia + ':entra:' + x.id, dia: dia, tipo: 'entra', id: x.id, campos: camposDele, sinal: '+',
+                 titulo: nomeDe(x.id) + ' entra',
+                 detalhe: x.s + ' × ' + x.r + (onde ? ', ' + onde : '') + (ja ? ' · já está no seu programa' : m ? ' · no seu programa: ' + m.s + ' × ' + m.r : ''),
+                 texto: nomeDe(x.id) + ' entra (' + prescricao(x) + (onde ? ', ' + onde : '') + ')',
+                 jaEsta: ja || undefined });
+      return;
+    }
+    const campos = camposQueMudam(v, x);
+    if (!campos.length) return;
+    const m = dele[x.id];
+    const ja = !!m && campos.every(function (c) { return (m[c] || '') === (x[c] || ''); });
+    const seu = !m ? 'não está no seu programa'
+      : ja ? 'o seu já está assim'
+      : (m.s !== v.s || m.r !== v.r) ? 'no seu programa: ' + m.s + ' × ' + m.r : null;
+    const frases = campos.map(function (c) { return fraseDoCampo(c, v, x); });
+    out.push({ k: dia + ':muda:' + x.id, dia: dia, tipo: 'muda', id: x.id, campos: campos,
+               sinal: x.s > v.s ? '↑' : x.s < v.s ? '↓' : '~',
+               titulo: nomeDe(x.id) + ': ' + frases[0],
+               detalhe: frases.slice(1).concat(seu ? [seu] : []).join(' · ') || null,
+               texto: nomeDe(x.id) + ': ' + frases.join(', '),
+               jaEsta: ja || !m || undefined });
+  });
+
+  V.forEach(function (v) {
+    if (depois[v.id]) return;
+    const ja = !dele[v.id];
+    out.push({ k: dia + ':sai:' + v.id, dia: dia, tipo: 'sai', id: v.id, sinal: '−',
+               titulo: nomeDe(v.id) + ' sai',
+               detalhe: 'era ' + v.s + ' × ' + v.r + (ja ? ' · já não está no seu programa' : ''),
+               texto: nomeDe(v.id) + ' sai (era ' + v.s + ' × ' + v.r + ')',
+               jaEsta: ja || undefined });
+  });
+
+  // a ordem, só entre os que ficam (entrar e sair já são mudanças próprias)
+  const ficavam = V.filter(function (v) { return depois[v.id]; }).map(function (v) { return v.id; });
+  const ficam = novo.ex.filter(function (x) { return antes[x.id]; }).map(function (x) { return x.id; });
+  if (ficavam.join('|') !== ficam.join('|')) {
+    const i = ficam.findIndex((id, j) => id !== ficavam[j]);
+    const adiantado = ficam[i], adiado = ficavam[i];
+    const sem = (ids: string[], id: string) => ids.filter(x => x !== id).join('|');
+    const adiantouUm = sem(ficavam, adiantado) === sem(ficam, adiantado);
+    const adiouUm = !adiantouUm && sem(ficavam, adiado) === sem(ficam, adiado);
+    const detalhe = adiouUm
+      ? nomeDe(adiado) + ' passa para depois de ' + nomeDe(ficam[ficam.indexOf(adiado) - 1])
+      : nomeDe(adiantado) + ' passa para antes de ' + nomeDe(adiado) + (adiantouUm ? '' : ', entre outras trocas');
+    out.push({ k: dia + ':ordem', dia: dia, tipo: 'ordem', sinal: '⇅', titulo: 'A ordem dos exercícios muda',
+               detalhe: detalhe,
+               texto: 'a ordem dos exercícios muda: ' + ficam.map(nomeDe).join(', ') });
+  }
+  const ordem: TipoDaMudanca[] = ['dia', 'entra', 'sai', 'nome', 'aberto', 'muda', 'ordem'];
+  return out.sort((a, b) => ordem.indexOf(a.tipo) - ordem.indexOf(b.tipo));
+}
+
+/**
+ * O treino DELE depois das mudanças escolhidas. Puro: devolve um treino novo.
+ *
+ * Na ordem: o que sai (toda ocorrência), o que muda (só os campos da mudança),
+ * o que entra (no lugar que o treinador deu: depois do exercício que vem antes
+ * na revisão e que ele tem; sem esse, antes do seguinte; sem nenhum, no fim; e,
+ * se ele já tem o exercício, só os campos que diferem), a ordem (os que estão na
+ * revisão trocam de lugar entre si, na ordem dela; os que só ele tem ficam onde
+ * estão), o nome e a aula aberta, cada um só se escolhido.
+ *
+ * Sem o treino no programa dele, só o treino inteiro entra (`dia`).
+ */
+export function aplicaMudancas(
+  meu: TreinoDoPrograma | undefined, velho: TreinoDoPrograma | undefined, novo: TreinoDoPrograma,
+  escolhidas: MudancaDaRevisao[], agora: number
+): TreinoDoPrograma | undefined {
+  const quer = function (tipo: TipoDaMudanca) { return escolhidas.filter(function (m) { return m.tipo === tipo; }); };
+  const copia = function (sl: SlotDoPrograma): SlotDoPrograma { return JSON.parse(JSON.stringify(sl)); };
+  if (quer('dia').length) {
+    const t: TreinoDoPrograma = JSON.parse(JSON.stringify(novo));
+    t.ex.forEach(function (sl) { sl.desde = agora; });
+    return t;
+  }
+  if (!meu) return meu;
+  const t: TreinoDoPrograma = Object.assign({}, meu, { ex: (meu.ex || []).map(copia) });
+  if (quer('nome').length && novo.name) t.name = novo.name;
+  if (!!meu.aberto !== !!novo.aberto) {
+    if (quer('aberto').length) {
+      if (novo.aberto) { t.aberto = 1; t.ex = []; }
+      else {
+        delete t.aberto;
+        t.ex = novo.ex.map(sl => Object.assign(copia(sl), { desde: agora }));
+      }
+    }
+    return t;
+  }
+  const ex = t.ex;
+  const doNovo = porIdDe(novo.ex);
+  const onde = function (id: string) { return ex.findIndex(function (sl) { return sl.id === id; }); };
+  const ajusta = function (sl: SlotDoPrograma, n: SlotDoPrograma, campos: CampoDoSlot[]) {
+    campos.forEach(function (c) {
+      if (c === 'rir') { if (n.rir) sl.rir = n.rir; else delete sl.rir; return; }
+      (sl as Record<string, unknown>)[c] = n[c];
+    });
+  };
+
+  quer('sai').forEach(function (m) {
+    let i;
+    while ((i = onde(m.id!)) >= 0) ex.splice(i, 1);
+  });
+  quer('muda').forEach(function (m) {
+    const n = doNovo[m.id!];
+    if (!n) return;
+    ex.forEach(function (sl) { if (sl.id === m.id) ajusta(sl, n, m.campos || ['s', 'r', 'rir', 'd']); });
+  });
+  const entra: Record<string, MudancaDaRevisao> = {};
+  quer('entra').forEach(function (m) { entra[m.id!] = m; });
+  novo.ex.forEach(function (n, j) {
+    const m = entra[n.id];
+    if (!m) return;
+    const ja = onde(n.id);
+    if (ja >= 0) { ajusta(ex[ja], n, m.campos || ['s', 'r', 'rir', 'd']); return; }
+    const sl = copia(n);
+    sl.desde = agora;
+    let pos = -1;
+    for (let a = j - 1; a >= 0 && pos < 0; a--) { const p = onde(novo.ex[a].id); if (p >= 0) pos = p + 1; }
+    for (let a = j + 1; a < novo.ex.length && pos < 0; a++) { const p = onde(novo.ex[a].id); if (p >= 0) pos = p; }
+    ex.splice(pos < 0 ? ex.length : pos, 0, sl);
+  });
+  if (quer('ordem').length) {
+    const lugar = function (id: string) { return novo.ex.findIndex(function (n) { return n.id === id; }); };
+    const posicoes: number[] = [], quem: SlotDoPrograma[] = [];
+    ex.forEach(function (sl, i) { if (doNovo[sl.id]) { posicoes.push(i); quem.push(sl); } });
+    quem.sort(function (a, b) { return lugar(a.id) - lugar(b.id); });
+    posicoes.forEach(function (i, j) { ex[i] = quem[j]; });
+  }
+  return t;
 }
 
 /** O modelo que o app oferece para o treinador escrever a revisão. */

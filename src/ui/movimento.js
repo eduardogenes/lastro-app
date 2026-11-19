@@ -99,6 +99,8 @@ export function podeDissolver() {
 
 /** O clique que não veio depois de um toque mirado: o app o entrega. */
 const SEM_CLIQUE_MS = 300;
+/** Intervalo entre os dois toques de um toque duplo, inclusive com movimento reduzido. */
+export const TOQUE_DUPLO_MS = 500;
 /** Folga sobre o tempo da camada, onde não se pode perguntar ao documento. */
 const FOLGA_MS = 150;
 
@@ -109,6 +111,28 @@ const FOLGA_MS = 150;
  */
 let mira = null;
 let escutando = false;
+/** @type {{ rect: DOMRect, ate: number, saida: typeof viva } | null} */
+let ultimoAplicar = null;
+let descidaRepetida = false;
+
+/** O segundo toque no lugar de Aplicar não aciona a linha que apareceu ali.
+ * @param {DOMRect} rect */
+export function protegeSegundoToque(rect) {
+  escuta();
+  // O DOM do aviso pode ficar pronto enquanto o WebKit ainda mostra a tela anterior.
+  const guarda = { rect, ate: Infinity, saida: viva };
+  ultimoAplicar = guarda;
+  return function avisoDesenhado() {
+    const minimo = agora() + TOQUE_DUPLO_MS;
+    if (guarda.saida && aindaCorre(guarda.saida) && typeof window.requestAnimationFrame === 'function') {
+      // O primeiro quadro ainda pode ser a fotografia da revisão. Depois de
+      // apresentar o novo, sobram ao menos 300 ms para distinguir outro toque.
+      window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+        guarda.ate = Math.max(minimo, agora() + SEM_CLIQUE_MS);
+      }));
+    } else guarda.ate = minimo;
+  };
+}
 
 const agora = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
 
@@ -189,6 +213,12 @@ function aoCancelar(e) {
 
 /** @param {MouseEvent} e */
 function aoClicar(e) {
+  if (descidaRepetida && e.detail > 0) {
+    descidaRepetida = false;
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    return;
+  }
   const m = mira;
   if (!m) return;
   clearTimeout(m.relogio);
@@ -300,8 +330,29 @@ function aindaCorre(/** @type {{ vt: any, ate: number }} */ v) {
   return agora() < v.ate;
 }
 
+/** @param {{ clientX: number, clientY: number }} e @param {DOMRect} r */
+export function pontoDentro(e, r) {
+  return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+}
+
 /** @param {PointerEvent} e */
 function aoDescer(e) {
+  descidaRepetida = false;
+  if (ultimoAplicar) {
+    const { rect, ate, saida } = ultimoAplicar;
+    ultimoAplicar = null;
+    const aviso = document.querySelector('#toast .aviso');
+    const a = aviso && aviso.getBoundingClientRect();
+    // O WebKit pode entregar a descida sobre a foto mesmo depois do prazo.
+    const saindo = saida && saida === viva && aindaCorre(saida);
+    if (pontoDentro(e, rect) && (agora() < ate || (saindo && !(a && pontoDentro(e, a))))) {
+      descidaRepetida = true;
+      if (mira) { clearTimeout(mira.relogio); mira = null; }
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      return;
+    }
+  }
   const v = viva;
   if (!v) return;
   viva = null;
@@ -324,7 +375,7 @@ function aoDescer(e) {
  *
  * Devolve `true` quando o desenho ficou PENDENTE (há transição), `false` quando
  * já desenhou.
- * @param {'lugar' | 'entra' | 'sai' | 'sobe' | 'desce' | 'passo' | 'fica' | 'seca'} sentido
+ * @param {'lugar' | 'entra' | 'sai' | 'sobe' | 'desce' | 'passo' | 'estado' | 'fica' | 'seca'} sentido
  * @param {() => void} desenha
  * @param {boolean} [anima] `false` quando o navegador já animou (o gesto de borda)
  * @returns {boolean}

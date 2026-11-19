@@ -371,7 +371,7 @@ function programaDoTreinador(b: Base, ctx: Contexto): string {
   const t = b.treinador;
   const L = cabeca('Programa do treinador', [
     t.colado
-      ? 'A última revisão que o treinador mandou e foi colada no app' + (t.data ? ', datada de ' + dataIsoBR(t.data) : '') + '.'
+      ? 'A última revisão que o treinador mandou e foi colada no app' + (t.data ? ', datada de ' + (DATA_ISO.test(t.data) ? dataIsoBR(t.data) : t.data) : '') + '.'
       : 'O programa original, como o treinador prescreveu (é o que vem no código do app; nenhuma revisão foi colada depois).',
     'É a referência: o programa atual (`programa.md`) pode ter divergido dele por decisões do dia a dia.'
   ]);
@@ -1031,6 +1031,7 @@ function leiaMe(b: Base, ctx: Contexto, existentes: Set<string>): string {
   L.push('- **Totais de comida** de dias fechados foram congelados no fechamento, contra o plano daquela data: mudar o plano depois não reescreve o passado. Refeição marcada "fora do plano" ou "não sabe" entra com os números do plano; "não comeu" não entra.');
   L.push('- **O tamanho da refeição fora do plano.** Desde novembro de 2026, quem marca "comi outra coisa" diz o tamanho comparado ao da refeição do plano, sem pesar: parecido, bem mais, bem menos ou não sabe. Aparece entre parênteses em `refeicoes_marcadas`. É o que a pessoa disse, não uma medida, e não muda os totais: eles continuam com os números do plano. Marca sem tamanho é de antes, ou veio do "pôr o dia em dia", que não pergunta.');
   L.push('- **Registro por exceção.** Desde novembro de 2026 o app deixa responder o dia inteiro de uma vez ("a comida foi como o plano?": sim, quase, não lembro). Esses dias têm `respondido_pelo_dia` = 1 em `dias.csv`: as refeições aparecem sem hora, porque a hora da marca é a da resposta. "Quase" é `como_foi_o_dia` = fora; "não lembro" é perdido, e o dia não conta para a regra.');
+  L.push('- **A revisão do treinador entra mudança por mudança** (desde novembro de 2026). `programa-do-treinador.md` é a revisão inteira, como ele mandou; a pessoa escolhe quais mudanças entram no programa dela (`programa.md`). O que ela deixou de fora aparece em `mudancas.md`, na linha da revisão, depois de "Ficou de fora:". As mudanças que ela já tinha feito e a revisão não tocou continuam no programa dela.');
   L.push('- **Séries registradas depois** (`registrado_depois` = 1 em `series.csv`): a pessoa treinou, não anotou na hora e marcou depois, com a carga e as repetições da última vez (podem ter sido corrigidas). Contam como as outras.');
   L.push('- **Fotos fora do padrão** (coluna "Padrão" em `fotos.md`): a pessoa tirou mesmo sem acertar o que está escrito ali. A linha "Mudou em relação à sessão anterior" diz se a luz, a roupa ou o lugar mudaram.');
   L.push('- **Água** em copos; vazio quando ele marcou que não contou (é diferente de zero).');

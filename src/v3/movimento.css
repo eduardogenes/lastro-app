@@ -60,6 +60,14 @@ html[data-nav="passo"] .v3-acao-links { view-transition-name: acao-saidas; }
 ::view-transition-old(acao-topo), ::view-transition-new(acao-topo),
 ::view-transition-old(acao-saidas), ::view-transition-new(acao-saidas) { animation-duration: var(--d-passo-sai); }
 
+/* A mesma revisão muda de estado. As chaves preservam a identidade das
+   seções de cada treino e pergunta quando entram ou saem seções acima. */
+html[data-nav="estado"] .v3-cab { view-transition-name: revisao-cab; }
+html[data-nav="estado"] .v3-sec,
+html[data-nav="estado"] .v3-pad { view-transition-name: match-element; }
+html[data-nav="estado"] .v3-revisao-confirmar { view-transition-name: revisao-confirmar; }
+html[data-nav="estado"]::view-transition-group(*) { animation-duration: var(--d-estado-tela); }
+
 /* A FOLHA DESCE (`fica`): só ela e o véu dela saem; a página atrás não se
    move. Quem marca a que sai é `marcaAsFolhasQueSaem`, no casco. */
 html[data-nav="fica"]::view-transition-old(root),

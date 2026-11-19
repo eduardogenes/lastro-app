@@ -68,7 +68,7 @@ Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino 
 
 | Tipo | O quê | Hoje | Correção | Onde |
 |---|---|---|---|---|
-| dado | **Revisão aplica treinos inteiros** | Cada treino que muda entra todo ou não entra. | Decisão do dono (17/11): mudança por mudança, com a chave em cada uma; o que ficar de fora continua como diferença sua. Pede a regra de aplicar parte de um treino (teste de domínio: aplicar 4 de 5 e conferir o programa e as diferenças). | RevisaoV3 em programa.jsx; a leitura da revisão em src/main.jsx |
+| dado | **Revisão aplica treinos inteiros** (feito, peça 6) | Cada treino que muda entra todo ou não entra. | Decisão do dono (17/11): mudança por mudança, com a chave em cada uma; o que ficar de fora continua como diferença sua. Pede a regra de aplicar parte de um treino (teste de domínio: aplicar 4 de 5 e conferir o programa e as diferenças). | RevisaoV3 em programa.jsx; a leitura da revisão em src/main.jsx |
 | estado | **O que vence hoje não se destaca** (feito, peça 5, Plano) | O prazo aparece na linha pequena de cada mudança (g.vence), mas uma que vence hoje tem o mesmo peso das outras; venceHoje não é usado na tela. | Vencendo hoje, um aviso de atenção acima da mudança ("Vence hoje, no treino B"), e as respostas como fichas ("Só aquele dia" / "Passa a valer"). | plano.jsx; src/main.jsx:10716 |
 
 ## Dias, Corpo, Fotos

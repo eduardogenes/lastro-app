@@ -248,6 +248,67 @@ que veio do treinador e não conta nessa regra.
 
 `treino(d)` devolve `S.prog[d]` com os mods aplicados por cima.
 
+### A revisão do treinador, mudança por mudança
+
+Decisão do dono (17/11/2026). O treinador manda o programa novo em texto; o app
+lê (`lerRevisao`), pergunta o nome que não reconhece com certeza (`casaNomes`:
+"é o mesmo / é outro", porque errar manda o histórico para o exercício errado)
+e mostra cada mudança com a chave (`mudancasDoTreino`, `src/dominio/revisao.ts`).
+
+- **`S.progTreinador` passa a ser a revisão inteira**, nos treinos que ela traz
+  (`treinoDaRevisao`). O que a linha da revisão não diz (RIR, descanso) fica
+  como estava no programa do treinador: omitir não é mudar.
+- **`S.prog` recebe só as mudanças marcadas** (`aplicaMudancas`). Uma mudança é
+  uma afirmação do treinador sobre um exercício (entra, sai, ou muda séries,
+  repetições, RIR, descanso), sobre a ordem dos que ficam, ou sobre um treino
+  novo. Aplicar é aplicar o DELTA: "Flexora: 4 → 3 séries" muda as séries do
+  slot dele e deixa a faixa que ele escolheu. O que entra vai para o lugar que
+  o treinador deu (depois do exercício que vem antes na revisão e que ele tem).
+- **O que ficou de fora vira diferença dele**, sem nada novo no estado: é a
+  `difDoDia` de sempre, que compara `S.prog` com `S.progTreinador`. E o que ele
+  já tinha mudado e a revisão não toca fica como está (antes, aplicar um treino
+  apagava as mudanças dele naquele treino).
+- O histórico do programa ganha uma linha por treino com o que entrou e o que
+  ficou de fora ("Ficou de fora: Cadeira extensora sai."), e a pasta dos
+  agentes a mostra em `mudancas.md`.
+- O nome do treino e a aula aberta (`aberto`) também são mudanças com chave. A chave de aula
+  inclui a lista fixa: ao virar aula, ela sai; ao deixar de ser aula, entra a
+  lista prescrita. Ao virar aula sai a lista INTEIRA, inclusive o que só ele
+  tinha acrescentado e os ajustes dele; ao deixar de ser aula, entra a lista do
+  treinador, não a dele. A linha diz o que sai, o histórico guarda a lista com a
+  prescrição e o Desfazer devolve tudo (decisão do dono, 19/11/2026: guardar a
+  lista dele para trazer de volta pediria um dado novo). Se ele recusou a
+  conversão e o treinador mudou a lista depois, ela volta desmarcada. O
+  treino que não está no programa dele entra inteiro ou não entra ("Treino F
+  entra na rotação"); o que ele deixou de fora numa revisão anterior volta assim,
+  desmarcado. "Entra" num exercício que ele já tem mexe só no que difere do slot
+  dele. A leitura recusa o mesmo exercício duas vezes no mesmo treino (o
+  programa é por exercício) e diz qual guardou.
+- Com a sessão daquele treino aberta, aplicar espera: o rascunho é por posição, e
+  mudar o programa do dia no meio do treino misturaria as séries de hoje (a tela
+  diz, e liberar é desmarcar as mudanças daquele treino).
+- O aviso desfaz, se o programa ainda for o que a revisão gravou (uma sincronia
+  no meio pode ter trazido uma edição do outro aparelho; restaurar por cima a
+  apagaria): o programa, o do treinador e a sequência voltam ao que eram, e o
+  exercício que a revisão criou e nada usa é ARQUIVADO (`arq`), e não apagado
+  com lápide — se o outro aparelho criou o mesmo e já treinou com ele, a série
+  dele continua com nome e grupo.
+- A diferença do programa (`difDoDia`) passou a contar o RIR, para a mudança de
+  RIR deixada de fora aparecer.
+- Os ids do exercício novo são calculados uma vez, antes de criar o catálogo
+  (`planoDaRevisao(r, ids)`): recalcular depois fazia nascer `<slug>-2`. Dois
+  nomes com o mesmo `slugEx` na mesma revisão ("Máquina de sissy squat" e
+  "Máquina de Sissy Squat") viram um id só, com a primeira grafia.
+- Reaplicar uma revisão desfeita desarquiva o exercício que ela tinha criado.
+- Falha ao gravar: tudo volta, inclusive os carimbos de sincronia (`mtime`,
+  `carimbos`, `carimbosEm`, `impressoes`), senão o programa velho sairia com
+  carimbo novo e venceria a edição do outro aparelho. A falha fica na própria
+  revisão: "Tentar de novo" reaplica com as escolhas da tela, e, se uma
+  sincronia fechar a folha antes, a tela diz "A revisão não foi aplicada.".
+
+A forma do estado não muda (sem migração): `S.prog`, `S.progTreinador` e
+`S.progLog` têm os mesmos campos de antes, e a fusão deles é a de sempre.
+
 ---
 
 ## A chave do histórico é o exercício

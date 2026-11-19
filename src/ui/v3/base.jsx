@@ -110,10 +110,16 @@ export function Linha({ titulo, apoio, valor, unidade, marca, marcaTom, quieta, 
   return aoTocar ? <button class={c} onClick={aoTocar} {...resto}>{dentro}</button> : <div class={c} {...resto}>{dentro}</div>;
 }
 
-/** Liga e desliga. Desligar esconde; nunca apaga. */
-export function Chave({ titulo, apoio, ligada, aoMudar, ...resto }) {
+/**
+ * Liga e desliga. Desligar esconde; nunca apaga. Com `sinal`, é a linha de uma
+ * mudança da revisão (ds-telas2.js, "revisao"): o sinal num círculo à
+ * esquerda ('+' entra, '−' sai, '↑'/'↓'/'~'/'⇅' muda), em menta, atenção
+ * (`tom="t"`) ou o céu da semana (`tom="m"`).
+ */
+export function Chave({ titulo, apoio, ligada, aoMudar, sinal, tom, ...resto }) {
   return (
-    <button class="v3-chave" role="switch" aria-checked={ligada ? 'true' : 'false'} onClick={() => aoMudar(!ligada)} {...resto}>
+    <button class={cls('v3-chave', sinal && 'v3-mud')} role="switch" aria-checked={ligada ? 'true' : 'false'} onClick={() => aoMudar(!ligada)} {...resto}>
+      {sinal && <span class={cls('v3-mud-s', tom)} aria-hidden="true">{sinal}</span>}
       <span class="v3-chave-t"><b>{titulo}</b>{apoio && <span>{apoio}</span>}</span>
       <span class="v3-chave-k" />
     </button>

@@ -270,8 +270,16 @@ e o botão "Desfazer" em lima. Onde fica: 10 acima da doca (e da tira do treino
 aberto, se houver); a 14 da borda em destino; **10 acima do principal** na
 tela de ação, para nunca cobrir o "Feito" nem as saídas; e **no alto, sobre o
 véu**, com uma folha aberta, para nunca cobrir o que a folha pede. Entra em
-200 ms, deslizando 10 px, sem empurrar nada. Some em 6 s ou no próximo toque
-fora; com leitor de tela, é anunciado e fica até ser dispensado. Um de cada
+200 ms, deslizando 10 px, sem empurrar nada. Nos primeiros 500 ms, um toque
+fora mantém o aviso na tela. Depois disso, o próximo toque fora o dispensa.
+Quando o aviso nasce no lugar do botão que o criou (o "Aplicar" de uma lista
+longa), um toque nesse lugar nos primeiros 500 ms depois de o aviso aparecer
+é o segundo toque de um toque duplo e não vale, nem no "Desfazer". Um
+"Desfazer" de propósito nesse intervalo pede um segundo toque; no WebKit, que
+desenha o aviso mais tarde, o intervalo passa de 0,7 s do primeiro toque
+(medido: abaixo de 1 s). É a troca aceita pelo dono (19/11/2026): um toque duplo que desfaz sem
+aviso é pior que um Desfazer que às vezes pede outro toque.
+O aviso some em 6 s. Com leitor de tela, é anunciado e fica até ser dispensado. Um de cada
 vez; o novo substitui o velho.
 
 ## 13. Aviso dentro da tela

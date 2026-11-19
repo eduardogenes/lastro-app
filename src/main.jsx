@@ -17,7 +17,7 @@ import {
 } from './dominio/carga';
 import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
-import { tempo as tempoDoMovimento, trocaDeCamada } from './ui/movimento.js';
+import { tempo as tempoDoMovimento, pontoDentro, protegeSegundoToque, TOQUE_DUPLO_MS, trocaDeCamada } from './ui/movimento.js';
 import { ehBancada } from './palco.js';
 import { MIN_PESAGENS as MIN_PESAGENS_CORPO, semanaEmCurso, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, VALIDADE_LEITURA, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois, intervaloLongo } from './dominio/sessao';
@@ -25,7 +25,7 @@ import { entendeuAlgo, interpretaTexto } from './dominio/textolivre';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
-import { lerRevisao, casaNomes, mudancasDaRevisao, MODELO_DA_REVISAO } from './dominio/revisao';
+import { lerRevisao, casaNomes, MODELO_DA_REVISAO, treinoDaRevisao, mudancasDoTreino, aplicaMudancas } from './dominio/revisao';
 import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
 import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
@@ -3665,7 +3665,7 @@ function aplicaAoOficial(d, mods, motivo) {
 // oficial. É o oposto da edição do dia, e a tela diz isso o tempo todo.
 function difDoDia(d) {
   const bt = baseTreinador()[d];
-  const base = bt ? bt.ex.map(function (sl) { return { id: sl.id, s: sl.s, r: sl.r, d: sl.d }; }) : null;
+  const base = bt ? bt.ex.map(function (sl) { return { id: sl.id, s: sl.s, r: sl.r, d: sl.d, rir: sl.rir }; }) : null;
   const meu = (S.prog[d] || { ex: [] }).ex;
   if (!base) return [{ k:'novo', txt:'treino criado por você' }];
 
@@ -3697,6 +3697,7 @@ function difDoDia(d) {
     if (x.s !== b.s) out.push({ k:'sets', txt: nomeEx(x.id) + ': ' + x.s + ' séries, não ' + b.s });
     if (x.r !== b.r) out.push({ k:'reps', txt: nomeEx(x.id) + ': ' + x.r + ' repetições, não ' + b.r });
     if (x.d !== b.d) out.push({ k:'desc', txt: nomeEx(x.id) + ': descanso de ' + fmtDesc(x.d) + ', não ' + fmtDesc(b.d) });
+    if ((x.rir || '') !== (b.rir || '')) out.push({ k:'rir', txt: nomeEx(x.id) + ': sobrando ' + (x.rir || '—') + ', não ' + (b.rir || '—') });
   });
   const saiuPorTroca = {};
   Object.keys(trocado).forEach(function (k) { saiuPorTroca[trocado[k]] = 1; });
@@ -3783,11 +3784,35 @@ CTX.leRevisao = function () {
   view.revisao.lida = lida;
   view.revisao.casa = casaNomes(lida, catalogoParaRevisao(), baseTreinador());
   view.revisao.respostas = {};
+  // as mudanças começam marcadas; desmarcar é o que fica de fora. O treino que
+  // ele deixou de fora numa revisão anterior começa desmarcado, como ele escolheu
+  view.revisao.fora = {};
+  render();
+};
+/** "Editar o texto": volta ao campo, com o texto como estava. */
+CTX.editaTextoDaRevisao = function () { if (view.revisao) { view.revisao.lida = null; view.revisao.falhou = false; render(); } };
+/** A chave de uma mudança: marcada entra no programa dele; desmarcada fica como diferença. */
+CTX.alternaMudanca = function (k) {
+  const r = view.revisao;
+  if (!r || !r.lida) return;
+  const mudanca = CTX.revisao().grupos.flatMap(g => g.mudancas).find(m => m.k === k);
+  if (!mudanca) return;
+  r.fora[k] = mudanca.on;
   render();
 };
 CTX.respondeRevisao = function (nome, r) {
   if (!view.revisao || (r !== 'mesma' && r !== 'outro')) return;
-  view.revisao.respostas = Object.assign({}, view.revisao.respostas, { [nome]: r });
+  const rev = view.revisao;
+  const anteriores = rev.respostas[nome] && CTX.revisao().grupos;
+  rev.respostas = Object.assign({}, rev.respostas, { [nome]: r });
+  // Ao corrigir uma resposta, uma troca recusada pode se dividir em entrada e saída.
+  if (anteriores) {
+    CTX.revisao().grupos.forEach(function (g) {
+      const antes = anteriores.find(a => a.dia === g.dia);
+      if (!antes || !antes.mudancas.some(a => !a.on && !g.mudancas.some(m => m.k === a.k))) return;
+      g.mudancas.forEach(m => { if (!antes.mudancas.some(a => a.k === m.k)) rev.fora[m.k] = true; });
+    });
+  }
   render();
 };
 
@@ -3801,9 +3826,9 @@ function catalogoParaRevisao() {
 function seriesDoExercicio(id) {
   const h = S.logs[id] || [];
   const n = h.reduce(function (a, e) { return a + (e.sets || []).filter(Boolean).length; }, 0);
-  if (!n) return 'Não tem série registrada.';
+  if (!n) return 'não tem série registrada';
   const desde = Math.min.apply(null, h.map(function (e) { return e.t; }));
-  return 'Tem ' + n + (n === 1 ? ' série registrada' : ' séries registradas') + ' desde ' + fmtDate(desde) + '.';
+  return 'tem ' + n + (n === 1 ? ' série registrada' : ' séries registradas') + ' desde ' + fmtDate(desde);
 }
 
 /** O id final de cada nome, com as respostas dadas; `null` enquanto falta resposta. */
@@ -3829,6 +3854,29 @@ function idsDaRevisao(r) {
   return { ids: ids, falta: falta };
 }
 
+/**
+ * O que a revisão faz em cada treino que ela traz: o treino do treinador de
+ * antes (`velho`), o de depois (`novo`, a revisão inteira), o dele (`meu`) e a
+ * lista das mudanças (`dominio/revisao.ts`, `mudancasDoTreino`). Uma conta só
+ * para a tela e para a gravação.
+ */
+function planoDaRevisao(r, idsJa) {
+  // `idsJa`: os ids que a gravação já calculou ANTES de criar os exercícios novos
+  // no catálogo. Recalcular depois fazia o novo nascer como `<slug>-2` (o slug
+  // já existia), e a chave da mudança desmarcada não batia mais com a gravada
+  const { ids, falta } = idsJa ? { ids: idsJa, falta: false } : idsDaRevisao(r);
+  const base = baseTreinador();
+  const agora = Date.now();
+  const nome = function (id) { return CAT[id] ? CAT[id].n : (Object.keys(ids).filter(function (n) { return ids[n] === id; })[0] || id); };
+  const dias = r.lida.dias.map(function (d) {
+    const velho = base[d.dia];
+    const novo = treinoDaRevisao(d, ids, velho, function (id) { return descansoPadrao(exDe(id)); }, agora);
+    const meu = S.prog[d.dia];
+    return { dia: d.dia, velho: velho, novo: novo, meu: meu, mudancas: mudancasDoTreino(d.dia, velho, novo, meu, nome) };
+  });
+  return { ids: ids, falta: falta, dias: dias };
+}
+
 CTX.revisao = function () {
   const r = view.revisao;
   if (!r) return null;
@@ -3842,88 +3890,164 @@ CTX.revisao = function () {
       const c = r.casa[x.n];
       if (c.k === 'pergunta' && !perguntas.some(function (p) { return p.nome === x.n; })) {
         perguntas.push({ nome: x.n, candidato: exDe(c.id).n, series: seriesDoExercicio(c.id),
-                         lugar: c.por === 'lugar' ? 'Ele ocupa este lugar no Treino ' + d.dia + ' hoje.' : null,
+                         lugar: c.por === 'lugar' ? ' e ocupa este lugar no treino ' + d.dia : '',
                          resposta: r.respostas[x.n] || null });
       }
       if (!CAT[ids[x.n]]) novos[x.n] = 1;
     });
   });
-  const nome = function (id) { return CAT[id] ? CAT[id].n : (Object.keys(ids).filter(function (n) { return ids[n] === id; })[0] || id); };
-  const mud = mudancasDaRevisao(L, ids, baseTreinador(), nome);
+  const dias = falta ? [] : planoDaRevisao(r, ids).dias;
+  const grupos = dias.filter(function (d) { return d.mudancas.length; }).map(function (d) {
+    return { dia: d.dia, titulo: 'Treino ' + d.dia,
+             mudancas: d.mudancas.map(function (m) { return Object.assign({}, m, { on: !(r.fora[m.k] ?? m.desmarcada) }); }) };
+  });
+  const todas = grupos.reduce(function (a, g) { return a.concat(g.mudancas); }, []);
+  // com a sessão daquele treino aberta, mudar o programa dele no meio misturaria
+  // as séries de hoje (o rascunho é por posição): aplicar espera o fim do treino,
+  // ou que ele desmarque as mudanças daquele treino
+  const naSessao = S.sessao && S.sessao.day;
+  const bloqueio = naSessao && grupos.some(function (g) {
+    return g.dia === naSessao && g.mudancas.some(function (m) { return m.on && !m.jaEsta; });
+  }) ? naSessao : null;
   return {
     lida: true, data: L.data,
+    bloqueio: bloqueio,
+    falhou: !!r.falhou,
     problemas: L.problemas,
     vazia: !L.dias.length,
     perguntas: perguntas,
-    novos: Object.keys(novos),
-    dias: mud.map(function (m) {
-      const meu = S.prog[m.dia] ? difDoDia(m.dia) : [];
-      return { dia: m.dia, novo: m.novo, linhas: m.linhas,
-               series: m.antes === m.depois ? m.depois + ' séries, como antes' : m.antes + ' → ' + m.depois + ' séries',
-               suas: meu.map(function (x) { return x.txt; }) };
-    }),
-    pode: !falta && L.dias.length > 0
+    falta: falta,
+    novos: falta ? [] : Object.keys(novos),
+    grupos: grupos,
+    total: todas.length,
+    marcadas: todas.filter(function (m) { return m.on; }).length,
+    // a revisão lida é igual ao programa do treinador de agora: nada a escolher
+    igual: !falta && L.dias.length > 0 && !todas.length,
+    pode: !falta && !bloqueio && L.dias.length > 0 && todas.length > 0
   };
 };
 
 /**
- * Grava a revisão: os exercícios novos entram no catálogo; o programa do
- * treinador passa a ser o da revisão nos treinos que ela traz; o programa
- * dele, nesses treinos, vira o da revisão (as mudanças dele ali saem, e a tela
- * disse quais antes); treino novo entra no fim da sequência. Tudo volta se o
- * aparelho recusar.
+ * Grava a revisão, mudança por mudança (decisão do dono, 17/11/2026):
+ *
+ * - os exercícios novos entram no catálogo (o programa do treinador os tem,
+ *   marcados ou não);
+ * - o programa do TREINADOR passa a ser a revisão inteira, nos treinos que ela
+ *   traz (`treinoDaRevisao`); treino novo entra no fim da sequência dele;
+ * - o programa DELE recebe só as mudanças marcadas (`aplicaMudancas`): o que
+ *   ficou de fora continua aparecendo como diferença dele (`difDoDia`), e o que
+ *   ele já tinha mudado e a revisão não toca fica como está;
+ * - o histórico do programa diz, por treino, o que entrou e o que ficou de fora.
+ *
+ * Tudo volta se o aparelho recusar. O aviso desfaz: o programa, o do treinador
+ * e a sequência voltam ao que eram, e o exercício que a revisão criou e nada
+ * usa fica arquivado, preservando o histórico do outro aparelho.
  */
-CTX.incorporaRevisao = async function () {
+CTX.incorporaRevisao = async function (evento) {
   const r = view.revisao;
   const vm = CTX.revisao();
-  if (!r || !vm || !vm.pode) return;
+  if (!r || !vm || !vm.pode || r.aplicando) return;
+  r.aplicando = true;
+  const botaoTocado = evento && evento.detail > 0 && evento.currentTarget ? evento.currentTarget.getBoundingClientRect() : null;
   const { ids } = idsDaRevisao(r);
+  // Ao recusar a revisão, o programa volta com a mesma prioridade na fusão.
+  const marcas = { mtime: S.mtime, carimbosEm: S.carimbosEm, carimbos: S.carimbos && { ...S.carimbos } };
+  const impressoesAntes = { ...impressoes };
   const antes = JSON.stringify({ ex: S.ex, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog });
 
   S.ex = Object.assign({}, S.ex);
+  const criados = [];
   r.lida.dias.forEach(function (d) {
     d.ex.forEach(function (x) {
       const id = ids[x.n];
+      if (S.ex[id] && S.ex[id].arq) {
+        S.ex[id] = { ...S.ex[id], m: Date.now() };
+        delete S.ex[id].arq;
+        criados.push(id);
+        return;
+      }
       if (CAT[id] || S.ex[id]) return;
       S.ex[id] = { n: x.n, car: 'pino', g: x.g || '', c: 0, cue: x.cue || '', m: Date.now() };
+      criados.push(id);
     });
   });
   montaCatalogo();
 
+  // a conta de novo, agora com o catálogo completo (o descanso padrão do novo),
+  // com os MESMOS ids da tela
+  const p = planoDaRevisao(r, ids);
+  const marcadas = new Set(vm.grupos.flatMap(g => g.mudancas.filter(m => m.on).map(m => m.k)));
   const base = JSON.parse(JSON.stringify(baseTreinador()));
   const rotBase = rotTreinador().slice();
   const agora = Date.now();
-  r.lida.dias.forEach(function (d) {
-    const velho = S.prog[d.dia];
-    const slots = d.ex.map(function (x, i) {
-      const id = ids[x.n];
-      const igual = velho && velho.ex[i] && velho.ex[i].id === id;
-      const sl = { id: id, s: x.s, r: x.r, d: x.d || descansoPadrao(exDe(id)), desde: igual ? velho.ex[i].desde || 0 : agora };
-      if (x.rir) sl.rir = x.rir;
-      return sl;
-    });
-    const t = { name: d.nome || (base[d.dia] && base[d.dia].name) || ('Treino ' + d.dia),
-                tag: (base[d.dia] && base[d.dia].tag) || '', ex: slots };
-    if (d.aberto) t.aberto = 1;
-    base[d.dia] = t;
+  const de = r.lida.data ? ' de ' + r.lida.data : '';
+  const tocados = [];
+  let aplicadas = 0;
+  p.dias.forEach(function (d) {
+    base[d.dia] = d.novo;
     if (rotBase.indexOf(d.dia) < 0) rotBase.push(d.dia);
-    S.prog[d.dia] = JSON.parse(JSON.stringify(t));
-    if (rot().indexOf(d.dia) < 0) S.rot = rot().concat([d.dia]);
-    logProg(d.dia, 'revisão do treinador' + (r.lida.data ? ' de ' + r.lida.data : '') + ' incorporada no treino ' + d.dia);
+    if (!d.mudancas.length) return;
+    const escolhidas = d.mudancas.filter(function (m) { return marcadas.has(m.k); });
+    const deixadas = d.mudancas.filter(function (m) { return !marcadas.has(m.k); });
+    // conta só o que mexe no programa dele (o que já estava assim não é mudança)
+    aplicadas += escolhidas.filter(function (m) { return !m.jaEsta; }).length;
+    const t = aplicaMudancas(S.prog[d.dia], d.velho, d.novo, escolhidas, agora);
+    if (t) {
+      S.prog[d.dia] = t;
+      if (rot().indexOf(d.dia) < 0 && escolhidas.some(function (m) { return m.tipo === 'dia'; })) S.rot = rot().concat([d.dia]);
+    }
+    // o registro inteiro de cada mudança (todos os campos), e não só o título da tela
+    const lista = function (ms) { return ms.map(function (m) { return m.texto; }).join('; '); };
+    logProg(d.dia, 'revisão do treinador' + de + ': ' + (escolhidas.length ? lista(escolhidas) : 'nenhuma mudança aplicada') +
+                   (deixadas.length ? '. Ficou de fora: ' + lista(deixadas) : '') + '.');
+    tocados.push(d.dia);
   });
   S.progTreinador = { em: agora, data: r.lida.data, rot: rotBase, dias: base };
 
   if ((await save()) === false) {
+    r.aplicando = false;
+    Object.assign(S, marcas);
+    impressoes = impressoesAntes;
     const v = JSON.parse(antes);
     S.ex = v.ex; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog;
     montaCatalogo();
+    r.falhou = true;
     render();
     return;
   }
-  const quais = r.lida.dias.map(function (d) { return 'Treino ' + d.dia; }).join(', ');
   view.revisao = null;
   render(); saiDoDestino('revisao');
-  toast('Revisão' + (r.lida.data ? ' de ' + r.lida.data : '') + ' incorporada: ' + quais + '.');
+  if (botaoTocado) noDesenho(protegeSegundoToque(botaoTocado));
+  const gravado = JSON.stringify({ prog: S.prog, rot: S.rot, progTreinador: S.progTreinador });
+  const desfaz = async function () {
+    // só desfaz se o programa ainda é o que a revisão gravou: uma sincronia no
+    // meio pode ter trazido uma edição do outro aparelho, e restaurar por cima
+    // a apagaria (com carimbo novo, nos dois aparelhos)
+    if (JSON.stringify({ prog: S.prog, rot: S.rot, progTreinador: S.progTreinador }) !== gravado) {
+      toast('O programa mudou depois da revisão; desfazer agora passaria por cima disso. Corrija pelo programa.');
+      return;
+    }
+    const v = JSON.parse(antes);
+    S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador;
+    // o que a revisão criou e nada mais usa é ARQUIVADO, e não apagado: se o
+    // outro aparelho criou o mesmo exercício e já treinou com ele, a série dele
+    // continua com nome e grupo (uma lápide mataria a entrada de catálogo de lá)
+    const usado = function (id) {
+      if ((S.logs[id] || []).length) return true;
+      const em = function (dias) { return Object.keys(dias || {}).some(function (k) { return ((dias[k] && dias[k].ex) || []).some(function (sl) { return sl.id === id; }); }); };
+      return em(S.prog) || em(S.progTreinador && S.progTreinador.dias);
+    };
+    S.ex = Object.assign({}, S.ex);
+    criados.forEach(function (id) { if (S.ex[id] && !usado(id)) S.ex[id] = Object.assign({}, S.ex[id], { arq: 1, m: Date.now() }); });
+    montaCatalogo();
+    tocados.forEach(function (d) { logProg(d, 'revisão do treinador' + de + ' desfeita: o treino voltou ao que era.'); });
+    const ok = await save();
+    render();
+    if (ok) toast('Revisão desfeita.');
+  };
+  noDesenho(() => CTX.avisaComDesfazer(aplicadas
+    ? aplicadas + (aplicadas === 1 ? ' mudança aplicada' : ' mudanças aplicadas') + '. Valem a partir do próximo treino.'
+    : 'Revisão guardada. O seu programa não mudou.', desfaz));
 };
 
 function logProg(d, txt, motivo) {
@@ -4988,7 +5112,10 @@ CTX.respondePare = function (sim) { respondePare(sim); };
 CTX.naoGuardado = function () { return view.naoGuardado || null; };
 CTX.falhou = function () { return view.falhou && view.naoGuardado ? view.naoGuardado : null; };
 /** Tentar de novo é repetir a MESMA intenção: gravar o estado inteiro. */
-CTX.tentaGravar = function () { return save(); };
+CTX.tentaGravar = function () {
+  if (view.revisao && view.revisao.falhou) return CTX.incorporaRevisao();
+  return save();
+};
 /** "Ver", na faixa da falha: o painel com o que era, o porquê e o que fazer. */
 CTX.verFalha = function () { if (view.naoGuardado) { view.falhou = true; render(); } };
 /**
@@ -7859,6 +7986,7 @@ function sentidoDaTroca(antes, agora, abaAntes, abaAgora, passoAntes, passoAgora
   const folhas = function (l) { return l.filter(function (c) { return c.indexOf('folha:') === 0; }).length; };
   if (folhas(agora) < folhas(antes)) return 'fica';
   if (antes.indexOf('pare') >= 0 && agora.indexOf('pare') < 0) return 'fica';
+  if (topoAgora === 'revisao' && passoAntes !== passoAgora) return 'estado';
   if (eAcao(topoAgora) && passoAntes != null && passoAgora != null && passoAntes !== passoAgora) return 'passo';
   return null;
 }
@@ -7870,6 +7998,11 @@ function sentidoDaTroca(antes, agora, abaAntes, abaAgora, passoAntes, passoAgora
  * (+15 s, a régua, o relógio). `null` fora de tela de ação.
  */
 function passoDaAcao(topo) {
+  if (topo === 'revisao') {
+    const r = view.revisao;
+    if (!r || !r.lida) return 'colar';
+    return JSON.stringify(r.respostas);
+  }
   if (topo === 'modoSessao') {
     if (view.fimV3) return 'encerrado';
     if (timerFim) return 'descanso';
@@ -12030,10 +12163,11 @@ function avisoComAcao(msg, rotulo, fn) {
   no.appendChild(t); no.appendChild(b);
   regiao.textContent = '';
   regiao.appendChild(no);
-  // some no próximo toque fora dele (02-componentes.md, §12)
+  // O segundo toque da ação que abriu o aviso ainda pode cair na tela de trás.
+  const aceitaForaEm = Date.now() + TOQUE_DUPLO_MS;
   const fora = function (e) {
     if (!no.isConnected) { document.removeEventListener('pointerdown', fora, true); return; }
-    if (regiao.contains(e.target)) return;
+    if (pontoDentro(e, no.getBoundingClientRect()) || Date.now() < aceitaForaEm) return;
     document.removeEventListener('pointerdown', fora, true);
     clearTimeout(avisoLeitura);
     apagaAviso();

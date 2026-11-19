@@ -219,3 +219,11 @@ describe('espelho — arquivos', () => {
     });
   });
 });
+
+it.each([
+  ['18/11', '18/11'], ['18/11/2026', '18/11/2026'], ['2026-11-18', 'qua, 18/11/2026']
+])('a data %s da revisão chega legível ao programa do treinador', (data, esperado) => {
+  const { S } = estado();
+  const arquivo = montaArquivos({ ...S, progTreinador: { em: T, data, rot: S.rot, dias: S.prog } }, { agora: T });
+  expect(arquivo['treino/programa-do-treinador.md']).toContain('datada de ' + esperado + '.');
+});
