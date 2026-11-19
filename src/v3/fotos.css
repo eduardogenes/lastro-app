@@ -489,11 +489,14 @@
 .v3 .v3-diga button { flex: 0 0 52px; height: 52px; border-radius: 50%; background: var(--acao); color: var(--texto-sobre-acao); display: flex; align-items: center; justify-content: center; }
 .v3-diga svg { width: 22px; height: 22px; }
 .v3-eco { min-height: 22px; font-size: 14px; font-weight: 600; margin-top: 6px; }
-.v3-reg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
-.v3 .v3-reg-b { display: flex; flex-direction: column; align-items: flex-start; min-height: 58px; padding: 10px 16px; border-radius: 20px; background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--contorno); text-align: left; }
-.v3 .v3-reg-b.pri { grid-column: 1 / -1; background: var(--assunto-treino); box-shadow: inset 0 0 0 2px var(--texto); }
-.v3-reg b { font: 700 16px var(--f-titulo); }
-.v3-reg span { font: 500 13px var(--f-texto); color: var(--texto-2); }
+/* o "+": as sugestões como a .sug de lá (areia, 76, quina de cartão) */
+.v3-reg { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); margin-top: var(--e-5); }
+.v3 .v3-reg-b { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; min-height: 76px; padding: var(--e-5) var(--e-7);
+  border-radius: var(--r-cartao); background: var(--superficie-quieta); text-align: left; transition: transform var(--d-toque) var(--mola); }
+.v3 .v3-reg-b:active { transform: scale(.97); }
+.v3 .v3-reg-b.pri { grid-column: 1 / -1; background: var(--assunto-treino); }
+.v3-reg b { font: 700 18px/1.15 var(--f-titulo); letter-spacing: -.01em; }
+.v3-reg span { font: 500 13px/1.3 var(--f-texto); color: var(--texto-2); }
 /* sobre a cor do principal, o apoio é tinta */
 .v3-reg-b.pri span { color: var(--texto); }
 

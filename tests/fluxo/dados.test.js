@@ -340,6 +340,9 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   a.v('diaDeComida');
   a.E(`S.dia.done = { pos: 1790000000000 }`);
   a.E(`S.dia.como = { pos: 'fora' }`);
+  // o tamanho do "comi outra coisa" (peça 6), no dia aberto e num dia fechado
+  a.E(`S.dia.tam = { pos: 'menos' }`);
+  a.E(`S.comidaHist.push({ d: '2026-09-29', done: { almoco: 1790000000000 }, agua: 0, escala: {}, como: { almoco: 'fora' }, tam: { almoco: 'mais' }, tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 1, m: 1 })`);
   a.E(`S.dia.aguaNaoContada = 1`);
   // a lista de perguntas de programa que esperam — coleção desde o plano 10
   a.E(`S.promoPendente = [{ sid: 1790000000000, day: 'A', t: 1790000000000, m: 1790000000000,
@@ -372,7 +375,8 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   // e os seis, nominalmente, porque são o motivo deste teste existir
   assert.strictEqual(a.S().ajusteHist.length, 1, 'o ledger do ajuste');
   assert.strictEqual(a.S().aulas.length, 1, 'os modelos de aula');
-  assert.strictEqual(a.S().comidaHist.length, 1, 'os dias de comida fechados');
+  assert.strictEqual(a.S().comidaHist.length, 2, 'os dias de comida fechados');
+  assert.strictEqual(a.S().comidaHist.filter(h => h.d === '2026-09-29')[0].tam.almoco, 'mais', 'o tamanho num dia fechado');
   assert.strictEqual(a.S().gordura.length, 1, 'as leituras de gordura visual');
   assert.strictEqual(a.S().protocolo.sessoes.length, 1, 'as sessões de foto');
   assert.strictEqual((a.S().quadro || { texto: null }).texto, '5 RNDS · 20 WB', 'o quadro do dia');
@@ -391,9 +395,37 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
     'e a pesagem da manhã segue sendo outro registro, intocada');
   assert.strictEqual(a.S().dia.done.pos, 1790000000000, 'o instante da marca');
   assert.strictEqual(a.S().dia.como.pos, 'fora', 'qual refeição saiu do plano');
+  assert.strictEqual(a.S().dia.tam.pos, 'menos', 'e o tamanho do que comeu no lugar');
   assert.strictEqual(a.S().dia.aguaNaoContada, 1, '"não contei a água" como fato');
   assert.strictEqual(a.S().promoPendente.length, 1, 'a pergunta de programa que espera');
   assert.strictEqual(a.S().promoPendente[0].sid, 1790000000000, 'com a chave natural dela');
+  a.fechar();
+});
+
+test('a cópia com tamanho que não segue a regra entra limpa, e a de antes do tamanho entra intacta', async () => {
+  // O tamanho é campo novo e opcional, sem migração: a cópia de antes não tem,
+  // e nada muda nela. A colada à mão (ou de build adulterado) pode trazer valor
+  // desconhecido ou tamanho numa refeição que não foi "outra coisa": isso sai.
+  const a = await app();
+  const hoje = a.E('hojeISO()');
+  const copia = {
+    logs: {}, done: [{ day: 'A', t: 1790000000000, sid: 1790000000000 }], plano: 12,
+    dia: { data: hoje, done: { almoco: 1790000000000, jantar: 1790000000000, lanche: 1790000000000 }, agua: 0, escala: {},
+           como: { almoco: 'fora', jantar: 'nao' }, tam: { almoco: 'enorme', jantar: 'mais', lanche: 'menos', ceia: 'parecido' } },
+    comidaHist: [
+      { d: '2026-09-29', done: { almoco: 1790000000000 }, agua: 0, escala: {}, como: { almoco: 'fora' }, tam: { almoco: 'parecido' }, tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 1, m: 1 },
+      { d: '2026-09-28', done: { almoco: 1790000000000 }, agua: 0, escala: {}, como: { almoco: 'fora' }, tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 1, m: 1 }
+    ]
+  };
+  await a.v('importText', JSON.stringify({ app: 'lastro', data: copia }));
+  await a.esperar(60);
+  assert.deepStrictEqual(a.S().dia.tam, { almoco: 'enorme' },
+    'sai o do "não comi", o de marca como o plano e o sem marca; o valor que este app não conhece fica (é de uma versão mais nova)');
+  assert.strictEqual(a.S().dia.como.almoco, 'fora', 'e a marca fica como estava');
+  const h29 = a.S().comidaHist.filter(h => h.d === '2026-09-29')[0], h28 = a.S().comidaHist.filter(h => h.d === '2026-09-28')[0];
+  assert.strictEqual(h29.tam.almoco, 'parecido', 'o tamanho certo fica');
+  assert.ok(!('tam' in h28), 'o dia de antes do tamanho continua sem o campo');
+  assert.strictEqual(h28.como.almoco, 'fora', 'com a marca dele');
   a.fechar();
 });
 

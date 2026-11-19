@@ -195,8 +195,8 @@ S = {
   draft: null,                          // buffer de digitação da sessão aberta
   deload: false,
   cardio: [{ t, m: 'bike', min: 25, i: 'moderado' }],
-  dia: { data, done, agua, escala, cadencia, alta, turno },   // o dia de comida
-  comidaHist: [{ d, done, agua, escala, tot, pv, aj, m }],    // os dias que já fecharam
+  dia: { data, done, como, tam, agua, escala, cadencia, alta, turno },   // o dia de comida
+  comidaHist: [{ d, done, como, tam, agua, escala, tot, pv, aj, m }],    // os dias que já fecharam
   body: { peso: [{ t, v }], cintura: [{ t, v }] },
   carga: { 'pendulum-squat': 'lado' },  // correção do tipo, por exercício
 
@@ -1055,12 +1055,92 @@ mesmo modo de falha que fez `uneSessoesDeFoto` existir.
 
 | campo | funde | por quê |
 |---|---|---|
-| `done` | união com lápide | é presença; a forma é a de `S.descanso` |
+| `done` | união com lápide; com a mesma refeição viva dos dois lados, fica a deste lado | é presença; a forma é a de `S.descanso` |
+| `como`, `tam`, a porção da refeição marcada | com a marca que ficou | são atributos da marca: viajam com ela e morrem com a lápide dela |
 | `agua` | o maior | contador que só cresce ao longo do dia |
 | `escala`, `tot`, `pv`, enquadramento | carimbo mais novo | decisões tomadas uma vez |
 
 **O dia ABERTO funde pela mesma função.** Ele era o único que ainda vinha
 inteiro do lado que gravou por último — e é justamente o que mais colide.
+
+**A lápide passa primeiro** (18/11/2026). Antes, a fusão unia e só depois
+aplicava a lápide ao que este lado tinha: a marca refeita no outro aparelho
+depois de desfeita ("Comi", "Desfazer", "Comi outra coisa") era recusada porque
+este lado ainda tinha a velha, e a velha morria logo em seguida — a refeição
+ficava sem marca até a próxima sincronia.
+
+**Corrigir uma marca é desmarcar e marcar de novo, e a lápide leva a correção.**
+Com a mesma refeição marcada e viva dos dois lados, fica a deste lado, com o
+`como`, o `tam` e a porção dela. No Hoje, corrigir já era desfazer e marcar; no
+pôr em dia de um dia passado passou a ser também: a linha tocada que muda deixa
+lápide na marca velha e nasce depois dela, e só ela é recarimbada (as outras
+marcas do dia guardam a hora delas). No outro aparelho, a marca velha morre pela
+lápide e a nova entra pela união. Assim duas correções em refeições diferentes do
+mesmo dia, feitas sem os aparelhos se verem, ficam as duas.
+
+"Vale a marca mais nova" foi tentado e saiu, na revisão de dado da mesma data: o
+instante de uma marca nem sempre é uma afirmação sobre a refeição. A resposta do
+dia marca as refeições sem marca com a hora da resposta, e o pôr em dia de um
+build antigo recarimba o dia inteiro; com "a mais nova vence", o "como o plano"
+da resposta das 21h apagaria o "outra coisa, bem mais" das 12h40 do outro
+aparelho, nos dois. E dias que já divergiam entre os aparelhos do dono mudariam
+na primeira sincronia depois de publicar.
+
+Os limites que ficam, ditos: duas marcas DIFERENTES da mesma refeição, feitas sem
+os aparelhos se verem, não convergem — cada aparelho fica com a sua, e nenhuma se
+perde; e a lápide depende do relógio, como sempre dependeu (um aparelho com o
+relógio atrasado perde para a marca do outro).
+
+**A porção segue a marca.** A porção de uma refeição marcada é a da marca que
+ficou, quando a marca veio de um lado só ou os dois lados têm marcas diferentes.
+Antes ela vinha sempre do dia de carimbo mais novo, e o "Comi metade" que veio do
+outro aparelho virava "tudo" quando este lado tinha mexido em outra coisa do dia
+depois. Com a MESMA marca dos dois lados, a porção continua vindo do lado que
+mexeu por último (`setEscala` ajusta a porção de uma refeição já marcada).
+
+**O que só este lado tem, empurra.** A fusão conta o dia, a marca e o tamanho de
+uma marca dos dois lados que só existem aqui (`comidaDaqui`, ao lado de
+`ajustesCorpo`), e a sincronia empurra: o tamanho que voltou depois de um build
+antigo ter fundido o dia sem ele não fica fora da nuvem e da pasta dos agentes.
+
+**A porção sem marca sai.** A porção de uma refeição que ficou sem marca na fusão
+(a lápide levou a marca) sai junto; e marcar qualquer coisa que não seja "metade"
+no Hoje tira a porção que estava. Antes, a porção 50% de um "Comi metade"
+desfeito no outro aparelho ficava solta e caía no "outra coisa, bem mais"
+seguinte.
+
+**A janela do build antigo.** Enquanto um aparelho ainda roda o build de antes
+destas mudanças (uma ou duas aberturas, até o PWA se atualizar): a correção de um
+dia passado feita no aparelho novo some por um tempo no antigo (a fusão antiga
+une antes de aplicar a lápide, recusa a marca nova e mata a velha) e volta quando
+o novo sincroniza de novo e o antigo puxa outra vez; e, se o antigo foi o último
+a mexer no dia aberto, o tamanho vai e volta na nuvem a cada sincronia dos dois.
+Não há como mudar o build antigo; as duas coisas param sozinhas quando ele se
+atualiza ou o dia fecha. A sincronia só roda no boot, depois de mudança, ao
+voltar ao app, ao reconectar e no manual, então não vira laço.
+
+### O tamanho do "comi outra coisa"
+
+Decisão do dono (17/11/2026): guardar o tamanho, comparado ao da refeição do
+plano (`tam`: `parecido`, `mais`, `menos`, `nsei`). É atributo da marca `'fora'`,
+como `como` é da marca: `tamanhosDaMarca` (`dominio/nutricao/calculo.ts`) é a
+guarda única da invariante (valor conhecido, refeição em `done` com `como:
+'fora'`), e passam por ela o fecho do dia, o pôr em dia, a fusão e
+`normalizaEstado()`.
+
+**Nenhuma regra lê o tamanho.** O total do dia continua com os números do plano
+e o peso na adesão continua o da marca `'fora'`: a decisão foi guardar e mostrar
+ao nutricionista (a pasta dos agentes diz o tamanho em `dias.csv`), não mudar a
+conta. Campo novo e opcional, sem migração: ausente é "não foi perguntado" (as
+marcas de antes, e as do pôr em dia, que não pergunta). Um teste de domínio
+cobra que total, adesão e dia interpretável sejam os mesmos com qualquer
+resposta.
+
+**"Tudo" vence "Fora" no pôr em dia.** "Como o plano" é a ausência do `como`, e
+ausência não sobrescreve nada no merge de `poeComidaNoDia`: um "Não comi" errado
+num dia passado não tinha conserto, e pesava 0 na regra. `como: null` numa
+refeição agora tira o que ela tinha, e "Tudo" sobre "Metade" diz a porção cheia
+como 1.
 
 ### As três regras de medição
 

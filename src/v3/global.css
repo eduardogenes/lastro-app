@@ -124,7 +124,7 @@ html:has(.v3-doca:not(.oculta) .v3-tira) #toast { bottom: calc(var(--doca) + 88p
 /* na tela de ação, 10 acima do principal: nunca cobre o "Feito" nem as saídas */
 html:has(.v3-acao) #toast { bottom: calc(var(--botao-acao) + var(--alvo) + 32px + var(--sa-bottom)); }
 /* com uma folha aberta, no alto, sobre o véu: nunca cobre o que a folha pede */
-html:has(.v3-folha-w) #toast { top: calc(14px + var(--sa-top)); bottom: auto; }
+html:has(.v3-folha-w:not([data-sai])) #toast { top: calc(14px + var(--sa-top)); bottom: auto; }
 #toast > .aviso {
   box-sizing: border-box;
   background: var(--acao); color: var(--texto-sobre-acao);

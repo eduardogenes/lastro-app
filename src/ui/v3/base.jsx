@@ -8,7 +8,7 @@ import { ic } from './icones.jsx';
 // O comportamento de camada é o mesmo do visual antigo, e por isso vem de lá:
 // a trava de rolagem é um contador só, e o isolamento acha a camada de cima
 // entre as folhas dos dois visuais.
-import { trava, destrava, abreCamada, LugarNaPilha } from './camada.js';
+import { trava, destrava, abreCamada, LugarNaPilha, FolhaDaPilha } from './camada.js';
 import { dita } from './regua.jsx';
 
 const cls = (...p) => p.filter(Boolean).join(' ');
@@ -345,10 +345,12 @@ export function Faixa({ falha, acao, aoAgir, children }) {
 export function Folha({ titulo, sub, aoFechar, children }) {
   const caixa = useRef(null);
   const lugar = useContext(LugarNaPilha);
+  const entrada = useContext(FolhaDaPilha);
   useEffect(() => { trava(); return destrava; }, []);
   useEffect(() => abreCamada(caixa.current && caixa.current.parentElement, caixa.current), []);
   return (
-    <div class="v3 v3-folha-w" data-lugar={lugar || 0} style={`position:relative;z-index:${60 + (lugar || 0) * 2}`}>
+    <div class="v3 v3-folha-w" data-lugar={lugar || 0} data-troca={entrada && entrada.troca ? '' : undefined}
+         style={`position:relative;z-index:${60 + (lugar || 0) * 2}`}>
       <div class="v3-veu" onClick={aoFechar} />
       <section class="v3-folha" role="dialog" aria-modal="true" aria-label={titulo} ref={caixa} tabindex="-1">
         <h2>{titulo}</h2>

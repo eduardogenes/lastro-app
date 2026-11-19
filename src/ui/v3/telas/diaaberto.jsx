@@ -14,6 +14,7 @@ import { ic } from '../icones.jsx';
 import { Acoes, Apoio, Botao, Caixa, Cabecalho, Fichas, Folha, Linha, Par, Quadros, Respostas, Saida, Secao, Selo, Vazio } from '../base.jsx';
 import { Regua } from '../regua.jsx';
 import { CamposDoCardio } from '../cardio.jsx';
+import { outraCoisa } from './hoje.jsx';
 
 const virgula = n => String(Math.round(n * 100) / 100).replace('.', ',');
 const meioDia = data => new Date(data + 'T12:00:00').getTime();
@@ -95,7 +96,8 @@ export function DiaAbertoV3({ ctx }) {
           <div>
             {d.comida.momentos.map(x => {
               const sl = SELO[x.marca] || [x.marca, 'quieto'];
-              return <Linha key={x.id} titulo={x.nome} apoio={x.hora} valor={<Selo tom={sl[1]}>{x.marca === 'tudo' && ic.ok}{sl[0]}</Selo>} />;
+              return <Linha key={x.id} titulo={x.nome} apoio={x.hora + (x.marca === 'fora' && x.tam ? ' · ' + outraCoisa(x.tam) : '')}
+                            valor={<Selo tom={sl[1]}>{x.marca === 'tudo' && ic.ok}{sl[0]}</Selo>} />;
             })}
           </div>
           <Apoio>Água: {d.comida.agua}. {d.comida.regra}</Apoio>

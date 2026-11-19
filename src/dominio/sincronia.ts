@@ -33,6 +33,7 @@ import type {
 } from './tipos';
 import type { ComoFoiARefeicao, DiaComida, DiaComidaHist } from './nutricao/tipos';
 import { MARCAS_DO_CORPO } from './corpo';
+import { tamanhosDaMarca } from './nutricao/calculo';
 import { chaveDaLixeira, vivaDesde } from './lixeira';
 import type { LeituraDeGordura } from './corpo';
 
@@ -76,6 +77,13 @@ export interface ResumoDaFusao {
   ajustesCorpo: number;
   /** registros que uma lápide removeu */
   apagados: number;
+  /**
+   * marcas de refeição (e tamanhos de uma marca que os dois lados têm) que só
+   * existem DESTE lado. Como `ajustesCorpo`: não é registro que veio, é o que
+   * o outro lado ainda não tem, e obriga a empurrar — o tamanho recuperado
+   * depois de um build antigo ter fundido o dia sem ele, por exemplo.
+   */
+  comidaDaqui: number;
   /** de que lado vieram os documentos (programa, plano de comida, cadência) */
   documentos: 'local' | 'remoto' | 'iguais';
   /** true quando nada mudou de nenhum lado — o app não precisa nem salvar */
@@ -448,6 +456,36 @@ function uneSessoesDeFoto(
  * - `como` é ATRIBUTO da marca, e viaja com ela: o lado cuja marca entrou traz
  *   o "fora do plano" ou o "não comi" junto, e a lápide que mata a marca mata o
  *   atributo também. Fundido à parte, ele descreveria uma marca que não existe.
+ *   `tam` (o tamanho do "comi outra coisa") é atributo da mesma marca e anda
+ *   do mesmo jeito.
+ * - A lápide passa PRIMEIRO pelo que este lado tem, e só depois vem a união.
+ *   Na ordem inversa, a marca refeita no outro aparelho depois de desfeita (o
+ *   "Comi", "Desfazer", "Comi outra coisa") era recusada porque este lado ainda
+ *   tinha a marca velha, e logo em seguida a marca velha morria pela lápide: a
+ *   refeição ficava sem marca nenhuma até a próxima sincronia.
+ * - Os dois lados com a mesma refeição marcada e viva: fica a DESTE lado, com o
+ *   `como`, o `tam` e a porção dela. Corrigir uma marca é desmarcar e marcar de
+ *   novo (no Hoje e no pôr em dia), e é a lápide que leva a correção ao outro
+ *   aparelho: a marca velha morre lá, e a nova entra pela união. "Vale a marca
+ *   mais nova" foi tentado e saiu (revisão de dado, 18/11/2026): o instante de
+ *   uma marca nem sempre é uma afirmação sobre a refeição (a resposta do dia
+ *   marca com a hora da resposta; o pôr em dia de um build antigo recarimba o
+ *   dia inteiro), e a marca "como o plano" da resposta das 21h venceria o
+ *   "outra coisa, bem mais" das 12h40 do outro aparelho. O limite que fica:
+ *   duas marcas DIFERENTES da mesma refeição, feitas sem os aparelhos se verem,
+ *   não convergem; cada aparelho fica com a sua, e nenhuma se perde.
+ * - Com o mesmo instante é a mesma marca, e o tamanho que só um lado tem (o
+ *   outro passou por um build que não o conhecia) vale para os dois.
+ * - A porção de uma refeição marcada (`escala[id]`) é da marca que ficou
+ *   quando a marca veio de um lado só, ou quando os dois lados têm marcas
+ *   DIFERENTES: senão o "Comi metade" que veio do outro aparelho virava "tudo"
+ *   sempre que este lado tivesse mexido em outra coisa do dia depois, e o
+ *   tamanho de um lado se misturava com a porção do outro. Com a MESMA marca
+ *   dos dois lados, a porção continua vindo do lado que mexeu por último
+ *   (`setEscala` ajusta a porção de uma refeição já marcada). A porção de
+ *   refeição que ficou sem marca sai: era da marca que a lápide levou.
+ * - O que só este lado tem (o dia, a marca, o tamanho de uma marca dos dois)
+ *   é contado em `soDaqui`, para a sincronia saber que precisa empurrar.
  * - `agua` é contador que só cresce ao longo do dia: fica o MAIOR. Carimbar um
  *   inteiro custaria mais que o risco, e subestimar um copo é ruído aceitável.
  * - `aguaNaoContada` é o único campo em que CONTAR vence: declarar que não
@@ -460,10 +498,11 @@ function uneSessoesDeFoto(
  */
 function uneDiasDeComida(
   local: DiaComidaHist[], remoto: DiaComidaHist[], mortos: Record<string, number>
-): { itens: DiaComidaHist[]; vindos: number; apagados: number } {
+): { itens: DiaComidaHist[]; vindos: number; apagados: number; soDaqui: number } {
   const por: Record<string, DiaComidaHist> = {};
   const daqui: Record<string, 1> = {};
-  let vindos = 0, apagados = 0;
+  const vistosLa: Record<string, 1> = {};
+  let vindos = 0, apagados = 0, soDaqui = 0;
 
   (Array.isArray(local) ? local : []).forEach(function (x) {
     if (x && x.d) { por[x.d] = JSON.parse(JSON.stringify(x)); daqui[x.d] = 1; }
@@ -471,31 +510,59 @@ function uneDiasDeComida(
 
   (Array.isArray(remoto) ? remoto : []).forEach(function (x) {
     if (!x || !x.d) return;
+    vistosLa[x.d] = 1;
     const meu = por[x.d];
     if (!meu) { por[x.d] = JSON.parse(JSON.stringify(x)); vindos++; return; }
 
-    // done: união, respeitando a lápide de cada refeição. `como` acompanha a
-    // marca que entrou: é atributo dela, não registro próprio
+    // o que ESTE lado tem passa primeiro pela lápide: a marca morta sai antes
+    // da união, para a refeita do outro lado poder entrar no lugar dela
+    if (!meu.done) meu.done = {};
+    Object.keys(meu.done).forEach(function (id) {
+      const morto = mortos[chaveDeRefeicaoFeita(x.d, id)];
+      if (morto != null && meu.done[id] <= morto) {
+        delete meu.done[id];
+        if (meu.como) delete meu.como[id];
+        if (meu.tam) delete meu.tam[id];
+        apagados++;
+      }
+    });
+    // done: união, respeitando a lápide de cada refeição. `como` e `tam`
+    // acompanham a marca que entrou: são atributos dela, não registro próprio,
+    // e vêm exatamente como estão do lado de lá (inclusive ausentes)
+    const veioDeLa: Record<string, 1> = {};
+    const vivasLa: Record<string, 1> = {};
+    const mesmaMarca: Record<string, 1> = {};
     Object.keys(x.done || {}).forEach(function (id) {
       const quando = x.done[id];
       if (typeof quando !== 'number') return;
       const morto = mortos[chaveDeRefeicaoFeita(x.d, id)];
       if (morto != null && quando <= morto) return;
+      vivasLa[id] = 1;
       if (meu.done[id] == null) {
-        meu.done[id] = quando; vindos++;
+        meu.done[id] = quando; vindos++; veioDeLa[id] = 1;
         const como = x.como && x.como[id];
         if (como) { if (!meu.como) meu.como = {}; meu.como[id] = como; }
+        else if (meu.como) delete meu.como[id];
+        const tam = x.tam && x.tam[id];
+        if (tam) { if (!meu.tam) meu.tam = {}; meu.tam[id] = tam; }
+        else if (meu.tam) delete meu.tam[id];
+      } else if (quando === meu.done[id]) {
+        mesmaMarca[id] = 1;
+        // a mesma marca dos dois lados: o tamanho que só lá existe é a mesma
+        // afirmação, desde que o "como" seja o mesmo
+        const tam = x.tam && x.tam[id];
+        const mesmoComo = ((x.como && x.como[id]) || null) === ((meu.como && meu.como[id]) || null);
+        if (tam && mesmoComo && !(meu.tam && meu.tam[id])) { if (!meu.tam) meu.tam = {}; meu.tam[id] = tam; }
+        // e o tamanho que só ESTE lado tem precisa subir
+        if (!tam && mesmoComo && meu.tam && meu.tam[id]) soDaqui++;
       }
+      // marcas diferentes da mesma refeição, feitas sem se ver: fica a deste lado
     });
-    // e o que ESTE lado tem também passa pela lápide do outro
-    Object.keys(meu.done || {}).forEach(function (id) {
-      const morto = mortos[chaveDeRefeicaoFeita(x.d, id)];
-      if (morto != null && meu.done[id] <= morto) {
-        delete meu.done[id];
-        if (meu.como) delete meu.como[id];
-        apagados++;
-      }
-    });
+    // a marca viva que só este lado tem também precisa subir
+    Object.keys(meu.done).forEach(function (id) { if (!vivasLa[id]) soDaqui++; });
+    // a porção de cada refeição marcada é da marca que ficou (ver acima)
+    const escalaDeLa = Object.assign({}, x.escala || {});
+    const escalaDaqui = Object.assign({}, meu.escala || {});
 
     if (typeof meu.aguaM === 'number' && typeof x.aguaM === 'number') {
       // Os dois lados carimbam a água: vale a conta que mudou por último,
@@ -524,6 +591,17 @@ function uneDiasDeComida(
       if (x.pordia) meu.pordia = 1; else delete meu.pordia;
       meu.m = x.m;
     }
+    // a porção das refeições marcadas é a da marca que ficou, não a do dia mais
+    // novo (com a mesma marca dos dois lados, vale o dia mais novo, acima)
+    Object.keys(meu.done).forEach(function (id) {
+      if (mesmaMarca[id]) return;
+      const fonte = veioDeLa[id] ? escalaDeLa : escalaDaqui;
+      if (fonte[id] != null) { if (!meu.escala) meu.escala = {}; meu.escala[id] = fonte[id]; }
+      else if (meu.escala) delete meu.escala[id];
+    });
+    // e a porção de refeição que ficou sem marca sai: era da marca que a lápide
+    // levou, e cairia na próxima ("outra coisa, bem mais" com "porção 50%")
+    Object.keys(meu.escala || {}).forEach(function (id) { if (meu.done[id] == null) delete meu.escala[id]; });
   });
 
   const itens: DiaComidaHist[] = [];
@@ -540,10 +618,15 @@ function uneDiasDeComida(
       });
       if (!Object.keys(h.como).length) delete h.como;
     }
+    // o dia que só este lado tem precisa subir
+    if (daqui[d] && !vistosLa[d]) soDaqui++;
+    // e o tamanho só fica onde ainda há marca `'fora'` (a guarda é uma só)
+    const tam = tamanhosDaMarca(h);
+    if (tam) h.tam = tam; else delete h.tam;
     itens.push(h);
   });
   itens.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
-  return { itens: itens, vindos: vindos, apagados: apagados };
+  return { itens: itens, vindos: vindos, apagados: apagados, soDaqui: soDaqui };
 }
 
 /** A lápide de uma entrada do catálogo dele. */
@@ -658,6 +741,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
 
   const resumo: ResumoDaFusao = {
     series: 0, sessoes: 0, medidas: 0, cardio: 0, fotosCorpo: 0, ajustesCorpo: 0, apagados: 0,
+    comidaDaqui: 0,
     documentos: 'iguais',
     identicos: false
   };
@@ -732,6 +816,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   const cm = uneDiasDeComida(local.comidaHist || [], remoto.comidaHist || [], mortos);
   base.comidaHist = cm.itens.slice(-TETO.comida);
   resumo.apagados += cm.apagados;
+  resumo.comidaDaqui += cm.soDaqui;
 
   // ---- o dia ABERTO ----
   // Ele é o que mais colide, e era o único que ainda vinha inteiro do lado que
@@ -756,6 +841,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
                aguaNaoContada: d.aguaNaoContada, aguaM: d.aguaM,
                escala: Object.assign({}, d.escala || {}),
                como: d.como ? Object.assign({}, d.como) : undefined,
+               tam: d.tam ? Object.assign({}, d.tam) : undefined,
                // `aderencia` não entrava nesta conversão, e o `base.dia`
                // reconstruído abaixo não a devolvia: fundir dois aparelhos no
                // mesmo dia APAGAVA o enquadramento ("saí do plano", "dia
@@ -765,11 +851,13 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
                tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 0,
                m: (d as DiaComida & { m?: number }).m || mtime };
     };
-    const j = uneDiasDeComida(
+    const ja = uneDiasDeComida(
       [comoHist(local.dia, porDocumento ? (cl.dia || 0) : mtimeDe(local))],
       [comoHist(remoto.dia, porDocumento ? (cr.dia || 0) : mtimeDe(remoto))],
       mortos
-    ).itens[0];
+    );
+    resumo.comidaDaqui += ja.soDaqui;
+    const j = ja.itens[0];
     if (j) {
       base.dia = { data: j.d, done: j.done, agua: j.agua, escala: j.escala,
                    cadencia: j.cadencia, alta: j.alta, turno: j.turno };
@@ -778,6 +866,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
       if (j.aguaNaoContada) base.dia.aguaNaoContada = 1;
       if (typeof j.aguaM === 'number') base.dia.aguaM = j.aguaM;
       if (j.como) base.dia.como = j.como;
+      if (j.tam) base.dia.tam = j.tam;
       if (j.aderencia) base.dia.aderencia = j.aderencia;
       if (j.pordia) base.dia.pordia = 1;
     }
@@ -944,6 +1033,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
 
   resumo.identicos = resumo.series === 0 && resumo.sessoes === 0 && resumo.medidas === 0 &&
                      resumo.cardio === 0 && resumo.fotosCorpo === 0 && resumo.ajustesCorpo === 0 &&
+                     resumo.comidaDaqui === 0 &&
                      resumo.apagados === 0 && resumo.documentos !== 'remoto';
 
   return { estado: base, resumo: resumo };

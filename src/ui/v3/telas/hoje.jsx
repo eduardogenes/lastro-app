@@ -7,7 +7,8 @@
 import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
 import { CamposDoCardio } from '../cardio.jsx';
-import { Acoes, Apoio, Bloco, Botao, Caixa, Chave, Fichas, Folha, Linha, Pequeno, Pergunta, Saida, Secao, Seletor } from '../base.jsx';
+import { contracaoDe } from '../../../dominio/formato';
+import { Acoes, Apoio, Bloco, Botao, Caixa, Chave, Fichas, Folha, Linha, Pequeno, Pergunta, Radios, Saida, Secao, Seletor, radio } from '../base.jsx';
 
 const RESPOSTAS = [{ k: 'sim', t: 'Foi, sim' }, { k: 'quase', t: 'Quase' }, { k: 'naosei', t: 'Não sei dizer' }];
 
@@ -202,6 +203,15 @@ export function HojeV3({ ctx }) {
  * outra coisa de quem não comeu.
  */
 const FRASE_DA_MARCA = { tudo: ' marcado como o plano.', metade: ': comi metade.', fora: ': outra coisa.', nao: ': não comi.', nsei: ' fica fora da conta.' };
+/** O tamanho do "comi outra coisa", em palavra, depois de "outra coisa, ". */
+export const PALAVRA_DO_TAMANHO = { parecido: 'parecido', mais: 'bem mais', menos: 'bem menos', nsei: 'sem saber o tamanho' };
+/** "outra coisa" e, quando foi dito, o tamanho. */
+export const outraCoisa = tam => 'outra coisa' + (tam && PALAVRA_DO_TAMANHO[tam] ? ', ' + PALAVRA_DO_TAMANHO[tam] : '');
+/** O "como" que esta versão do app sabe mostrar e refazer. */
+const COMO_CONHECIDO = { fora: 1, nao: 1, nsei: 1 };
+/** A marca de uma refeição de hoje, em palavra ("como o plano", "outra coisa, bem mais", "não comi"…). */
+const palavraDaMarca = r => r.como && !COMO_CONHECIDO[r.como] ? 'marcada por uma versão mais nova do app'
+  : r.como === 'fora' ? outraCoisa(r.tam) : r.como === 'nao' ? 'não comi' : r.como === 'nsei' ? 'não sei' : r.metade ? 'metade' : 'como o plano';
 export function FolhaRefeicaoV3({ ctx, f }) {
   const r = ctx.refeicaoV3(f.id);
   // ao trocar para "não foi assim", o botão que tinha o foco some: o foco entra na folha
@@ -216,9 +226,10 @@ export function FolhaRefeicaoV3({ ctx, f }) {
   const marca = k => {
     ctx.fechaFolha();
     if (k === 'desfaz') {
-      const antes = r.como || (r.metade ? 'metade' : 'tudo');
+      // desfazer o desmarcar devolve a marca inteira, com o tamanho dela
+      const antes = r.como || (r.metade ? 'metade' : 'tudo'), tam = r.tam;
       ctx.marcaLinhaDaComida(r.id, 'desfaz');
-      ctx.avisaComDesfazer(r.n + ' desmarcado.', () => ctx.marcaLinhaDaComida(r.id, antes));
+      ctx.avisaComDesfazer(r.n + ' desmarcado.', () => ctx.marcaLinhaDaComida(r.id, antes, tam));
       return;
     }
     ctx.marcaLinhaDaComida(r.id, k);
@@ -229,7 +240,7 @@ export function FolhaRefeicaoV3({ ctx, f }) {
     return (
       <Folha titulo={r.n} sub="O que aconteceu? Não precisa detalhar." aoFechar={() => ctx.fechaFolha()}>
         <div class="v3-opcoes">
-          <Linha marca={ic.prato} titulo="Comi outra coisa" apoio="no lugar dela, fora do plano" semSeta data-a="ref-fora" aoTocar={() => marca('fora')} />
+          <Linha marca={ic.prato} titulo="Comi outra coisa" apoio="diga o tamanho, sem pesar nada" data-a="ref-fora" aoTocar={() => ctx.trocaFolha({ k: 'comiOutra', id: r.id }, true)} />
           <Linha marca={ic.prato} titulo="Comi metade" apoio="a mesma refeição, menos" semSeta data-a="ref-metade" aoTocar={() => marca('metade')} />
           <Linha marca={ic.x} titulo="Não comi" apoio='fica anotado; a regra conta o dia como "quase"' semSeta data-a="ref-nao" aoTocar={() => marca('nao')} />
           <Linha marca={ic.duvida} titulo="Não sei dizer" apoio="fica fora da conta" semSeta data-a="ref-nsei" aoTocar={() => marca('nsei')} />
@@ -238,7 +249,7 @@ export function FolhaRefeicaoV3({ ctx, f }) {
     );
   }
   return (
-    <Folha titulo={r.n} sub={hora + (r.feita ? ' · ' + (r.como === 'fora' ? 'comi outra coisa' : r.como === 'nao' ? 'não comi' : r.como === 'nsei' ? 'não sei' : r.metade ? 'metade' : 'como o plano') : '')}
+    <Folha titulo={r.n} sub={hora + (r.feita ? ' · ' + palavraDaMarca(r) : '')}
            aoFechar={() => ctx.fechaFolha()}>
       <div class="v3-itens">{r.itens.map(i => <div key={i.n}><span>{i.n}</span><span class="v3-n">{i.q}</span></div>)}</div>
       {r.nota && <Apoio>{r.nota}</Apoio>}
@@ -247,6 +258,86 @@ export function FolhaRefeicaoV3({ ctx, f }) {
             <Saida onClick={() => { ctx.fechaFolha(); ctx.editaRefeicao(r.id); }}>Corrigir o que comi</Saida></>
         : <Acoes><Botao data-a="ref-tudo" onClick={() => marca('tudo')}>{ic.ok} Comi</Botao>
             <Botao tipo="contorno" data-a="ref-diferente" onClick={() => ctx.mudaFolha({ diferente: true })}>Não foi assim</Botao></Acoes>}
+    </Folha>
+  );
+}
+
+/**
+ * "COMI OUTRA COISA", COM O TAMANHO (ds-telas.js, "f-comi-outra"). Decisão do
+ * dono (17/11/2026): o tamanho é guardado, comparado ao da refeição do plano,
+ * sem pesar nem listar. Quatro respostas grandes e "✓ Guardar", que só vale com
+ * uma escolhida: começar com uma marcada empurraria a resposta. Grava a marca
+ * `'fora'` com o tamanho (`marcaLinhaDaComida`), e o aviso desfaz.
+ *
+ * Chega trocando a folha de onde veio (a refeição, o "+"), e o Voltar a
+ * devolve (02 §8). Se a refeição for marcada enquanto a pessoa escolhe (a
+ * sincronia trouxe a marca do outro aparelho), "Guardar" não fecha calado: a
+ * folha diz o que está marcado e oferece trocar.
+ */
+const TAMANHOS = [
+  { k: 'parecido', t: 'Parecido', a: 'mesma quantidade' },
+  { k: 'mais', t: 'Bem mais', a: 'refeição grande' },
+  { k: 'menos', t: 'Bem menos', a: 'quase nada' },
+  { k: 'nsei', t: 'Não sei', a: 'não lembro quanto foi' }
+];
+export function FolhaComiOutra({ ctx, f }) {
+  const r = ctx.refeicaoV3(f.id);
+  const [tam, setTam] = useState(null);
+  const [conflito, setConflito] = useState(false);
+  if (!r) return null;
+  const aviso = () => ctx.avisaComDesfazer(r.n + ': ' + outraCoisa(tam) + '.', () => ctx.marcaLinhaDaComida(r.id, 'desfaz'));
+  const guarda = () => {
+    if (!tam) return;
+    if (ctx.refeicaoV3(r.id).feita) { setConflito(true); return; }
+    ctx.concluiFolha();
+    ctx.marcaLinhaDaComida(r.id, 'fora', tam);
+    aviso();
+  };
+  // trocar a marca que chegou por esta; desfazer devolve a que estava
+  const trocaAMarca = () => {
+    const a = ctx.refeicaoV3(r.id);
+    const volta = a.como || (a.metade ? 'metade' : 'tudo'), tamVolta = a.tam;
+    ctx.concluiFolha();
+    ctx.marcaLinhaDaComida(r.id, 'desfaz');
+    ctx.marcaLinhaDaComida(r.id, 'fora', tam);
+    ctx.avisaComDesfazer(r.n + ': ' + outraCoisa(tam) + '.', () => {
+      ctx.marcaLinhaDaComida(r.id, 'desfaz');
+      ctx.marcaLinhaDaComida(r.id, volta, tamVolta);
+    });
+  };
+  if (conflito && r.feita && r.como && !COMO_CONHECIDO[r.como]) {
+    // a marca que chegou é de uma versão mais nova: trocar a apagaria sem volta
+    // (o desfazer daqui não sabe refazê-la), então só se deixa como está
+    return (
+      <Folha titulo="Comi outra coisa" sub={'Enquanto você escolhia, a marca ' + contracaoDe(r.n) + ' chegou de outro aparelho.'}
+             aoFechar={() => ctx.fechaFolha()}>
+        <Caixa tom="atencao" data-a="tam-conflito" titulo="Está marcada por uma versão mais nova do app."
+               nota="Para não perder o que ela guardou, trocar fica para depois de atualizar este aparelho." />
+        <Acoes><Botao data-a="tam-deixa" onClick={() => ctx.concluiFolha()}>Deixar como está</Botao></Acoes>
+      </Folha>
+    );
+  }
+  if (conflito && r.feita) {
+    return (
+      <Folha titulo="Comi outra coisa" sub={'Enquanto você escolhia, a marca ' + contracaoDe(r.n) + ' chegou de outro aparelho.'}
+             aoFechar={() => ctx.fechaFolha()}>
+        <Caixa tom="atencao" data-a="tam-conflito" titulo={'Está marcado: ' + palavraDaMarca(r) + '.'}
+               nota={'Trocar deixa “' + outraCoisa(tam) + '” no lugar. Dá para desfazer.'} />
+        <Acoes><Botao data-a="tam-troca" onClick={trocaAMarca}>{ic.ok} Trocar</Botao></Acoes>
+        <Saida data-a="tam-deixa" onClick={() => ctx.concluiFolha()}>Deixar como está</Saida>
+      </Folha>
+    );
+  }
+  return (
+    <Folha titulo="Comi outra coisa" sub={'No lugar ' + contracaoDe(r.n) + '. Não precisa pesar nem listar: só o tamanho, comparado ao do plano.'} aoFechar={() => ctx.fechaFolha()}>
+      <Radios classe="v3-tam" rotulo="Tamanho">
+        {TAMANHOS.map((o, i) => (
+          <button key={o.k} {...radio(tam === o.k, i === 0, !!tam)} data-a={'tam-' + o.k} onClick={() => setTam(o.k)}>
+            <b>{o.t}</b><span>{o.a}</span>
+          </button>
+        ))}
+      </Radios>
+      <Acoes><Botao data-a="tam-guarda" aria-disabled={tam ? undefined : 'true'} onClick={guarda}>{ic.ok} Guardar</Botao></Acoes>
     </Folha>
   );
 }
@@ -279,6 +370,7 @@ export function FolhaRegistrar({ ctx }) {
         {h.seQuiser.agua && <button class="v3-reg-b" data-a="reg-agua" onClick={ctx.maisUmCopo}><b>+1 copo de água</b><span>{h.seQuiser.agua.n} de {h.seQuiser.agua.meta} hoje</span></button>}
         {h.seQuiser.peso && <button class="v3-reg-b" data-a="reg-peso" onClick={faz(() => ctx.vaiPara('corpo'))}><b>Peso de hoje</b><span>{h.seQuiser.peso.hoje ? h.seQuiser.peso.hoje + ' kg · mudar' : 'pela régua do Corpo'}</span></button>}
         {h.seQuiser.cardio && <button class="v3-reg-b" data-a="reg-cardio" onClick={faz(ctx.abreCardio)}><b>Cardio</b><span>{h.seQuiser.cardio.n} de {h.seQuiser.cardio.meta} na semana</span></button>}
+        {b.k === 'refeicao' && <button class="v3-reg-b" data-a="reg-outra" onClick={() => ctx.trocaFolha({ k: 'comiOutra', id: b.id }, true)}><b>Comi outra coisa</b><span>fora do plano</span></button>}
         <button class="v3-reg-b" data-a="reg-ja-treinei" onClick={faz(ctx.lancaTreinoDeHoje)}><b>Já treinei e não anotei</b><span>o treino de hoje, depois</span></button>
       </div>
     </Folha>

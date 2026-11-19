@@ -279,6 +279,8 @@ button.v3-quadro { min-height: var(--alvo); }
   animation: v3-sobe var(--d-folha) var(--mola) both;
 }
 @keyframes v3-sobe { from { translate: 0 100%; } }
+/* a folha que substitui outra troca no lugar: o véu não reacende e ela não sobe de novo */
+.v3-folha-w[data-troca] .v3-veu, .v3-folha-w[data-troca] .v3-folha { animation: none; }
 .v3-folha::before { content: ""; display: block; width: 44px; height: 5px; border-radius: var(--r-pilula); background: var(--contorno); opacity: .6; margin: 0 auto 16px; }
 .v3-folha h2 { font: var(--t-folha); letter-spacing: var(--e-titulo); text-wrap: balance; }
 .v3-folha-s { font: 500 15px/1.4 var(--f-texto); color: var(--texto-2); margin-top: var(--e-2); }

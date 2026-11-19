@@ -33,7 +33,7 @@ import { App } from './ui/app.jsx';
 import { DESTINOS_V3, FOLHAS_V3 } from './ui/v3/telas.js';
 import { ligado, fitaLigada, comModulo, comFita, normalizaModulos } from './dominio/modulos';
 import { DIAS_NA_LIXEIRA, chaveDaLixeira, diasRestantes, nomeNaLixeira, ordemDaLixeira, pastaDaLixeira, vencidos as vencidosDaLixeira } from './dominio/lixeira';
-import { LugarNaPilha } from './ui/v3/camada.js';
+import { LugarNaPilha, FolhaDaPilha } from './ui/v3/camada.js';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { diasComTreino as _diasComTreino, inicioDoDia as _inicioDoDia, iniciosDoPeriodo as _iniciosDoPeriodo, medianaDosInicios as _medianaDosInicios, leituraDosDias as _leituraDosDias,
          serieDaMediaMovel as _serieDaMediaMovel } from './dominio/mes';
@@ -43,7 +43,7 @@ import {
   refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao, minutosDe,
   fechaDia, aderenciaDoDia, padraoPorRefeicao, comidaDaResposta, respostaDoDia, janelaDoHistorico, diasInterpretaveis, diaInterpretavel,
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste,
-  poeComidaNoDia, resumoDaRefeicao, FOLGA_POS, fmtKg
+  poeComidaNoDia, resumoDaRefeicao, FOLGA_POS, fmtKg, ehTamanhoDaOutra, tamanhosDaMarca
 } from './dominio/nutricao/calculo';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana, treinosQueVem, somaPorGrupo } from './dominio/volume';
@@ -423,6 +423,18 @@ function normalizaEstado() {
   if (!S.progTreinador || typeof S.progTreinador !== 'object' || !S.progTreinador.dias ||
       typeof S.progTreinador.dias !== 'object' || !Array.isArray(S.progTreinador.rot)) S.progTreinador = null;
   if (!Array.isArray(S.comidaHist)) S.comidaHist = [];
+  // O tamanho do "comi outra coisa" (18/11/2026): campo novo e opcional, sem
+  // migração — ausente é "não foi perguntado", e as marcas de antes continuam
+  // valendo como estão. Aqui só sai o que a invariante não deixa (valor
+  // desconhecido, refeição sem marca `'fora'`): a cópia colada à mão e o
+  // aparelho com build antigo chegam pelo mesmo caminho.
+  const limpaTamanho = function (h) {
+    if (!h || typeof h !== 'object' || h.tam === undefined) return;
+    const tam = tamanhosDaMarca(h);
+    if (tam) h.tam = tam; else delete h.tam;
+  };
+  limpaTamanho(S.dia);
+  S.comidaHist.forEach(limpaTamanho);
   if (typeof S.mtime !== 'number') S.mtime = 0;
   if (!S.carimbos || typeof S.carimbos !== 'object') S.carimbos = {};
   if (typeof S.carimbosEm !== 'number') S.carimbosEm = 0;
@@ -1744,7 +1756,7 @@ async function garanteBytesDoCorpo(datas) {
 /** A fusão trouxe algo do outro lado? Então o nosso documento precisa subir. */
 function temQueEmpurrar(r) {
   return r.series > 0 || r.sessoes > 0 || r.medidas > 0 || r.cardio > 0 ||
-         r.fotosCorpo > 0 || r.ajustesCorpo > 0 || r.apagados > 0 || r.documentos === 'local';
+         r.fotosCorpo > 0 || r.ajustesCorpo > 0 || r.comidaDaqui > 0 || r.apagados > 0 || r.documentos === 'local';
 }
 
 /** Mudar o histórico dele em silêncio seria pior que não sincronizar. */
@@ -2869,16 +2881,26 @@ const CTX = {
    * Desmarcar deixa LÁPIDE. `chaveDeRefeicaoFeita` existia na fusão desde que o
    * dia aberto passou a fundir campo a campo, e ninguém a escrevia: desmarcar
    * aqui era desfeito pelo outro aparelho, que ainda tinha a marca.
+   *
+   * `tam` é o tamanho do "comi outra coisa" (`TamanhoDaOutra`): só vale com
+   * `como === 'fora'`, e sai junto com a marca.
    */
-  marcaRefeicao: function (id, como) {
+  marcaRefeicao: function (id, como, tam) {
     const d = diaDeComida();
     if (d.done[id]) {
+      const quando = d.done[id];
       delete d.done[id];
       if (d.como) {
         delete d.como[id];
         if (!Object.keys(d.como).length) delete d.como;
       }
-      lapide(chaveDeRefeicaoFeita(d.data, id));
+      if (d.tam) {
+        delete d.tam[id];
+        if (!Object.keys(d.tam).length) delete d.tam;
+      }
+      // nunca anterior à marca que ela mata: a marca pode ter vindo de um
+      // aparelho com o relógio adiantado
+      lapide(chaveDeRefeicaoFeita(d.data, id), Math.max(Date.now(), typeof quando === 'number' ? quando : 0));
     } else {
       // Nunca igual nem anterior à lápide daquela refeição: marcar, desmarcar e
       // marcar de novo dentro do mesmo milissegundo daria `quando <= morto`, e a
@@ -2888,6 +2910,10 @@ const CTX = {
       if (como === 'fora' || como === 'nao' || como === 'nsei') {
         if (!d.como) d.como = {};
         d.como[id] = como;
+      }
+      if (como === 'fora' && ehTamanhoDaOutra(tam)) {
+        if (!d.tam) d.tam = {};
+        d.tam[id] = tam;
       }
     }
     queueSave(); render();
@@ -2951,7 +2977,8 @@ const CTX = {
   /**
    * `k`: `'tudo'`, `'metade'` (a marca com porção ½, como na folha de pôr o dia
    * em dia), `'fora'`, `'nsei'`, `'nao'` — ou `'pergunta'`, que abre a única
-   * pergunta do "Não comi isso", e `'desfaz'`, que tira a marca.
+   * pergunta do "Não comi isso", e `'desfaz'`, que tira a marca. Com `'fora'`,
+   * `tam` é o tamanho que a folha "Comi outra coisa" perguntou.
    *
    * Pela LINHA aberta (peça 8 do motion; só ela tem estes botões — o cartão de
    * cima chama o mesmo verbo com a linha fechada), duas coisas de tela, que não
@@ -2970,7 +2997,7 @@ const CTX = {
    *    está. `view.formaRecem` é estado de tela, como a marca da série: vence em
    *    `VIDA_DO_RECEM_MS`, e trocar de aba ou entrar no modo a apaga.
    */
-  marcaLinhaDaComida: function (id, k) {
+  marcaLinhaDaComida: function (id, k, tam) {
     const d = diaDeComida();
     if (k === 'pergunta') { view.perguntaDe = id; render(); return; }
     const daLinha = view.linhaComida === id;
@@ -2989,11 +3016,12 @@ const CTX = {
     if (d.done[id]) return;                 // marcada: só "Desfazer" muda
     if (['tudo', 'metade', 'fora', 'nsei', 'nao'].indexOf(k) < 0) return;
     if (k === 'metade') d.escala[id] = 0.5;
-    else if (d.escala[id] != null && k === 'tudo') delete d.escala[id];
+    // "tudo", "fora", "não comi", "não sei": a porção que sobrou de antes não fica
+    else if (d.escala[id] != null) delete d.escala[id];
     view.linhaComida = null; view.perguntaDe = null;
     view.ultimaMarca = { id: id, k: k, data: d.data };
     view.formaRecem = daLinha ? { id: id, data: d.data, t: Date.now() } : null;
-    CTX.marcaRefeicao(id, k === 'tudo' || k === 'metade' ? undefined : k);
+    CTX.marcaRefeicao(id, k === 'tudo' || k === 'metade' ? undefined : k, k === 'fora' ? tam : undefined);
     devolveALinhaDaComida(id, antes, dedo);
   },
   editaRefeicao: function (id) { CTX.abreFolha({ k: 'editaRefeicao', id: id }); },
@@ -7660,7 +7688,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 function folhaAberta() {
   return (view.pilha || []).map(function (f, i) {
     // a posição na pilha dá a ordem de empilhamento da folha
-    return <LugarNaPilha.Provider key={i} value={i}>{folhaDe(f, i)}</LugarNaPilha.Provider>;
+    return <LugarNaPilha.Provider key={i} value={i}><FolhaDaPilha.Provider value={f}>{folhaDe(f, i)}</FolhaDaPilha.Provider></LugarNaPilha.Provider>;
   });
 }
 function folhaDe(f, i) {
@@ -9701,7 +9729,15 @@ CTX.mudaFolha = function (campos) { const p = pilha(); if (!p.length) return; Ob
  * o fechar leva de volta. Cadastrar é a continuação da busca que não achou, não
  * uma camada por cima dela.
  */
-CTX.trocaFolha = function (f) { pilha().pop(); pilha().push(f); render(); };
+CTX.trocaFolha = function (f, volta) {
+  const de = pilha().pop();
+  // `troca`: a folha nova nasce no lugar, sem subir nem acender o véu (a moldura
+  // é outra, e a entrada recomeçava: o véu piscava e um toque no meio caía no
+  // vazio). `volta`: o Voltar, o Esc e o véu devolvem a primeira (02 §8: "a
+  // segunda substitui a primeira, e o Voltar devolve a primeira")
+  pilha().push(Object.assign({}, f, { troca: 1 }, volta && de ? { deBaixo: de } : {}));
+  render();
+};
 // O estado que uma folha do visual novo segura sai com ela, feche como fechar
 // (o X, o véu, o Voltar do sistema, o Esc): sem isto o catálogo e a série
 // passada ficavam "abertos" no `view` depois de a folha sumir.
@@ -9710,7 +9746,15 @@ function soltaEstadoDaFolha(f) {
   if (f.k === 'catalogo') { view.addEx = false; view.addQ = ''; view.novoEx = false; }
   if (f.k === 'seriePassada') { view.passada = null; view.teclado = null; }
 }
-CTX.fechaFolha = function () { soltaEstadoDaFolha(pilha().pop()); render(); };
+CTX.fechaFolha = function () {
+  const f = pilha().pop();
+  soltaEstadoDaFolha(f);
+  // a folha que substituiu outra devolve a de baixo, no lugar
+  if (f && f.deBaixo) pilha().push(Object.assign(f.deBaixo, { troca: 1 }));
+  render();
+};
+/** A folha terminou o que fazia (gravou): fecha sem devolver a que ela substituiu. */
+CTX.concluiFolha = function () { soltaEstadoDaFolha(pilha().pop()); render(); };
 CTX.fechaTudo = function () { (view.pilha || []).forEach(soltaEstadoDaFolha); view.pilha = []; render(); };
 
 /** Um id de alimento a partir do nome, igual ao dos exercícios. */
@@ -9812,6 +9856,7 @@ CTX.removeRefeicao = async function (id) {
   delete dia.done[id];
   delete dia.escala[id];
   if (dia.como) { delete dia.como[id]; if (!Object.keys(dia.como).length) delete dia.como; }
+  if (dia.tam) { delete dia.tam[id]; if (!Object.keys(dia.tam).length) delete dia.tam; }
   CTX.fechaTudo();
   queueSave(); render();
   toast('Refeição removida do plano.');
@@ -10323,7 +10368,7 @@ CTX.diaAberto = function () {
   const folha = passado ? CTX.poeODiaEmDia(iso) : null;
   const h = (Array.isArray(S.comidaHist) ? S.comidaHist : []).filter(function (x) { return x.d === iso; })[0] || null;
   const momentos = folha ? folha.linhas.map(function (l) {
-    return { id: l.id, nome: l.nome, hora: l.hora.replace(/^0(\d)/, '$1').replace(':', 'h'), marca: l.sugerida || l.marca === 'vazia' ? 'sem' : l.marca };
+    return { id: l.id, nome: l.nome, hora: l.hora.replace(/^0(\d)/, '$1').replace(':', 'h'), marca: l.sugerida || l.marca === 'vazia' ? 'sem' : l.marca, tam: l.tam };
   }) : [];
   const comMarca = momentos.filter(function (x) { return x.marca !== 'sem'; }).length;
   const conta = h && diaInterpretavel(h);
@@ -13049,6 +13094,9 @@ CTX.poeODiaEmDia = function (data) {
         hora: r.t,
         marca: marcada ? (como || (escala === 0.5 ? 'metade' : 'tudo'))
              : vazio ? 'vazia' : 'tudo',
+        // o tamanho do "comi outra coisa", quando foi dito (só lido aqui: o pôr
+        // em dia não pergunta o tamanho, e a fusão do chão o preserva)
+        tam: marcada && como === 'fora' && linha.tam ? linha.tam[r.id] || null : null,
         escala: marcada ? escala : 1,
         // o que distingue sugestão de declaração, em PALAVRA e não em cor
         sugerida: !marcada && !linha,
@@ -13134,23 +13182,57 @@ function fraseDoDia(refs, linha) {
  * distingue "não comi" de silêncio é que a primeira é fato declarado.
  */
 CTX.marcaNoDiaPassado = async function (data, id, marca, escala) {
+  // só dia passado: hoje é o dia aberto (`marcaRefeicao`), e a lápide daqui usaria
+  // a mesma chave da marca dele, que a fusão seguinte apagaria
+  if (typeof data === 'string' && data >= hojeISO()) return { ok: false, recusa: data > hojeISO() ? 'futuro' : 'hoje' };
   const d = CTX.poeODiaEmDia(data);
   if (!d) return { ok: false, recusa: 'data' };
 
   const done = {}, como = {}, esc = {};
   const agora = Date.now();
+  const linhaHoje = (Array.isArray(S.comidaHist) ? S.comidaHist : []).filter(function (x) { return x && x.d === data; })[0] || null;
+  const chave = chaveDeRefeicaoFeita(data, id);
+  // A linha tocada que já tinha marca e muda é "desmarcar e marcar de novo",
+  // como no Hoje: a marca velha morre com lápide e a nova nasce depois dela. É
+  // a lápide que leva a correção ao outro aparelho, que ainda tem a velha (a
+  // fusão fica com a marca de cada lado; ver `uneDiasDeComida`). A lápide só é
+  // escrita depois de o dia gravar.
+  let morte = null;
   d.linhas.forEach(function (l) {
+    // Só a linha tocada e as sugeridas (o primeiro toque grava o dia inteiro
+    // como está sugerido). As outras marcas do dia ficam como estão, com a hora
+    // delas: recarimbá-las fazia este toque valer sobre a correção que o outro
+    // aparelho fez em outra refeição, e apagava o "como" que uma versão mais
+    // nova do app tivesse gravado (revisão de dado, 18/11/2026).
+    if (l.id !== id && !l.sugerida) return;
     const m = l.id === id ? marca : l.marca;
-    const e = l.id === id ? (escala == null ? l.escala : escala) : l.escala;
+    let e = l.id === id ? (escala == null ? l.escala : escala) : l.escala;
+    // "Tudo" sobre "Metade": a porção volta a cheia. Dita como 1, e não como
+    // ausente: ausência não vence o ½ guardado no merge do chão
+    const cheia = l.id === id && marca === 'tudo' && escala == null && l.marca === 'metade';
+    if (cheia) e = 1;
     // Linha que o dia declarou SEM marca fica sem marca: ela não entra, e o
     // merge do chão preserva o que já estava. O que não existe é a volta —
     // nenhuma marca sai daqui.
     if (m === 'vazia') return;
-    done[l.id] = agora;
+    const tinha = l.id === id && !l.sugerida && l.marca !== 'vazia';
+    if (tinha) {
+      // o mesmo toque de novo não muda nada, e não vira lápide
+      if (m === l.marca && (m === 'metade' || (e == null ? 1 : e) === l.escala)) return;
+      const velha = linhaHoje && linhaHoje.done ? linhaHoje.done[id] : 0;
+      morte = Math.max(agora, typeof velha === 'number' ? velha : 0, (S.apagados || {})[chave] || 0);
+    }
+    // nunca igual nem anterior à lápide da refeição (como em `marcaRefeicao`)
+    const morta = (S.apagados || {})[chaveDeRefeicaoFeita(data, l.id)] || 0;
+    done[l.id] = tinha ? morte + 1 : Math.max(agora, morta + 1);
+    // "Tudo" e "Metade" tiram o "fora", o "não sei" ou o "não comi" que a
+    // linha tocada tinha (`null`): sem isso a marca nova não vencia a antiga
     if (m === 'fora' || m === 'nao' || m === 'nsei') como[l.id] = m;
+    else if (l.id === id) como[l.id] = null;
     if (m === 'metade') esc[l.id] = 0.5;
-    else if (e != null && e !== 1) esc[l.id] = e;
+    else if (e != null && (e !== 1 || cheia)) esc[l.id] = e;
   });
+  if (!Object.keys(done).length) { render(); return { ok: true }; }
 
   const r = poeComidaNoDia(
     Array.isArray(S.comidaHist) ? S.comidaHist : [],
@@ -13171,6 +13253,7 @@ CTX.marcaNoDiaPassado = async function (data, id, marca, escala) {
   }
 
   S.comidaHist = r.hist;
+  if (morte != null) lapide(chave, morte);
   await save();
   render();
   return { ok: true };
@@ -13244,7 +13327,8 @@ CTX.refeicaoV3 = function (id) {
   const esc = d.escala[id] != null ? d.escala[id] : 1;
   return { id: id, n: r.n, t: r.t, kcal: Math.round(totalDaRefeicao(r, H.catalogo, H.alta).kcal * esc),
            itens: resumoDaRefeicao(r, H.catalogo, H.alta, esc).split(' · ').filter(Boolean).map(separaQuantidade),
-           feita: !!d.done[id], como: d.como ? d.como[id] || null : null, metade: esc === 0.5, nota: r.nota || null };
+           feita: !!d.done[id], como: d.como ? d.como[id] || null : null,
+           tam: d.tam ? d.tam[id] || null : null, metade: esc === 0.5, nota: r.nota || null };
 };
 
 /** O "+": a folha de registrar, com o mais provável primeiro e o texto livre. */

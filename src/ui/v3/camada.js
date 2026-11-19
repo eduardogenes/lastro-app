@@ -17,6 +17,12 @@ import { createContext } from 'preact';
 export const LugarNaPilha = createContext(0);
 
 /**
+ * A entrada da pilha que a folha desenha. A moldura lê `troca`: a folha que
+ * substituiu outra nasce no lugar, sem a entrada (`CTX.trocaFolha`).
+ */
+export const FolhaDaPilha = createContext(null);
+
+/**
  * A TRAVA do fundo. Com uma camada aberta, o corpo fica fixo na posição em que
  * estava (`top` negativo) e volta para ela ao destravar. A contagem existe
  * porque as folhas empilham: destravar na primeira que fechar soltaria o

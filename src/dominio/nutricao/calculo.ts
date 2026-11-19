@@ -6,10 +6,63 @@
 // um número é derivado, quem mostra tem que dizer de onde veio.
 
 import type {
-  Alimento, ComoFoiARefeicao, DiaComida, DiaComidaHist, Item, LinhaCompra, Quando, Refeicao, Totais, Turno
+  Alimento, ComoFoiARefeicao, DiaComida, DiaComidaHist, Item, LinhaCompra, Quando, Refeicao, TamanhoDaOutra, Totais, Turno
 } from './tipos';
 
 export const VAZIO: Totais = { kcal: 0, p: 0, c: 0, g: 0 };
+
+// ---------- o tamanho do "comi outra coisa" ----------
+
+/** Os tamanhos, na ordem da folha. */
+export const TAMANHOS_DA_OUTRA: readonly TamanhoDaOutra[] = ['parecido', 'mais', 'menos', 'nsei'];
+
+/** O valor é um tamanho que o app conhece? */
+export function ehTamanhoDaOutra(v: unknown): v is TamanhoDaOutra {
+  return typeof v === 'string' && (TAMANHOS_DA_OUTRA as readonly string[]).indexOf(v) >= 0;
+}
+
+/** Os "como" que este app conhece: com eles se sabe que a marca não é "fora". */
+const COMO_CONHECIDO: Record<string, 1> = { nao: 1, nsei: 1 };
+
+/**
+ * O `tam` de um dia, só com o que a invariante permite. Sai:
+ *
+ * - o tamanho de refeição sem marca em `done` (descreveria uma refeição que o
+ *   dia não diz ter acontecido — o mesmo motivo de `como` sem marca sair);
+ * - o tamanho de marca que este app sabe que NÃO é "fora" (como o plano, "não
+ *   comi", "não sei"): ele descrevia a "outra coisa" que a marca deixou de ser;
+ * - o que não é texto curto (lixo de uma cópia adulterada).
+ *
+ * Fica o valor que este app não conhece, numa marca "fora" ou de "como" que ele
+ * não conhece: veio de uma versão mais nova, e apagá-lo no boot ou na fusão o
+ * perderia na volta para a nuvem (revisão de dado, 18/11/2026). Quem lê só
+ * mostra os conhecidos.
+ *
+ * É a guarda única, e todo caminho que escreve ou recebe o campo passa por ela:
+ * o fecho do dia (`fechaDia`), o pôr em dia (`poeComidaNoDia`, pelo fecho), a
+ * fusão (`uneDiasDeComida`) e a carga do disco ou de uma cópia
+ * (`normalizaEstado`). Devolve `undefined` quando não sobra nada, para o campo
+ * sumir em vez de ficar `{}`.
+ */
+export function tamanhosDaMarca(h: {
+  done?: Record<string, number> | null;
+  como?: Record<string, ComoFoiARefeicao | string> | null;
+  tam?: Record<string, unknown> | null;
+}): Record<string, string> | undefined {
+  const tam = h && h.tam && typeof h.tam === 'object' ? h.tam : null;
+  if (!tam) return undefined;
+  const done = h.done || {}, como = (h.como || {}) as Record<string, string>;
+  const saida: Record<string, string> = {};
+  Object.keys(tam).forEach(function (id) {
+    const v = tam[id];
+    if (typeof v !== 'string' || !v || v.length > 24) return;
+    if (done[id] == null) return;
+    const c = como[id];
+    if (c !== 'fora' && (c == null || COMO_CONHECIDO[c])) return;
+    saida[id] = v;
+  });
+  return Object.keys(saida).length ? saida : undefined;
+}
 
 /** Soma dois totais. */
 export function somaTotais(a: Totais, b: Totais): Totais {
@@ -465,6 +518,9 @@ export function fechaDia(
     });
     if (Object.keys(como).length) h.como = como;
   }
+  // `tam` é atributo da marca `'fora'`: só desce o que a guarda deixa
+  const tam = tamanhosDaMarca({ done: done, como: h.como, tam: dia.tam });
+  if (tam) h.tam = tam;
   if (dia.aguaNaoContada && !h.agua) h.aguaNaoContada = 1;
   if (typeof dia.aguaM === 'number') h.aguaM = dia.aguaM;
   if (dia.cadencia) h.cadencia = dia.cadencia;
@@ -553,8 +609,15 @@ export function comidaDaResposta(
 export interface ComidaDoDia {
   /** refeição → instante da marca. O instante é de quem chama: aqui não há relógio */
   done?: Record<string, number>;
-  /** refeição → como ela saiu do plano */
-  como?: Record<string, ComoFoiARefeicao>;
+  /**
+   * refeição → como ela saiu do plano. `null` TIRA o que a refeição tinha: é
+   * o "Tudo" ou o "Metade" corrigindo um "Fora", um "Não sei" ou um "Não comi"
+   * já gravado. Sem ele, a marca nova não vencia a antiga, porque "como o
+   * plano" é a ausência do campo, e ausência não sobrescreve nada no merge.
+   */
+  como?: Record<string, ComoFoiARefeicao | null>;
+  /** refeição → o tamanho do "comi outra coisa"; ver `TamanhoDaOutra` */
+  tam?: Record<string, string>;
   /** ajuste de porção por refeição */
   escala?: Record<string, number>;
   agua?: number;
@@ -587,7 +650,9 @@ export interface PostoNoDia {
  * parâmetro porque nenhuma função deste módulo lê relógio.
  *
  * **O que já estava no dia não é apagado: é completado.** `done`, `como` e
- * `escala` se unem chave a chave, com o que vem agora vencendo em conflito;
+ * `escala` se unem chave a chave, com o que vem agora vencendo em conflito
+ * (e `como: null` numa refeição tira o "como" dela: é a marca nova "como o
+ * plano" vencendo a antiga, não um apagamento);
  * `agua` e os campos de dia só são escritos se vierem. Pôr o dia em dia é
  * acrescentar o que faltou, e um merge que zerasse o resto transformaria
  * "marquei o jantar que esqueci" em "apaguei o resto da terça".
@@ -615,6 +680,13 @@ export interface PostoNoDia {
  * `ajuste` segue a mesma honestidade: quem chama passa o que estava em vigor
  * NAQUELE dia. Com `null`, o que a linha já tinha é preservado.
  */
+/** O mapa sem as chaves `null`: é como `como: null` tira o "como" de uma refeição. */
+function semNulos<T>(m: Record<string, T | null>): Record<string, T> {
+  const saida: Record<string, T> = {};
+  Object.keys(m).forEach(function (k) { const v = m[k]; if (v != null) saida[k] = v; });
+  return saida;
+}
+
 export function poeComidaNoDia(
   hist: DiaComidaHist[],
   data: string,
@@ -645,7 +717,9 @@ export function poeComidaNoDia(
     done: Object.assign({}, antes ? antes.done : {}, c.done || {}),
     agua: c.agua != null ? Math.max(0, c.agua) : (antes ? antes.agua || 0 : 0),
     escala: Object.assign({}, antes ? antes.escala : {}, c.escala || {}),
-    como: Object.assign({}, antes ? antes.como : {}, c.como || {}),
+    como: semNulos(Object.assign({}, antes ? antes.como : {}, c.como || {})),
+    // o tamanho se une como o `como`; o fecho só deixa o de marca `'fora'`
+    tam: Object.assign({}, antes ? antes.tam : {}, c.tam || {}),
     cadencia: c.cadencia !== undefined ? c.cadencia : (antes ? antes.cadencia : null)
   };
   const alta = c.alta !== undefined ? c.alta : (antes ? antes.alta : undefined);

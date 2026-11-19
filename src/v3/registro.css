@@ -60,3 +60,14 @@
 .v3-lembrete { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; padding: 14px 16px 6px; border-radius: 20px; background: var(--assunto-corpo); }
 .v3-lembrete b { font: 800 18px var(--f-titulo); }
 .v3-lembrete span { font-size: 14px; color: var(--texto); }
+
+/* ---- "comi outra coisa", com o tamanho: quatro respostas grandes (a .sug de lá) ---- */
+.v3-tam { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); margin-top: var(--e-7); }
+.v3 .v3-tam button { min-height: 76px; padding: var(--e-5) var(--e-7); border-radius: var(--r-cartao); background: var(--superficie-quieta);
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left;
+  transition: transform var(--d-toque) var(--mola); }
+.v3 .v3-tam button:active { transform: scale(.97); }
+.v3 .v3-tam button[aria-checked="true"] { background: var(--selecionado); box-shadow: inset 0 0 0 var(--fio-escolhido) var(--texto); }
+.v3-tam b { font: 700 18px/1.15 var(--f-titulo); letter-spacing: -.01em; }
+.v3-tam span { font: 500 13px/1.3 var(--f-texto); color: var(--texto-2); }
+.v3-tam button[aria-checked="true"] span { color: var(--texto); }

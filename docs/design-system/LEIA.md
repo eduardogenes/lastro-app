@@ -46,7 +46,7 @@ marcado em `05-auditoria.md` com o commit.
 | 3. Tokens e componentes base | feita (`933171b`), depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
 | 4. Treino | feita (`318532f`), depois da revisão: a série com o par e uma régua só, sem rolar; o descanso com o "a seguir" e "Água +1"; o fim; pôr em dia como tela; a aula do box como tela de ação. O principal tem o mesmo retângulo em série, descanso e fim |
 | 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | feita: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada, `e6a969c`); Corpo (`7418d77`); Semana (`0d32ca0`); Ajustes (`053e632`); Plano, e Semana e Fotos depois da revisão: o que vence hoje em destaque, o toque duplo nas respostas travado, "Aplicar no plano" com Desfazer, os dias de treino como círculos, a câmera sem rolar e com o disparo parado, apagar foto sem pergunta e com Desfazer, rádios e alvos de 44 |
-| 6. Os três de dado | a fazer |
+| 6. Os três de dado | em curso: o tamanho do "comi outra coisa" feito (a folha com quatro respostas e "✓ Guardar", a marca `'fora'` com o tamanho, a fusão, a cópia, a pasta dos agentes; e, achados nas revisões, a lápide antes da união, a correção do pôr em dia pela lápide, a porção que segue a marca). Faltam a revisão do treinador mudança por mudança e a primeira vez em três passos |
 | 7. Revisão final | a fazer |
 
 Pendências que a revisão da peça 2 deixou para depois, de propósito:
@@ -150,6 +150,25 @@ o da referência; nada perde dado):
 - folhas da refeição, nova refeição (hora pela régua), alimentos (lupa,
   "Criar “tapioca”"), alimento (vírgula nos números) e compras (marca redonda,
   `checkbox`, "Copiar a lista").
+
+Pendências que a revisão da peça 6 (o tamanho do "comi outra coisa") deixou:
+
+- o "+": o principal da referência é uma linha com o ✓ à direita ("Comi o
+  almoço · 719 kcal · como o plano"); o do app é coluna, com outro texto
+  ("Comi: Almoço · como o plano"). As medidas das sugestões já são as de lá;
+- o dia aberto: hora sem o zero ("5h45"), linhas sem "· como o plano", a nota
+  "5 de 7 com marca" em vez de "foi como o plano", e a linha do treino dentro de
+  "A comida do dia";
+- a 375 px, o apoio da folha do tamanho vai a três linhas com "café da manhã" e
+  "lanche da tarde" (a 414, duas).
+
+Questões para o design system (não são do app):
+
+- as respostas grandes (`.sug`) são areia sobre papel, sem contorno (1,12:1); a
+  lista de conferência pede contorno de controle a 3:1, e o 02 §5 dá contorno às
+  fichas de resposta. Dizer se `.sug` leva `--contorno`;
+- a página viva fecha as duas folhas no Voltar depois de uma troca; o 02 §8 diz
+  que o Voltar devolve a primeira, e o app segue o 02 na folha do tamanho.
 
 Pendências que a revisão de Fotos deixou:
 

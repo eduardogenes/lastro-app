@@ -72,16 +72,17 @@ tela({ id: 'f-refeicao', n: 'Uma refeição do dia', g: 'hoje', c: 'folha', base
   d: 'O que tem na refeição e marcar. "Não foi assim" abre as três respostas da exceção, em vez de "Pulei esta": o app separa quem comeu outra coisa de quem não comeu.',
   es: [['normal', 'a refeição'], ['diferente', 'não foi assim'], ['marcada', 'já marcada']], vai: ['f-comi-outra'],
   r: e => e === 'diferente'
-    ? H.folha('Almoço', 'O que aconteceu? Não precisa detalhar.', `<div class="lista" style="margin-top:12px">${H.op(ic.prato, 'Comi outra coisa', 'diga o tamanho, sem pesar nada', { folha: 'f-comi-outra' })}${H.op(ic.prato, 'Comi metade', 'a mesma refeição, menos', { desfazer: 'Almoço: comi metade.' })}${H.op(ic.x, 'Não comi', 'fica anotado; a regra conta o dia como "quase"', { desfazer: 'Almoço: não comi.' })}${H.op(ic.duvida, 'Não sei dizer', 'fica fora da conta', { desfazer: 'Almoço fica fora da conta.' })}</div>`)
+    ? H.folha('Almoço', 'O que aconteceu? Não precisa detalhar.', `<div class="lista" style="margin-top:12px">${H.op(ic.prato, 'Comi outra coisa', 'diga o tamanho, sem pesar nada', { folha: 'f-comi-outra', dir: 1 })}${H.op(ic.prato, 'Comi metade', 'a mesma refeição, menos', { desfazer: 'Almoço: comi metade.' })}${H.op(ic.x, 'Não comi', 'fica anotado; a regra conta o dia como "quase"', { desfazer: 'Almoço: não comi.' })}${H.op(ic.duvida, 'Não sei dizer', 'fica fora da conta', { desfazer: 'Almoço fica fora da conta.' })}</div>`)
     : H.folha('Almoço', '<span class="n">12h30 · 719 kcal</span>' + (e === 'marcada' ? ' · marcado às 12h52, como o plano' : ''), `<div class="itens" style="margin-top:10px">${D.REF[2].it.map(i => `<div><span>${i[0]}</span><span class="n">${i[1]}</span></div>`).join('')}</div>
       <div class="acoes">${e === 'marcada' ? H.alt('Desmarcar', { cheio: 1, desfazer: 'Almoço desmarcado.' }) : H.vai(ic.ok + ' Comi', { desfazer: 'Almoço marcado como o plano.' }) + H.alt('Não foi assim', { est: 'diferente' })}</div>`) });
 
 tela({ id: 'f-comi-outra', n: '"Comi outra coisa", com o tamanho', g: 'hoje', c: 'folha', base: 'hoje',
-  d: 'Decisão do dono (17/11): o tamanho é guardado. Quatro respostas grandes, sem pesar nem listar. É dado novo: pede campo, migração e a pasta dos agentes.',
-  r: () => H.folha('Comi outra coisa', 'No lugar do almoço. Não precisa pesar nem listar: só o tamanho, comparado ao do plano.', `<div class="sug" role="radiogroup" aria-label="Tamanho" style="margin-top:16px">
-    <button role="radio" data-radio aria-checked="false"><b>Parecido</b><span>mesma quantidade</span></button><button role="radio" data-radio aria-checked="false"><b>Bem mais</b><span>refeição grande</span></button>
-    <button role="radio" data-radio aria-checked="false"><b>Bem menos</b><span>quase nada</span></button><button role="radio" data-radio aria-checked="false"><b>Não sei</b><span>fica fora da conta</span></button></div>
-    <div class="acoes">${H.vai('Guardar', { desfazer: 'Almoço: outra coisa, parecido.' })}</div>`) });
+  d: 'Decisão do dono (17/11): o tamanho é guardado. Quatro respostas grandes, sem pesar nem listar. É dado novo: pede campo, migração e a pasta dos agentes. Nenhuma regra lê o tamanho (a decisão foi guardar e mostrar ao nutricionista), então "Não sei" descreve a resposta, e não promete tirar da conta. "Guardar" só vale com uma escolhida. Feito na peça 6.',
+  es: [['normal', 'sem escolha'], ['escolhido', 'uma escolhida']],
+  r: e => H.folha('Comi outra coisa', 'No lugar do almoço. Não precisa pesar nem listar: só o tamanho, comparado ao do plano.', `<div class="sug" role="radiogroup" aria-label="Tamanho" style="margin-top:16px">
+    <button role="radio" data-radio aria-checked="false"><b>Parecido</b><span>mesma quantidade</span></button><button role="radio" data-radio aria-checked="${e === 'escolhido'}"><b>Bem mais</b><span>refeição grande</span></button>
+    <button role="radio" data-radio aria-checked="false"><b>Bem menos</b><span>quase nada</span></button><button role="radio" data-radio aria-checked="false"><b>Não sei</b><span>não lembro quanto foi</span></button></div>
+    <div class="acoes">${H.vai(ic.ok + ' Guardar', e === 'escolhido' ? { desfazer: 'Almoço: outra coisa, bem mais.' } : { off: 1 })}</div>`) });
 
 tela({ id: 'f-aparece', n: 'O que aparece', g: 'hoje', c: 'folha', base: 'hoje',
   d: 'O ícone de ajuste no bloco do Hoje. O treino fica sempre; o resto se liga e desliga. Desligar esconde, nunca apaga. No fim, a porta dos Ajustes.', vai: ['ajustes'],

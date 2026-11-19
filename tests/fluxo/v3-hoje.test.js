@@ -50,6 +50,134 @@ test('a refeição: "Comi" oferece desfazer, e "Não foi assim" abre as resposta
   a.fechar();
 });
 
+test('"Comi outra coisa": o tamanho em quatro respostas, e "Guardar" só com uma escolhida', async () => {
+  const a = await noHoje(12, 5);
+  a.clicar('[data-a="hoje-nao-comi"]');
+  await a.esperar(40);
+  a.clicar('[data-a="ref-fora"]');
+  await a.esperar(40);
+  assert.ok(/^Comi outra coisa/.test(a.texto('.v3-folha')), 'a folha troca para a do tamanho: ' + a.texto('.v3-folha'));
+  assert.ok(!a.$('[data-a="ref-nao"]'), 'e não empilha sobre a da refeição');
+  assert.strictEqual(a.$$('.v3-folha').length, 1, 'uma folha só');
+  assert.ok(a.$('.v3-folha-w[data-troca]'), 'trocada no lugar: sem subir de novo nem reacender o véu');
+  // o Voltar devolve a primeira (02 §8), e ela volta como estava
+  a.v('ctx.fechaFolha');
+  await a.esperar(40);
+  assert.ok(a.$('[data-a="ref-nao"]') && a.$('[data-a="ref-metade"]'), 'de volta a "não foi assim"');
+  a.clicar('[data-a="ref-fora"]');
+  await a.esperar(40);
+  const grupo = a.$('.v3-tam[role="radiogroup"]');
+  assert.ok(grupo, 'escolha única');
+  assert.deepStrictEqual(a.$$('.v3-tam [role="radio"] b').map(x => x.textContent), ['Parecido', 'Bem mais', 'Bem menos', 'Não sei']);
+  assert.ok(a.$$('.v3-tam [role="radio"]').every(x => x.getAttribute('aria-checked') === 'false'), 'nenhuma vem marcada');
+  // sem escolha, Guardar não grava
+  assert.strictEqual(a.$('[data-a="tam-guarda"]').getAttribute('aria-disabled'), 'true');
+  a.clicar('[data-a="tam-guarda"]');
+  await a.esperar(40);
+  assert.ok(!a.E('!!diaDeComida().done.almoco'), 'nada gravado sem o tamanho');
+  a.clicar('[data-a="tam-mais"]');
+  await a.esperar(20);
+  assert.strictEqual(a.$('[data-a="tam-mais"]').getAttribute('aria-checked'), 'true');
+  assert.strictEqual(a.$('[data-a="tam-guarda"]').getAttribute('aria-disabled'), null, 'com a escolha, Guardar vale');
+  a.clicar('[data-a="tam-guarda"]');
+  await a.esperar(80);
+  assert.strictEqual(a.E('diaDeComida().como.almoco'), 'fora', 'a marca é "fora"');
+  assert.strictEqual(a.E('diaDeComida().tam.almoco'), 'mais', 'com o tamanho');
+  await a.esperar(800);      // a gravação da marca é represada por 700 ms (`queueSave`)
+  assert.strictEqual(a.gravado().dia.tam.almoco, 'mais', 'e está no disco');
+  assert.strictEqual(a.toast().replace('Desfazer', ''), 'Almoço: outra coisa, bem mais.', a.toast());
+  // a folha da refeição marcada diz o tamanho
+  a.v('ctx.abreFolha', { k: 'refeicao', id: 'almoco' });
+  await a.esperar(40);
+  assert.ok(/outra coisa, bem mais/.test(a.texto('.v3-folha')), a.texto('.v3-folha'));
+  // desmarcar e desfazer o desmarcar devolve a marca inteira, com o tamanho
+  a.clicar('[data-a="ref-desfaz"]');
+  await a.esperar(60);
+  assert.ok(!a.E('!!diaDeComida().done.almoco'), 'desmarcado');
+  assert.ok(!a.E('diaDeComida().tam && diaDeComida().tam.almoco'), 'o tamanho saiu com a marca');
+  assert.ok(a.E(`S.apagados['comida:' + diaDeComida().data + ':almoco'] > 0`), 'com a lápide, para a fusão');
+  a.clicar('[data-a="aviso-acao"]');
+  await a.esperar(60);
+  assert.strictEqual(a.E('diaDeComida().como.almoco'), 'fora', 'a marca voltou');
+  assert.strictEqual(a.E('diaDeComida().tam.almoco'), 'mais', 'com o tamanho de antes');
+  a.fechar();
+});
+
+test('"Comi outra coisa": marcada no meio do caminho, a folha diz o que está e oferece trocar', async () => {
+  const a = await noHoje(12, 5);
+  a.clicar('[data-a="hoje-nao-comi"]');
+  await a.esperar(40);
+  a.clicar('[data-a="ref-fora"]');
+  await a.esperar(40);
+  a.clicar('[data-a="tam-mais"]');
+  await a.esperar(20);
+  // a sincronia traz a marca do outro aparelho enquanto ele escolhe
+  a.v('ctx.marcaLinhaDaComida', 'almoco', 'tudo');
+  await a.esperar(20);
+  a.clicar('[data-a="tam-guarda"]');
+  await a.esperar(40);
+  assert.ok(a.$('[data-a="tam-conflito"]'), 'a folha fica aberta e diz');
+  assert.ok(/Está marcado: como o plano/.test(a.texto('.v3-folha')), a.texto('.v3-folha'));
+  assert.ok(!a.E('diaDeComida().como'), 'nada foi trocado sem ele pedir');
+  a.clicar('[data-a="tam-troca"]');
+  await a.esperar(60);
+  assert.strictEqual(a.E('diaDeComida().como.almoco'), 'fora', 'trocou');
+  assert.strictEqual(a.E('diaDeComida().tam.almoco'), 'mais');
+  assert.ok(!a.$('.v3-folha'), 'e a folha fechou');
+  a.clicar('[data-a="aviso-acao"]');
+  await a.esperar(60);
+  assert.ok(a.E('!!diaDeComida().done.almoco'), 'desfazer devolve a marca que estava');
+  assert.ok(!a.E('diaDeComida().como') && !a.E('diaDeComida().tam'), 'como o plano, sem tamanho');
+  a.fechar();
+});
+
+test('"Comi outra coisa" tira a porção que sobrou de antes, e não troca uma marca de versão mais nova', async () => {
+  const a = await noHoje(12, 5);
+  // a porção solta de uma marca que a sincronia levou
+  a.E(`diaDeComida().escala.almoco = 0.5`);
+  a.v('ctx.marcaLinhaDaComida', 'almoco', 'fora', 'mais');
+  await a.esperar(40);
+  assert.ok(!a.E('diaDeComida().escala.almoco'), '"bem mais" não fica pela metade');
+  // uma versão mais nova marcou o jantar de um jeito que esta não conhece
+  a.v('ctx.marcaLinhaDaComida', 'almoco', 'desfaz');
+  a.v('ctx.abreFolha', { k: 'comiOutra', id: 'almoco' });
+  await a.esperar(40);
+  a.clicar('[data-a="tam-menos"]');
+  a.E(`diaDeComida().done.almoco = Date.now(); diaDeComida().como = { almoco: 'pouco' }; render();`);
+  await a.esperar(20);
+  a.clicar('[data-a="tam-guarda"]');
+  await a.esperar(40);
+  assert.ok(/versão mais nova/.test(a.texto('.v3-folha')), a.texto('.v3-folha'));
+  assert.ok(!a.$('[data-a="tam-troca"]'), 'sem "Trocar": o desfazer daqui não saberia refazê-la');
+  a.clicar('[data-a="tam-deixa"]');
+  await a.esperar(40);
+  assert.strictEqual(a.E('diaDeComida().como.almoco'), 'pouco', 'a marca dela fica');
+  a.fechar();
+});
+
+test('"Comi outra coisa" também sai do "+", e desfazer pelo aviso tira a marca e o tamanho', async () => {
+  const a = await noHoje(12, 5);
+  a.v('ctx.abreRegistrar');
+  await a.esperar(40);
+  a.clicar('[data-a="reg-outra"]');
+  await a.esperar(40);
+  assert.ok(a.$('.v3-tam'), 'a folha do tamanho');
+  a.clicar('[data-a="tam-nsei"]');
+  await a.esperar(20);
+  a.clicar('[data-a="tam-guarda"]');
+  await a.esperar(80);
+  assert.strictEqual(a.E('diaDeComida().tam.almoco'), 'nsei', '"não sei" é resposta, e fica guardada');
+  assert.strictEqual(a.toast().replace('Desfazer', ''), 'Almoço: outra coisa, sem saber o tamanho.');
+  a.clicar('[data-a="aviso-acao"]');
+  await a.esperar(60);
+  assert.ok(!a.E('!!diaDeComida().done.almoco'), 'desfeito');
+  assert.ok(!a.E('diaDeComida().tam'), 'sem tamanho solto');
+  await a.esperar(800);      // a gravação represada (`queueSave`)
+  const g = a.gravado();
+  assert.ok(g && g.dia && !g.dia.done.almoco && !g.dia.tam, 'nem no disco');
+  a.fechar();
+});
+
 test('o "+": o texto livre grava o que entendeu e diz o que não entendeu', async () => {
   const a = await noHoje(13, 0);
   a.clicar('.v3-doca-m');

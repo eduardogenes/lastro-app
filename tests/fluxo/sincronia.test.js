@@ -192,6 +192,31 @@ test('nada mudou de nenhum lado: não reescreve à toa', async () => {
   a.fechar();
 });
 
+test('o que só este aparelho tem sobe, mesmo sem mudança nova nele (o tamanho que a nuvem perdeu)', async () => {
+  // Um build antigo fundiu o dia sem conhecer o tamanho e subiu. Este aparelho,
+  // que não mexeu em nada desde então, puxa e fica com o tamanho (é a mesma
+  // marca): sem empurrar, a nuvem e a pasta dos agentes ficariam sem ele.
+  const t = Date.now() - 2 * 86400000;
+  const iso = new Date(t).toISOString().slice(0, 10);
+  const dia = { d: iso, done: { almoco: t }, agua: 0, escala: {}, como: { almoco: 'fora' }, tam: { almoco: 'mais' },
+                tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 1, m: t };
+  const a = await app({ estado: { logs: {}, done: [], comidaHist: [dia] } });
+  nuvemFalsa(a, null);
+  await a.v('sincroniza');
+  await a.esperar(40);
+  assert.strictEqual(nuvem(a).linha.data.comidaHist[0].tam.almoco, 'mais', 'a pré-condição: a nuvem tem o tamanho');
+  const empurros = nuvem(a).empurros.length;
+  // o build antigo sobe o dia sem o tamanho
+  a.E(`(function () { const n = globalThis.__nuvem; const data = JSON.parse(JSON.stringify(n.linha.data));
+        data.comidaHist.forEach(function (h) { delete h.tam; }); n.linha = { v: n.linha.v + 1, data: data }; })()`);
+  await a.v('sincroniza');
+  await a.esperar(40);
+  assert.strictEqual(a.S().comidaHist[0].tam.almoco, 'mais', 'este aparelho fica com o tamanho');
+  assert.ok(nuvem(a).empurros.length > empurros, 'e empurra, sem ter mudado nada aqui');
+  assert.strictEqual(nuvem(a).linha.data.comidaHist[0].tam.almoco, 'mais', 'a nuvem volta a ter o tamanho');
+  a.fechar();
+});
+
 test('apagar aqui não é desfeito pelo que a nuvem ainda tem', async () => {
   const t = Date.now() - 2 * 86400000;
   const a = await app({ estado: {

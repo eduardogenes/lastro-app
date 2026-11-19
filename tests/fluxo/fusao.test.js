@@ -148,6 +148,29 @@ test('remover uma refeição limpa o que era do dia junto', async () => {
   a.fechar();
 });
 
+test('remover uma refeição leva o tamanho do "comi outra coisa" junto', async () => {
+  const a = await app({ aba: 'agora' });
+  a.v('ctx.marcaRefeicao', 'lanche', 'fora', 'mais');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.tam.lanche, 'mais', 'a pré-condição');
+  a.aceitar();
+  a.v('ctx.removeRefeicao', 'lanche');
+  await a.esperar();
+  assert.ok(!a.S().dia.tam, 'o tamanho não fica solto no dia');
+  a.fechar();
+});
+
+test('desmarcar deixa lápide que alcança a marca, mesmo vinda de um relógio adiantado', async () => {
+  const a = await app({ aba: 'agora' });
+  a.v('ctx.marcaRefeicao', 'lanche');
+  // a marca veio de um aparelho com o relógio uma hora adiantado
+  const adiantada = a.E('diaDeComida().done.lanche = Date.now() + 3600000');
+  a.v('ctx.marcaRefeicao', 'lanche');
+  assert.ok(a.S().apagados['comida:' + a.S().dia.data + ':lanche'] >= adiantada,
+    'a lápide nunca é anterior à marca que ela mata: senão a fusão a traria de volta');
+  a.fechar();
+});
+
 test('a marca da refeição removida não volta pelo outro aparelho', async () => {
   // Regressão (docs/mapa, risco D15): a marca saía sem lápide, e a fusão do
   // mesmo dia a trazia de volta do aparelho que ainda a tinha.

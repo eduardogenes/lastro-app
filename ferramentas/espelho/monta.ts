@@ -679,6 +679,11 @@ function alimentosCsv(b: Base): string {
 }
 
 const COMO: Record<string, string> = { fora: 'fora do plano', nao: 'não comeu', nsei: 'não sabe o que comeu' };
+/** O tamanho do "comi outra coisa", dito pela pessoa sem pesar (desde 18/11/2026). */
+const TAMANHO: Record<string, string> = {
+  parecido: 'tamanho parecido com o do plano', mais: 'bem mais que o plano',
+  menos: 'bem menos que o plano', nsei: 'tamanho: não sabe'
+};
 
 /** Treino ou descanso num dia de comida, pela mesma autoridade do app: sessão registrada, depois o que ele disse, depois a semana típica. */
 function tipoDoDia(b: Base, d: string, informado: string | null | undefined): [string, string] {
@@ -692,12 +697,15 @@ function diasCsv(b: Base): string {
   const S = b.S;
   const nomes: Record<string, string> = {};
   b.plano.forEach(function (r) { nomes[r.id] = r.n; });
-  const refeicoes = function (h: { done: Record<string, number>; como?: Record<string, string>; escala?: Record<string, number>; pordia?: 1 }): string {
+  const refeicoes = function (h: { done: Record<string, number>; como?: Record<string, string>; tam?: Record<string, string>; escala?: Record<string, number>; pordia?: 1 }): string {
     const done = obj<number>(h.done);
     return Object.keys(done).sort(function (a, c) { return (done[a] || 0) - (done[c] || 0); }).map(function (id) {
       const notas: string[] = [];
       const como = obj<string>(h.como)[id];
       if (como && COMO[como]) notas.push(COMO[como]);
+      // o tamanho só descreve a marca "fora do plano"; noutra marca, não é lido
+      const tam = obj<string>(h.tam)[id];
+      if (como === 'fora' && tam && TAMANHO[tam]) notas.push(TAMANHO[tam]);
       const e = obj<number>(h.escala)[id];
       if (typeof e === 'number' && e !== 1 && como !== 'nao') notas.push('porção ' + Math.round(e * 100) + '%');
       // dia respondido pela pergunta: as marcas têm a hora da resposta, não a
@@ -1021,6 +1029,7 @@ function leiaMe(b: Base, ctx: Contexto, existentes: Set<string>): string {
   L.push('- **Movimentos medidos por distância ou caloria** (remo, corrida, sled): o resultado é o TEMPO, e menos é melhor. Por repetição ou tempo (wall ball, prancha): o resultado é QUANTO saiu, e mais é melhor.');
   L.push('- **Hora do treino** só aparece quando é confiável (sessão lançada depois sem hora informada fica sem).');
   L.push('- **Totais de comida** de dias fechados foram congelados no fechamento, contra o plano daquela data: mudar o plano depois não reescreve o passado. Refeição marcada "fora do plano" ou "não sabe" entra com os números do plano; "não comeu" não entra.');
+  L.push('- **O tamanho da refeição fora do plano.** Desde novembro de 2026, quem marca "comi outra coisa" diz o tamanho comparado ao da refeição do plano, sem pesar: parecido, bem mais, bem menos ou não sabe. Aparece entre parênteses em `refeicoes_marcadas`. É o que a pessoa disse, não uma medida, e não muda os totais: eles continuam com os números do plano. Marca sem tamanho é de antes, ou veio do "pôr o dia em dia", que não pergunta.');
   L.push('- **Registro por exceção.** Desde novembro de 2026 o app deixa responder o dia inteiro de uma vez ("a comida foi como o plano?": sim, quase, não lembro). Esses dias têm `respondido_pelo_dia` = 1 em `dias.csv`: as refeições aparecem sem hora, porque a hora da marca é a da resposta. "Quase" é `como_foi_o_dia` = fora; "não lembro" é perdido, e o dia não conta para a regra.');
   L.push('- **Séries registradas depois** (`registrado_depois` = 1 em `series.csv`): a pessoa treinou, não anotou na hora e marcou depois, com a carga e as repetições da última vez (podem ter sido corrigidas). Contam como as outras.');
   L.push('- **Fotos fora do padrão** (coluna "Padrão" em `fotos.md`): a pessoa tirou mesmo sem acertar o que está escrito ali. A linha "Mudou em relação à sessão anterior" diz se a luz, a roupa ou o lugar mudaram.');

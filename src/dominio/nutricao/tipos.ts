@@ -172,6 +172,33 @@ export interface Totais {
  */
 export type ComoFoiARefeicao = 'fora' | 'nao' | 'nsei';
 
+/**
+ * O tamanho do "comi outra coisa", comparado ao da refeição do plano.
+ *
+ * Decisão do dono (17/11/2026): guardar o tamanho, para o nutricionista ver,
+ * em cada refeição fora do plano, se foi maior ou menor. Sem pesar nem listar:
+ * quatro respostas grandes.
+ *
+ * - `'parecido'`: mais ou menos a quantidade do plano;
+ * - `'mais'`: bem mais, uma refeição grande;
+ * - `'menos'`: bem menos, quase nada;
+ * - `'nsei'`: a pessoa respondeu que não sabe o tamanho.
+ *
+ * **Nenhuma regra lê isto.** O total do dia continua com os números do plano
+ * (é o que o app sabe; ver `totalRegistrado`) e o peso na adesão continua o da
+ * marca `'fora'` (ver `pesoDaRefeicao`). Mudar a conta pelo tamanho seria regra
+ * nova do nutricionista, e a decisão foi só guardar e mostrar.
+ *
+ * Ausente quer dizer "não foi perguntado": as marcas `'fora'` de antes de
+ * 18/11/2026, e as que entram por caminhos sem a folha do tamanho (o "pôr o dia
+ * em dia"). `'nsei'` é diferente de ausente: é resposta.
+ *
+ * O campo guarda `string`, e não só estes quatro: um valor que este app não
+ * conhece veio de uma versão mais nova, e fica (quem lê, a tela e a pasta dos
+ * agentes, só mostra os conhecidos). É a mesma tolerância do `como`.
+ */
+export type TamanhoDaOutra = 'parecido' | 'mais' | 'menos' | 'nsei';
+
 /** O estado do dia de comida. Carimbado com a data, zera sozinho. */
 export interface DiaComida {
   /** 'AAAA-MM-DD' — o carimbo que faz o dia zerar sozinho */
@@ -213,6 +240,14 @@ export interface DiaComida {
    * está em `done`, viaja com ela na fusão e morre com a lápide dela.
    */
   como?: Record<string, ComoFoiARefeicao>;
+  /**
+   * refeição → o tamanho do "comi outra coisa"; ver `TamanhoDaOutra`.
+   *
+   * Atributo da marca `'fora'`, como `como` é da marca: só existe para refeição
+   * que está em `done` com `como: 'fora'`, viaja com ela na fusão e morre com a
+   * lápide dela (`tamanhosDaMarca` é quem guarda essa invariante).
+   */
+  tam?: Record<string, string>;
   /** override da cadência de hoje */
   cadencia?: 'treino' | 'descanso' | null;
   /** hoje é dia de alta demanda */
@@ -289,6 +324,8 @@ export interface DiaComidaHist {
   escala: Record<string, number>;
   /** refeição → como ela saiu do plano; ver `DiaComida.como` */
   como?: Record<string, ComoFoiARefeicao>;
+  /** refeição → o tamanho do "comi outra coisa"; ver `DiaComida.tam` */
+  tam?: Record<string, string>;
   cadencia?: 'treino' | 'descanso' | null;
   alta?: 1;
   turno?: Turno;

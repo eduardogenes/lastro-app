@@ -205,6 +205,21 @@ export function casaBusca(alvo: unknown, consulta: unknown): boolean {
  * ganha a maiúscula inicial, sem mexer em sigla no meio da frase. É conversão de
  * TELA: o dado guardado não muda.
  */
+/**
+ * O nome com a contração certa: "do almoço", "da ceia", "dos lanches", "das
+ * frutas", "do agachamento", "da cadeira extensora". O gênero e o número saem da
+ * primeira palavra (feminino em -a, -ção, -são; plural em -s); só a primeira
+ * letra vira minúscula, e o resto do nome fica como está ("do lanche no
+ * Subway"). Erra em nome raro, e por isso só serve para frase de apoio.
+ */
+export function contracaoDe(nome: string | null | undefined): string {
+  const n = String(nome || '').trim();
+  const p = (n.split(/\s+/)[0] || '').toLowerCase();
+  const plural = /[^s]s$/.test(p) || /ões$/.test(p);
+  const fem = /(a|as|ção|ções|são|sões)$/.test(p);
+  return (fem ? 'da' : 'do') + (plural ? 's ' : ' ') + n.charAt(0).toLowerCase() + n.slice(1);
+}
+
 export function caixaDeFrase(x: string | null | undefined): string {
   const s = String(x == null ? '' : x).trim();
   if (!s) return s;

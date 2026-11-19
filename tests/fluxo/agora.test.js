@@ -721,6 +721,67 @@ test('a folha NÃO apaga marca nenhuma, e isso é limite do chão', async () => 
   a.fechar();
 });
 
+test('a marca nova vence a antiga: "Tudo" tira o "Fora" e o tamanho, e "Tudo" sobre "Metade" volta à porção cheia', async () => {
+  // A folha diz "marca nova vence a antiga", e não vencia: "como o plano" é a
+  // AUSÊNCIA do `como`, e ausência não sobrescreve nada no merge do chão. Um
+  // "Não comi" errado num dia passado não tinha conserto, e pesava 0 na regra.
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 3);
+  const a = await app({ aba: 'dias', agora: agora, estado: { plano: 12, logs: {}, done: [], comidaHist: [
+    { d: data, done: { almoco: agora - 3 * DIA, jantar: agora - 3 * DIA, lanche: agora - 3 * DIA }, agua: 0,
+      escala: { lanche: 0.5 }, como: { almoco: 'fora', jantar: 'nao' }, tam: { almoco: 'mais' }, tot: {}, pv: 1, m: agora - 3 * DIA }
+  ] } });
+  const linha = () => a.S().comidaHist.filter(function (x) { return x.d === data; })[0];
+  await a.v('ctx.marcaNoDiaPassado', data, 'almoco', 'tudo', null);
+  await a.esperar(60);
+  assert.ok(!(linha().como && linha().como.almoco), 'o "Fora" saiu');
+  assert.ok(!linha().tam, 'e o tamanho dele também');
+  assert.strictEqual(linha().como.jantar, 'nao', 'o resto do dia fica como estava');
+  // corrigir é desmarcar e marcar de novo: a lápide leva a correção ao outro aparelho
+  const morte = a.S().apagados['comida:' + data + ':almoco'];
+  assert.ok(morte > agora - 3 * DIA && linha().done.almoco > morte, 'a marca velha morre, e a nova nasce depois da lápide');
+  assert.strictEqual(linha().done.jantar, agora - 3 * DIA, 'as outras marcas do dia guardam a hora delas');
+  assert.strictEqual(linha().done.lanche, agora - 3 * DIA);
+  // o mesmo toque de novo não muda nada, e não vira lápide
+  const antes = JSON.stringify(linha());
+  await a.v('ctx.marcaNoDiaPassado', data, 'almoco', 'tudo', null);
+  await a.esperar(60);
+  assert.strictEqual(JSON.stringify(linha()), antes);
+  assert.strictEqual(a.S().apagados['comida:' + data + ':almoco'], morte);
+  await a.v('ctx.marcaNoDiaPassado', data, 'jantar', 'tudo', null);
+  await a.esperar(60);
+  assert.ok(!linha().como, 'o "Não comi" errado tem conserto');
+  assert.strictEqual(a.vJ('ctx.poeODiaEmDia', data).linhas.filter(function (l) { return l.id === 'lanche'; })[0].marca, 'metade');
+  await a.v('ctx.marcaNoDiaPassado', data, 'lanche', 'tudo', null);
+  await a.esperar(60);
+  assert.strictEqual(a.vJ('ctx.poeODiaEmDia', data).linhas.filter(function (l) { return l.id === 'lanche'; })[0].marca, 'tudo',
+    '"Tudo" sobre "Metade" é a porção cheia');
+  assert.strictEqual(linha().escala.lanche, 1);
+  a.fechar();
+});
+
+test('o pôr em dia é só de dia passado, e a lápide dele nunca é anterior à marca que ela mata', async () => {
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 3);
+  const adiantada = agora + 3600000;   // a marca veio de um aparelho com o relógio adiantado
+  const a = await app({ aba: 'dias', agora: agora, estado: { plano: 12, logs: {}, done: [], comidaHist: [
+    { d: data, done: { almoco: adiantada }, agua: 0, escala: {}, como: { almoco: 'fora' }, tot: {}, pv: 1, m: adiantada }
+  ] } });
+  await a.v('ctx.marcaNoDiaPassado', data, 'almoco', 'tudo', null);
+  await a.esperar(60);
+  const morte = a.S().apagados['comida:' + data + ':almoco'];
+  const h = a.S().comidaHist.filter(function (x) { return x.d === data; })[0];
+  assert.ok(morte >= adiantada, 'a lápide alcança a marca adiantada');
+  assert.ok(h.done.almoco > morte, 'e a nova nasce depois dela');
+  // hoje é o dia aberto: o pôr em dia recusa, e não deixa lápide na chave da marca de hoje
+  const hoje = a.E('hojeISO()');
+  const r = await a.v('ctx.marcaNoDiaPassado', hoje, 'almoco', 'tudo', null);
+  assert.strictEqual(r.recusa, 'hoje');
+  assert.ok(!a.S().comidaHist.some(function (x) { return x.d === hoje; }), 'nenhuma linha de hoje no histórico');
+  assert.strictEqual(a.S().apagados['comida:' + hoje + ':almoco'], undefined, 'nem lápide');
+  a.fechar();
+});
+
 test('a porção acima de 1 alcança o dia passado', async () => {
   // Decisão 3: os mesmos cinco valores que o dia corrente já tem. "Comi uma vez
   // e meia o almoço" passa a se dizer de um dia passado.
