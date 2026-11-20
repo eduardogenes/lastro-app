@@ -208,6 +208,16 @@ async function apaga(bucket: string, partes: string[]): Promise<Resultado<true>>
 }
 
 export const NUVEM = {
+  /**
+   * O relatório da sonda de tela (`src/ui/sonda.js`). Vai como arquivo para a
+   * pasta `diagnostico/` do dono no bucket dos aparelhos: não entra no estado,
+   * não muda o formato de nada e não sincroniza entre aparelhos. É lido no
+   * computador por `ferramentas/sonda/le.ts`.
+   */
+  async enviaDiagnostico(nome: string, texto: string): Promise<Resultado<true>> {
+    return subir(BUCKET, ['diagnostico', nome], new Blob([texto], { type: 'application/json' }));
+  },
+
   /** A sessão atual, ou null. Síncrono depois do primeiro `pronta()`. */
   sessao(): SessaoNuvem | null { return sessao; },
 

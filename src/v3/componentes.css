@@ -408,7 +408,11 @@ button.v3-quadro { min-height: var(--alvo); }
 .v3-doca-m svg { width: 28px; height: 28px; }
 .v3-doca.mini { justify-content: space-between; }
 .v3-doca.mini .v3-doca-n { flex: 0 0 var(--doca); }
-.v3 .v3-doca.mini .v3-doca-n button:not([aria-current="page"]) { flex: 0 0 0; width: 0; opacity: 0; }
+/* `.v3-doca.v3`, e não `.v3 .v3-doca`: a doca é ela mesma a raiz `.v3`, não
+   está dentro de uma. Com o descendente a regra nunca casava, e no iPhone os
+   outros botões ficavam com 52 px fora da pílula e o atual espremido a zero. */
+.v3-doca.v3.mini .v3-doca-n button:not([aria-current="page"]) { flex: 0 0 0; width: 0; opacity: 0; padding: 0; }
+.v3-doca.v3.mini .v3-doca-n button[aria-current="page"] { flex: 0 0 52px; }
 .v3-doca.mini .v3-doca-n button[aria-current="page"] span { display: none; }
 
 /* ---- 14. Campo de texto longo ------------------------------------------ */

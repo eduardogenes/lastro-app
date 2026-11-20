@@ -8,6 +8,7 @@
 
 import { useState } from 'preact/hooks';
 import { Acoes, Apoio, Botao, Caixa, Cabecalho, Chave, Folha, Linha, Saida, Secao } from '../base.jsx';
+import { SONDA } from '../../sonda.js';
 
 const PARTES = [['comida', 'Comida', 'o plano e as refeições do dia'], ['agua', 'Água', 'contar copos no Hoje'], ['peso', 'Peso', 'a pesagem da manhã'], ['cardio', 'Cardio', 'as duas sessões da semana'],
                 ['dobras', 'Dobras', 'adipômetro, no Corpo'], ['fotos', 'Fotos do corpo', 'sessão a cada 14 dias']];
@@ -61,6 +62,7 @@ export function AjustesV3({ ctx }) {
         </div>
         <Apoio>{d.resumo}. Guardado em: {d.onde}.</Apoio>
       </Secao>
+      <Diagnostico entrou={n.dentro} />
       <Secao titulo="Recomeçar">
         <div>
           {d.difTxt && <Linha titulo="Voltar ao programa do treinador" apoio={d.difTxt} data-a="ajustes-restaura-programa" aoTocar={ctx.restauraPrograma} />}
@@ -110,5 +112,20 @@ export function FolhaColarCopia({ ctx }) {
           : <Botao data-a="colar-confere" aria-disabled={txt.trim() ? undefined : 'true'} onClick={() => { if (txt.trim()) confere(); }}>Conferir o texto</Botao>}
       </Acoes>
     </Folha>
+  );
+}
+
+// A sonda de tela, para conferir o app no iPhone de verdade. Mede enquanto
+// você usa e manda o relatório para a sua conta; quem lê é o computador.
+function Diagnostico({ entrou }) {
+  const [on, setOn] = useState(SONDA.ligada());
+  let ultimo = '';
+  try { ultimo = localStorage.getItem('lastro-sonda-ultimo') || ''; } catch (e) {}
+  const nota = !entrou ? 'precisa entrar na conta' : on ? (ultimo || 'medindo') : 'desligado';
+  return (
+    <Secao titulo="Diagnóstico da tela" nota={nota}>
+      <Chave titulo="Medir as telas" apoio="enquanto você usa, o app confere cortes e desalinhamentos e manda para a sua conta"
+        ligada={on} data-a="ajustes-sonda" aoMudar={v => { SONDA.liga(v); setOn(v); }} />
+    </Secao>
   );
 }

@@ -19,6 +19,7 @@ import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { tempo as tempoDoMovimento, pontoDentro, protegeSegundoToque, TOQUE_DUPLO_MS, trocaDeCamada } from './ui/movimento.js';
 import { ehBancada } from './palco.js';
+import { SONDA } from './ui/sonda.js';
 import { MIN_PESAGENS as MIN_PESAGENS_CORPO, semanaEmCurso, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, VALIDADE_LEITURA, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois, intervaloLongo } from './dominio/sessao';
 import { entendeuAlgo, interpretaTexto } from './dominio/textolivre';
@@ -606,6 +607,8 @@ async function load() {
   // funcionar, e quem chegou primeiro é o dado do aparelho.
   await NUVEM.pronta();
   if (NUVEM.sessao()) { render(); sincroniza(); }
+  // A sonda de tela (Ajustes → Diagnóstico da tela): só mede quando ligada.
+  SONDA.pronta();
   // O que a 6→7 apagou merece ser dito: apagar histórico em silêncio é o tipo
   // de coisa que a pessoa descobre semanas depois e não sabe se foi bug.
   if (m7 && m7.entradas) {
