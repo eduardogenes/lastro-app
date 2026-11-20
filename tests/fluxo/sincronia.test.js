@@ -810,7 +810,9 @@ test('a primeira fusão mantém a prescrição da conta e oferece reaplicar o te
       await reaberto.esperar();
       reaberto.clicar('[data-a="prog-hist"]');
       await reaberto.esperar();
-      const linha = reaberto.$$('.v3-lin').find(l => l.textContent.includes('revisão do treinador'));
+      const linha = reaberto.$$('.v3-mud-l').find(l => l.textContent.includes('revisão do treinador'));
+      assert.match(linha.querySelector('.v3-mud-s').textContent, /^\d{2}$/);
+      assert.match(linha.textContent, /texto do treinador/);
       assert.equal(linha.tagName, 'DIV');
       reaberto.clicar(linha.querySelector('b'));
       await reaberto.esperar();

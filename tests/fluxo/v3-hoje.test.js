@@ -29,6 +29,44 @@ test('às 12h05 o momento é o almoço, e "Comi" marca pela porta de sempre', as
   a.fechar();
 });
 
+test('às 12h40 o almoço das 12h30 continua no bloco até tocar em Comi', async () => {
+  const a = await noHoje(12, 40);
+  assert.equal(a.texto('.v3-bloco-t'), 'Almoço');
+  assert.match(a.texto('.v3-bloco'), /era às 12h30/);
+  a.clicar('[data-a="hoje-comi"]');
+  await a.esperar();
+  assert.ok(a.E('!!diaDeComida().done.almoco'));
+  assert.match(a.texto('.v3-bloco'), /O próximo é o lanche da tarde/i);
+  a.fechar();
+});
+
+test('a linha do dia acomoda os sete horários sem rolagem nos 374 px disponíveis', async () => {
+  const a = await noHoje(12, 5);
+  const linha = a.$('.v3-ld');
+  const pontos = [...linha.querySelectorAll('button')];
+  assert.equal(pontos.length, 7);
+  assert.match(pontos.at(-1).getAttribute('aria-label'), /21h30/);
+  const estilo = el => a.window.getComputedStyle(el);
+  assert.equal(estilo(linha).justifyContent, 'space-between');
+  assert.ok(!['auto', 'scroll'].includes(estilo(linha).overflowX));
+  const alvo = parseFloat(estilo(a.window.document.documentElement).getPropertyValue('--alvo'));
+  assert.equal(alvo, 44);
+  const largura = pontos.reduce((total, b) => {
+    const minimo = estilo(b).minWidth;
+    return total + (minimo === 'var(--alvo)' ? alvo : parseFloat(minimo));
+  }, 0);
+  assert.ok(largura + (parseFloat(estilo(linha).gap) || 0) * (pontos.length - 1) <= 374);
+  a.fechar();
+});
+
+test('uma sessão de 58 minutos dá a estimativa “perto de uma hora” no treino', async () => {
+  const a = await noHoje(5, 30, { done: [{ day: 'A', t: agoraEstavel(5, 30) - DIA, dur: 58 * 60000 }] });
+  assert.equal(a.vJ('ctx.hojeV3').bloco.k, 'treino');
+  assert.match(a.texto('.v3-bloco'), /séries, perto de uma hora/);
+  assert.equal(a.$$('.v3-ritmo .bola.cheia').length, 1);
+  a.fechar();
+});
+
 test('a refeição: "Comi" oferece desfazer, e "Não foi assim" abre as respostas da exceção', async () => {
   const a = await noHoje(12, 5);
   a.clicar('[data-a="hoje-comi"]');
@@ -89,6 +127,8 @@ test('"Comi outra coisa": o tamanho em quatro respostas, e "Guardar" só com uma
   a.v('ctx.abreFolha', { k: 'refeicao', id: 'almoco' });
   await a.esperar(40);
   assert.ok(/outra coisa, bem mais/.test(a.texto('.v3-folha')), a.texto('.v3-folha'));
+  assert.equal(a.window.getComputedStyle(a.$('.v3-itens div')).paddingTop, '11px');
+  assert.equal(a.window.getComputedStyle(a.$('.v3-itens span:last-child')).fontWeight, '600');
   // desmarcar e desfazer o desmarcar devolve a marca inteira, com o tamanho
   a.clicar('[data-a="ref-desfaz"]');
   await a.esperar(60);
@@ -183,6 +223,8 @@ test('o "+": o texto livre grava o que entendeu e diz o que não entendeu', asyn
   await a.esperar(40);
   assert.ok(a.$('#registrar-texto'), 'a folha do "+"');
   const campo = a.$('#registrar-texto');
+  assert.ok(a.window.getComputedStyle(campo.form).boxShadow.includes('inset'));
+  assert.equal(a.window.getComputedStyle(campo.form.querySelector('button')).height, 'var(--resposta)');
   campo.value = 'almocei e tomei 2 copos';
   campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
   await a.esperar();
@@ -212,6 +254,7 @@ test('"se quiser" obedece ao que está ligado, e a chave muda na hora', async ()
   a.v('ctx.fechaFolha');
   await a.esperar();
   assert.ok(!a.$('[data-a="hoje-agua"]'), 'e a água sumiu do Hoje');
+  assert.match(a.window.getComputedStyle(a.$('.v3-instr')).gridTemplateColumns, /repeat\(3,/);
   a.clicar('[data-a="hoje-agua"]'.replace('hoje-agua', 'hoje-peso'));
   await a.esperar();
   assert.strictEqual(a.vista().aba, 'corpo', 'o peso leva à régua do Corpo');
@@ -238,6 +281,7 @@ test('de noite, "Foi, sim" fecha o dia com "Desfazer", e desfazer desmarca só o
 test('de noite, com refeições sem resposta, o momento pergunta pelo dia, e responder grava', async () => {
   const a = await noHoje(21, 0);
   assert.strictEqual(a.vJ('ctx.hojeV3').bloco.k, 'noite');
+  assert.equal(a.$('.v3-ld .agora'), null);
   a.clicar('[data-a="noite-quase"]');
   await a.esperar(60);
   assert.strictEqual(a.E('CTX.respostaDoDia(hojeISO())'), 'quase');
@@ -248,6 +292,8 @@ test('ontem em branco: a pergunta aparece no ritmo, e responder fecha o dia de o
   const ontem = dataLocal(agoraEstavel(10) - DIA);
   const a = await noHoje(10, 0, { comidaHist: [{ d: ontem, done: {}, agua: 0, escala: {}, tot: {}, pv: 1, m: 1 }] });
   assert.ok(a.texto('.v3-perg').includes('Ontem ficou em branco'));
+  assert.ok(a.$('.v3-ritmo button:nth-last-child(2) .bola.vazia'));
+  assert.ok(!a.$('.v3-ritmo .hoje.vazia'));
   a.clicar('.v3-perg-r button:first-child');
   await a.esperar(60);
   assert.strictEqual(a.E(`CTX.respostaDoDia(${JSON.stringify(ontem)})`), 'sim');
@@ -319,7 +365,9 @@ test('sem a comida: o Hoje é só o treino, o Plano diz como ligar, e nada pergu
   await a.esperar();
   const h = a.vJ('ctx.hojeV3');
   assert.notStrictEqual(h.bloco.k, 'refeicao', 'sem a comida, o almoço sai do bloco');
-  assert.ok(h.linha.every(x => x.treino), 'a linha do dia é só o treino');
+  assert.equal(h.linha.length, 1);
+  assert.equal(a.$('.v3-ld'), null);
+  assert.match(a.texto('[data-a="linha-' + h.linha[0].id + '"]'), /Treino .*séries/);
   assert.ok(!a.$('[data-a="linha-almoco"]'));
   a.v('ctx.vaiPara', 'prescricao');
   await a.esperar(40);

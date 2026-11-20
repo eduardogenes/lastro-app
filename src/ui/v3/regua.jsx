@@ -23,7 +23,7 @@ const txt = v => String(v).replace('.', ',');
  *                              cabe sem rolar; o teclado e o leitor de tela andam
  *                              pela própria régua, que é um `slider`)
  */
-const DITA = { kg: 'quilos', cm: 'centímetros', mm: 'milímetros', g: 'gramas', ml: 'mililitros', min: 'minutos', s: 'segundos',
+const DITA = { kg: 'quilos', 'kg por lado': 'quilos por lado', 'kg em cada mão': 'quilos em cada mão', cm: 'centímetros', mm: 'milímetros', g: 'gramas', ml: 'mililitros', min: 'minutos', s: 'segundos',
                reps: 'repetições', seg: 'segundos', m: 'metros', cal: 'calorias', L: 'litros', '%': 'por cento' };
 /** Uma unidade como se fala: "kg" → "quilos", "kg/lado" → "quilos por lado". */
 export function dita(u) {
@@ -33,7 +33,7 @@ export function dita(u) {
 }
 /** A unidade falada: a do rótulo ("carga em kg" → "quilos"), ou o próprio rótulo ("repetições"). */
 function unidadeDita(rotulo) {
-  const m = / em (\S+)$/.exec(rotulo || '');
+  const m = / em (.+)$/.exec(rotulo || '');
   if (m) return dita(m[1]);
   return dita(rotulo || '');
 }

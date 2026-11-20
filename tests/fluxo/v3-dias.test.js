@@ -19,6 +19,7 @@ const iso = n => dataLocal(agoraEstavel(10) - n * DIA);
 test('o mês em grade, e o dia escolhido pergunta pela comida', async () => {
   const a = await emDias();
   assert.strictEqual(a.texto('.v3-cab h1'), 'Dias');
+  assert.equal(a.window.getComputedStyle(a.$('.v3-cab h1')).flexGrow, '0');
   assert.ok(a.$$('.v3-dia').length >= 28, 'os dias do mês');
   const ontem = iso(1);   // o harness fixa o dia 15: ontem está no mês
   a.clicar(`[data-a="dia-${ontem}"]`);

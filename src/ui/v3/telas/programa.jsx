@@ -28,14 +28,21 @@ export function ProgramaV3({ ctx }) {
     );
   }
   if (p.modo === 'historico') {
+    const meses = new Map();
+    for (const x of p.log) {
+      if (!meses.has(x.mes)) meses.set(x.mes, []);
+      meses.get(x.mes).push(x);
+    }
     return (
       <>
         <Cabecalho titulo="Mudanças" nota={p.meta} aoVoltar={A.volta} />
-        <Secao><div>{p.log.length ? p.log.map(x => (
-          <Linha key={x.i} titulo={x.txt} apoio={x.meta}>
+        {meses.size ? Array.from(meses, ([mes, entradas]) => <Secao key={mes} titulo={mes}>
+          {entradas.map(x => <div class="v3-mud-l" key={x.i}>
+            <span aria-hidden="true" class="v3-mud-s m v3-n">{x.dia}</span>
+            <span class="v3-lin-t"><b>{x.txt}</b><span>{x.meta}</span></span>
             {x.textoRevisao && <Pequeno contorno onClick={() => ctx.abreRevisao(x.textoRevisao)}>Rever texto</Pequeno>}
-          </Linha>
-        )) : <Apoio>Nenhuma mudança no programa ainda.</Apoio>}</div></Secao>
+          </div>)}
+        </Secao>) : <Secao><Apoio>Nenhuma mudança no programa ainda.</Apoio></Secao>}
         <div class="v3-fim-curto" />
       </>
     );

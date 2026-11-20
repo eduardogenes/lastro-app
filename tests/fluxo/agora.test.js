@@ -147,7 +147,7 @@ test('enquanto a janela do treino não passou, o cartão é o treino', async () 
 
 test('passada a janela do treino, a refeição da janela assume o topo', async () => {
   // O treino das 6h15 acabaria muito antes. Às 12h05 o cartão é o almoço das
-  // 12h30, que está na janela; às 10h, longe dela, não há cartão.
+  // 12h30, que está na janela; às 10h, a refeição mais recente ainda espera resposta.
   const ag = function (h, m) {
     return { logs: {}, done: [],
              dia: { data: dataLocal(agoraEstavel(h, m)), done: {}, agua: 0, escala: {}, cadencia: 'treino', alta: 0 } };
@@ -159,7 +159,9 @@ test('passada a janela do treino, a refeição da janela assume o topo', async (
   assert.strictEqual(c.janela, true);
   a.fechar();
   const b = await app({ agora: agoraEstavel(10, 0), estado: ag(10, 0) });
-  assert.strictEqual(b.vJ('ctx.cartaoDeCima'), null, 'longe da janela: nenhum cartão');
+  const anterior = b.vJ('ctx.cartaoDeCima');
+  assert.equal(anterior.k, 'refeicao');
+  assert.ok(anterior.hora < 10 * 60, 'a refeição que passou, até receber resposta');
   b.fechar();
 });
 

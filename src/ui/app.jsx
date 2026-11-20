@@ -16,7 +16,7 @@ export function App({ ctx }) {
   // pedida de dentro de um destino.
   const paineis = <>
     <EstadosV3 ctx={ctx} />
-    <FalhouV3 f={ctx.falhou()} onTenta={ctx.tentaGravar} onCopia={ctx.copiaRegistro} onBaixa={ctx.exportar} onFecha={ctx.dispensaFalha} />
+    <FalhouV3 f={ctx.falhou()} onTenta={ctx.tentaGravar} onCopia={ctx.copiaRegistro} onBaixa={ctx.exportar} />
     <PareV3 p={ctx.pare()} onResponde={ctx.respondePare} />
   </>;
   // Tela cheia toma o lugar do lugar e da doca, MENOS as folhas: uma folha

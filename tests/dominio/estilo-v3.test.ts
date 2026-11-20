@@ -108,6 +108,12 @@ test('os tokens do app são os do design system: os mesmos nomes e valores', () 
   assert.deepStrictEqual([...app.entries()].sort(), [...ds.entries()].sort());
 });
 
+test('a nota dos lugares usa o espaço disponível e a do cabeçalho com Voltar ocupa até 45%', () => {
+  const css = semComentarios(ler('src/v3/fotos.css'));
+  assert.match(css, /\.v3-cab \.v3-cab-n\s*\{[^}]*max-width:\s*45%;/);
+  assert.match(css, /\.v3-cab\.raiz \.v3-cab-n\s*\{[^}]*max-width:\s*none;/);
+});
+
 test('a primeira vez reserva a saída no rodapé e usa os tokens de espaço da referência', () => {
   const app = semComentarios(ler('src/v3/componentes.css'));
   const referencia = ler('docs/design-system/lastro.html');

@@ -35,6 +35,10 @@ test('pesar pela régua: guarda a de hoje, e mexer de novo corrige a mesma', asy
   a.clicar('[data-a="corpo-pesa"]');
   await a.esperar(60);
   assert.deepStrictEqual(hojeNoPeso(a).map(x => x.v), [77.8]);
+  const t = new Date(hojeNoPeso(a)[0].t);
+  const hora = n => String(n).padStart(2, '0');
+  assert.ok(a.texto('.v3-bloco').includes('pesado hoje, ' + hora(t.getHours()) + 'h' + hora(t.getMinutes())));
+  assert.ok(a.$('[data-a="corpo-mesma-data"].c'));
   assert.ok(/Guardado hoje/.test(a.texto('[data-a="corpo-pesa"]')));
 
   await mais(a);
@@ -48,6 +52,7 @@ test('pesar pela régua: guarda a de hoje, e mexer de novo corrige a mesma', asy
 
 test('mais medidas: ligar a coxa e as dobras as põe na lista e na fila de medir', async () => {
   const a = await corpo();
+  assert.match(a.texto('[data-a="corpo-ligar"]'), /e dobras · desligadas/);
   const antes = a.$$('[data-a^="corpo-medida-"]').length;
   a.clicar('[data-a="corpo-ligar"]');
   await a.esperar(40);

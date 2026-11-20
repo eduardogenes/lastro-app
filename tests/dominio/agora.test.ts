@@ -157,7 +157,7 @@ test('colisão: em dia de descanso a refeição ganha por AUSÊNCIA, não por re
   assert.deepStrictEqual(c, { k: 'refeicao', id: 'cafe', hora: H(6, 0), janela: true });
 });
 
-// ---------- regra 4: a refeição, e só para frente ----------
+// ---------- regra 4: a refeição do momento ----------
 
 test('a refeição do momento é a próxima do plano dentro de 30 min', () => {
   const c = cartaoDeCima(marcando(['cafe'], H(12, 5)));
@@ -182,7 +182,7 @@ test('a refeição da hora EXATA conta como à frente', () => {
   assert.deepStrictEqual(c, { k: 'refeicao', id: 'cafe', hora: H(6, 0), janela: true });
 });
 
-test('o que passou sem marca NÃO volta ao topo — é a correção da regra da D', () => {
+test('responder ao lanche não traz o almoço anterior de volta', () => {
   // A regra escrita da direção D dizia "se não houver nada à frente, é a última
   // que passou sem marca", e ela se virava contra si mesma um segundo depois de
   // marcar: marcado o lanche das 16h, o almoço das 12h30 voltava ao topo como
@@ -201,16 +201,15 @@ test('nada na janela, não há cartão: o que está à frente é linha do dia', 
   // terceira entrega da D a desfez: às 10h40 de um domingo, com o almoço às
   // 12h30, "nenhum cartão" (`agora-descanso.html`, estado 1). O exemplo das
   // 5h20 do momento 2 não precisava dela: o pré-treino estava a 25 min.
-  assert.strictEqual(cartaoDeCima(marcando([], H(10, 40))), null);
+  assert.strictEqual(cartaoDeCima(marcando(['cafe'], H(10, 40))), null);
   assert.strictEqual(cartaoDeCima(marcando([], H(5, 20))), null, 'o café das 6h a 40 min: ainda não');
   assert.strictEqual(cartaoDeCima(marcando([], H(5, 30)))!.k, 'refeicao', 'a 30 min, sim');
 });
 
-test('meio-dia e quarenta com o almoço sem marca: nem o almoço, nem o lanche', () => {
-  // O almoço das 12h30 passou sem marca: ele é linha, nunca o cartão. O lanche
-  // das 16h está fora da janela. A tela fica com as linhas do dia (a D,
-  // `agora-descanso.html`, estado 3: "de novo, nenhum cartão").
-  assert.strictEqual(cartaoDeCima(marcando(['cafe'], H(12, 40))), null);
+test('às 12h40 o almoço continua no topo até receber resposta', () => {
+  assert.deepStrictEqual(cartaoDeCima(marcando(['cafe'], H(12, 40))),
+    { k: 'refeicao', id: 'almoco', hora: H(12, 30), janela: false });
+  assert.equal(cartaoDeCima(marcando(['almoco'], H(12, 40))), null);
 });
 
 // ---------- regra 6: o dia resolvido ----------
@@ -241,13 +240,9 @@ test('dia resolvido exige o treino resolvido também', () => {
 
 // ---------- regra 7: o silêncio, e ele é legítimo ----------
 
-test('dia de descanso fora de qualquer janela não tem cartão', () => {
-  // Está na regra: ficam a linha do dia, a água e a contagem dos 14 dias, e não
-  // há cartão. A frente declarou que este estado não está desenhado em nenhum
-  // dos nove HTML abertos — então a função responde `null` e quem desenha
-  // decide, em vez de a regra inventar um cartão para preencher.
+test('depois da última refeição, a ceia sem resposta continua disponível', () => {
   const c = cartaoDeCima(marcando(['cafe', 'almoco', 'lanche', 'jantar'], H(23, 0)));
-  assert.strictEqual(c, null, 'a ceia das 22h30 passou sem marca: nada à frente, dia não fechado');
+  assert.deepStrictEqual(c, { k: 'refeicao', id: 'ceia', hora: H(22, 30), janela: false });
 });
 
 test('dia sem plano de comida nenhum não quebra, e não inventa cartão', () => {

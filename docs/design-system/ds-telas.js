@@ -239,16 +239,31 @@ const COM = { 1: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 10: 1, 11: 1, 12: 1 };
 tela({ id: 'dias', n: 'Dias', g: 'dias', c: 'lugar', lugar: 'dias',
   d: 'O mês em grade: preto é treino (com a letra), o ponto é comida respondida, riscado é dia em branco. Embaixo, o dia escolhido, com a pergunta da comida.',
   es: [['treino', 'dia com treino'], ['branco', 'dia em branco'], ['hoje', 'hoje']], vai: ['dia-aberto', 'responder'],
-  r: e => { const sel = e === 'branco' ? 9 : e === 'hoje' ? 16 : 13; let sem = '';
-    for (let w = 0; w < 4; w++) { sem += '<div class="sem">'; for (let k = 1; k <= 7; k++) { const d = w * 7 + k, t = MES[d], fut = d > 16; sem += `<button class="dd ${t && t !== '·' ? 't' : ''} ${!t && !fut && d !== 16 && !COM[d] ? 'v' : ''} ${fut ? 'fut' : ''} ${d === 16 ? 'hoje' : ''} ${d === sel ? 'sel' : ''}" ${fut ? 'disabled' : `data-est="${d === 9 ? 'branco' : d === 16 ? 'hoje' : 'treino'}"`} aria-label="dia ${d}${t && t !== '·' ? ', treino ' + t : ''}${COM[d] ? ', comida respondida' : ''}"><small>${d}</small>${t && t !== '·' ? t : ''}${COM[d] ? '<i class="c"></i>' : ''}</button>`; } sem += '</div>'; }
-    const t = MES[sel];
-    return H.cab('Dias', 'novembro · 10 treinos em 16 dias', { lugar: 1 }) + `<section class="secao" style="padding-top:6px"><div class="sem" style="margin-bottom:6px">${['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(x => `<span>${x}</span>`).join('')}</div><div class="mes">${sem}</div>
+  r: e => {
+    const deslocamento = topo().mes || 0, corrente = deslocamento === 0;
+    const inicio = new Date(2026, 10 + deslocamento, 1);
+    const fim = new Date(2026, 11 + deslocamento, 0).getDate();
+    const mes = inicio.toLocaleDateString('pt-BR', { month: 'long' });
+    const sel = topo().dia || (corrente ? (e === 'branco' ? 9 : e === 'hoje' ? 16 : 13) : 1);
+    const treinoDe = d => corrente && MES[d] && MES[d] !== '·' ? MES[d] : '';
+    const comidaDe = d => corrente && COM[d];
+    const celulas = Array(inicio.getDay()).fill('<span></span>');
+    for (let d = 1; d <= fim; d++) {
+      const t = treinoDe(d), comida = comidaDe(d), hoje = corrente && d === 16, futuro = corrente && d > 16;
+      celulas.push(`<button class="dd ${t ? 't' : ''} ${!t && !comida && !hoje && !futuro ? 'v' : ''} ${futuro ? 'fut' : ''} ${hoje ? 'hoje' : ''} ${d === sel ? 'sel' : ''}" ${futuro ? 'disabled' : 'data-dia="' + d + '"'} aria-pressed="${d === sel}" aria-label="dia ${d}${t ? ', treino ' + t : ''}${comida ? ', comida respondida' : ''}"><small>${d}</small>${t}${comida ? '<i class="c"></i>' : ''}</button>`);
+    }
+    let sem = '';
+    for (let i = 0; i < celulas.length; i += 7) sem += '<div class="sem">' + celulas.slice(i, i + 7).join('') + '</div>';
+    const t = treinoDe(sel);
+    const data = new Date(inicio.getFullYear(), inicio.getMonth(), sel);
+    const titulo = data.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).replace('-feira', '');
+    return H.cab('Dias', mes + (corrente ? ' · 10 treinos em 16 dias' : ' · sem registros'), { lugar: 1 }) + `<div class="mes-nav"><button class="ico" data-mes="-1" aria-label="Mês anterior">${ic.volta}</button><b>${mes} de ${inicio.getFullYear()}${corrente ? ' · até ontem, 15/11' : ''}</b><button class="ico" data-mes="1" aria-label="Próximo mês" ${corrente ? 'disabled' : ''}>${ic.dir}</button></div><section class="secao" style="padding-top:6px"><div class="sem" style="margin-bottom:6px">${['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(x => `<span>${x}</span>`).join('')}</div><div class="mes">${sem}</div>
       <div class="legm"><span><i style="background:var(--texto)"></i>treino</span><span><i style="background:var(--assunto-feito);box-shadow:inset 0 0 0 1px var(--texto)"></i>comida respondida</span><span><i style="background:repeating-linear-gradient(135deg,var(--superficie-quieta) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px var(--contorno)"></i>em branco</span></div></section>
-      ${H.secao({ 13: 'sexta, 13 de novembro', 9: 'segunda, 9 de novembro', 16: 'segunda, 16 · hoje' }[sel], '', `${H.quadros([{ v: t && t !== '·' ? 'Treino ' + t : '—', l: t && t !== '·' ? '20 séries · 58 min' : 'sem treino', ir: 'dia-aberto' }, { v: sel === 9 ? '—' : '77,4', l: 'peso' }, { v: sel === 13 ? '8 de 14' : '—', l: 'água' }], 3)}
-        ${sel === 13 ? H.pergunta('Comida: foi como o plano', 'Conta para os 14 dias da regra. Toque para corrigir.', ['Foi, sim', 'Quase', 'Não lembro'], 'Foi, sim') : H.pergunta('A comida deste dia foi como o plano?', 'Sem resposta, o dia fica fora da conta. Não vira zero.', ['Foi, sim', 'Quase', 'Não lembro'])}
+      ${H.secao(titulo + (corrente && sel === 16 ? ' · hoje' : ''), '', `${H.quadros([{ v: t && t !== '·' ? 'Treino ' + t : '—', l: t && t !== '·' ? '20 séries · 58 min' : 'sem treino', ir: 'dia-aberto' }, { v: corrente && (sel === 13 || sel === 16) ? '77,4' : '—', l: 'peso' }, { v: corrente && sel === 13 ? '8 de 14' : '—', l: 'água' }], 3)}
+        ${corrente && sel === 13 ? H.pergunta('Comida: foi como o plano', 'Conta para os 14 dias da regra. Toque para corrigir.', ['Foi, sim', 'Quase', 'Não lembro'], 'Foi, sim') : H.pergunta('A comida deste dia foi como o plano?', 'Sem resposta, o dia fica fora da conta. Não vira zero.', ['Foi, sim', 'Quase', 'Não lembro'])}
         <div class="acoes">${H.alt('Abrir o dia ' + ic.seta, { cheio: 1, ir: 'dia-aberto' })}</div>`)}
       ${H.secao('', '', `<div class="acoes" style="margin-top:0">${H.vai('Responder os dias em branco ' + ic.seta, { ir: 'responder' })}</div><p class="txt"><span class="n">9</span> de 14 respondidos. A regra do nutricionista precisa de 11.</p>`)}
-      ${H.secao('No mês', '', H.quadros([{ v: '4,75', l: 'dias de treino por semana' }, { v: '06h15', l: 'horário mais comum' }, { v: '1', l: 'cardio no mês' }], 3))}`; } });
+      ${!corrente ? '' : H.secao('No mês', '', H.quadros([{ v: '4,75', l: 'dias de treino por semana' }, { v: '06h15', l: 'horário mais comum' }, { v: '1', l: 'cardio no mês' }], 3))}`; } });
 
 tela({ id: 'responder', n: 'Responder os dias', g: 'dias', c: 'acao', lugar: 'dias',
   d: 'Um dia por tela, do mais recente para trás. Um toque por dia; "voltar um" desfaz o último; "todos os que faltam" responde de uma vez.',

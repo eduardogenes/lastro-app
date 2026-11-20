@@ -26,7 +26,7 @@ export function Progressao({ ctx }) {
   const vazio = !p.grupos.subir.length && !p.grupos.rep.length && !p.grupos.parado.length;
   return (
     <>
-      <Cabecalho titulo="Progressão" nota={p.nome} aoVoltar={ctx.fechaProgressao} />
+      <Cabecalho titulo="Progressão" nota={'Treino ' + p.dia} aoVoltar={ctx.fechaProgressao} />
       {p.dias.length > 1 && (
         <div class="v3-pad">
           <Seletor rotulo="Treino" valor={p.dia} aoMudar={ctx.setDiaDaProgressao} opcoes={p.dias.map(d => ({ k: d, t: d }))} />

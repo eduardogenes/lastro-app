@@ -68,12 +68,12 @@ function eraParaOutraCoisa(ev, nasceu, apertou) {
   return apertou == null || apertou - nasceu < JANELA_MS;
 }
 
-export function FalhouV3({ f, onTenta, onCopia, onBaixa, onFecha }) {
+export function FalhouV3({ f, onTenta, onCopia, onBaixa }) {
   if (!f) return null;
-  return <AvisoV3 f={f} onTenta={onTenta} onCopia={onCopia} onBaixa={onBaixa} onFecha={onFecha} />;
+  return <AvisoV3 f={f} onTenta={onTenta} onCopia={onCopia} onBaixa={onBaixa} />;
 }
 
-function AvisoV3({ f, onTenta, onCopia, onBaixa, onFecha }) {
+function AvisoV3({ f, onTenta, onCopia, onBaixa }) {
   const caixa = useRef(null);
   const nasceu = useRef(Date.now());
   const apertou = useRef(null);
@@ -98,11 +98,12 @@ function AvisoV3({ f, onTenta, onCopia, onBaixa, onFecha }) {
         {f.salvo ? ' ' + f.salvo : ''}
       </p>
       <Acoes>
-        <Botao data-a="falhou-tenta" onClick={deProposito(onTenta)}>Tentar de novo</Botao>
-        {onBaixa && <Botao tipo="contorno" data-a="falhou-baixa" onClick={deProposito(onBaixa)}>Baixar uma cópia de segurança</Botao>}
+        <Botao cheio data-a="falhou-tenta" onClick={deProposito(onTenta)}>Tentar de novo</Botao>
       </Acoes>
-      <Saida data-a="falhou-copia" onClick={deProposito(onCopia)}>Copiar o registro inteiro</Saida>
-      <Saida data-a="falhou-fecha" onClick={deProposito(onFecha)}>Fechar este aviso</Saida>
+      <div class="v3-saidas">
+        <Saida data-a="falhou-copia" onClick={deProposito(onCopia)}>Copiar o registro em texto</Saida>
+        {onBaixa && <Saida data-a="falhou-baixa" onClick={deProposito(onBaixa)}>Baixar uma cópia</Saida>}
+      </div>
     </Moldura>
   );
 }

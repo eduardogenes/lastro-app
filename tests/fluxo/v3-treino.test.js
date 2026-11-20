@@ -75,6 +75,18 @@ test('a série feita entra pelo caminho de sempre: rascunho, histórico e sessã
   a.fechar();
 });
 
+test('o par e a régua dizem o que a carga conta, por lado ou em cada mão', async () => {
+  const a = await emFoco();
+  a.clicar('[data-a="par-carga"]');
+  for (const [tipo, unidade, falada] of [['lado', 'kg por lado', 'quilos por lado'], ['halter', 'kg em cada mão', 'quilos em cada mão']]) {
+    a.E(`S.carga[logKey(view.day, 0)] = '${tipo}'; render()`);
+    await a.esperar();
+    assert.match(a.texto('[data-a="par-carga"]'), new RegExp(unidade));
+    assert.ok(a.$('[role="slider"]').getAttribute('aria-valuetext').endsWith(falada));
+  }
+  a.fechar();
+});
+
 test('a régua muda a carga antes de gravar, e corrigir uma série feita não abre outra', async () => {
   const a = await emFoco();
   await maisNa(a, 1, 2);                       // 60 → 65 (passo de 2,5)
@@ -129,11 +141,72 @@ test('a lista do treino leva a outro exercício, e pular hoje tira o exercício 
   a.E('view.focoV3 = null');
   a.clicar('[data-a="mudar-ex"]');
   await a.esperar(40);
+  assert.match(a.texto('.v3-folha'), /Mudar hoje/);
+  a.clicar('[data-a="mudar-dor"]');
+  await a.esperar();
+  assert.match(a.texto('.v3-folha'), /Treinador · Apareceu/);
+  a.v('ctx.fechaFolha');
+  await a.esperar();
+  a.clicar('[data-a="mudar-trocar"]');
+  await a.esperar();
+  assert.ok(a.$('#catalogo-busca'));
+  a.v('ctx.fechaFolha');
+  await a.esperar();
   a.clicar('[data-a="mudar-pular"]');
   await a.esperar(80);
   assert.strictEqual(a.vJ('ctx.focoV3').i, 1, 'o pulado sai da fila');
   assert.ok(a.E('S.sessao && S.sessao.pulados.length === 1'), 'e fica anotado na sessão');
   a.fechar();
+});
+
+test('Trocar por outro só oferece a mesma grandeza e leva a série para o substituto', async () => {
+  const a = await emFoco();
+  try {
+    const original = a.E('treino(view.day).ex[0].id');
+    const unidades = a.J('Object.fromEntries(Object.entries(CAT).map(([id, ex]) => [id, unidadeDe(ex)]))');
+    assert.equal(unidades[original], null);
+    assert.equal(unidades['remo-ergometro'], 'm');
+    a.preencher(0, 0, 60, 10);
+    await a.esperar();
+    a.clicar('[data-a="mudar-ex"]');
+    await a.esperar();
+    a.clicar('[data-a="mudar-trocar"]');
+    await a.esperar();
+    const opcoes = () => a.$$('.v3-folha .v3-lin[data-a^="catalogo-"]').map(b => b.dataset.a.slice('catalogo-'.length));
+    assert.ok(opcoes().length > 0);
+    assert.deepEqual(opcoes().filter(id => unidades[id] !== null), []);
+    a.digitar('catalogo-busca', 'remo');
+    await a.esperar();
+    assert.equal(a.$('[data-a="catalogo-remo-ergometro"]'), null);
+    assert.deepEqual(opcoes().filter(id => unidades[id] !== null), []);
+    a.digitar('catalogo-busca', 'supino');
+    await a.esperar();
+    const substituto = opcoes().find(id => id !== original && unidades[id] === null);
+    assert.ok(substituto, 'a busca encontrou outro supino com carga e repetições');
+    a.clicar('[data-a="catalogo-' + substituto + '"]');
+    await a.esperar();
+    const { sessao, logs } = a.S();
+    const registro = logs[substituto].find(l => l.sid === sessao.sid && l.sl === original);
+    assert.deepEqual(registro.sets[0].slice(0, 2), [60, 10]);
+    assert.equal(registro.u, undefined);
+    assert.ok(!(logs[original] || []).some(l => l.sid === sessao.sid), 'a série saiu do exercício original');
+  } finally { a.fechar(); }
+});
+
+test('a troca usa a unidade prescrita na posição, inclusive para um remo prescrito em calorias', async () => {
+  const a = await emFoco();
+  try {
+    a.E("Object.assign(S.prog[view.day].ex[0], { id: 'remo-ergometro', u: 'cal', q: 15 }); render()");
+    await a.esperar();
+    a.clicar('[data-a="mudar-ex"]');
+    await a.esperar();
+    a.clicar('[data-a="mudar-trocar"]');
+    await a.esperar();
+    const oferecidos = a.$$('.v3-folha .v3-lin[data-a^="catalogo-"]').map(b => b.dataset.a.slice('catalogo-'.length));
+    const calorias = a.J("Object.keys(CAT).filter(id => unidadeDe(CAT[id]) === 'cal')");
+    assert.ok(oferecidos.includes('assault-bike'));
+    assert.ok(oferecidos.every(id => calorias.includes(id)));
+  } finally { a.fechar(); }
 });
 
 test('intervalo longo: o aviso pergunta, "pôr em dia" grava as que faltam com os números da última vez, marcadas, sem descanso', async () => {
@@ -212,6 +285,8 @@ test('encerrar: o fim fica na tela com o resumo, e o "vira regra?" decide pela f
   assert.ok(a.perguntas().some(q => /pendente/.test(JSON.stringify(q))), 'pergunta pelos pendentes, como sempre: ' + JSON.stringify(a.perguntas()));
   await a.esperar(120);
   assert.strictEqual(a.E('S.sessao'), null, 'encerrado');
+  assert.match(a.texto('.v3-acao-q'), /guardado · \d+ min/);
+  assert.doesNotMatch(a.toast(), /Encerrei/);
   // o título da tela do fim diz o resumo (é tela de ação desde a peça 2 do design system)
   assert.ok(/1 série\. .* fechado\./.test(a.texto('.v3-acao h1')), a.texto('.v3-acao h1'));
   assert.ok(a.$('[data-a="regra-sempre-0"]'), 'a mudança do dia pergunta se vira regra');

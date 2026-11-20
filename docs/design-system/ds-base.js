@@ -281,7 +281,7 @@ function desenhaAparelho(primeira) {
       <aside class="lado" id="lado"></aside></div>`;
   }
   const b = topo(), tb = TELAS[b.id], lugar = tb.c === 'lugar';
-  const chave = b.id + '|' + b.e + '|' + P.glob.treino;
+  const chave = [b.id, b.e, P.glob.treino, b.mes, b.dia].join('|');
   const mudouTela = chave !== ULT.chave;
   const tipo = mudouTela ? tipoDe(b) : null;
   const el = $('#tela');
@@ -363,10 +363,12 @@ function voltar() {
 document.addEventListener('click', ev => {
   if (!$('#fone')) return;
   if (ev.target.id === 'veu') { voltar(); return; }
-  const b = ev.target.closest('[data-ir],[data-lugar],[data-folha],[data-voltar],[data-fecha],[data-est],[data-glob],[data-desfazer],[data-desfaz],[data-radio],[data-chave],[data-marca],[data-passo],[data-par]');
+  const b = ev.target.closest('[data-ir],[data-lugar],[data-folha],[data-voltar],[data-fecha],[data-est],[data-glob],[data-desfazer],[data-desfaz],[data-radio],[data-chave],[data-marca],[data-passo],[data-par],[data-dia],[data-mes]');
   if (!b || !b.closest('#fone, #lado')) return;
   const d = b.dataset;
   if (b.getAttribute('aria-disabled') === 'true') return;
+  if (d.mes != null) { topo().mes = Math.min(0, (topo().mes || 0) + Number(d.mes)); delete topo().dia; desenhaAparelho(); return; }
+  if (d.dia != null) { topo().dia = Number(d.dia); desenhaAparelho(); return; }
   if (d.radio != null) { const g = b.closest('[role=radiogroup]') || b.parentElement; g.querySelectorAll('[data-radio]').forEach(x => x.setAttribute('aria-checked', x === b)); }
   if (d.chave != null) { b.setAttribute('aria-checked', b.getAttribute('aria-checked') !== 'true'); return; }
   if (d.marca != null) { b.setAttribute('aria-checked', b.getAttribute('aria-checked') !== 'true'); return; }
@@ -374,7 +376,7 @@ document.addEventListener('click', ev => {
   if (d.par) { const p = b.closest('.par'); p.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); return; }
   if (d.glob) { P.glob[d.glob] = !P.glob[d.glob]; desenhaAparelho(); return; }
   if (d.desfaz != null) { P.desfazer = null; $('#desf').innerHTML = ''; return; }
-  if (d.est != null && b.closest('#lado, #fone')) { const a = atual(); a.e = d.est; desenhaAparelho(); return; }
+  if (d.est != null && b.closest('#lado, #fone')) { const a = atual(); a.e = d.est; delete a.mes; delete a.dia; desenhaAparelho(); return; }
   if (d.desfazer) { P.folha = null; desenhaAparelho(); P.desfazer = d.desfazer; $('#desf').innerHTML = `<div class="desfazer ${TELAS[topo().id].c === 'lugar' ? 'sobe' : ''}" role="status"><span>${d.desfazer}</span><button data-desfaz>Desfazer</button></div>`; return; }
   if (d.fecha != null) { voltar(); return; }
   if (d.voltar != null) { voltar(); return; }
@@ -382,7 +384,7 @@ document.addEventListener('click', ev => {
   if (d.folha) { vaiPara(d.folha); return; }
   if (d.ir) { vaiPara(d.ir); }
 });
-document.addEventListener('change', ev => { if (ev.target.id === 'sim-e') { atual().e = ev.target.value; desenhaAparelho(); } });
+document.addEventListener('change', ev => { if (ev.target.id === 'sim-e') { atual().e = ev.target.value; delete atual().mes; delete atual().dia; desenhaAparelho(); } });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && $('#fone')) voltar(); });
 let ultY = 0;
 document.addEventListener('scroll', ev => {

@@ -143,7 +143,7 @@
   --mola: cubic-bezier(.2, .9, .25, 1);      /* o que entra e o que muda: chega rápido, pousa macio */
   --mola-sai: cubic-bezier(.4, 0, 1, 1);     /* o que sai: parte devagar e some (07-fluidez-e-estabilidade.md) */
   --d-toque: 100ms;      /* botão encolhe 3% */
-  --d-lugar-sai: 90ms;   /* trocar de lugar: o que sai some (fade through) */
+  --d-lugar-sai: 100ms;   /* trocar de lugar: o que sai some (fade through) */
   --d-atraso-lugar: 60ms;/* e o que entra espera isto */
   --d-sai: 100ms;        /* a tela que sai, num destino */
   --d-atraso: 40ms;      /* a tela que entra num destino espera a que sai */

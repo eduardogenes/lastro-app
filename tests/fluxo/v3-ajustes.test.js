@@ -75,7 +75,11 @@ test('confirmação: a folha nova, com "Deixar como está" como principal e com 
   assert.ok(/Não guardei a série 2/.test(a.texto('#falhou-t')));
   assert.ok(/está cheio.*80 kg/.test(a.texto('.v3-pare-w .v3-folha-s')), a.texto('.v3-pare-w .v3-folha-s'));
   assert.ok(a.$('[data-a="falhou-copia"]') && a.$('[data-a="falhou-baixa"]'));
-  a.clicar('[data-a="falhou-fecha"]');
+  const aviso = a.$('[role="alertdialog"]');
+  assert.deepEqual([...aviso.querySelectorAll('.v3-acoes button')], [a.$('[data-a="falhou-tenta"]')]);
+  assert.equal(a.window.document.activeElement, a.$('[data-a="falhou-tenta"]'));
+  assert.equal(aviso.querySelectorAll('.v3-saidas button').length, 2);
+  a.window.document.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   await a.esperar();
   assert.ok(!a.$('#falhou-t'), 'fechar só fecha o aviso');
   assert.ok(/a série 2/.test(a.texto('.v3-estados')), 'e a faixa fica');

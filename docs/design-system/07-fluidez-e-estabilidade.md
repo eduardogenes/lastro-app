@@ -108,7 +108,7 @@ O que chega sem toque (dado que carrega, sincronia que termina, um aviso)
 
 | Navegação | Movimento | Entra | Sai | Por quê |
 |---|---|---|---|---|
-| trocar de lugar (doca) | *fade through* | some em 90 ms, entra em 180 ms | — | lugares são do mesmo nível, sem relação espacial: deslizar sugeriria uma ordem que não existe |
+| trocar de lugar (doca) | *fade through* | some em 100 ms, entra em 180 ms | — | lugares são do mesmo nível, sem relação espacial: deslizar sugeriria uma ordem que não existe |
 | entrar num destino | eixo horizontal | 260 ms, da direita, 24 px + opacidade, desacelerando, começando 40 ms depois | 100 ms, 24 px para a esquerda, acelerando | ir mais fundo; a direção ensina que o Voltar desfaz |
 | voltar de um destino | o mesmo, ao contrário | 220 ms, da esquerda, 40 ms depois | 100 ms, para a direita | a saída curta e o atraso pequeno evitam as duas telas sobrepostas, legíveis ao mesmo tempo |
 | abrir tela de ação | sobe de baixo | 380 ms, desacelerando | — | é uma tarefa fechada em si, como no iOS |

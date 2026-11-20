@@ -43,8 +43,8 @@ Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino 
 | Tipo | O quê | Hoje | Correção | Onde |
 |---|---|---|---|---|
 | dado | **Primeira vez começa com o programa do dono** (feito, peça 6, parte 3, 20/11) | O aparelho novo recebia as prescrições do dono. Uma conta vazia ou uma nova entrada na conta podia apagar edições locais. | Três passos puláveis. Na primeira fusão, o programa da conta leva sua sequência e sua referência do treinador. Plano alimentar e cadência da conta só vencem com conteúdo, e o carimbo do aparelho que vence fica acima do da conta. Os catálogos conservam exercícios e alimentos próprios exclusivos do aparelho. Entrar de novo respeita as edições no intervalo. O texto colado pode ser reaberto. Marcas de refeição de versões diferentes ficam separadas na virada. A 414 × 896, o principal mede 374 × 58 px em (20, 762) nos três passos em Chromium e WebKit. O título fica em x 56. | `primeira-vez.ts`, `sincronia.ts`, `main.jsx`, `hoje.jsx`, `conferir-primeira-vez.mjs` |
-| hierarquia | **C1 · Falha ao guardar** (peça 7) | “Tentar de novo” quebra em três linhas ao lado de “Baixar uma cópia de segurança”. | Seguir `f-falhou` com um botão principal e uma saída. | `src/ui/v3/pare.jsx` |
-| letra | **C2 · Hoje vazio** (peça 7) | “Nada para agora.” quebra em duas linhas. A fonte carregada tem apenas o eixo de peso. | Carregar a variante de Bricolage com o eixo óptico, `…-full-normal.woff2`. | `src/v3/fontes.css` |
+| hierarquia | **C1 · Falha ao guardar** (implementado, peça 7) | “Tentar de novo” quebra em três linhas ao lado de “Baixar uma cópia de segurança”. | Um principal para tentar de novo e duas saídas para copiar ou baixar. | `src/ui/v3/pare.jsx` |
+| letra | **C2 · Hoje vazio** (implementado, peça 7) | “Nada para agora.” quebra em duas linhas. A fonte carregada tem apenas o eixo de peso. | Carregada a variante com peso e tamanho óptico, `…-latin-opsz-normal.woff2`. | `src/v3/fontes.css` |
 | dado | **C3 · Escolhas de módulos em dois aparelhos** (peça 7) | As escolhas da primeira vez ficam sem carimbo. O relógio de um aparelho pode esconder módulos escolhidos no outro. | Rever o carimbo das escolhas na fusão entre perfis pessoais. Os registros continuam guardados. | `guardaPasso` em `src/main.jsx` |
 | dado | **"Comi outra coisa" sem o tamanho** (feito, peça 6) | Marca só "fora". | Decisão do dono (17/11): guardar o tamanho (parecido, bem mais, bem menos, não sei). Campo novo na marca da refeição, com fusão, cópia de segurança e a pasta dos agentes; teste de domínio e do espelho. | marcaLinhaDaComida em src/main.jsx; ferramentas/espelho/monta.ts |
 | hierarquia | **A exceção da refeição dentro do bloco** (feito, peça 5, Hoje) | "Não foi assim" troca os botões do bloco por dois de contorno e uma saída (sem principal). | O bloco fica com "Comi" e "Ver"; "Não foi assim" abre a folha com as três respostas (outra coisa, não comi, não sei). Um principal por bloco, sempre. | Momento em hoje.jsx |
@@ -87,3 +87,17 @@ Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino 
 |---|---|---|---|---|
 | fluxo | **Apagar tudo como saída sublinhada** (feito, peça 5, Ajustes) | "Apagar todo o histórico deste aparelho" em saída discreta. | Linha "Voltar ao começo" na seção Recomeçar, que abre a confirmação dizendo o que se perde e o que não se perde. | ajustes.jsx |
 | texto | **Interruptor de visual que não existe mais** (feito, peça 5, Ajustes) | A seção "Visual" ainda é desenhada (titulo="Visual"). | Tirar: o visual antigo saiu na Fase 5. | ajustes.jsx:61 |
+
+## Peça 7 · revisão final
+
+Implementados os achados de acessibilidade, texto, desenho e acabamento da varredura a 414 × 896. Na rodada 2, após a conferência em Chromium e WebKit, o catálogo de substituição passou a oferecer a mesma grandeza do exercício naquela posição, e a nota de Dias passou a usar o espaço disponível no cabeçalho. Os fluxos cobrem a duração do treino, o almoço depois do horário, os sete pontos do dia e o principal da falha. Os estados ainda sem varredura e as pendências visuais estão no [andamento](LEIA.md#implementação-no-app).
+
+**Decisão pendente do dono · foto da lousa.** A referência promete leitura automática no estado `aula--lousa` (“Lousa lida: 6 movimentos”). Hoje o app guarda a foto para consulta. As opções são corrigir a referência para descrever a consulta ou dedicar uma peça à leitura dos movimentos na foto.
+
+| Decisão | Resultado |
+|---|---|
+| Q1 · Refeição que passou | O almoço das 12h30 ainda aparece às 12h40. Responder libera o bloco e não traz de volta uma refeição anterior. Regra de leitura em `cartaoDeCima`. |
+| Q2 · Denominador das gotas | A referência usa tinta sobre o nível de água, como o app. |
+| Q3 · Saída da troca de lugar | Os dois arquivos de tokens e o guia de movimento usam 100 ms. |
+| Q4 · Meses em Dias | A página viva permite voltar ao mês anterior, avançar até o atual e selecionar dias. |
+| Q5 · Principal no Corpo pesado | “Guardado hoje” é o principal. “Ver tudo na mesma data” tem contorno também na referência. |

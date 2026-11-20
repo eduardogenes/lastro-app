@@ -147,17 +147,20 @@ export function HojeV3({ ctx }) {
   const q = h.seQuiser;
   const tem = q.agua || q.peso || q.cardio;
   return (
-    <div class="v3">
+    <div class="v3" style={'--cor-agora:var(--assunto-' + h.bloco.cor + ')'}>
       <Momento ctx={ctx} h={h} />
       <Gruda ctx={ctx} b={h.bloco} />
       {h.bloco.k === 'semTreino' ? <Secao titulo="Enquanto isso">
         <Linha titulo="Colar o texto do treinador" apoio="o app organiza em treinos e séries" aoTocar={ctx.abreRevisao} />
         <Linha titulo="Escolher o que acompanhar" apoio="peso, água, cardio, fotos" aoTocar={() => ctx.abreFolha({ k: 'oQueAparece' })} />
       </Secao> : <Secao titulo="O dia" nota={h.feitas + ' de ' + h.linha.length}>
+        {!h.comida && h.linha.length === 1 && h.linha[0].treino ?
+          <Linha marca={ic.halter} marcaTom="dia" titulo={h.linha[0].n} apoio={h.linha[0].t.replace(':', 'h') + ' · ' + h.linha[0].series + ' séries'}
+            data-a={'linha-' + h.linha[0].id} aoTocar={ctx.abreTreinoDeHoje} /> : <>
         <div class="v3-ld" role="list">
           {h.linha.map(x => (
-            <button key={x.id} role="listitem" class={x.feita ? 'ok' : x.agora ? (x.treino ? 'agora t' : 'agora') : x.falta ? 'falta' : undefined}
-                    data-a={'linha-' + x.id} aria-label={x.n + ', ' + x.t + (x.feita ? ', feito' : x.falta ? ', sem resposta' : '')}
+            <button key={x.id} role="listitem" class={x.feita ? 'ok' : x.agora && h.bloco.k !== 'noite' ? 'agora' : x.falta ? 'falta' : undefined}
+                    data-a={'linha-' + x.id} aria-label={x.n + ', ' + x.t.replace(':', 'h') + (x.feita ? ', feito' : x.falta ? ', sem resposta' : '')}
                     onClick={() => x.treino ? ctx.abreTreinoDeHoje() : ctx.abreFolha({ k: 'refeicao', id: x.id })}>
               <span class="p">{x.feita ? ic.ok : x.treino ? ic.halter : ic.prato}</span>
               <span class="v3-n">{x.t.replace(':', 'h')}</span>
@@ -167,7 +170,7 @@ export function HojeV3({ ctx }) {
         <p class="v3-ld-leg">
           <span>{h.proxima ? <>a seguir: <b>{h.proxima.n}</b>, {h.proxima.t.replace(':', 'h')}</> : 'nada mais para hoje'}</span>
           {h.proxima && h.proxima.kcal ? <span class="v3-n">{h.proxima.kcal} kcal</span> : null}
-        </p>
+        </p></>}
       </Secao>}
       {tem && (
         <Secao titulo="Se quiser" nota="nada aqui é obrigatório">
@@ -198,7 +201,7 @@ export function HojeV3({ ctx }) {
             <button key={d.data} onClick={() => ctx.vaiPara('dias')}
                     aria-label={(d.hoje ? 'hoje, ' : '') + d.nome + (d.treino ? ', treino ' + d.treino : ', sem treino') +
                       (d.comida ? ', comida ' + ({ cheia: 'como o plano', meia: 'quase', vazia: 'sem resposta' })[d.comida] : '')}>
-              <span class={'bola ' + (d.comida || '') + (d.hoje ? ' hoje' : '')}>{d.treino || ''}</span>{d.letra}
+              <span class={'bola ' + (d.treino ? 'cheia' : d.comida === 'meia' ? 'meia' : !d.hoje && d.emBranco ? 'vazia' : '') + (d.hoje ? ' hoje' : '')}>{d.treino || ''}</span>{d.letra}
             </button>
           ))}
         </div>

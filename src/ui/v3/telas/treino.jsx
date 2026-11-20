@@ -222,7 +222,7 @@ function TreinoEncerrado({ ctx, f }) {
       segs={<Segmentos total={Math.max(f.prescritas || 0, f.series)} feitos={f.series} rotulo={f.series + ' séries guardadas'} />}
       pe={<Botao grande data-a="encerrado-fecha" onClick={ctx.fechaFimV3}>Fechar</Botao>}
       links={f.t != null && <button data-a="encerrado-series" onClick={ctx.verSeriesDoFimV3}>Ver as séries</button>}>
-      <p class="v3-acao-q">guardado{f.min ? ' · ' + f.min + ' min' : ''}</p>
+      <p class="v3-acao-q">guardado{f.min != null ? ' · ' + f.min + ' min' : ''}</p>
       <h1 class="v3-fim-t" tabindex="-1">{f.series + (f.series === 1 ? ' série. ' : ' séries. ') + f.nome + ' fechado.'}</h1>
       {f.depois > 0 && <p class="v3-medir-f">{(f.depois === 1 ? 'Um exercício registrado depois' : f.depois + ' exercícios registrados depois') + ', com os números da última vez.'}</p>}
       {f.mudancas.length > 0 && (
@@ -253,8 +253,6 @@ function TreinoEncerrado({ ctx, f }) {
 function Aula({ ctx, t }) {
   const A = ctx.acoesAulas;
   const r = t.rapido;
-  const [colando, setColando] = useState(false);
-  const [colado, setColado] = useState('');
   const ms = ctx.relogioDoTreinoV3();
   const topo = <>
     <button onClick={ctx.fechaModoDeSessao} data-a="sai-do-modo" aria-label="Recolher a aula, deixando-a aberta">{ic.baixo}</button>
@@ -262,7 +260,7 @@ function Aula({ ctx, t }) {
     <button onClick={() => ctx.abreFolha({ k: 'menuSessao' })} data-a="menu-sessao" aria-label="Opções desta sessão">{ic.lista}</button>
   </>;
   const lousa = t.lousa && (
-    <label class="v3-reg-b" data-a="aula-lousa"><b>{t.lousa.tem ? 'Lousa: tirar de novo' : 'Foto da lousa'}</b><span>{t.lousa.tem ? t.lousa.quando : 'a foto do quadro do box'}</span>
+    <label class="v3-reg-b" data-a="aula-lousa"><b>{t.lousa.tem ? 'Lousa: tirar de novo' : 'Foto da lousa'}</b><span>{t.lousa.tem ? t.lousa.quando : 'para consultar os movimentos'}</span>
       <input type="file" accept="image/*" capture="environment" hidden onChange={e => ctx.tiraFotoDaLousa(e.currentTarget)} />
     </label>
   );
@@ -278,16 +276,11 @@ function Aula({ ctx, t }) {
           <div class="v3-reg v3-aula-sug">
             {t.aulas.ultima && <button class="v3-reg-b pri" data-a="aula-repete" onClick={A.repete}><b>Repetir a última aula</b><span>{t.aulas.ultima.quando} · {t.aulas.ultima.n} movimentos</span></button>}
             {t.aulas.modelos.map(m => <button key={m.id} class="v3-reg-b" data-a={'aula-modelo-' + m.id} onClick={() => A.aplica(m.id)}><b>{m.nome}</b><span>{m.sub}</span></button>)}
-            <button class="v3-reg-b" data-a="aula-cola" aria-expanded={colando ? 'true' : 'false'} onClick={() => setColando(!colando)}><b>Colar o texto</b><span>do grupo do box</span></button>
+            <button class="v3-reg-b" data-a="aula-cola" onClick={() => ctx.abreFolha({ k: 'aulaTexto' })}><b>Colar o texto</b><span>do grupo do box</span></button>
             {lousa}
             <button class="v3-reg-b" data-a="aula-add" onClick={ctx.acoesAdd.abre}><b>Montar</b><span>um movimento por vez</span></button>
           </div>
         )}
-        {colando && <>
-          <textarea id="aula-texto" class="v3-campo v3-texto" placeholder="Cole aqui o texto da aula" aria-label="Texto da aula"
-                    onInput={e => setColado(e.currentTarget.value)}>{colado}</textarea>
-          <Acoes><Botao tipo="contorno" cheio data-a="aula-importa" disabled={!colado.trim()} onClick={() => A.importa(colado)}>Montar a aula pelo texto</Botao></Acoes>
-        </>}
       </TelaDeAcao>
     );
   }
@@ -423,44 +416,43 @@ export function FolhaMudarEx({ ctx, f }) {
   if (!m) return null;
   const a = ctx.acoesEx;
   const faz = fn => () => { ctx.fechaFolha(); fn(); };
-  return (
-    <Folha titulo={m.nome} sub={m.nomeOriginal ? 'no lugar de ' + m.nomeOriginal : 'O que muda vale só para esta sessão.'} aoFechar={() => ctx.fechaFolha()}>
-      <div>
-        {m.temTroca && (f.troca
-          ? (
-            <>
-              {m.troca.indicados.concat(m.troca.outros).map(o => (
-                <Linha key={o.id} titulo={o.n} apoio={o.indicado ? 'indicado pelo treinador' + (o.nota ? ' · ' + o.nota : '') : (o.antes || '')}
-                       data-a={'troca-' + o.id} aoTocar={faz(() => a.setAlt(f.i, o.id))} />
-              ))}
-            </>
-          )
-          : <Linha titulo="Trocar por outro" apoio="a máquina está ocupada, ou não existe aqui" data-a="mudar-trocar" aoTocar={() => ctx.mudaFolha({ troca: true })} />)}
-        {!f.troca && (
-          <>
-            {m.podeMaisSerie && <Linha titulo="Mais uma série" apoio="só hoje" mais data-a="mudar-mais" aoTocar={faz(() => a.maisUmaSerie(f.i))} />}
-            {m.proximo && <Linha titulo={'Fazer ' + m.proximo + ' antes'} apoio="este fica para depois" data-a="mudar-antes" aoTocar={faz(() => a.fazAntesOProximo(f.i))} />}
-            <Linha titulo="O aparelho" apoio="a foto da máquina, para achar e regular" data-a="mudar-foto"
-                   aoTocar={faz(() => ctx.abreFotoDoAparelhoV3(m.id))} />
-            <Linha titulo="Histórico deste exercício" apoio="sessão a sessão, e se está pronto para subir" data-a="mudar-historico"
-                   aoTocar={faz(() => ctx.abreExercicioV3(ctx.focoV3().dia, f.i))} />
-            <Linha titulo={m.pulado ? 'Desfazer o pulo' : 'Pular hoje'} apoio={m.pulado ? 'volta para a fila' : 'fica anotado como pulado'} data-a="mudar-pular"
-                   aoTocar={faz(() => a.pularEx(f.i))} />
-          </>
-        )}
-      </div>
-      {!f.troca && (
-        <Secao titulo="Doeu?">
-          <div class="v3-cond">
-            {m.dores.map(d => (
-              <button key={d.k} aria-pressed={d.on ? 'true' : 'false'} data-a={'dor-' + d.k} onClick={() => a.toggleDor(f.i, d.k)}>{d.on ? ic.x : null}{d.t}</button>
-            ))}
-          </div>
-        </Secao>
-      )}
-      <Saida onClick={() => ctx.fechaFolha()}>Fechar</Saida>
-    </Folha>
-  );
+  const indicado = m.troca.indicados.find(o => o.indicado) || m.troca.indicados[0];
+  const nome = m.nome + (m.nomeOriginal ? ', no lugar de ' + m.nomeOriginal : '');
+  return <Folha titulo="Mudar hoje" sub={nome + '. Vale só neste treino; no fim o app pergunta se vira regra.'} aoFechar={ctx.fechaFolha}>
+    <div class="v3-opcoes">
+      {m.nomeOriginal && <Linha titulo={'Voltar a ' + m.nomeOriginal} marca={ic.troca} semSeta aoTocar={faz(() => a.setAlt(f.i, null))} />}
+      {indicado && <Linha titulo={'Trocar por ' + indicado.n} apoio={indicado.nota || indicado.antes}
+        marca={ic.troca} semSeta data-a={'troca-' + indicado.id} aoTocar={faz(() => a.setAlt(f.i, indicado.id))} />}
+      <Linha titulo="Trocar por outro" apoio="buscar no catálogo" marca={ic.troca} semSeta data-a="mudar-trocar" aoTocar={() => ctx.abreCatalogoV3(f.i)} />
+      {m.podeMaisSerie && <Linha titulo="Mais uma série" apoio={<>{m.series} {ic.seta} {m.series + 1}</>} aria-label={'Mais uma série, de ' + m.series + ' para ' + (m.series + 1)} marca={ic.mais} semSeta data-a="mudar-mais" aoTocar={faz(() => a.maisUmaSerie(f.i))} />}
+      {m.proximo && <Linha titulo={'Fazer ' + m.proximo + ' antes'} apoio="o aparelho está ocupado" marca={ic.fim} semSeta data-a="mudar-antes" aoTocar={faz(() => a.fazAntesOProximo(f.i))} />}
+      <Linha titulo={m.pulado ? 'Desfazer o pulo' : 'Pular hoje'} apoio={m.pulado ? 'volta para a fila' : 'fica anotado como pulado'} marca={ic.pula} semSeta data-a="mudar-pular" aoTocar={faz(() => a.pularEx(f.i))} />
+      <Linha titulo="O aparelho" apoio="a foto, para achar o mesmo" marca={ic.camera} semSeta data-a="mudar-foto" aoTocar={faz(() => ctx.abreFotoDoAparelhoV3(m.id))} />
+      <Linha titulo="Senti dor aqui" apoio={m.regraDor ? 'anota e mostra o que o treinador manda fazer' : 'anota a região no exercício'} marca={ic.atencao} semSeta data-a="mudar-dor" aoTocar={() => ctx.trocaFolha({ k:'dorEx', i:f.i }, true)} />
+    </div>
+  </Folha>;
+}
+
+export function FolhaDorEx({ ctx, f }) {
+  const m = ctx.mudarExV3(f.i);
+  if (!m) return null;
+  return <Folha titulo="Senti dor aqui" sub={m.nome} aoFechar={ctx.fechaFolha}>
+    <div class="v3-cond">{m.dores.map(d =>
+      <button key={d.k} aria-pressed={d.on ? 'true' : 'false'} data-a={'dor-' + d.k} onClick={() => ctx.acoesEx.toggleDor(f.i, d.k)}>{d.on ? ic.ok : null}{d.t}</button>
+    )}</div>
+    {m.regraDor && <Apoio>Treinador · {m.regraDor}</Apoio>}
+    <Acoes><Botao cheio onClick={ctx.fechaFolha}>Voltar</Botao></Acoes>
+  </Folha>;
+}
+
+export function FolhaAulaTexto({ ctx }) {
+  const [texto, setTexto] = useState('');
+  const ler = () => { if (texto.trim()) ctx.acoesAulas.importa(texto, ctx.fechaFolha); };
+  return <Folha titulo="Colar o texto da aula" sub="Como veio do grupo. O app separa os movimentos e as quantidades, e você confere antes de guardar." aoFechar={ctx.fechaFolha}>
+    <label class="v3-rotulo" for="aula-texto">Texto da aula</label>
+    <textarea id="aula-texto" class="v3-campo v3-texto" value={texto} onInput={e => setTexto(e.currentTarget.value)} />
+    <Acoes><Botao cheio espera={!texto.trim()} disabled={!texto.trim()} data-a="aula-importa" onClick={ler}>Ler o texto {ic.seta}</Botao></Acoes>
+  </Folha>;
 }
 
 /** As opções da sessão inteira: outro treino, editar, deload, encerrar, descartar. */

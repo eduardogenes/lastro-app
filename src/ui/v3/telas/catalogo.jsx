@@ -8,8 +8,9 @@ import { useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
 import { Acoes, Apoio, Botao, Chave, Fichas, Folha, Linha, Saida, Vazio } from '../base.jsx';
 
-export function FolhaCatalogo({ ctx }) {
-  const c = ctx.catalogoV3();
+export function FolhaCatalogo({ ctx, f }) {
+  const c = ctx.catalogoV3(f.trocaDe);
+  const troca = Number.isInteger(f.trocaDe);
   const [novo, setNovo] = useState({ nome: '', grupo: '', carga: 'pino', unidade: '', q: '', composto: false });
   const m = (k, v) => setNovo(x => Object.assign({}, x, { [k]: v }));
   const sub = c.permanente ? 'Entra no programa, para as próximas vezes.' : 'Só no treino de hoje. O programa não muda.';
@@ -46,17 +47,20 @@ export function FolhaCatalogo({ ctx }) {
     );
   }
   return (
-    <Folha titulo={'Adicionar ao treino ' + c.dia} sub={sub} aoFechar={ctx.fechaCatalogoV3}>
+    <Folha titulo={troca ? 'Trocar por outro' : 'Adicionar ao treino ' + c.dia} sub={sub} aoFechar={ctx.fechaCatalogoV3}>
       <input id="catalogo-busca" class="v3-campo" type="search" value={c.busca} placeholder="Buscar exercício ou grupo"
              aria-label="Buscar exercício ou grupo" autocomplete="off" onInput={e => ctx.buscaCatalogoV3(e.currentTarget.value)} />
       {c.achados.length === 0
-        ? <Vazio titulo="Nada com esse nome"><p>Se o aparelho é novo para o app, cadastre abaixo.</p></Vazio>
+        ? <Vazio titulo="Nada com esse nome"><p>{troca ? 'Tente outro nome ou grupo.' : 'Se o aparelho é novo para o app, cadastre abaixo.'}</p></Vazio>
         : c.achados.map(x => (
           <Linha key={x.id} titulo={x.n} apoio={x.sub + (x.ref ? ' · ' + x.ref : '')} mais data-a={'catalogo-' + x.id}
-                 aoTocar={() => ctx.adicionaDoCatalogoV3(x.id)} />
+                 aoTocar={() => {
+                   if (troca) { ctx.acoesEx.setAlt(f.trocaDe, x.id); ctx.concluiFolha(); }
+                   else ctx.adicionaDoCatalogoV3(x.id);
+                 }} />
         ))}
-      <Acoes><Botao tipo="contorno" cheio data-a="catalogo-novo" onClick={() => ctx.novoNoCatalogoV3(true)}>{ic.mais} Cadastrar exercício novo</Botao></Acoes>
-      <Apoio>Para o equipamento que o app ainda não conhece.</Apoio>
+      {!troca && <><Acoes><Botao tipo="contorno" cheio data-a="catalogo-novo" onClick={() => ctx.novoNoCatalogoV3(true)}>{ic.mais} Cadastrar exercício novo</Botao></Acoes>
+      <Apoio>Para o equipamento que o app ainda não conhece.</Apoio></>}
     </Folha>
   );
 }

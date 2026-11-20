@@ -46,8 +46,8 @@ marcado em `05-auditoria.md` com o commit.
 | 3. Tokens e componentes base | feita (`933171b`), depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
 | 4. Treino | feita (`318532f`), depois da revisão: a série com o par e uma régua só, sem rolar; o descanso com o "a seguir" e "Água +1"; o fim; pôr em dia como tela; a aula do box como tela de ação. O principal tem o mesmo retângulo em série, descanso e fim |
 | 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | feita: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada, `e6a969c`); Corpo (`7418d77`); Semana (`0d32ca0`); Ajustes (`053e632`); Plano, e Semana e Fotos depois da revisão: o que vence hoje em destaque, o toque duplo nas respostas travado, "Aplicar no plano" com Desfazer, os dias de treino como círculos, a câmera sem rolar e com o disparo parado, apagar foto sem pergunta e com Desfazer, rádios e alvos de 44 |
-| 6. Os três de dado | feita: o tamanho do "comi outra coisa" feito (`f3f82c0`: a folha com quatro respostas e "✓ Guardar", a marca `'fora'` com o tamanho, a fusão, a cópia, a pasta dos agentes; e, achados nas revisões, a lápide antes da união, a correção do pôr em dia pela lápide, a porção que segue a marca). A revisão do treinador mudança por mudança (o programa do treinador é a revisão inteira, o dele recebe as marcadas, o que fica de fora é diferença; desfazer). Parte 2 feita em `1aa7977`, depois de três rodadas das revisões de dado e de design (o toque duplo em Aplicar, "Tentar de novo" que aplica, os carimbos restaurados na falha, a aula e a lista numa chave só). Parte 3 (a primeira vez em três passos) feita, depois de seis rodadas da revisão de dado e três da de design (a primeira fusão com a conta: o trio de treino em bloco, plano e cadência decididos pelo conteúdo, catálogos unidos, o carimbo do aparelho que vence acima do da conta, entrar de novo sem desfazer edições; a âncora a 762 e o cabeçalho no WebKit). Peça 6 concluída |
-| 7. Revisão final | a fazer |
+| 6. Os três de dado | feita: o tamanho do "comi outra coisa" feito (`f3f82c0`: a folha com quatro respostas e "✓ Guardar", a marca `'fora'` com o tamanho, a fusão, a cópia, a pasta dos agentes; e, achados nas revisões, a lápide antes da união, a correção do pôr em dia pela lápide, a porção que segue a marca). A revisão do treinador mudança por mudança (o programa do treinador é a revisão inteira, o dele recebe as marcadas, o que fica de fora é diferença; desfazer). Parte 2 feita em `1aa7977`, depois de três rodadas das revisões de dado e de design (o toque duplo em Aplicar, "Tentar de novo" que aplica, os carimbos restaurados na falha, a aula e a lista numa chave só). Parte 3 (a primeira vez em três passos) feita, depois de seis rodadas da revisão de dado e três da de design (a primeira fusão com a conta: o trio de treino em bloco, plano e cadência decididos pelo conteúdo, catálogos unidos, o carimbo do aparelho que vence acima do da conta, entrar de novo sem desfazer edições; a âncora a 762 e o cabeçalho no WebKit). Peça 6 concluída em `f2fd688` |
+| 7. Revisão final | feita (20/11/2026): varredura de cerca de 40 estados em Chromium e WebKit (`conferir-app.mjs`), 16 achados e o acabamento corrigidos, cinco divergências do design system decididas; depois de duas rodadas, as revisões de dado e de design aprovaram. Ficaram de fora, sem conferência no navegador: fotos e câmera, medidas, editor e catálogo, pôr em dia e dor. Pendente do dono: a leitura da foto da lousa |
 
 **Peça 6, parte 3.** O aparelho novo começa com os dois catálogos e traz a
 própria prescrição. Os três passos aceitam pular. Conta e cópia ficam na saída
@@ -71,12 +71,24 @@ alimentos se une nos dois sentidos e, quando o aparelho vence a primeira fusão,
 o carimbo dele passa o da conta, para a fusão seguinte não desfazer a decisão.
 As revisões de dado e de design aprovaram (20/11/2026).
 
-Pendências da peça 6, parte 3, para a revisão final da peça 7:
+**Peça 7, revisão final.** O Hoje ganhou a linha completa, os rótulos falados, o ritmo por treino, a estimativa em minutos e a linha única quando a comida está desligada. A folha de falha tem um principal (C1). A Bricolage inclui o eixo óptico (C2). Entraram as folhas de mudar o treino, anotar dor e colar a aula, o histórico por mês e os ajustes de Registrar, Dias, Progressão, Corpo e fim do treino. A foto da lousa serve para consulta. A importação de movimentos continua pelo texto de aula no formato do Lastro.
 
-- **C1 · Falha ao guardar.** “Tentar de novo” quebra em três linhas. Seguir
-  `f-falhou` com um principal e uma saída para a cópia.
-- **C2 · Hoje vazio.** “Nada para agora.” quebra em duas linhas. Carregar a
-  Bricolage com o eixo óptico em `src/v3/fontes.css`.
+**Pendente para o dono · foto da lousa.** A página viva promete “o app lê os movimentos” e mostra “Lousa lida: 6 movimentos” no estado `aula--lousa`. O app guarda a foto para consulta. O dono decide entre ajustar a referência ao comportamento atual e abrir uma peça própria para ler os movimentos da foto.
+
+Decisões incorporadas na revisão final:
+
+- **Q1.** Às 12h40 o almoço das 12h30 continua no topo até receber resposta. A janela da próxima refeição tem prioridade. A mudança é de leitura.
+- **Q2.** O denominador das gotas usa tinta, inclusive sobre o nível de água.
+- **Q3.** A saída da troca de lugar dura 100 ms no app e na referência.
+- **Q4.** Dias permite navegar pelos meses e escolher o dia também na página viva.
+- **Q5.** No Corpo pesado, “Guardado hoje” é o principal. “Ver tudo na mesma data” usa contorno.
+
+**Como conferir.** Depois do build, rode `node docs/design-system/conferir-app.mjs chromium` e repita com `webkit`. O [roteiro local do revisor](conferir-app.mjs) percorre os estados a 414 × 896 e mede rolagem, alvos e âncoras. A [sonda da primeira vez](conferir-primeira-vez.mjs) recebe os mesmos nomes de motor e mede o título e o botão dos três passos depois da troca da fonte.
+
+**Pendências da revisão final.** Ficam a fita de treinos no Plano, o veredito e “O que a regra olha” na Semana, a folha do cardio, os quadros de bioimpedância, as miniaturas da última sessão de fotos, a apresentação de Medidas em Ajustes, o minigráfico da Progressão, “Comi o almoço” em Registrar fora da janela e Desfazer no histórico de mudanças. A varredura visual também deixou para outra passagem câmera e protocolo de fotos, medidas e bioimpedância, editores e catálogos, compras, registros passados, dor e menu da sessão, Hoje sem rede ou parado, listas e nomes longos e retorno do foco.
+
+Pendências de dado da peça 6:
+
 - **C3 · Módulos entre aparelhos pessoais.** As escolhas da primeira vez ficam
   sem carimbo. Uma sincronização pode esconder módulos escolhidos no outro
   aparelho. Os registros continuam guardados.

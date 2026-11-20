@@ -9,7 +9,7 @@
 // classe que liga os estilos do visual novo, e o `<main>` do app fica como é.
 import { CorpoV3, FolhaComoMedir, FolhaLigarMedidas, MedirAgora } from './telas/corpo.jsx';
 import { FolhaBioV3, FolhaCorrigeMarca, MedidaV3, NaMesmaData, PesoV3 } from './telas/corpoconsulta.jsx';
-import { FolhaListaTreino, FolhaMenuSessaoV3, FolhaMudarEx, PorEmDiaV3, TreinoEmFoco } from './telas/treino.jsx';
+import { FolhaAulaTexto, FolhaDorEx, FolhaListaTreino, FolhaMenuSessaoV3, FolhaMudarEx, PorEmDiaV3, TreinoEmFoco } from './telas/treino.jsx';
 import { ExercicioV3, FolhaFotoV3, FolhaRenomeiaEx, Progressao } from './telas/progressao.jsx';
 import { ProgramaV3, RevisaoV3 } from './telas/programa.jsx';
 import { FolhaCardioV3, FolhaComiOutra, FolhaOQueAparece, FolhaRefeicaoV3, FolhaRegistrar, FolhaTipoDoDia, HojeV3, PrimeiraVez } from './telas/hoje.jsx';
@@ -76,7 +76,7 @@ export const DESTINOS_V3 = {
 };
 export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoComparada: FolhaFotoComparada, mandar: FolhaMandar,
   ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir, corrigeMarca: FolhaCorrigeMarca, bio: FolhaBioV3,
-  listaTreino: FolhaListaTreino, mudarEx: FolhaMudarEx, menuSessao: FolhaMenuSessaoV3,
+  listaTreino: FolhaListaTreino, mudarEx: FolhaMudarEx, dorEx: FolhaDorEx, aulaTexto: FolhaAulaTexto, menuSessao: FolhaMenuSessaoV3,
   renomeiaEx: FolhaRenomeiaEx,
   registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, poeODia: FolhaPoeODiaV3, poeODiaGeral: FolhaPoeODiaGeralV3, seriePassada: FolhaSeriePassada,
   editaRefeicao: FolhaEditaRefeicaoV3, seletor: FolhaSeletorV3, editaAlimento: FolhaEditaAlimentoV3, catalogo: FolhaCatalogo, foto: FolhaFotoV3, refeicao: FolhaRefeicaoV3, comiOutra: FolhaComiOutra, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos, aplicar: FolhaAplicar, colarCopia: FolhaColarCopia,

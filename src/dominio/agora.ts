@@ -89,9 +89,8 @@ export interface FatosDoDia {
 /**
  * O cartão de cima, ou `null` quando não há o que pôr nele.
  *
- * `null` é resposta legítima e está na regra: dia de descanso fora de qualquer
- * janela não tem cartão (§5.7), e o que passou sem marca é a linha "Pôr hoje em
- * dia" — nunca o cartão.
+ * Sem sessão ou treino, o topo pode ficar livre entre uma refeição respondida
+ * e a janela da próxima.
  */
 export type Cartao =
   | { k: 'sessao'; dia: string; guardadas: number; prescritas: number; pergunta: boolean }
@@ -128,26 +127,15 @@ export const JANELA_REFEICAO = 30;
  * dentro do descanso, que é onde ele de fato é marcado. Em dia de descanso não
  * há treino, então a refeição ganha POR AUSÊNCIA e não por regra.
  *
- * **4 · Passada a janela do treino, a refeição do momento ganha o topo** — e só
- * PARA FRENTE. Esta metade corrige a regra escrita da direção D ("se não houver
- * nada à frente, é a última que passou sem marca"), que se virava contra si
- * mesma um segundo depois de marcar: marcado o lanche das 15h30, ela jogava o
- * almoço das 12h30 para o topo como se fosse agora.
- *
- * **5 · Fora da janela, não há cartão de refeição.** Aqui havia uma leitura
- * minha, declarada: "nada na janela, mas algo à frente, o cartão é a próxima
- * coisa do dia". A terceira entrega da D (`agora-descanso.html`, estados 1 e 3)
- * a desfez com dois casos: às 10h40, com o almoço às 12h30, e às 14h10, com o
- * lanche às 16h00 — "de novo, nenhum cartão". O que está à frente é linha do
- * dia; o que passou sem marca também. O campo `janela` fica, sempre verdadeiro,
- * para a tela não precisar mudar de forma.
+ * **4 e 5 · A próxima refeição entra meia hora antes.** Depois da hora,
+ * a refeição mais recente continua no topo enquanto aguarda resposta.
+ * Responder a ela não traz de volta refeições anteriores.
  *
  * **6 · Dia resolvido: o topo confirma o que foi marcado, com "Corrigir".**
  * Para a tela não ficar muda quando tudo foi feito. O app de hoje já faz algo
  * equivalente por outro caminho.
  *
- * **7 · Nada à frente e o dia não resolvido: não há cartão.** O que passou sem
- * marca é a linha "Pôr hoje em dia", e o app não cobra ninguém.
+ * **7 · Sem refeição do momento e sem confirmação, o topo fica livre.**
  */
 export function cartaoDeCima(f: FatosDoDia): Cartao | null {
   if (!f) return null;
@@ -173,13 +161,17 @@ export function cartaoDeCima(f: FatosDoDia): Cartao | null {
     return t.aula ? { k: 'aula', dia: t.dia } : { k: 'treino', dia: t.dia, palpite: !!t.palpite };
   }
 
-  // 4 e 5 · a refeição, só para frente
+  // A janela da próxima refeição tem preferência sobre a anterior.
   const adiante = (f.refeicoes || [])
     .filter(function (r) { return r && !r.marcada && r.hora >= f.agora; })
     .sort(function (a, b) { return a.hora - b.hora; })[0];
   if (adiante && adiante.hora - f.agora <= JANELA_REFEICAO) {
     return { k: 'refeicao', id: adiante.id, hora: adiante.hora, janela: true };
   }
+
+  const ultima = (f.refeicoes || []).filter(r => r && r.hora <= f.agora)
+    .sort((a, b) => b.hora - a.hora)[0];
+  if (ultima && !ultima.marcada) return { k: 'refeicao', id: ultima.id, hora: ultima.hora, janela: false };
 
   // 6 · o dia resolvido confirma a última marca
   const marcadas = (f.refeicoes || [])

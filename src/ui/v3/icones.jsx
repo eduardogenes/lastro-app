@@ -7,6 +7,9 @@ const I = (d, w) => (
 );
 
 export const ic = {
+  troca: I(<path d="M4 8h13M13 4l4 4-4 4M20 16H7M11 12l-4 4 4 4" />, 2.2),
+  pula: I(<path d="M5 5.5l9 6.5-9 6.5zM18 5.5v13" />, 2.2),
+  fim: I(<path d="M12 5v10M8 11l4 4 4-4M5 19h14" />, 2.2),
   hoje: I(<><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8" /></>),
   dias: I(<><circle cx="6" cy="7" r="1.6" /><circle cx="12" cy="7" r="1.6" /><circle cx="18" cy="7" r="1.6" /><circle cx="6" cy="13" r="1.6" /><circle cx="12" cy="13" r="1.6" /><circle cx="18" cy="13" r="1.6" /><circle cx="6" cy="19" r="1.6" /></>),
   corpo: I(<><circle cx="12" cy="5" r="2.6" /><path d="M5 11.5c2.3 1 4.6 1.5 7 1.5s4.7-.5 7-1.5M12 13v4l-2.8 4.5M12 17l2.8 4.5" /></>),

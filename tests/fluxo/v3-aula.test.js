@@ -81,3 +81,25 @@ test('"+ Movimento" na aula abre o catálogo, e o movimento entra só no dia', a
   assert.ok(a.vJ('treino', 'HX').ex.some(x => x.id === id), 'entrou no dia');
   a.fechar();
 });
+
+test('o texto da aula fica na folha até ser lido e leva os movimentos à lista rápida', async () => {
+  const a = await naAula();
+  a.clicar('[data-a="aula-cola"]');
+  await a.esperar();
+  assert.equal(a.texto('label[for="aula-texto"]'), 'Texto da aula');
+  const campo = a.$('#aula-texto');
+  const ler = a.$('[data-a="aula-importa"]');
+  assert.ok(ler.disabled);
+  for (const txt of ['incompleto', JSON.stringify({ lastro: 'aula', v: 1, nome: 'Box', mov: [{ n: 'Wall balls', s: 2, q: 15, u: 'rep' }] })]) {
+    campo.value = txt;
+    campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+    await a.esperar();
+    a.clicar(ler);
+    await a.esperar();
+    if (txt === 'incompleto') assert.equal(a.$('#aula-texto').value, txt);
+  }
+  assert.equal(a.$('.v3-folha'), null);
+  assert.equal(a.$$('.v3-rapida').length, 1);
+  assert.match(a.texto('.v3-rapida'), /Wall balls/i);
+  a.fechar();
+});

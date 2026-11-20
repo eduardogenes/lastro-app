@@ -68,7 +68,7 @@ export function CorpoV3({ ctx }) {
                    data-a={'corpo-medida-' + m.k} aoTocar={() => ctx.abreMedida(m.k)} />
           ))}
           {c.desligadas.length > 0 && (
-            <Linha titulo={'Mais ' + c.desligadas.length + ' medidas'} apoio={c.desligadas.join(', ') + ' · desligadas'} quieta mais
+            <Linha titulo={'Mais ' + c.desligadas.length + ' medidas'} apoio={new Intl.ListFormat('pt-BR').format([...new Set(c.desligadas.map(n => /^dobra /i.test(n) ? 'dobras' : n))]) + ' · desligadas'} quieta mais
                    data-a="corpo-ligar" aoTocar={() => ctx.abreFolha({ k: 'ligarMedidas' })} />
           )}
         </div>

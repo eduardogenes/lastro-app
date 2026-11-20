@@ -1226,7 +1226,7 @@ async function descartarSessao() {
 }
 
 // ---------- finalizar ----------
-async function finalizarSessao() {
+async function finalizarSessao(comTelaDeFim = false) {
   const s = S.sessao;
   if (!s) return;
   const p = pendencias(s.day, s.sid, s.pulados);
@@ -1268,10 +1268,10 @@ async function finalizarSessao() {
   // o defeito que o `soltaPromo(s.sid)` daqui existia para evitar.
   const resumoMods = mods.map(function (m) { return textoMod(s.day, m); });
   if (mods.length && !diaAberto(s.day)) guardaPromo(s, mods);
-  await encerraDeVerdade(s.day, feitas, resumoMods);
+  await encerraDeVerdade(s.day, feitas, resumoMods, comTelaDeFim);
 }
 
-async function encerraDeVerdade(dia, feitas, resumoMods) {
+async function encerraDeVerdade(dia, feitas, resumoMods, comTelaDeFim) {
   const s = S.sessao;
   if (!s) return;
   const dur = duracaoSessao(s, Date.now());
@@ -1286,6 +1286,7 @@ async function encerraDeVerdade(dia, feitas, resumoMods) {
   await save(); render(); rola(0);
   // "Encerrei o Treino A · 6h20 → 7h31 · 1h11 · 8 exercícios" — o intervalo
   // inteiro, e o pulado no resumo, que é onde a §7.5 o põe.
+  if (comTelaDeFim === true) return;
   toast('Encerrei ' + oTreino(dia) + ' · ' + fmtHoraDita(inicio) + ' → ' + fmtHoraDita(Date.now()) +
         ' · ' + fmtDur(dur) + ' · ' + feitas + (feitas === 1 ? ' exercício' : ' exercícios') +
         (pulados ? ' · ' + pulados + (pulados === 1 ? ' pulado' : ' pulados') : ''));
@@ -2877,6 +2878,7 @@ const CTX = {
         ' · ' + (h.previsto ? 'dia previsto pela cadência da semana' : 'dia confirmado'),
       sessao: {
         nome: P ? P.name : null,
+        prescritas: prescritas,
         feita: prescritas > 0 && feitas >= prescritas,
         // já há treino registrado hoje (a linha do treino leva ao dia, não a outro registro)
         registrada: h.origem === 'registrado',
@@ -3398,7 +3400,7 @@ async function salvarAulaComoModelo() {
  * O formato está em docs/AULA-IMPORTACAO.md; a leitura e as recusas moram em
  * dominio/aula.ts, onde custam microssegundos para testar.
  */
-async function importaAulaColada(texto) {
+async function importaAulaColada(texto, aoLer) {
   const d = view.day;
   if (!diaAberto(d)) { toast('A aula do box só entra no dia aberto.'); return; }
 
@@ -3426,6 +3428,7 @@ async function importaAulaColada(texto) {
   if (a.novos.length) {
     msg += ' · ' + a.novos.length + (a.novos.length === 1 ? ' cadastrado' : ' cadastrados');
   }
+  if (aoLer) aoLer();
   await poeMovimentos(d, a.mov, msg + (r.avisos.length ? ' · ' + r.avisos[0] : ''));
 }
 
@@ -9576,7 +9579,7 @@ CTX.corpoV3 = function () {
     peso: {
       valor: ult ? ult.v : (medidaDoCorpo('peso').partida || 75),
       hoje: hoje,
-      ultima: ult ? (hoje ? 'pesado hoje' : 'última: ' + rotuloDoDia(ult.t)) : 'nenhuma pesagem ainda',
+      ultima: ult ? (hoje ? 'pesado hoje, ' + horaHHMM(ult.t).replace(':', 'h') : 'última: ' + rotuloDoDia(ult.t)) : 'nenhuma pesagem ainda',
       variacao: dPeso == null ? null : fmtSig(dPeso), serie: serie.filter(function (x) { return x != null; })
     },
     quadros: [
@@ -11399,10 +11402,11 @@ function referenciaDaUltimaAula(d) {
   return null;
 }
 
-function catalogoDeAdicao(d) {
+function catalogoDeAdicao(d, trocaDe) {
   const q = view.addQ || '';
   const nodia = {};
   const t = treino(d);
+  const origem = t?.ex[trocaDe];
   if (t) t.ex.forEach(function (x) { nodia[x.id] = 1; });
 
   // No DIA ABERTO o que ele procura é sempre o mesmo punhado, e a ordem
@@ -11419,6 +11423,8 @@ function catalogoDeAdicao(d) {
     busca: view.addQ || '',
     achados: Object.keys(CAT)
       .filter(function (k) { return !CAT[k].arq; })
+      // Na troca, a série já digitada acompanha o exercício com a mesma grandeza.
+      .filter(k => trocaDe == null || (origem && unidadeDe(CAT[k]) === unidadeDe(origem)))
       // Nome e grupo no mesmo alvo: cada palavra da consulta precisa aparecer
       // em algum dos dois, e a ordem não importa. É o que faz `sled push`,
       // `push sled` e `remo` chegarem onde ele espera — e `triceps` achar o
@@ -11475,7 +11481,7 @@ CTX.acoesAulas = {
   salva: function () { salvarAulaComoModelo(); },
   apaga: function (id) { apagarModeloDeAula(id); },
   cola: function () { view.colaAula = !view.colaAula; render(); },
-  importa: function (txt) { importaAulaColada(txt); }
+  importa: importaAulaColada
 };
 
 CTX.acoesAdd = {
@@ -11492,14 +11498,15 @@ CTX.acoesAdd = {
 // As mesmas portas do catálogo antigo (`catalogoDeAdicao`, `addExercicio`,
 // `criarExercicioCom`). No programa a adição é permanente; no treino de hoje
 // (a aula), é só do dia — quem decide é `addExercicio`, pelo `view.prog`.
-CTX.abreCatalogoV3 = function () {
+CTX.abreCatalogoV3 = function (trocaDe) {
   view.addEx = true; view.addQ = ''; view.novoEx = false;
-  CTX.abreFolha({ k: 'catalogo' });
+  if (Number.isInteger(trocaDe)) CTX.trocaFolha({ k: 'catalogo', trocaDe }, true);
+  else CTX.abreFolha({ k: 'catalogo' });
 };
-CTX.catalogoV3 = function () {
+CTX.catalogoV3 = function (trocaDe) {
   const permanente = !!(view.prog && view.prog.day);
   const d = permanente ? view.prog.day : view.day;
-  return Object.assign(catalogoDeAdicao(d), { permanente: permanente });
+  return Object.assign(catalogoDeAdicao(d, trocaDe), { permanente: permanente });
 };
 CTX.buscaCatalogoV3 = function (q) { setBuscaDeExercicio(q); };
 CTX.novoNoCatalogoV3 = function (sim) { view.novoEx = sim !== false; render(); };
@@ -11628,19 +11635,24 @@ function programaDiff() {
 }
 
 function programaHist() {
-  const log = (S.progLog || []).slice().reverse();
+  const log = (S.progLog || []).slice().reverse().sort((a, b) => b.t - a.t);
   const MOT = {}; MOTIVOS.forEach(function (x) { MOT[x.k] = x.t; });
   return {
     modo: 'historico',
     olho: 'seu programa',
-    meta: log.length + (log.length === 1 ? ' mudança' : ' mudanças'),
+    meta: log.length ? log.length + ' desde ' + fmtDate(log[log.length - 1].t) : '0 mudanças',
     titulo: 'Histórico de mudanças',
     log: log.map(function (x, i) {
+      const data = new Date(x.t);
+      const mes = maiuscula(MESES[data.getMonth()]);
+      const origem = x.textoRevisao ? 'texto do treinador' : x.motivo ? 'você, no fim do treino' : 'treino ' + x.day;
       return {
+        mes: mes + (data.getFullYear() === new Date().getFullYear() ? '' : ' de ' + data.getFullYear()),
+        dia: fmtDate(x.t).slice(0, 2),
         i: i,
         txt: x.txt,
         textoRevisao: x.textoRevisao,
-        meta: 'treino ' + x.day + ' · ' + diaExtenso(x.t) +
+        meta: fmtDate(x.t) + ' · ' + origem +
               (x.motivo ? ' · ' + (MOT[x.motivo] || x.motivo) : '')
       };
     })
@@ -13557,6 +13569,7 @@ CTX.hojeV3 = function () {
   const cartao = cartaoDeCima(CTX.fatosDoDia());
   // sem a comida (desligada em "O que aparece"), o dia é só o treino
   const comOn = ligado(S.modulos, 'comida');
+  const diaT = H.diaHoje.treino;
   const linha = H.refs.filter(function (r) { return comOn || ehLinhaDeTreino(r); }).map(function (r) {
     const treinoL = ehLinhaDeTreino(r);
     const m = minutosDe(r.t);
@@ -13564,8 +13577,8 @@ CTX.hojeV3 = function () {
     const feita = treinoL ? !emCurso && !!(H.sessao.registrada || H.sessao.fechada) : !!d.done[r.id];
     const agoraNela = cartao && ((cartao.k === 'refeicao' && cartao.id === r.id) ||
       (treinoL && (cartao.k === 'treino' || cartao.k === 'aula' || cartao.k === 'sessao')));
-    const diaT = diaResolvido().treino;
     return { id: r.id, t: r.t, n: treinoL ? (diaT ? (diaAberto(diaT) ? 'Aula do box' : 'Treino ' + diaT) : 'Treino') : r.n, treino: treinoL,
+             series: treinoL ? H.sessao.prescritas : null,
              feita: feita, como: d.como ? d.como[r.id] || null : null, agora: !!agoraNela,
              falta: !feita && !agoraNela && agoraMin - m >= 60,
              kcal: treinoL ? null : Math.round(totalDaRefeicao(r, cat, H.alta).kcal) };
@@ -13595,13 +13608,15 @@ CTX.hojeV3 = function () {
   } else if (cartao && (cartao.k === 'treino' || cartao.k === 'aula')) {
     const l = linha.filter(function (x) { return x.treino; })[0];
     const falta = l ? minutosDe(l.t) - agoraMin : null;
+    const minutos = duracaoDoTreino();
+    const estimativa = minutos < 50 ? '45 min' : minutos <= 70 ? 'uma hora' : '1h15';
     bloco = { k: cartao.k, cor: cartao.k === 'aula' ? 'corpo' : 'treino', vivo: true,
               quando: falta == null ? 'hoje' : falta > 0 ? 'daqui a ' + falta + ' min' : 'agora',
               titulo: cartao.k === 'aula' ? 'Aula do box' : 'Treino ' + cartao.dia,
               apoio: cartao.k === 'aula' ? 'Anote no fim, um número por movimento. Ou repita a última aula.'
                 : (H.sessao.nome ? H.sessao.nome + '. ' : '') +
                   (treino(cartao.dia) ? treino(cartao.dia).ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0) + ' séries' +
-                    (duracaoDoTreino() ? ', perto de ' + fmtDur(duracaoDoTreino()) : '') + '.' : ''),
+                    ', perto de ' + estimativa + '.' : ''),
               sub: cartao.k === 'aula' ? (l ? 'hoje, ' + l.t.replace(':', 'h') : 'hoje') : (treino(cartao.dia) ? treino(cartao.dia).ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0) + ' séries' : '') };
   } else if (comOn && agoraMin >= HORA_DA_PERGUNTA && passaram && !respondido) {
     // de noite, a pergunta do dia vem antes da próxima refeição (o protótipo)
@@ -13621,7 +13636,7 @@ CTX.hojeV3 = function () {
   } else {
     bloco = { k: 'livre', cor: 'feito', fino: true, quando: H.diaHoje.cadencia === 'treino' ? 'tudo em dia' : 'dia de descanso',
               titulo: prox ? 'Livre até as ' + prox.t.replace(':', 'h') : 'Dia fechado',
-              apoio: prox ? 'O próximo é ' + prox.n.toLowerCase() + '. Ele aparece aqui meia hora antes.' : 'Nada mais para hoje.' };
+              apoio: prox ? 'O próximo é ' + (/^ceia/i.test(prox.n) ? 'a ' : 'o ') + prox.n.toLowerCase() + '. Ele aparece aqui meia hora antes.' : 'Nada mais para hoje.' };
   }
   // os últimos sete dias: treino e comida de cada um
   const ritmo = [];
@@ -13631,9 +13646,9 @@ CTX.hojeV3 = function () {
     const m = (S.done || []).filter(function (x) { return x && !x.livre && sameDay(x.t, t); })[0];
     const r = CTX.respostaDoDia(data);
     const hist = (S.comidaHist || []).filter(function (h) { return h.d === data; })[0];
-    const ader = hist ? hist.aderencia : (i === 0 ? null : null);
+    const ader = hist?.aderencia;
     ritmo.push({ data: data, letra: DIAS_CURTOS[new Date(t).getDay()].charAt(0).toUpperCase(), nome: DIAS_LONGOS[new Date(t).getDay()],
-                 treino: m ? m.day : null, hoje: i === 0,
+                 treino: m ? m.day : null, hoje: i === 0, emBranco: !r && !Object.keys(hist?.done || {}).length && (!ader || ader === 'plano'),
                  comida: !comOn ? null : r === 'sim' || ader === 'plano' ? 'cheia' : r === 'quase' || ader === 'fora' ? 'meia' : 'vazia' });
   }
   const ontem = hojeISO(agora - 86400000);
@@ -14222,7 +14237,8 @@ CTX.focoV3 = function () {
   const sobe = vm.up && f.k === 0 && agora[0] == null ? proximaCarga(ant ? ant[0] : null, tipo) : null;
   return Object.assign(base, {
     fim: false, i: f.i, k: f.k,
-    ex: { n: ex.n, cue: ex.cue || '', faixa: ex.r || '', rir: ex.rir || '', series: setsFor(ex), unidade: vm.unidade, medida: vm.medida,
+    ex: { n: ex.n, cue: ex.cue || '', faixa: ex.r || '', rir: ex.rir || '', series: setsFor(ex),
+          unidade: vm.unidade === 'kg/lado' ? (tipo === 'halter' ? 'kg em cada mão' : 'kg por lado') : vm.unidade, medida: vm.medida,
           semCarga: tipo === 'corpo', seg: vm.seg, descanso: vm.descansoTxt, proximo: vm.proximo },
     estados: vm.linhas.map(function (l, k) {
       return { k: k, feita: l.valor[1] != null, antes: l.antes,
@@ -14334,7 +14350,7 @@ CTX.encerraTreinoV3 = async function () {
   const s = S.sessao;
   if (!s) return;
   const sid = s.sid, dia = s.day;
-  await finalizarSessao();
+  await finalizarSessao(true);
   if (S.sessao && S.sessao.sid === sid) return;   // voltou ao treino, ou não encerrou
   let series = 0, depois = 0;
   Object.keys(S.logs).forEach(function (k) {
@@ -14347,7 +14363,7 @@ CTX.encerraTreinoV3 = async function () {
   if (!series) return;                             // descartada: nada a resumir
   const marca = S.done.filter(function (x) { return x.sid === sid; })[0];
   view.fimV3 = { sid: sid, dia: dia, series: series, depois: depois,
-                 t: marca ? marca.t : null, min: marca && marca.dur ? Math.round(marca.dur / 60000) : null, dur: marca && marca.dur ? marca.dur : 0 };
+                 t: marca ? marca.t : null, min: typeof marca?.dur === 'number' ? Math.round(marca.dur / 60000) : null, dur: marca && marca.dur ? marca.dur : 0 };
   render(); rola(0);
 };
 CTX.fimV3 = function () {
@@ -14617,8 +14633,9 @@ CTX.mudarExV3 = function (i) {
   const P = treino(d);
   if (!P || !P.ex[i]) return null;
   const vm = vmExercicio(d, i, P.ex[i]);
-  return { i: i, id: P.ex[i].id, nome: vm.nome, nomeOriginal: vm.nomeOriginal, pulado: vm.pulado, podeMaisSerie: vm.podeMaisSerie,
-           proximo: vm.proximo, troca: vm.troca, temTroca: vm.temTroca, dores: vm.dores, dorBloqueia: vm.dorBloqueia };
+  return { i: i, id: P.ex[i].id, nome: vm.nome, nomeOriginal: vm.nomeOriginal, series: setsFor(P.ex[i]), pulado: vm.pulado, podeMaisSerie: vm.podeMaisSerie,
+           proximo: vm.proximo, troca: vm.troca, temTroca: vm.temTroca, dores: vm.dores, dorBloqueia: vm.dorBloqueia,
+           regraDor: S.primeiraVez ? null : RULES.find(r => r.k === 'atenção').p[1] };
 };
 /** A lista do treino: cada exercício com o que foi feito, e a primeira série que falta dele. */
 CTX.listaV3 = function () {

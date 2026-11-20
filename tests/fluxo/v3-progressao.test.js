@@ -27,6 +27,7 @@ test('a progressão agrupa os exercícios pela regra do treinador', async () => 
   const a = await comHistorico();
   a.v('ctx.abreProgressao', 'A');
   await a.esperar();
+  assert.equal(a.texto('.v3-cab-n'), 'Treino A');
   const p = a.vJ('ctx.progressaoV3');
   assert.deepStrictEqual(p.grupos.subir.map(x => x.i), [0]);
   assert.deepStrictEqual(p.grupos.parado.map(x => x.i), [1]);
