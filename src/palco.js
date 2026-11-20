@@ -231,7 +231,10 @@ function montaBancada() {
     b.className = 'pl-item';
     b.dataset.id = a.id;
     b.innerHTML =
-      '<span class="pl-marca" aria-hidden="true"></span>' +
+      // A marca é o aparelho em miniatura, na proporção dele: o SE baixo e
+      // largo, o Pro Max alto. Ler a forma é mais rápido que ler o número.
+      '<span class="pl-marca" aria-hidden="true" style="--pl-mw:' + (a.w / 27).toFixed(1) +
+        'px;--pl-mh:' + (a.h / 27).toFixed(1) + 'px"></span>' +
       '<span class="pl-item-n">' + a.nome + '</span>' +
       '<span class="pl-item-d">' + a.w + ' × ' + a.h + '</span>';
     b.addEventListener('click', function () { troca(a); });
@@ -444,7 +447,7 @@ function montaBancada() {
       : a.sat + ' · ' + a.sab;
 
     el.leitura.innerHTML = [
-      celula('viewport', larg + ' × ' + alt, 'pt · ' + (estado.deitado ? 'paisagem' : 'retrato')),
+      celula('tela', larg + ' × ' + alt, 'pt · ' + (estado.deitado ? 'paisagem' : 'retrato')),
       celula('densidade', '@' + a.dpr + '×', a.w * a.dpr + ' × ' + a.h * a.dpr + ' px'),
       celula('área segura', seg, estado.deitado ? 'lados · base' : 'topo · base'),
       celula('escala', um ? '1:1' : estado.k.toFixed(2) + '×', um ? 'tamanho real' : 'reduzido para caber')
@@ -555,22 +558,18 @@ function esqueleto() {
 
   <div class="pl-secao">
     <div class="pl-cab">
-      <span class="pl-rotulo">prateleira</span>
+      <span class="pl-rotulo">aparelhos</span>
       <kbd class="pl-tecla">alt 1—4</kbd>
     </div>
     <div class="pl-lista"></div>
   </div>
 
   <div class="pl-secao">
-    <span class="pl-rotulo">bancada</span>
     <button type="button" class="pl-girar pl-acao">
-      <span>girar o aparelho</span><kbd class="pl-tecla">alt r</kbd>
+      <span>Girar o aparelho</span><kbd class="pl-tecla">alt r</kbd>
     </button>
   </div>
 
-  <p class="pl-nota">Este não é o aparelho. O app foi desenhado para a mão, de
-  pé, às 6h15 — aqui a área segura é desenhada pela bancada, não medida pelo
-  sistema, e o dedo é um cursor.</p>
 </aside>
 `;
 }

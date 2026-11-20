@@ -48,12 +48,12 @@
      em sete paradas, porque metal escovado é o que acontece quando
      uma superfície devolve duas luzes em ângulos diferentes. Uma
      parada só daria plástico. ---- */
-  --pl-metal-1: #363B34;
-  --pl-metal-2: #7B8177;
-  --pl-metal-3: #31362F;
-  --pl-metal-4: #585F53;
-  --pl-metal-5: #20241E;
-  --pl-metal-6: #454B42;
+  --pl-metal-1: #B9B3A7;
+  --pl-metal-2: #F4F1EA;
+  --pl-metal-3: #A39D90;
+  --pl-metal-4: #D6D1C6;
+  --pl-metal-5: #8F897C;
+  --pl-metal-6: #E4E0D7;
 
   /* O vidro é mais preto que o canvas do app, e essa diferença de
      três pontos é o que faz a tela parecer ACESA dentro da moldura.
@@ -65,24 +65,28 @@
      longo de 11 pixels ele quase não muda, e o metal sai chapado. Estas duas
      entram por cima num degradê CÔNICO, que dá a cada aresta um tom diferente
      — que é literalmente o que uma peça usinada faz com uma luz de estúdio. */
-  --pl-luz:     rgba(236, 240, 230, .26);
-  --pl-escuro:  rgba(6, 8, 6, .42);
+  --pl-luz:     rgba(255, 255, 255, .62);
+  --pl-escuro:  rgba(74, 66, 48, .20);
 
-  --pl-chanfro: rgba(242, 244, 239, .17);   /* o fio de luz na quina usinada */
-  --pl-fenda:   rgba(4, 5, 4, .92);         /* a junta entre metal e vidro */
-  --pl-sombra:  rgba(0, 0, 0, .92);
-  --pl-bloom:   rgba(214, 218, 208, .075);  /* a tela é emissiva; isto é o halo */
+  --pl-chanfro: rgba(255, 255, 255, .85);   /* o fio de luz na quina usinada */
+  --pl-fenda:   rgba(16, 15, 12, .55);      /* a junta entre metal e vidro */
+  --pl-moldura: #0B0B0A;                    /* a borda preta do vidro, entre o aro e a tela */
+  --pl-grelha:  #2B2B28;                    /* o alto-falante e o aro do botão Início, sobre a moldura */
+  --pl-aro:     3px;                        /* o aro de titânio, visto de frente */
+  --pl-sombra-perto: rgba(58, 50, 32, .28); /* o contato com a mesa */
+  --pl-sombra-longe: rgba(58, 50, 32, .16); /* a luz de cima, longa e mole */
+  --pl-bloom:   transparent;
 
-  --pl-sistema:      #FFFFFF;               /* tinta do relógio e dos ícones */
-  --pl-sistema-meia: rgba(255, 255, 255, .38);
+  --pl-sistema:      #0F0F0D;               /* tinta do relógio e dos ícones: tela clara, sistema escuro */
+  --pl-sistema-meia: rgba(15, 15, 13, .38);
 
   /* O piso da bancada. O canvas do app é chapado; aqui há um
      levante no centro, e é ele que dá à sombra do aparelho algo
      mais claro que ela para escurecer. Sombra preta sobre preto
      chapado não existe. */
-  --pl-piso-1:  #12160F;
-  --pl-piso-2:  #0C0E0C;
-  --pl-piso-3:  #070806;
+  --pl-piso-1:  #FBF9F4;   /* a luz cai no centro da mesa */
+  --pl-piso-2:  #F1EDE3;
+  --pl-piso-3:  #E6E0D2;
 
   --pl-font-sistema: -apple-system, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
 
@@ -117,7 +121,7 @@ html[data-palco="bancada"] #deitado { display: none; }
 /* ---- O palco ---------------------------------------------------------- */
 
 .pl {
-  --pl-lado: 236px;
+  --pl-lado: 260px;
   position: fixed; inset: 0; z-index: 1;
   /* Três colunas com a do meio livre: a coluna vazia da esquerda tem a
      largura do painel, e é ela que põe o APARELHO no centro da janela em vez
@@ -147,12 +151,14 @@ html[data-palco="bancada"] #deitado { display: none; }
 /* ---- O aparelho ------------------------------------------------------- */
 
 .pl-aparelho {
-  position: relative;
+  position: relative; box-sizing: border-box;
   width:  calc((var(--pl-w) + 2 * var(--pl-mx)) * var(--pl-k));
   height: calc((var(--pl-h) + 2 * var(--pl-my)) * var(--pl-k));
-  padding: calc(var(--pl-my) * var(--pl-k)) calc(var(--pl-mx) * var(--pl-k));
+  padding: calc((var(--pl-my) - var(--pl-aro)) * var(--pl-k)) calc((var(--pl-mx) - var(--pl-aro)) * var(--pl-k));
+  border: calc(var(--pl-aro) * var(--pl-k)) solid transparent;
   border-radius: calc(var(--pl-rc) * var(--pl-k));
   background:
+    linear-gradient(var(--pl-moldura), var(--pl-moldura)) padding-box,
     conic-gradient(from 208deg,
       transparent      0deg,  var(--pl-luz)     38deg, var(--pl-escuro)  94deg,
       var(--pl-luz)  148deg,  var(--pl-escuro) 198deg, var(--pl-luz)    248deg,
@@ -160,12 +166,20 @@ html[data-palco="bancada"] #deitado { display: none; }
     linear-gradient(152deg,
       var(--pl-metal-6)  0%, var(--pl-metal-2)  9%, var(--pl-metal-3) 26%,
       var(--pl-metal-4) 46%, var(--pl-metal-5) 62%, var(--pl-metal-2) 84%,
-      var(--pl-metal-1) 100%);
+      var(--pl-metal-1) 100%) border-box;
   box-shadow:
-    inset 0 0 0 1px var(--pl-chanfro),
-    0 calc(38px * var(--pl-k)) calc(84px * var(--pl-k)) calc(-42px * var(--pl-k)) var(--pl-sombra),
-    0 calc(6px * var(--pl-k))  calc(18px * var(--pl-k)) calc(-8px * var(--pl-k))  var(--pl-sombra);
+    0 0 0 calc(.5px * var(--pl-k)) var(--pl-fenda),
+    0 calc(2px * var(--pl-k))  calc(4px * var(--pl-k))   0 var(--pl-sombra-perto),
+    0 calc(30px * var(--pl-k)) calc(60px * var(--pl-k))  calc(-18px * var(--pl-k)) var(--pl-sombra-longe),
+    0 calc(70px * var(--pl-k)) calc(120px * var(--pl-k)) calc(-40px * var(--pl-k)) var(--pl-sombra-longe);
 }
+/* O fio de luz na quina usinada, por cima do aro. */
+.pl-aparelho::after {
+  content: ""; position: absolute; inset: calc(-1 * var(--pl-aro) * var(--pl-k));
+  border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 calc(.75px * var(--pl-k)) var(--pl-chanfro);
+}
+@supports (corner-shape: squircle) { .pl-aparelho::after { corner-shape: squircle; } }
 
 /* O halo da tela acesa. Fica ATRÁS do aparelho (z-index negativo
    dentro do contexto de empilhamento do palco) e é quase invisível
@@ -190,7 +204,6 @@ html[data-palco="bancada"] #deitado { display: none; }
   height: calc(var(--pl-h) * var(--pl-k));
   border-radius: calc(var(--pl-raio) * var(--pl-k));
   background: var(--pl-vidro);
-  box-shadow: inset 0 0 0 1px var(--pl-fenda);
 }
 
 /* A tela roda em tamanho REAL e é escalada por transform. A viewport
@@ -287,28 +300,28 @@ html[data-palco="bancada"] #deitado { display: none; }
    A silhueta é o que faz o objeto ser lido como telefone antes de
    qualquer detalhe: sem eles, uma barra de metal com tela dentro. */
 .pl-botao {
-  position: absolute;
-  background: linear-gradient(180deg, var(--pl-metal-3), var(--pl-metal-4), var(--pl-metal-5));
-  box-shadow: inset 0 0 0 1px var(--pl-fenda);
+  position: absolute; z-index: -1;
+  background: linear-gradient(90deg, var(--pl-metal-5), var(--pl-metal-2) 45%, var(--pl-metal-4));
+  box-shadow: 0 0 0 calc(.5px * var(--pl-k)) var(--pl-fenda), 0 calc(1px * var(--pl-k)) calc(2px * var(--pl-k)) var(--pl-sombra-perto);
 }
 .pl-botao[data-borda="esq"], .pl-botao[data-borda="dir"] {
   top: calc(var(--pl-b-y) * var(--pl-k));
-  width: calc(3px * var(--pl-k));
+  width: calc(4px * var(--pl-k));
   height: calc(var(--pl-b-h) * var(--pl-k));
   border-radius: calc(2px * var(--pl-k));
 }
-.pl-botao[data-borda="esq"] { left: calc(-2px * var(--pl-k)); }
-.pl-botao[data-borda="dir"] { right: calc(-2px * var(--pl-k)); }
+.pl-botao[data-borda="esq"] { left: calc((-3px - var(--pl-aro)) * var(--pl-k)); }
+.pl-botao[data-borda="dir"] { right: calc((-3px - var(--pl-aro)) * var(--pl-k)); }
 
 .pl-botao[data-borda="cima"], .pl-botao[data-borda="baixo"] {
   left: calc(var(--pl-b-y) * var(--pl-k));
-  height: calc(3px * var(--pl-k));
+  height: calc(4px * var(--pl-k));
   width: calc(var(--pl-b-h) * var(--pl-k));
   border-radius: calc(2px * var(--pl-k));
-  background: linear-gradient(90deg, var(--pl-metal-3), var(--pl-metal-4), var(--pl-metal-5));
+  background: linear-gradient(180deg, var(--pl-metal-5), var(--pl-metal-2) 45%, var(--pl-metal-4));
 }
-.pl-botao[data-borda="cima"]  { top: calc(-2px * var(--pl-k)); }
-.pl-botao[data-borda="baixo"] { bottom: calc(-2px * var(--pl-k)); }
+.pl-botao[data-borda="cima"]  { top: calc((-3px - var(--pl-aro)) * var(--pl-k)); }
+.pl-botao[data-borda="baixo"] { bottom: calc((-3px - var(--pl-aro)) * var(--pl-k)); }
 
 /* ---- Os queixos do aparelho com botão --------------------------------- */
 
@@ -331,7 +344,7 @@ html[data-palco="bancada"] #deitado { display: none; }
 
 .pl-alto-falante {
   width: calc(46px * var(--pl-k)); height: calc(5px * var(--pl-k));
-  border-radius: calc(3px * var(--pl-k)); background: var(--pl-fenda);
+  border-radius: calc(3px * var(--pl-k)); background: var(--pl-grelha);
 }
 .pl-lente {
   width: calc(8px * var(--pl-k)); height: calc(8px * var(--pl-k)); border-radius: 50%;
@@ -339,7 +352,7 @@ html[data-palco="bancada"] #deitado { display: none; }
 }
 .pl-home {
   width: calc(46px * var(--pl-k)); height: calc(46px * var(--pl-k)); border-radius: 50%;
-  box-shadow: inset 0 0 0 1px var(--pl-chanfro), inset 0 0 0 2px var(--pl-fenda);
+  box-shadow: inset 0 0 0 calc(1.5px * var(--pl-k)) var(--pl-grelha);
 }
 [data-orientacao="paisagem"] .pl-alto-falante {
   width: calc(5px * var(--pl-k)); height: calc(46px * var(--pl-k));
@@ -388,21 +401,21 @@ html[data-palco="bancada"] #deitado { display: none; }
 
 .pl-painel {
   grid-column: 3;
-  width: var(--pl-lado); display: flex; flex-direction: column; gap: 24px;
+  width: var(--pl-lado); display: flex; flex-direction: column; gap: 28px;
 }
 
 .pl-id { display: flex; flex-direction: column; gap: 8px; }
 .pl-nome {
   margin: 0;
-  font: 700 24px/1.05 var(--f-texto); letter-spacing: -.03em;
+  font: 800 30px/1 var(--f-titulo); letter-spacing: -.035em;
   color: var(--texto);
 }
 
-.pl-leitura { grid-template-columns: 1fr 1fr; }
-.pl-cel { display: flex; flex-direction: column; gap: 6px; padding: 10px 0 12px; }
+.pl-leitura { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; border-top: 1.5px solid var(--divisoria); }
+.pl-cel { display: flex; flex-direction: column; gap: 5px; padding: 14px 0; border-bottom: 1.5px solid var(--divisoria); }
 .pl-val {
-  font: 600 16px/1 var(--f-texto); letter-spacing: -.03em;
-  color: var(--texto-2);
+  font: 700 18px/1 var(--f-texto); letter-spacing: -.02em;
+  color: var(--texto); font-variant-numeric: tabular-nums;
 }
 
 .pl-secao { display: flex; flex-direction: column; gap: 10px; }
@@ -410,47 +423,57 @@ html[data-palco="bancada"] #deitado { display: none; }
 
 .pl-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
+.pl-lista { gap: 6px; }
 .pl-item {
-  display: grid; grid-template-columns: 8px 1fr auto;
-  align-items: center; gap: 10px;
-  width: 100%; min-height: 34px; padding: 6px 0;
-  border-bottom: 1px solid var(--divisoria);
+  display: grid; grid-template-columns: 20px 1fr auto;
+  align-items: center; gap: 12px;
+  width: 100%; min-height: 52px; padding: 8px 14px 8px 12px;
+  border: 1.5px solid transparent; border-radius: 16px;
+  background: transparent; font: inherit; color: inherit;
   text-align: left; cursor: pointer;
+  transition: background-color var(--d-toque) ease, border-color var(--d-toque) ease;
 }
-.pl-item:first-child { border-top: 1px solid var(--divisoria); }
+.pl-item:hover { background: var(--superficie-quieta); }
+.pl-item.on { background: var(--superficie); border-color: var(--texto); }
 
 /* O ponto de status do sistema, reusado: a bancada não inventa um
    símbolo novo para dizer "este é o de agora". */
-.pl-marca { width: 7px; height: 7px; border-radius: 50%; background: var(--divisoria); }
-.pl-item.on .pl-marca { background: var(--acao); }
+.pl-marca {
+  justify-self: center; box-sizing: border-box;
+  width: var(--pl-mw, 14px); height: var(--pl-mh, 30px);
+  border: 1.5px solid var(--contorno); border-radius: 3.5px;
+  background: var(--superficie);
+}
+.pl-item.on .pl-marca { border-color: var(--texto); background: var(--assunto-treino); }
 
-.pl-item-n { font: 500 14px/1.2 var(--f-texto); color: var(--texto-legenda); }
+.pl-item-n { font: 600 15px/1.2 var(--f-texto); color: var(--texto-2); }
 /* text-4, não text-5: a medida ao lado do nome é o que se ESCOLHE nesta lista,
    e a 11px o nível 5 dá 3,2:1 — reprova em AA. O nível 5 fica para o
    redundante, que aqui não é o caso. */
-.pl-item-d { font: 400 11px/1 var(--f-texto); color: var(--texto-legenda); letter-spacing: -.02em; }
+.pl-item-d { font: 500 12px/1 var(--f-texto); color: var(--texto-legenda); font-variant-numeric: tabular-nums; }
 .pl-item.on .pl-item-n { color: var(--texto); }
 .pl-item.on .pl-item-d { color: var(--texto-legenda); }
-.pl-item:hover .pl-item-n { color: var(--texto-2); }
+.pl-item:hover .pl-item-n { color: var(--texto); }
 
 .pl-tecla {
-  font: 400 9px/1 var(--f-texto); letter-spacing: .04em;
+  font: 500 11px/1 var(--f-texto); letter-spacing: .02em; border-radius: 6px; background: var(--fundo);
   /* minúscula sempre: dentro do .pl-acao herdaria o caixa-alta do botão, e o
      mesmo atalho apareceria escrito de dois jeitos em duas linhas vizinhas */
   text-transform: none;
   color: var(--texto-legenda); border: 1px solid var(--divisoria);
-  padding: 3px 4px; min-width: 16px; text-align: center;
+  padding: 4px 6px; min-width: 16px; text-align: center;
 }
 
 .pl-acao {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  width: 100%; min-height: 40px; padding: 0 12px;
-  border: 1px solid var(--tracejado);
-  font: 400 var(--t-meta-palco)/1 var(--f-texto); color: var(--texto-legenda);
+  width: 100%; min-height: 48px; padding: 0 8px 0 18px;
+  border: 1.5px solid var(--contorno); border-radius: var(--r-pilula);
+  background: var(--superficie);
+  font: 600 15px/1 var(--f-texto); color: var(--texto);
   cursor: pointer;
 }
-.pl-acao:hover { border-color: var(--tracejado); color: var(--texto); }
-.pl-acao[aria-pressed="true"] { border-color: var(--tracejado); color: var(--texto); }
+.pl-acao:hover { border-color: var(--texto); }
+.pl-acao[aria-pressed="true"] { border-color: var(--texto); background: var(--superficie-quieta); }
 
 .pl-nota {
   margin: 0; max-width: 34ch;
@@ -500,5 +523,5 @@ html[data-palco="bancada"] #deitado { display: none; }
 
 /* os rótulos da bancada (antes usavam as classes do visual antigo) */
 :root { --t-meta-palco: 12px; }
-.pl-rotulo { font: 400 12px/1.35 var(--f-texto); color: var(--texto-legenda); }
+.pl-rotulo { font: 600 12px/1.35 var(--f-texto); color: var(--texto-legenda); letter-spacing: .02em; }
 .pl-proc { font: italic 400 12px/1.4 var(--f-texto); color: var(--texto-legenda); }
