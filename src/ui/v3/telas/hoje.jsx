@@ -167,10 +167,10 @@ export function HojeV3({ ctx }) {
             </button>
           ))}
         </div>
-        <p class="v3-ld-leg">
-          <span>{h.proxima ? <>a seguir: <b>{h.proxima.n}</b>, {h.proxima.t.replace(':', 'h')}</> : 'nada mais para hoje'}</span>
-          {h.proxima && h.proxima.kcal ? <span class="v3-n">{h.proxima.kcal} kcal</span> : null}
-        </p></>}
+        {h.proxima && <p class="v3-ld-leg">
+          <span>a seguir: <b>{h.proxima.n}</b>, {h.proxima.t.replace(':', 'h')}</span>
+          {h.proxima.kcal ? <span class="v3-n">{h.proxima.kcal} kcal</span> : null}
+        </p>}</>}
       </Secao>}
       {tem && (
         <Secao titulo="Se quiser" nota="nada aqui é obrigatório">
@@ -205,6 +205,7 @@ export function HojeV3({ ctx }) {
             </button>
           ))}
         </div>
+        <LegendaDoRitmo ritmo={h.ritmo} />
         {h.lembrete && (
           <Caixa tom="corpo" data-a="hoje-lembrete" titulo={h.lembrete.t} nota={h.lembrete.apoio}>
             <Pequeno cheio data-a="lembrete-abre" onClick={ctx.abreCentroDasFotos}>Abrir as fotos</Pequeno>
@@ -217,6 +218,24 @@ export function HojeV3({ ctx }) {
         )}
       </Secao>}
       <div class="v3-fim-da-tela" />
+    </div>
+  );
+}
+
+/** A legenda do ritmo: só os tipos de dia que aparecem na semana, com a mesma bola. */
+function LegendaDoRitmo({ ritmo }) {
+  const tem = { cheia: false, meia: false, vazia: false, sem: false };
+  ritmo.forEach(d => {
+    if (d.treino) tem.cheia = true;
+    else if (d.comida === 'meia') tem.meia = true;
+    else if (!d.hoje && d.emBranco) tem.vazia = true;
+    else if (!d.hoje) tem.sem = true;
+  });
+  const itens = [['cheia', 'treino'], ['meia', 'comida quase'], ['vazia', 'em branco'], ['sem', 'sem treino']].filter(([k]) => tem[k]);
+  if (itens.length < 2) return null;
+  return (
+    <div class="v3-legm v3-ritmo-leg" aria-hidden="true">
+      {itens.map(([k, t]) => <span key={k}><i class={k} />{t}</span>)}
     </div>
   );
 }

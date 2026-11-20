@@ -31,13 +31,38 @@ export const corDe = cor => `var(--${CORES[cor] || CORES.treino})`;
  * `fino` é a faixa de quando não há o que fazer. `medio` (o título em 36) é
  * calculado pelo tamanho do título quando não vem.
  */
+/**
+ * A faixa da barra do sistema (o `body::before` do global.css) toma a cor do
+ * bloco enquanto o bloco encosta nela: no topo da tela a cor sobe até o
+ * relógio, como num app do iPhone. Rolado para longe, a faixa volta ao papel,
+ * e nada do conteúdo passa por baixo do relógio.
+ */
+function useCorDoTopo(ref, cor) {
+  useEffect(() => {
+    const el = ref.current, raiz = document.documentElement;
+    if (!el || typeof IntersectionObserver !== 'function') return;
+    const sa = parseFloat(getComputedStyle(raiz).getPropertyValue('--sa-top')) || 0;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { raiz.style.setProperty('--cor-topo', cor); raiz.dataset.corTopo = '1'; }
+      else if (raiz.style.getPropertyValue('--cor-topo') === cor) { raiz.style.removeProperty('--cor-topo'); delete raiz.dataset.corTopo; }
+    }, { rootMargin: '0px 0px -' + Math.max(0, window.innerHeight - sa - 1) + 'px 0px' });
+    obs.observe(el);
+    return () => {
+      obs.disconnect();
+      if (raiz.style.getPropertyValue('--cor-topo') === cor) { raiz.style.removeProperty('--cor-topo'); delete raiz.dataset.corTopo; }
+    };
+  }, [cor]);
+}
+
 export function Bloco({ cor = 'treino', linha0, quando, vivo, titulo, medio, apoio, fino, chave, children }) {
   // o título passa a 36 com mais de 12 letras, em todo lugar (02-componentes.md, §1)
   if (medio == null) medio = String(titulo == null ? '' : titulo).length > 12;
   const anima = Bloco.ultima !== chave && chave != null;
   Bloco.ultima = chave;
+  const ref = useRef(null);
+  useCorDoTopo(ref, corDe(cor));
   return (
-    <section class={cls('v3-bloco', fino && 'fino')} style={`--v3-cor:${corDe(cor)}`}>
+    <section ref={ref} class={cls('v3-bloco', fino && 'fino')} style={`--v3-cor:${corDe(cor)}`}>
       {linha0 && <div class="v3-bloco-l0">{linha0}</div>}
       <div class={anima ? 'anima' : undefined} key={chave}>
         {quando && <p class="v3-bloco-q">{vivo && <i />}{quando}</p>}

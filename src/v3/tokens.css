@@ -127,6 +127,7 @@
   --icone-em-linha: 22px; /* desenho dentro do círculo */
   --linha: 60px;         /* linha de lista */
   --doca: 64px;          /* altura da doca e do "+" */
+  --doca-lugar: 46px;    /* cada lugar apagado da doca: passa do alvo de 44 e deixa "Semana" caber */
 
   /* ---------- elevação: só o que flutua tem sombra ---------- */
   --sombra-flutua: 0 12px 30px -12px rgba(15, 15, 13, .55); /* doca, "+" */

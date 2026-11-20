@@ -10458,7 +10458,9 @@ CTX.mes = function () {
     (Array.isArray(S.comidaHist) && S.comidaHist.some(diaInterpretavel));
 
   return {
-    titulo: MESES[mesN] + ' de ' + ano + (corrente && ate >= ini ? ' · até ontem, ' + fmtDate(ontem) : ''),
+    titulo: MESES[mesN] + ' de ' + ano,
+    // as leituras do mês contam até ontem; o calendário mostra hoje também
+    ate: corrente && ate >= ini ? 'até ontem, ' + fmtDate(ontem) : null,
     anterior: maiuscula(MESES[(mesN + 11) % 12]),
     proximo: maiuscula(MESES[(mesN + 1) % 12]),
     podeAvancar: view.mes < 0,
@@ -13986,7 +13988,9 @@ CTX.resumoDoDiaV3 = function (iso) {
     treino: m ? { titulo: diaAberto(m.day) ? 'Aula' : 'Treino ' + m.day,
                   apoio: (series ? series + (series === 1 ? ' série' : ' séries') : 'sem série') + (m.dur ? ' · ' + fmtDur(m.dur) : '') } : null,
     peso: peso ? fmtDec(peso.v) : null,
-    agua: ligado(S.modulos, 'agua') ? (h && !h.aguaNaoContada && h.agua ? h.agua + ' de ' + COPOS_DO_DIA : null) : undefined
+    // hoje conta desde o zero, como no Hoje; um dia passado sem registro fica "—"
+    agua: ligado(S.modulos, 'agua') ? (iso === hojeISO() && !(h && h.aguaNaoContada) ? ((h && h.agua) || 0) + ' de ' + COPOS_DO_DIA
+      : h && !h.aguaNaoContada && h.agua ? h.agua + ' de ' + COPOS_DO_DIA : null) : undefined
   };
 };
 CTX.responderDiasV3 = function () {

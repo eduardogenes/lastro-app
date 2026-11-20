@@ -49,7 +49,7 @@ export function DiasV3({ ctx }) {
           ))}
         </div>
         <div class="v3-legm" role="group" aria-label="Legenda do mês">
-          <span><i class="t" />treino</span>{comida && <><span><i class="c" />comida respondida</span><span><i class="v" />em branco</span></>}
+          <span><i class="t" />treino</span>{comida && <><span><i class="c" />comida respondida</span><span><i class="v" />comida em branco</span></>}
         </div>
       </div>
       {c && (
@@ -75,7 +75,7 @@ export function DiasV3({ ctx }) {
         </Secao>
       )}
       {(m.treino || m.horario || m.cardio.n > 0) && (
-        <Secao titulo="No mês">
+        <Secao titulo="No mês" nota={m.ate}>
           <Quadros colunas={3} itens={[
             { k: 'sem', valor: m.treino && m.treino.valor ? m.treino.valor : '—', rotulo: 'dias de treino por semana' },
             { k: 'hora', valor: m.horario ? pad(m.horario.mediana) : '—', rotulo: 'horário mais comum' },

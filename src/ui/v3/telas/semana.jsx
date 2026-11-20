@@ -56,7 +56,8 @@ export function SemanaV3({ ctx }) {
           {v.promessa && <Apoio>{v.promessa}</Apoio>}
         </Secao>
       )}
-      {v.estado && <Secao><Apoio>{v.estado}</Apoio></Secao>}
+      {/* o que está valendo no plano de comida: sem título, a linha ficava solta */}
+      {v.estado && <Secao titulo="No plano agora"><Apoio>{v.estado}</Apoio></Secao>}
       </>}
       <Secao titulo="Séries da semana" nota={'dia ' + s.dia + ' de 7'}>
         <div>

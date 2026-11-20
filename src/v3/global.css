@@ -55,7 +55,9 @@ body::before {
   content: "";
   position: fixed; top: 0; left: 0; right: 0;
   height: var(--sa-top); z-index: 90;
-  background: var(--fundo);
+  /* com um bloco colorido encostado no topo, a faixa toma a cor dele (Bloco, base.jsx) */
+  background: var(--cor-topo, var(--fundo));
+  transition: background-color var(--d-estado);
   pointer-events: none;
 }
 

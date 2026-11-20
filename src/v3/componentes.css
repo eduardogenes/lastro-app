@@ -383,22 +383,37 @@ button.v3-quadro { min-height: var(--alvo); }
   display: flex; gap: 10px; align-items: center; pointer-events: none;
 }
 .v3-doca.oculta { display: none; }
+/* o conteúdo some por baixo da doca em vez de aparecer pelas frestas entre a
+   pílula e o "+" (a seta de um botão rolando atrás parecia um defeito) */
+.v3-doca::before {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; z-index: -1; pointer-events: none;
+  height: calc(var(--doca) + 40px + var(--sa-bottom, 0px));
+  background: linear-gradient(to top, var(--fundo) 60%, color-mix(in srgb, var(--fundo) 0%, transparent));
+}
 .v3-doca > * { pointer-events: auto; }
 .v3-doca-n {
   flex: 1; height: var(--doca); border-radius: var(--r-pilula); background: var(--acao);
-  display: flex; align-items: center; padding: 6px; gap: 2px; box-shadow: var(--sombra-flutua);
+  display: flex; align-items: center; padding: 6px; gap: 0; box-shadow: var(--sombra-flutua);
   transition: flex 360ms var(--mola);
+  container-type: inline-size; container-name: doca;
 }
 .v3 .v3-doca-n button {
-  flex: 0 0 52px; height: 52px; border-radius: var(--r-pilula); overflow: hidden;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+  /* 46 e não 52: com 52 a pílula do lugar atual não cabia "Semana" num
+     iPhone de 414 ou menos. 46 ainda passa do alvo de 44. */
+  flex: 0 0 var(--doca-lugar); height: 52px; border-radius: var(--r-pilula); overflow: hidden;
+  display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0;
   color: var(--texto-sobre-acao-2); font: 700 14px var(--f-titulo);
   transition: flex 320ms var(--mola), background var(--d-estado), width 320ms var(--mola), opacity var(--d-estado);
 }
 .v3-doca-n svg { width: 23px; height: 23px; flex: 0 0 auto; }
 .v3-doca-n span { display: none; }
-.v3 .v3-doca-n button[aria-current="page"] { flex: 1; background: var(--fundo); color: var(--texto); }
-.v3-doca-n button[aria-current="page"] span { display: inline; }
+.v3 .v3-doca-n button[aria-current="page"] { flex: 1; padding: 0 10px; background: var(--fundo); color: var(--texto); }
+.v3-doca-n button[aria-current="page"] span { display: inline; white-space: nowrap; }
+/* iPhone bem estreito (SE): a pílula do lugar atual fica só com a palavra */
+@container doca (max-width: 290px) {
+  /* só com a doca aberta: encolhida, a pílula é o próprio ícone */
+  .v3-doca:not(.mini) .v3-doca-n button[aria-current="page"] svg { display: none; }
+}
 .v3 .v3-doca-m {
   flex: 0 0 var(--doca); height: var(--doca); border-radius: 50%; background: var(--assunto-treino);
   box-shadow: var(--sombra-flutua), inset 0 0 0 2px var(--texto);
@@ -412,7 +427,7 @@ button.v3-quadro { min-height: var(--alvo); }
    está dentro de uma. Com o descendente a regra nunca casava, e no iPhone os
    outros botões ficavam com 52 px fora da pílula e o atual espremido a zero. */
 .v3-doca.v3.mini .v3-doca-n button:not([aria-current="page"]) { flex: 0 0 0; width: 0; opacity: 0; padding: 0; }
-.v3-doca.v3.mini .v3-doca-n button[aria-current="page"] { flex: 0 0 52px; }
+.v3-doca.v3.mini .v3-doca-n button[aria-current="page"] { flex: 0 0 52px; padding: 0; }
 .v3-doca.mini .v3-doca-n button[aria-current="page"] span { display: none; }
 
 /* ---- 14. Campo de texto longo ------------------------------------------ */
