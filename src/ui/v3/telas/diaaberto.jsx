@@ -307,9 +307,11 @@ export function RegistrarPassadoV3({ ctx }) {
         {!d.gravado ? (
           <>
             <h2 class="v3-pergunta-t">{d.pergunta}</h2>
-            <p class="v3-rotulo">O próximo da sequência naquele dia</p>
-            <Linha marca={d.previsto.letra === 'aula' ? ic.halter : d.previsto.letra} titulo={d.previsto.titulo} apoio={d.previsto.detalhe}
-                   data-a="lanca-previsto" aoTocar={() => ctx.lancaTreino(d.previsto.k)} />
+            {d.previsto && <>
+              <p class="v3-rotulo">O próximo da sequência naquele dia</p>
+              <Linha marca={d.previsto.letra === 'aula' ? ic.halter : d.previsto.letra} titulo={d.previsto.titulo} apoio={d.previsto.detalhe}
+                    data-a="lanca-previsto" aoTocar={() => ctx.lancaTreino(d.previsto.k)} />
+            </>}
             {d.outros.length > 0 && (
               <>
                 <p class="v3-rotulo">Outro da sequência</p>

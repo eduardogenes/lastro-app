@@ -199,13 +199,13 @@ interface Base {
 function base(S: Partial<Estado>): Base {
   const cat = montaCatalogo(obj<Partial<Exercicio>>(S.ex));
   const progS = obj<Treino>(S.prog);
-  const prog = Object.keys(progS).length ? progS : semeiaProg();
-  const rot = lista<Dia>(S.rot).length ? lista<Dia>(S.rot) : ROT_BASE.filter(function (d) { return prog[d]; });
+  const prog = S.primeiraVez || Object.keys(progS).length ? progS : semeiaProg();
+  const rot = S.primeiraVez || lista<Dia>(S.rot).length ? lista<Dia>(S.rot) : ROT_BASE.filter(function (d) { return prog[d]; });
 
   const pt = S.progTreinador && typeof S.progTreinador === 'object' && S.progTreinador.dias ? S.progTreinador : null;
   const treinador = pt
     ? { rot: lista<Dia>(pt.rot), dias: obj<Treino>(pt.dias), data: pt.data || null, colado: true }
-    : { rot: ROT_BASE.slice(), dias: semeiaProg(), data: null, colado: false };
+    : { rot: S.primeiraVez ? [] : ROT_BASE.slice(), dias: S.primeiraVez ? {} : semeiaProg(), data: null, colado: false };
 
   // Como `catalogoAlimentos()` do app, mas sem esconder os ocultos: aqui o
   // catálogo serve para dar NOME a um item, e um item do plano não perde o
@@ -217,7 +217,7 @@ function base(S: Partial<Estado>): Base {
   Object.keys(proprios).forEach(function (k) {
     alimentos[k] = Object.assign({ id: k }, ALIMENTOS_BASE[k] || {}, proprios[k]) as Alimento;
   });
-  const plano = lista<Refeicao>(comida.plano).length ? lista<Refeicao>(comida.plano) : PLANO_BASE;
+  const plano = S.primeiraVez || lista<Refeicao>(comida.plano).length ? lista<Refeicao>(comida.plano) : PLANO_BASE;
 
   const sessoes = lista<Sessao>(S.done).filter(function (m) { return m && numero(m.t) != null; })
     .slice().sort(function (a, b) { return a.t - b.t; });
@@ -349,11 +349,12 @@ function tabelaDoTreino(b: Base, t: Treino, comDesde: boolean): string[] {
 function programaAtual(b: Base, ctx: Contexto): string {
   const S = b.S;
   const cad = lista<string>(S.cadencia).length === 7 ? lista<string>(S.cadencia) : CADENCIA_PADRAO;
-  const L = cabeca('Programa de treino atual', [
+  const L = cabeca('Programa de treino atual', !b.rot.length ? ['Nenhum treino no programa.'] :
+    S.primeiraVez && !b.treinador.colado ? ['O programa montado no app.'] : [
     'O programa que o app executa hoje. Começou como cópia do programa do treinador',
     '(`programa-do-treinador.md`) e muda conforme as decisões registradas em `mudancas.md`.'
   ]);
-  L.push('- **Rotação:** ' + b.rot.join(' → ') + ' (avança conforme os treinos são registrados, não pelo dia da semana)');
+  if (b.rot.length) L.push('- **Rotação:** ' + b.rot.join(' → ') + ' (avança conforme os treinos são registrados, não pelo dia da semana)');
   L.push('- **Semana típica:** ' + cad.map(function (c, i) { return DIAS_CURTOS[i] + ' ' + c; }).join(' · '));
   L.push('- **Deload:** ' + (S.deload ? 'ligado agora' : 'desligado'));
   L.push('- **Na posição desde:** quando o exercício entrou naquela posição; "do treinador" = está lá desde a prescrição original.');
@@ -369,6 +370,7 @@ function programaAtual(b: Base, ctx: Contexto): string {
 
 function programaDoTreinador(b: Base, ctx: Contexto): string {
   const t = b.treinador;
+  if (!Object.keys(t.dias).length) return cabeca('Programa do treinador', ['Nenhuma prescrição de treino recebida.']).join('\n');
   const L = cabeca('Programa do treinador', [
     t.colado
       ? 'A última revisão que o treinador mandou e foi colada no app' + (t.data ? ', datada de ' + (DATA_ISO.test(t.data) ? dataIsoBR(t.data) : t.data) : '') + '.'
@@ -632,6 +634,7 @@ function planoAlimentar(b: Base, ctx: Contexto): string {
   const S = b.S;
   const comida = obj<unknown>(S.comida);
   const ajuste = numero(S.ajuste) || 0;
+  if (!b.plano.length) return cabeca('Plano alimentar', ['Nenhuma refeição no plano.']).join('\n');
   const L = cabeca('Plano alimentar', [
     'O plano que o app usa hoje. Quantidades por porção; macros calculados pela tabela de alimentos (`alimentos.csv`).'
   ]);

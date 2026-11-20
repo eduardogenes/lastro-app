@@ -498,7 +498,9 @@ function abrirApp(opcoes) {
 
 /** sobe o app e espera ele terminar de carregar */
 async function app(opcoes) {
-  const a = abrirApp(opcoes);
+  // Os fluxos de treino exercitam um aparelho já usado. estado: null abre um endereço novo.
+  const o = opcoes || {};
+  const a = abrirApp(o.estado === undefined && !o.legado ? { ...o, estado: { logs: {}, done: [], plano: 12 } } : o);
   await a.pronto();
   // O padrão continua sendo a tela do TREINO — quase todo caso desta pasta é
   // sobre ela —, e agora chega lá pelo modo. Quem testa a casca das abas passa

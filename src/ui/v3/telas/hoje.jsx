@@ -8,19 +8,23 @@ import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
 import { CamposDoCardio } from '../cardio.jsx';
 import { contracaoDe } from '../../../dominio/formato';
-import { Acoes, Apoio, Bloco, Botao, Caixa, Chave, Fichas, Folha, Linha, Pequeno, Pergunta, Radios, Saida, Secao, Seletor, radio } from '../base.jsx';
+import { Acoes, Apoio, Bloco, Botao, Cabecalho, Caixa, Chave, Escolha, Fichas, Folha, Linha, Pequeno, Pergunta, Radios, Saida, Secao, Segmentos, Seletor, radio } from '../base.jsx';
 
 const RESPOSTAS = [{ k: 'sim', t: 'Foi, sim' }, { k: 'quase', t: 'Quase' }, { k: 'naosei', t: 'Não sei dizer' }];
 
 function Momento({ ctx, h }) {
   const b = h.bloco;
   // a data diz também o tipo do dia, e tocar confirma ou corrige (folha `dia`)
-  const linha0 = <><button data-a="hoje-tipo" onClick={() => ctx.abreFolha({ k: 'dia' })}
+  const data = <>{h.data} · <span class="v3-n">{h.hora.replace(':', 'h')}</span></>;
+  const linha0 = <>{b.k === 'semTreino' ? <span>{data}</span> : <button data-a="hoje-tipo" onClick={() => ctx.abreFolha({ k: 'dia' })}
                            aria-label={h.data + ', ' + (h.tipo === 'descanso' ? 'descanso' : 'dia de treino') + '. Mudar o tipo do dia'}>
-      {h.data} · <span class="v3-n">{h.hora.replace(':', 'h')}</span> · {h.tipo === 'descanso' ? 'descanso' : 'treino'}{ic.baixo}</button>
+      {data} · {h.tipo === 'descanso' ? 'descanso' : 'treino'}{ic.baixo}</button>}
     <button onClick={() => ctx.abreFolha({ k: 'oQueAparece' })} aria-label="Escolher o que aparece" data-a="hoje-aparece">{ic.ajuste}</button></>;
   let acoes = null;
-  if (b.k === 'sessao') {
+  if (b.k === 'semTreino') {
+    acoes = <><Acoes><Botao data-a="hoje-por-treino" onClick={ctx.abreRevisao}>Pôr o meu treino {ic.seta}</Botao></Acoes>
+      <Saida data-a="hoje-treino-livre" onClick={ctx.lancaTreinoDeHoje}>Registrar um treino livre</Saida></>;
+  } else if (b.k === 'sessao') {
     acoes = b.pergunta
       ? <><Acoes><Botao data-a="hoje-continuo" onClick={ctx.continuaSessao}>Continuo treinando</Botao>
             <Botao tipo="contorno" data-a="hoje-parei" onClick={ctx.encerraSessaoEsquecida}>Já parei</Botao></Acoes>
@@ -46,7 +50,7 @@ function Momento({ ctx, h }) {
       <Saida data-a="noite-naosei" onClick={() => ctx.respondeHojeComDesfazer('naosei')}>Não sei dizer</Saida></>;
   }
   return (
-    <Bloco cor={b.cor} chave={b.k + (b.id || '')} fino={b.fino} vivo={b.vivo} linha0={linha0}
+    <Bloco cor={b.cor} medio={b.k === 'semTreino' ? false : undefined} chave={b.k + (b.id || '')} fino={b.fino} vivo={b.vivo} linha0={linha0}
            quando={b.quando} titulo={b.titulo} apoio={b.apoio}>
       {acoes}
     </Bloco>
@@ -93,38 +97,52 @@ function Gruda({ ctx, b }) {
   );
 }
 
-/**
- * A PRIMEIRA VEZ: o aparelho sem nenhum registro. Começar com o programa e o
- * plano que já estão no app, colar o texto do treinador, ou restaurar uma
- * cópia; e escolher o que aparece. Nada aqui é obrigatório.
- */
-function PrimeiraVez({ ctx, v }) {
-  return (
-    <>
-      <Bloco cor="treino" chave="primeira-vez" quando="primeira vez aqui" titulo="Comece pelo que já está aqui" medio
-             apoio={'O treino: ' + v.programa + '. A comida: ' + v.plano + '.'}>
-        <Acoes><Botao data-a="primeira-comeca" onClick={ctx.comecaAqui}>Começar assim {ic.seta}</Botao></Acoes>
-        <Saida data-a="primeira-aparece" onClick={() => ctx.abreFolha({ k: 'oQueAparece' })}>Escolher o que aparece</Saida>
-      </Bloco>
-      <Secao titulo="Ou traga o seu">
-        <div>
-          <button class="v3-lin" data-a="primeira-treinador" onClick={ctx.abreRevisao}>
-            <span class="v3-lin-t"><b>Colar o texto do treinador</b><span>o app organiza em treinos e séries, e você confirma</span></span>{ic.dir}
-          </button>
-          <label class="v3-lin v3-lin-arq">
-            <span class="v3-lin-t"><b>Restaurar de uma cópia</b><span>o arquivo que você guardou em outro aparelho</span></span>
-            <input type="file" accept="application/json,.json" hidden data-a="primeira-importa" onChange={e => ctx.importaArquivo(e.currentTarget)} />
-          </label>
-        </div>
-        {v.semRede && <Apoio>Sem rede agora: tudo funciona e fica guardado neste aparelho.</Apoio>}
-      </Secao>
-    </>
-  );
+const INICIO = [
+  ['Seu treino', 'De onde vem o seu treino?', 'O app não monta treino: ele executa o que foi prescrito para você.'],
+  ['Sua comida', 'E a comida?', 'Com um plano, o registro vira uma pergunta por dia. Sem plano, o app só não acompanha comida.'],
+  ['O que acompanhar', 'O que mais você quer ver?', 'Nada aqui é obrigatório, e tudo se liga e desliga depois.']
+];
+const FONTES = [
+  [[ic.texto, 'Tenho o texto do treinador', 'Você cola e o app organiza em treinos e séries.'],
+   [ic.halter, 'Monto depois', 'Dá para registrar treino livre enquanto isso.']],
+  [[ic.prato, 'Tenho um plano alimentar', 'Você monta as refeições no Plano, uma vez.'],
+   [ic.x, 'Não acompanho comida', 'A parte de comida fica desligada. Dá para ligar depois.']]
+];
+const ACOMPANHAR = [
+  ['peso', 'Peso', 'a pesagem da manhã'], ['agua', 'Água', 'contar copos'],
+  ['cardio', 'Cardio', 'sessões da semana'], ['fotos', 'Fotos do corpo', 'sessão padronizada a cada 14 dias']
+];
+
+export function PrimeiraVez({ ctx }) {
+  const passo = ctx.passoInicial(), e = ctx.escolhasIniciais();
+  const [titulo, pergunta, apoio] = INICIO[passo - 1];
+  const campo = passo === 1 ? 'treinador' : 'comida';
+  useLayoutEffect(() => { document.querySelector('.v3-inicio h1')?.focus({ preventScroll: true }); }, [passo]);
+  return <main class="v3-acao v3-inicio">
+    <div class="v3-acao-topo"><Cabecalho titulo={titulo} reservaVoltar aoVoltar={passo > 1 && ctx.voltaInicio}
+      acao={<Saida data-a="inicio-pular" onClick={() => ctx.avancaInicio(true, passo)}>pular</Saida>} /></div>
+    <Segmentos total={3} feitos={passo - 1} rotulo={`Passo ${passo} de 3`} />
+    <section class="v3-acao-meio cima">
+      <h2>{pergunta}</h2><Apoio>{apoio}</Apoio>
+      {passo < 3 ? <Radios rotulo={pergunta}>
+        {FONTES[passo - 1].map(([icone, nome, detalhe], i) =>
+          <Escolha key={nome} icone={icone} titulo={nome} apoio={detalhe} ligada={e[campo] === (i === 0)}
+            aoMudar={() => ctx.escolheInicio(campo, i === 0)} />)}
+      </Radios> : <div class="v3-ligar">
+        {ACOMPANHAR.map(([k, nome, detalhe]) => <Chave key={k} titulo={nome} apoio={detalhe} ligada={e[k]}
+          data-a={'inicio-' + k} aoMudar={v => ctx.escolheInicio(k, v)} />)}
+      </div>}
+    </section>
+    <div class="v3-acao-pe"><Botao data-a="inicio-continuar" onClick={() => ctx.avancaInicio(false, passo)}>
+      {passo === 3 ? 'Abrir o app' : 'Continuar'} {ic.seta}
+    </Botao></div>
+    <div class="v3-acao-links">{passo === 1 &&
+      <Saida data-a="inicio-recuperar" onClick={() => ctx.abreAjustes()}>Já uso o app em outro aparelho</Saida>}
+    </div>
+  </main>;
 }
 
 export function HojeV3({ ctx }) {
-  const vazio = ctx.enderecoVazio();
-  if (vazio) return <div class="v3"><PrimeiraVez ctx={ctx} v={vazio} /><div class="v3-fim-da-tela" /></div>;
   const h = ctx.hojeV3();
   const q = h.seQuiser;
   const tem = q.agua || q.peso || q.cardio;
@@ -132,7 +150,10 @@ export function HojeV3({ ctx }) {
     <div class="v3">
       <Momento ctx={ctx} h={h} />
       <Gruda ctx={ctx} b={h.bloco} />
-      <Secao titulo="O dia" nota={h.feitas + ' de ' + h.linha.length}>
+      {h.bloco.k === 'semTreino' ? <Secao titulo="Enquanto isso">
+        <Linha titulo="Colar o texto do treinador" apoio="o app organiza em treinos e séries" aoTocar={ctx.abreRevisao} />
+        <Linha titulo="Escolher o que acompanhar" apoio="peso, água, cardio, fotos" aoTocar={() => ctx.abreFolha({ k: 'oQueAparece' })} />
+      </Secao> : <Secao titulo="O dia" nota={h.feitas + ' de ' + h.linha.length}>
         <div class="v3-ld" role="list">
           {h.linha.map(x => (
             <button key={x.id} role="listitem" class={x.feita ? 'ok' : x.agora ? (x.treino ? 'agora t' : 'agora') : x.falta ? 'falta' : undefined}
@@ -147,7 +168,7 @@ export function HojeV3({ ctx }) {
           <span>{h.proxima ? <>a seguir: <b>{h.proxima.n}</b>, {h.proxima.t.replace(':', 'h')}</> : 'nada mais para hoje'}</span>
           {h.proxima && h.proxima.kcal ? <span class="v3-n">{h.proxima.kcal} kcal</span> : null}
         </p>
-      </Secao>
+      </Secao>}
       {tem && (
         <Secao titulo="Se quiser" nota="nada aqui é obrigatório">
           <div class="v3-instr">
@@ -171,7 +192,7 @@ export function HojeV3({ ctx }) {
           </div>
         </Secao>
       )}
-      <Secao titulo="Seu ritmo" nota="últimos 7 dias">
+      {(h.bloco.k !== 'semTreino' || h.temHistorico) && <Secao titulo="Seu ritmo" nota="últimos 7 dias">
         <div class="v3-ritmo">
           {h.ritmo.map(d => (
             <button key={d.data} onClick={() => ctx.vaiPara('dias')}
@@ -191,7 +212,7 @@ export function HojeV3({ ctx }) {
           <Pergunta pergunta="Ontem ficou em branco. Foi como o plano?" respostas={RESPOSTAS} valor={null}
                     aoResponder={k => ctx.respondeODia(h.ontem, k)} />
         )}
-      </Secao>
+      </Secao>}
       <div class="v3-fim-da-tela" />
     </div>
   );

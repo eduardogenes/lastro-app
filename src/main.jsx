@@ -22,6 +22,7 @@ import { ehBancada } from './palco.js';
 import { MIN_PESAGENS as MIN_PESAGENS_CORPO, semanaEmCurso, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, VALIDADE_LEITURA, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois, intervaloLongo } from './dominio/sessao';
 import { entendeuAlgo, interpretaTexto } from './dominio/textolivre';
+import { corpoVazio, estadoInicial, passoValido } from './dominio/primeira-vez';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
@@ -34,7 +35,7 @@ import { DESTINOS_V3, FOLHAS_V3 } from './ui/v3/telas.js';
 import { ligado, fitaLigada, comModulo, comFita, normalizaModulos } from './dominio/modulos';
 import { DIAS_NA_LIXEIRA, chaveDaLixeira, diasRestantes, nomeNaLixeira, ordemDaLixeira, pastaDaLixeira, vencidos as vencidosDaLixeira } from './dominio/lixeira';
 import { LugarNaPilha, FolhaDaPilha } from './ui/v3/camada.js';
-import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
+import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino, rotacao } from './dominio/dia';
 import { diasComTreino as _diasComTreino, inicioDoDia as _inicioDoDia, iniciosDoPeriodo as _iniciosDoPeriodo, medianaDosInicios as _medianaDosInicios, leituraDosDias as _leituraDosDias,
          serieDaMediaMovel as _serieDaMediaMovel } from './dominio/mes';
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
@@ -58,8 +59,8 @@ import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from '
 import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
-  chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde,
-  lapidesDoApagamento, uneLapides, DOCUMENTOS, valorDoDocumento, TETO, TETO_PEDIDOS, chaveDeCatalogo
+  chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde, soTemAbertura,
+  lapidesDoApagamento, uneLapides, uneDiasDeComida, DOCUMENTOS, valorDoDocumento, TETO, TETO_PEDIDOS, chaveDeCatalogo
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -131,7 +132,7 @@ function lapide(chave, quando) {
   return t;
 }
 function depoisDe(morte) { return Math.max(Date.now(), (morte || 0) + 1); }
-function rot() { return (S.rot && S.rot.length) ? S.rot : ROT_BASE; }
+function rot() { return rotacao(S, ROT_BASE); }
 
 // Sessões de cardio por semana que o treinador pede: segunda depois do A e
 // quinta depois do D, que é o treino curto.
@@ -326,13 +327,6 @@ function treino(d) {
 // foi por uma lista escrita à mão que a importação derrubou seis campos de topo
 // em silêncio.
 
-/** Um `S.body` vazio, com todas as séries de medida. */
-function corpoVazio() {
-  const b = {};
-  MARCAS_DO_CORPO.forEach(function (k) { b[k] = []; });
-  return b;
-}
-
 /** O `S.body` de um backup, chave por chave. O que não for lista vira lista. */
 function corpoDoBackup(body) {
   const b = corpoVazio();
@@ -345,7 +339,7 @@ function corpoDoBackup(body) {
 
 
 
-let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] }, promoPendente:[] };
+let S = estadoInicial();
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, modoSessao:false, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, prog:null, medida:null, aulas:false, rapido:false,
   protocolo:null, comparar:null, evolucao:null, diaAberto:null, ajuste:null, camera:null, ajustes:false };
@@ -368,14 +362,10 @@ const STORE_LABEL = {
 // Padrões de campos novos e formas inválidas. Roda no boot e na importação:
 // um backup antigo tem que chegar às migrações no mesmo estado que o disco.
 function normalizaEstado() {
-  // A metade de comida entra AQUI e não só na migração 3→4: estado novo já
-  // nasce com plano = PLANO_ATUAL, então a migração devolve null sem semear
-  // nada, e a nutrição ficaria vazia para sempre em aparelho novo. Campo novo
-  // recebe padrão neste ponto — é o contrato da regra 2, e é por onde passam
-  // tanto o boot quanto a importação de backup.
-  if (!S.cadencia || S.cadencia.length !== 7) S.cadencia = CADENCIA_PADRAO.slice();
+  if (!passoValido(S.primeiraVez)) delete S.primeiraVez;
+  if (!S.cadencia || S.cadencia.length !== 7) S.cadencia = S.primeiraVez ? Array(7).fill('descanso') : CADENCIA_PADRAO.slice();
   if (!S.comida || typeof S.comida !== 'object') S.comida = { plano: null, alimentos: {}, ocultos: {} };
-  if (!S.comida.plano) S.comida.plano = JSON.parse(JSON.stringify(PLANO_BASE));
+  planoDeComida();
   if (!S.comida.alimentos || typeof S.comida.alimentos !== 'object') S.comida.alimentos = {};
   if (!S.comida.ocultos || typeof S.comida.ocultos !== 'object') S.comida.ocultos = {};
   if (!S.compras || typeof S.compras !== 'object') S.compras = { comprado:{}, extras:[], removidas:{}, dias:7 };
@@ -506,6 +496,23 @@ async function guardaIlegivel(chave, bruto) {
 }
 let registroIlegivel = false;
 
+function migraEstado() {
+  // as migrações rodam em cadeia: quem está no plano 1 passa pelas duas
+  const arquivados = migraPlano(S);
+  const m3 = migraPlano3(S);
+  migraPlano4(S);
+  migraPlano5(S);
+  migraPlano6(S);
+  const m7 = migraPlano7(S);
+  migraPlano8(S);
+  migraPlano9(S);
+  migraPlano10(S);
+  migraPlano11(S);
+  migraPlano12(S);
+  garanteProgramaERotacao();
+  return { arquivados, m3, m7 };
+}
+
 async function load() {
   const legado = await leBruto(KEY_LEGADO);
   const bruto = await leBruto(KEY);
@@ -522,24 +529,18 @@ async function load() {
   else if (atual) S = atual;
   else if (antigo) S = antigo;
 
+  await carregaSync();
+  if (!atual && !antigo && (sync.jaSincronizou || sync.v != null || sync.forcar)) {
+    // O estado que correspondia à versão vista já não existe neste aparelho.
+    sync.v = null; sync.em = 0; sync.forcar = false; sync.jaSincronizou = false;
+    await gravaSync();
+  }
   normalizaEstado();
   montaCatalogo();
   // a lixeira das fotos esvazia o que passou de 30 dias, também sem rede
   setTimeout(function () { if (!desligado) purgaLixeira().catch(function () {}); }, 4000);
 
-  // as migrações rodam em cadeia: quem está no plano 1 passa pelas duas
-  const arquivados = migraPlano(S);
-  const m3 = migraPlano3(S);
-  migraPlano4(S);
-  migraPlano5(S);
-  migraPlano6(S);
-  const m7 = migraPlano7(S);
-  migraPlano8(S);
-  migraPlano9(S);
-  migraPlano10(S);
-  migraPlano11(S);
-  migraPlano12(S);
-  garanteProgramaERotacao();
+  const { arquivados, m3, m7 } = migraEstado();
   montaCatalogo();
   limpaFila();
   // O que está no disco não é mudança: daqui em diante, só o que mudar ganha carimbo.
@@ -603,7 +604,6 @@ async function load() {
 
   // A nuvem entra DEPOIS de a tela já estar de pé: o app não espera rede para
   // funcionar, e quem chegou primeiro é o dado do aparelho.
-  await carregaSync();
   await NUVEM.pronta();
   if (NUVEM.sessao()) { render(); sincroniza(); }
   // O que a 6→7 apagou merece ser dito: apagar histórico em silêncio é o tipo
@@ -1307,19 +1307,24 @@ const CHAVE_SYNC = 'treino-sync-v1';
 // outro que já subiu o que só ele tem.
 // `expirou`: o instante em que a sessão de login caiu (401). Fica gravado: o
 // aviso tem de sobreviver a fechar e abrir o app, até ele entrar de novo.
-let sync = { v: null, em: 0, sujo: false, rodando: false, erro: null, forcar: false, fotos: {}, expirou: 0, apagar: [] };
+let sync = { v: null, em: 0, jaSincronizou: false, sujo: false, rodando: false, erro: null, forcar: false, fotos: {}, expirou: 0, apagar: [] };
 
 async function carregaSync() {
   try {
     const r = await DB.get(CHAVE_SYNC);
-    if (r && r.value) Object.assign(sync, JSON.parse(r.value), { rodando: false });
+    if (r && r.value) {
+      const controle = JSON.parse(r.value);
+      Object.assign(sync, controle, { rodando: false });
+      // Nos aparelhos anteriores ao marcador, a versão vista e o último sucesso já eram recibos.
+      sync.jaSincronizou = controle.jaSincronizou ?? (sync.v != null || sync.em > 0);
+    }
     if (!sync.fotos || typeof sync.fotos !== 'object') sync.fotos = {};
     if (!Array.isArray(sync.apagar)) sync.apagar = [];
   } catch (e) {}
 }
 function gravaSync() {
-  DB.set(CHAVE_SYNC, JSON.stringify({
-    v: sync.v, em: sync.em, sujo: sync.sujo, forcar: sync.forcar, fotos: sync.fotos || {},
+  return DB.set(CHAVE_SYNC, JSON.stringify({
+    v: sync.v, em: sync.em, jaSincronizou: sync.jaSincronizou, sujo: sync.sujo, forcar: sync.forcar, fotos: sync.fotos || {},
     expirou: sync.expirou || 0, apagar: sync.apagar || []
   }));
 }
@@ -1352,24 +1357,26 @@ function sujou() {
  * seguidas.
  */
 /**
- * O app não funciona sem programa e sem rotação. Estado vindo de fora — backup
- * antigo, aparelho novo, fusão com quem ainda não tinha nada — pode chegar sem
- * eles, e aí a tela quebra antes de qualquer mensagem de erro.
+ * O estado antigo podia depender da prescrição embutida. No perfil pessoal uma
+ * rotação vazia é válida, inclusive ao reabrir, restaurar ou entrar na conta.
  */
 function garanteProgramaERotacao() {
-  if (!S.prog || typeof S.prog !== 'object') S.prog = semeiaProg();
-  if (!Array.isArray(S.rot) || !S.rot.length) S.rot = ROT_BASE.slice();
+  if (!S.prog || typeof S.prog !== 'object') S.prog = S.primeiraVez ? {} : semeiaProg();
+  if (!Array.isArray(S.rot) || (!S.rot.length && !S.primeiraVez)) S.rot = S.primeiraVez ? [] : ROT_BASE.slice();
 }
 
 async function sincroniza(opcoes) {
   const manual = !!(opcoes && opcoes.manual);
   if (desligado || !NUVEM.sessao()) return;
   if (sync.rodando) { pedidoNoMeio = true; return; }
-  // o que estiver represado sobe neste ciclo, não no próximo
-  await liberaSave();
   sync.rodando = true; sync.erro = null; render();
+  let avisouPrescricao = false;
   try {
+    // O que estiver represado sobe neste ciclo, já com a sincronização em curso.
+    await liberaSave();
     for (let tentativa = 0; tentativa < 3; tentativa++) {
+      const primeiraConta = !sync.jaSincronizou && !!S.primeiraVez;
+      if (primeiraConta) sync.forcar = false;
       const lida = await NUVEM.puxa();
       if (!lida.ok) { sync.erro = lida.msg; if (lida.erro === 'auth') sync.expirou = Date.now(); if (manual) toast(lida.msg); return; }
 
@@ -1385,17 +1392,36 @@ async function sincroniza(opcoes) {
           return;
         }
         if (!jaVisto) {
-          const { estado, resumo } = funde(S, linha.data, Date.now());
+          const aindaComecando = passoInicial();
+          const trazDados = primeiraConta && !soTemAbertura(S);
+          const revisaoLocal = trazDados && Object.keys(linha.data.prog || {}).length &&
+            (S.progLog || []).slice().reverse().find(x => x.textoRevisao);
+          const { estado, resumo } = funde(S, linha.data, Date.now(), primeiraConta);
           S = estado;
           normalizaEstado();
-          garanteProgramaERotacao();
+          migraEstado();
+          if (aindaComecando) {
+            view.day = diaDaSessaoAberta() || nextDay();
+            delete view.escolhasIniciais;
+            delete view.repeteInicio;
+          }
           montaCatalogo();
           limpaFila();                       // a resposta dada lá vale aqui
           lembraDocumentos();                // o que veio de lá não é mudança daqui
-          await grava();                     // grava a fusão SEM recarimbar
-          contaFusao(resumo, manual);
+          const gravou = await grava();      // grava a fusão SEM recarimbar
+          if (trazDados) sync.sujo = true;
+          if (gravou && !sync.jaSincronizou) {
+            sync.jaSincronizou = true;       // a fusão já dura, mesmo se o envio falhar
+            await gravaSync();
+          }
+          if (revisaoLocal && !avisouPrescricao) {
+            avisoComAcao('Ficou o programa da sua conta. O texto que você colou está guardado.',
+              'Rever texto', () => CTX.abreRevisao(revisaoLocal.textoRevisao));
+            avisouPrescricao = true;
+          } else if (!avisouPrescricao) contaFusao(resumo, manual);
           if (!sync.sujo && !temQueEmpurrar(resumo)) {
-            sync.v = linha.v; sync.em = Date.now(); gravaSync(); render(); return;
+            if (gravou) { sync.v = linha.v; sync.em = Date.now(); }
+            gravaSync(); render(); return;
           }
         }
       }
@@ -1403,10 +1429,11 @@ async function sincroniza(opcoes) {
       const levou = geracao;
       const escrita = await NUVEM.empurra(deV, S);
       if (escrita.ok) {
+        sync.jaSincronizou = true;
         sync.v = escrita.v; sync.sujo = geracao !== levou; sync.forcar = false; sync.em = Date.now();
         if (sync.sujo) pedidoNoMeio = true;
         gravaSync(); render();
-        if (manual) toast('Sincronizado.');
+        if (manual && !avisouPrescricao) toast('Sincronizado.');
         reconciliaFotos();                     // sem await: os bytes vão por fora
         reconciliaCorpo();
         return;
@@ -1800,9 +1827,9 @@ let ultimaGravacaoOk = Date.now();
 function declaraGravacao(oQue, valor) { oQueGrava = { oQue: oQue, valor: valor || null }; }
 
 /** Escreve o estado como ele está. Não carimba: quem carimba é `save`. */
-async function grava() {
+async function grava(estado = S) {
   let ok;
-  try { ok = await DB.set(KEY, JSON.stringify(S)); }
+  try { ok = await DB.set(KEY, JSON.stringify(estado)); }
   catch (e) { console.error('não salvou', e); ok = false; }
   if (ok) {
     oQueGrava = null;
@@ -2631,8 +2658,11 @@ function fechaDiaDeComida(dia) {
   const fechado = Object.assign({}, dia, { cadencia: tipoDoDiaDeComida(dia.data, dia.cadencia, true) });
   const h = fechaDia(fechado, planoDeComida(), catalogoAlimentos(),
                      versaoDoPlano(), S.ajuste || 0, Date.now());
-  const j = S.comidaHist.findIndex(function (x) { return x.d === h.d; });
-  if (j >= 0) S.comidaHist[j] = h; else S.comidaHist.push(h);
+  const j = S.comidaHist.findIndex(x => x.d === h.d);
+  const anterior = j < 0 ? [] : [S.comidaHist[j]];
+  const unidos = uneDiasDeComida(anterior, [h], S.apagados || {}).itens;
+  if (j < 0) S.comidaHist.push(...unidos);
+  else S.comidaHist.splice(j, 1, ...unidos);
   S.comidaHist.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
   if (S.comidaHist.length > TETO.comida) S.comidaHist = S.comidaHist.slice(-TETO.comida);
 }
@@ -2658,6 +2688,7 @@ function duracaoDoTreino() {
  * do Safari.
  */
 function versaoDoPlano() {
+  if (S.primeiraVez && !S.comida.plano?.length && !S.comida.v) return 0;
   if (!S.comida.v) S.comida.v = Date.now();
   return S.comida.v;
 }
@@ -2685,7 +2716,7 @@ function catalogoAlimentos() {
 }
 
 function planoDeComida() {
-  if (!S.comida.plano) S.comida.plano = JSON.parse(JSON.stringify(PLANO_BASE));
+  if (!S.comida.plano) S.comida.plano = S.primeiraVez ? [] : JSON.parse(JSON.stringify(PLANO_BASE));
   return S.comida.plano;
 }
 
@@ -2802,7 +2833,7 @@ const CTX = {
   telaCheia: telaCheia,
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
-    return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
+    return !!(passoInicial() || view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.galeria || view.diaAberto || view.ajuste || view.camera ||
               view.ajustes || view.modoSessao || view.porEmDia || view.revisao || view.fotos || view.noTempo || view.naMesmaData || view.progressao || view.responderDias);
   },
@@ -3084,8 +3115,8 @@ function telaCheia() {
   // O destino de cima é o mesmo que o Voltar desfaz (`camadasAbertas`), sem as
   // folhas e os painéis. `so`: o destino que só assume a camada em certas
   // condições (o histórico de um exercício, aberto pela progressão).
-  const destinos = camadasAbertas(view).filter(function (c) { return c.indexOf('folha:') !== 0 && c !== 'pare' && c !== 'falhou'; });
-  const D = DESTINOS_V3[destinos[destinos.length - 1]];
+  const destinos = camadasAbertas(view, passoInicial()).filter(function (c) { return c.indexOf('folha:') !== 0 && c !== 'pare' && c !== 'falhou'; });
+  const D = DESTINOS_V3[destinos[destinos.length - 1] || (passoInicial() && 'pvTreino')];
   if (D && (!D.so || D.so(view))) return <div class="v3"><D ctx={CTX} /></div>;
   return null;
 }
@@ -3100,11 +3131,11 @@ function semanasDe(t) { return semanasDesde(t, Date.now()); }
 // (decisão do dono, 14/10). Daí em diante é o da revisão, guardado no dado —
 // é contra ele que "igual ao treinador", o alvo de séries e o restaurar leem.
 function baseTreinador() {
-  return S.progTreinador && S.progTreinador.dias ? S.progTreinador.dias : semeiaProg();
+  return S.progTreinador && S.progTreinador.dias ? S.progTreinador.dias : (S.primeiraVez ? {} : semeiaProg());
 }
 function rotTreinador() {
   return S.progTreinador && Array.isArray(S.progTreinador.rot) && S.progTreinador.rot.length
-    ? S.progTreinador.rot : ROT_BASE;
+    ? S.progTreinador.rot : (S.primeiraVez ? [] : ROT_BASE);
 }
 function alvo() {
   const b = baseTreinador(), prog = {};
@@ -3771,8 +3802,8 @@ function impactoOficial(g) {
 // com as séries que aquele exercício já tem —, diz o que muda em cada treino e
 // quais mudanças dele saem, e só então grava. Errar a correspondência manda o
 // histórico para o exercício errado (F300): por isso nada é chutado.
-CTX.abreRevisao = function () {
-  view.revisao = { texto: '', lida: null, respostas: {} };
+CTX.abreRevisao = function (texto) {
+  view.revisao = { texto: typeof texto === 'string' ? texto : '', lida: null, respostas: {} };
   entraNoDestino('revisao'); render();
 };
 CTX.fechaRevisao = function () { view.revisao = null; render(); saiDoDestino('revisao'); };
@@ -3999,13 +4030,17 @@ CTX.incorporaRevisao = async function (evento) {
     // o registro inteiro de cada mudança (todos os campos), e não só o título da tela
     const lista = function (ms) { return ms.map(function (m) { return m.texto; }).join('; '); };
     logProg(d.dia, 'revisão do treinador' + de + ': ' + (escolhidas.length ? lista(escolhidas) : 'nenhuma mudança aplicada') +
-                   (deixadas.length ? '. Ficou de fora: ' + lista(deixadas) : '') + '.');
+                   (deixadas.length ? '. Ficou de fora: ' + lista(deixadas) : '') + '.',
+      null, !tocados.length && S.primeiraVez && !sync.jaSincronizou ? r.texto : undefined);
     tocados.push(d.dia);
   });
   S.progTreinador = { em: agora, data: r.lida.data, rot: rotBase, dias: base };
+  const primeiroTreino = passoInicial() === 1;
+  if (primeiroTreino) S.primeiraVez = 2;
 
   if ((await save()) === false) {
     r.aplicando = false;
+    if (primeiroTreino) S.primeiraVez = 1;
     Object.assign(S, marcas);
     impressoes = impressoesAntes;
     const v = JSON.parse(antes);
@@ -4046,13 +4081,15 @@ CTX.incorporaRevisao = async function (evento) {
     if (ok) toast('Revisão desfeita.');
   };
   noDesenho(() => CTX.avisaComDesfazer(aplicadas
-    ? aplicadas + (aplicadas === 1 ? ' mudança aplicada' : ' mudanças aplicadas') + '. Valem a partir do próximo treino.'
+    ? aplicadas + (aplicadas === 1 ? ' mudança aplicada. Vale' : ' mudanças aplicadas. Valem') + ' a partir do próximo treino.'
     : 'Revisão guardada. O seu programa não mudou.', desfaz));
 };
 
-function logProg(d, txt, motivo) {
+function logProg(d, txt, motivo, textoRevisao) {
   if (!Array.isArray(S.progLog)) S.progLog = [];
-  S.progLog.push({ t: Date.now(), day: d, txt: txt, motivo: motivo || null, m: Date.now() });
+  const entrada = { t: Date.now(), day: d, txt: txt, motivo: motivo || null, m: Date.now() };
+  if (textoRevisao) entrada.textoRevisao = textoRevisao;
+  S.progLog.push(entrada);
   if (S.progLog.length > TETO.progLog) S.progLog = S.progLog.slice(-TETO.progLog);
 }
 
@@ -5114,6 +5151,7 @@ CTX.falhou = function () { return view.falhou && view.naoGuardado ? view.naoGuar
 /** Tentar de novo é repetir a MESMA intenção: gravar o estado inteiro. */
 CTX.tentaGravar = function () {
   if (view.revisao && view.revisao.falhou) return CTX.incorporaRevisao();
+  if (view.repeteInicio && passoInicial()) return view.repeteInicio();
   return save();
 };
 /** "Ver", na faixa da falha: o painel com o que era, o porquê e o que fazer. */
@@ -5245,6 +5283,10 @@ async function importText(txt) {
   // "substitui", e a sincronia seguinte trazia de volta tudo o que o arquivo não
   // tinha — e o que só existia aqui, sem ter subido, se perdia de verdade.
   const comConta = !!NUVEM.sessao();
+  if (!comConta && soTemAbertura(d) && !soTemAbertura(S)) {
+    toast('Essa cópia só tem as escolhas da primeira vez. Seu registro continua aqui.');
+    return;
+  }
   const ok = await pare(comConta
     ? { texto: 'Importar ' + sessoes(nS) + ' e ' + exercicios(nE) + ' do backup junta o que está nele ao histórico da sua conta (' + sessoes(S.done.length) + '): o que estiver no arquivo volta, e nada do que já está aqui ou na conta é apagado.',
         sim: 'Juntar o backup', tom: 'pergunta' }
@@ -5253,7 +5295,7 @@ async function importText(txt) {
   if (!ok) return;
   const atual = S;
 
-  S = { logs: d.logs, done: d.done, deload: !!d.deload, draft: d.draft || null,
+  S = { primeiraVez: d.primeiraVez, logs: d.logs, done: d.done, deload: !!d.deload, draft: d.draft || null,
         cardio: Array.isArray(d.cardio) ? d.cardio : [],
         // A lista branca das medidas do corpo também é por chave, e também
         // enumera `MARCAS_DO_CORPO`: escrita à mão, ela derrubaria em silêncio
@@ -5326,25 +5368,15 @@ async function importText(txt) {
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();
-  migraPlano(S);
-  migraPlano3(S);
-  migraPlano4(S);
-  migraPlano5(S);
-  migraPlano6(S);
-  // A 7 e a 8 faltavam aqui. `ARQUITETURA` diz que toda migração roda no boot
-  // E na importação, pelo mesmo caminho — um backup do plano 6 entrava com o
-  // histórico das estações de HYROX que a 6→7 existe para apagar.
-  migraPlano7(S);
-  migraPlano8(S);
-  migraPlano9(S);
-  migraPlano10(S);
-  migraPlano11(S);
-  migraPlano12(S);
+  migraEstado();
   if (comConta) {
     S = funde(atual, S, Date.now()).estado;
     normalizaEstado();
-    garanteProgramaERotacao();
   }
+  garanteProgramaERotacao();
+  delete view.escolhasIniciais;
+  delete view.repeteInicio;
+  if (S.primeiraVez) lembraDocumentos();
   montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;
@@ -7122,7 +7154,7 @@ async function wipe() {
   const agora = Date.now();
   // apagar o histórico não apaga o programa: os exercícios que ele cadastrou
   // e as mudanças que promoveu ao oficial sobrevivem
-  S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
+  S = { primeiraVez:S.primeiraVez, logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
         body:corpoVazio(), carga:{}, export:0,
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
         progTreinador:S.progTreinador || null,
@@ -7973,6 +8005,8 @@ function sentidoDaTroca(antes, agora, abaAntes, abaAgora, passoAntes, passoAgora
   const topoAntes = da.length ? da[da.length - 1] : null;
   const topoAgora = dn.length ? dn[dn.length - 1] : null;
   if (topoAntes !== topoAgora) {
+    if ((!topoAntes || topoAntes === 'pvComida' || topoAntes === 'pvAcompanhar') &&
+        (!topoAgora || topoAgora === 'pvComida' || topoAgora === 'pvAcompanhar') && passoInicial()) return 'passo';
     const chega = topoAgora != null && da.indexOf(topoAgora) < 0;
     if (chega) return eAcao(topoAgora) ? (eAcao(topoAntes) ? 'passo' : 'sobe') : 'entra';
     return eAcao(topoAntes) ? (eAcao(topoAgora) ? 'passo' : 'desce') : 'sai';
@@ -8032,7 +8066,7 @@ function topoDe(l) {
 
 function render() {
   if (desligado || desenhoPendente) return;
-  const pedidas = camadasAbertas(view);
+  const pedidas = camadasAbertas(view, passoInicial());
   const sentido = abriu ? sentidoDaTroca(camadasDesenhadas, pedidas, abaDesenhada, CTX.abaAtual(),
                                          passoDesenhado, passoDaAcao(topoDe(pedidas))) : null;
   if (!sentido) { desenhaAgora(); return; }
@@ -8084,7 +8118,7 @@ function desenhaAgora() {
   const depois = paraODesenho;
   paraODesenho = [];
   depois.forEach(function (f) { f(); });
-  camadasDesenhadas = camadasAbertas(view);
+  camadasDesenhadas = camadasAbertas(view, passoInicial());
   abaDesenhada = CTX.abaAtual();
   passoDesenhado = passoDaAcao(topoDe(camadasDesenhadas));
   devolveOFoco(antes, camadasDesenhadas);
@@ -8117,6 +8151,8 @@ function noDesenho(f) {
 // que já existia, e é isso que garante que voltar pelo gesto e voltar pelo
 // botão deixem o app no mesmo estado.
 const FECHA_CAMADA = {
+  pvComida: () => CTX.voltaInicio(),
+  pvAcompanhar: () => CTX.voltaInicio(),
   // Voltar com o aviso de falha aberto é "Fechar este aviso": dispensar não
   // escolhe por ele, e a marca de não guardado continua.
   falhou:    function () { dispensaFalha(); },
@@ -8155,7 +8191,7 @@ const FECHA_CAMADA = {
 };
 
 function voltarUmaCamada(como) {
-  const camadas = camadasAbertas(view);
+  const camadas = camadasAbertas(view, passoInicial());
   if (!camadas.length) return;
   const topo = camadas[camadas.length - 1];
   // Quando o navegador já animou a volta (o gesto de borda do iPhone), o fecho
@@ -8180,7 +8216,7 @@ ligaNavegacao({
   // fechada pelo botão — compara com ELA. Comparado com o `view` pendente, ele
   // via uma camada a mais e a fechava: abrir a Evolução logo depois de sair do
   // modo a fechava sozinha (medido no WebKit, onde a foto da tela velha demora).
-  camadas: function () { return desenhoPendente ? camadasDesenhadas.length : camadasAbertas(view).length; },
+  camadas: function () { return desenhoPendente ? camadasDesenhadas.length : camadasAbertas(view, passoInicial()).length; },
   aoVoltar: voltarUmaCamada
 });
 
@@ -8189,7 +8225,7 @@ ligaNavegacao({
 CTX.planoCompleto = function () {
   const cat = catalogoAlimentos();
   const doNutri = {};
-  PLANO_BASE.forEach(function (r) { doNutri[r.id] = true; });
+  if (!S.primeiraVez) PLANO_BASE.forEach(function (r) { doNutri[r.id] = true; });
   return planoDeComida().slice()
     .sort(function (a, b) { return a.t.localeCompare(b.t); })
     .map(function (r) {
@@ -8244,39 +8280,56 @@ CTX.resumoDoPlano = function () {
   };
 };
 
-// ---------- o endereço vazio (a D, `prescricao.html`, estado 9) ----------
-//
-// Os dados ficam presos ao endereço de onde o app é aberto (F56): um link novo
-// abre um app vazio, e o histórico continua no antigo. Aparelho novo já ficaria
-// sem plano para sempre (F271). Então o vazio de verdade não oferece começar em
-// primeiro: oferece ACHAR o que existe — a conta, a cópia de segurança, o ícone
-// antigo — e só depois começar. O programa e o plano já vêm semeados; começar é
-// só dizer que não há nada em outro lugar.
-function enderecoVazio() {
-  if (NUVEM.sessao()) return false;
-  const tem = function (x) { return Array.isArray(x) && x.length > 0; };
-  if (Object.keys(S.logs || {}).some(function (k) { return tem(S.logs[k]); })) return false;
-  if (tem(S.done) || tem(S.cardio) || tem(S.progLog) || tem(S.aulas) || tem(S.comidaHist)) return false;
-  if (S.body && Object.keys(S.body).some(function (k) { return tem(S.body[k]); })) return false;
-  if (S.protocolo && tem(S.protocolo.sessoes)) return false;
-  const d = S.dia;
-  if (S.sessao || (d && ((d.done && Object.keys(d.done).length) || d.agua))) return false;
-  return true;
-}
-CTX.enderecoVazio = function () {
-  if (view.comecouAqui || !enderecoVazio()) return null;
-  const r = rot().filter(function (k) { return !!treino(k); });
-  const series = r.reduce(function (n, k) {
-    return n + treino(k).ex.reduce(function (m, ex) { return m + setsFor(ex); }, 0);
-  }, 0);
-  const res = CTX.resumoDoPlano();
-  return {
-    programa: r.length + ' treinos na sequência · ' + series + ' séries nela inteira',
-    plano: res.refeicoes + ' momentos · ' + res.treino.kcal + ' kcal em dia de treino',
-    semRede: typeof navigator !== 'undefined' && navigator.onLine === false
+// A primeira tela é a raiz do aparelho novo. Só os passos seguintes entram no histórico.
+function passoInicial() { return S.primeiraVez < 4 ? S.primeiraVez : null; }
+CTX.passoInicial = passoInicial;
+CTX.escolhasIniciais = function () {
+  if (!view.escolhasIniciais) view.escolhasIniciais = {
+    treinador: true, comida: S.primeiraVez > 2 ? ligado(S.modulos, 'comida') : true,
+    peso: true, agua: false, cardio: false, fotos: false
   };
+  return view.escolhasIniciais;
 };
-CTX.comecaAqui = function () { view.comecouAqui = true; render(); };
+CTX.escolheInicio = function (k, v) { CTX.escolhasIniciais()[k] = v; render(); };
+async function guardaPasso(passo, modulos) {
+  if (view.guardandoInicio) return;
+  const origem = S;
+  view.guardandoInicio = true;
+  declaraGravacao('as escolhas da primeira vez');
+  const ok = await grava({ ...S, primeiraVez: passo, modulos });
+  view.guardandoInicio = false;
+  if (S !== origem) { await grava(); return; } // a conta ou a cópia chegou enquanto o disco gravava
+  if (!ok && DB.mode !== 'mem') {
+    view.repeteInicio = () => guardaPasso(passo, modulos);
+    return;
+  }
+  view.repeteInicio = null;
+  S.primeiraVez = passo;
+  S.modulos = modulos;
+  // Escolhas da abertura cedem às preferências de uma conta já usada.
+  impressoes.modulos = impressaoDe('modulos');
+  sujou();
+  if (passo === 4) delete view.escolhasIniciais;
+  render(); rola(0);
+}
+CTX.voltaInicio = function () {
+  if (passoInicial() > 1) return guardaPasso(S.primeiraVez - 1, S.modulos);
+};
+CTX.avancaInicio = function (pular, passoNaTela = passoInicial()) {
+  const passo = passoInicial();
+  if (!passo || passo !== passoNaTela || view.guardandoInicio) return;
+  const e = CTX.escolhasIniciais();
+  if (passo === 1 && !pular && e.treinador) { CTX.abreRevisao(); return; }
+  let modulos = S.modulos;
+  if (passo === 2) {
+    e.comida = !pular && e.comida;
+    modulos = comModulo(modulos, 'comida', e.comida);
+  }
+  if (passo === 3 && !pular) {
+    for (const k of ['peso', 'agua', 'cardio', 'fotos']) modulos = comModulo(modulos, k, e[k]);
+  }
+  return guardaPasso(passo + 1, modulos);
+};
 
 /**
  * O PLANO no visual novo (Fase 4): os treinos, a semana de treino, a comida
@@ -8905,6 +8958,7 @@ CTX.alternaCadencia = function (i) {
 
 CTX.restauraPrograma = function () { restaurarTudo(); };
 CTX.restauraPlano = async function () {
+  if (S.primeiraVez) return;
   if (!(await pare({ texto: 'Voltar ao plano do nutricionista? Seus alimentos cadastrados e todo o histórico ficam. Volta só a prescrição.', sim: 'Voltar ao plano dele' }))) return;
   // O carimbo vem DEPOIS da pergunta, e por isso: ele estava antes, então
   // cancelar subia a versão do plano sem o plano mudar, e o app passava a
@@ -10208,7 +10262,7 @@ CTX.entrarNaNuvem = async function () {
   if (!r.ok) { view.nuvemErro = r.msg; render(); return; }
   // a senha não fica pendurada na memória da tela depois de usada
   view.nuvemForm = null;
-  // primeiro login neste aparelho: nada foi visto ainda, então tudo se funde
+  // Relê a conta a cada login, inclusive depois de renovar a senha.
   sync.v = null; sync.sujo = true; sync.expirou = 0;
   gravaSync(); render();
   toast('Conectado como ' + r.v.email + '.');
@@ -10235,6 +10289,7 @@ CTX.dadosDoApp = function () {
     backupTxt: S.export
       ? Math.round(sb) + ' dias desde o último backup.'
       : 'Você nunca exportou o histórico.',
+    temPlanoEmbutido: !S.primeiraVez,
     difTxt: dif ? dif + ' ' + (dif === 1 ? 'diferença' : 'diferenças') + ' do treinador' : null,
     treinos: rot().length,
     json: view.json,
@@ -11187,7 +11242,7 @@ CTX.retroativo = function () {
     return Object.assign(base, {
       gravado: false,
       pergunta: 'Que treino foi ' + (d.getDay() === 0 || d.getDay() === 6 ? 'no ' : 'na ') + nomeDoDia + ', ' + dataCurta + '?',
-      previsto: { k: previsto, letra: diaAberto(previsto) ? 'aula' : previsto, titulo: nomeDe(previsto), detalhe: descreve(previsto) },
+      previsto: previsto ? { k: previsto, letra: diaAberto(previsto) ? 'aula' : previsto, titulo: nomeDe(previsto), detalhe: descreve(previsto) } : null,
       outros: rot().filter(function (k) { return k !== previsto; })
         .map(function (k) { return { k: k, t: diaAberto(k) ? 'Aula' : k }; })
     });
@@ -11584,6 +11639,7 @@ function programaHist() {
       return {
         i: i,
         txt: x.txt,
+        textoRevisao: x.textoRevisao,
         meta: 'treino ' + x.day + ' · ' + diaExtenso(x.t) +
               (x.motivo ? ' · ' + (MOT[x.motivo] || x.motivo) : '')
       };
@@ -13559,6 +13615,9 @@ CTX.hojeV3 = function () {
               titulo: r.n, apoio: nomesDaRefeicao(resumoDaRefeicao(r, cat, H.alta, d.escala[r.id] != null ? d.escala[r.id] : 1)),
               sub: r.t.replace(':', 'h') + ' · ' + Math.round(totalDaRefeicao(r, cat, H.alta).kcal) + ' kcal',
               pergunta: view.perguntaDe === r.id };
+  } else if (S.primeiraVez && !rot().length && !prox) {
+    bloco = { k: 'semTreino', cor: 'treino', quando: 'ainda sem treino', titulo: 'Nada para agora.',
+                apoio: 'Quando houver um treino no app, o próximo aparece aqui, com um botão só.' };
   } else {
     bloco = { k: 'livre', cor: 'feito', fino: true, quando: H.diaHoje.cadencia === 'treino' ? 'tudo em dia' : 'dia de descanso',
               titulo: prox ? 'Livre até as ' + prox.t.replace(':', 'h') : 'Dia fechado',
@@ -13597,6 +13656,7 @@ CTX.hojeV3 = function () {
       cardio: ligado(S.modulos, 'cardio') ? { n: cardioSemana, meta: 2 } : null
     },
     ritmo: ritmo,
+    temHistorico: !!(S.done.length || S.comidaHist.length),
     ontem: ontemEmBranco ? ontem : null,
     comida: comOn,
     lembrete: lembreteDasFotos(agora)
@@ -14006,7 +14066,7 @@ CTX.cicloDoBloco = function () {
   return {
     sessoes: S.done.length,
     treinos: treinos,
-    ciclo: String(Math.floor(S.done.length / treinos) + 1)
+    ciclo: treinos ? String(Math.floor(S.done.length / treinos) + 1) : '—'
   };
 };
 

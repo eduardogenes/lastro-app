@@ -5,7 +5,7 @@
 // a faixa de séries por músculo é `ctx.faixaDoTreinoV3`.
 
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Botao, Caixa, Cabecalho, Chave, Linha, Pergunta, Saida, Secao, Vazio } from '../base.jsx';
+import { Acoes, Apoio, Botao, Caixa, Cabecalho, Chave, Linha, Pequeno, Pergunta, Saida, Secao, Vazio } from '../base.jsx';
 
 export function ProgramaV3({ ctx }) {
   const p = ctx.programa();
@@ -31,7 +31,11 @@ export function ProgramaV3({ ctx }) {
     return (
       <>
         <Cabecalho titulo="Mudanças" nota={p.meta} aoVoltar={A.volta} />
-        <Secao><div>{p.log.length ? p.log.map(x => <Linha key={x.i} titulo={x.txt} apoio={x.meta} />) : <Apoio>Nenhuma mudança no programa ainda.</Apoio>}</div></Secao>
+        <Secao><div>{p.log.length ? p.log.map(x => (
+          <Linha key={x.i} titulo={x.txt} apoio={x.meta}>
+            {x.textoRevisao && <Pequeno contorno onClick={() => ctx.abreRevisao(x.textoRevisao)}>Rever texto</Pequeno>}
+          </Linha>
+        )) : <Apoio>Nenhuma mudança no programa ainda.</Apoio>}</div></Secao>
         <div class="v3-fim-curto" />
       </>
     );

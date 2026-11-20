@@ -148,7 +148,7 @@ Treino B · Pernas completas + panturrilhas
   const dif = a.E('difDoDia("B").map(x => x.txt)');
   assert.deepStrictEqual(dif.length, 1, 'a única diferença é a que ficou de fora: ' + dif.join(' | '));
   assert.ok(/Cadeira extensora/.test(dif[0]), dif[0]);
-  assert.ok(/2 mudanças aplicadas/.test(a.toast()), a.toast());
+  assert.match(a.toast(), /^2 mudanças aplicadas\. Valem a partir do próximo treino\./);
   assert.ok(/Ficou de fora: Cadeira extensora sai \(era 1 × 10–15\)/.test(a.E('S.progLog[S.progLog.length - 1].txt')), 'o histórico diz o que ficou de fora');
   // desfazer volta o programa, o do treinador e a sequência, e arquiva o exercício que nada usa
   a.clicar('[data-a="aviso-acao"]');
@@ -181,6 +181,21 @@ async function revisaoLida(a, texto) {
   a.vJ('ctx.revisao').perguntas.forEach(q => a.v('ctx.respondeRevisao', q.nome, 'outro'));
   await a.esperar();
 }
+
+test('uma mudança aplicada usa o singular no aviso', async () => {
+  const a = await noPrograma();
+  try {
+    await revisaoLida(a);
+    for (const mudanca of ['entra:maquina-de-sissy-squat', 'sai:cadeira-extensora']) {
+      a.clicar('[data-a="mud-B:' + mudanca + '"]');
+      await a.esperar();
+    }
+    assert.equal(a.texto('[data-a="revisao-aplica"]'), 'Aplicar 1 mudança');
+    a.clicar('[data-a="revisao-aplica"]');
+    await a.esperar(120);
+    assert.match(a.toast(), /^1 mudança aplicada\. Vale a partir do próximo treino\./);
+  } finally { a.fechar(); }
+});
 
 test('desmarcar o exercício novo o deixa de fora do programa dele, e só do dele', async () => {
   const a = await app({ aba: 'agora' });

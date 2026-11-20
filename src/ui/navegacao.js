@@ -52,9 +52,11 @@
  * @param {object} view
  * @returns {string[]}
  */
-export function camadasAbertas(view) {
+export function camadasAbertas(view, passoInicial) {
   if (!view) return [];
   const c = [];
+  if (passoInicial === 2 || passoInicial === 3) c.push('pvComida');
+  if (passoInicial === 3) c.push('pvAcompanhar');
   // De baixo para cima. Espelha `telaCheia()` de trás para frente.
   //
   // O MODO DE SESSÃO é a camada mais funda: tudo que se abre de dentro dele

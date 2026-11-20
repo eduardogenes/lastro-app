@@ -12,7 +12,7 @@ import { FolhaBioV3, FolhaCorrigeMarca, MedidaV3, NaMesmaData, PesoV3 } from './
 import { FolhaListaTreino, FolhaMenuSessaoV3, FolhaMudarEx, PorEmDiaV3, TreinoEmFoco } from './telas/treino.jsx';
 import { ExercicioV3, FolhaFotoV3, FolhaRenomeiaEx, Progressao } from './telas/progressao.jsx';
 import { ProgramaV3, RevisaoV3 } from './telas/programa.jsx';
-import { FolhaCardioV3, FolhaComiOutra, FolhaOQueAparece, FolhaRefeicaoV3, FolhaRegistrar, FolhaTipoDoDia, HojeV3 } from './telas/hoje.jsx';
+import { FolhaCardioV3, FolhaComiOutra, FolhaOQueAparece, FolhaRefeicaoV3, FolhaRegistrar, FolhaTipoDoDia, HojeV3, PrimeiraVez } from './telas/hoje.jsx';
 import { DiasV3, ResponderDias } from './telas/dias.jsx';
 import { FolhaAplicar, FolhaMusculos, RetrospectivaV3, SemanaV3 } from './telas/semana.jsx';
 import { FolhaAlimentos, FolhaCompras, FolhaRefeicaoDoPlano, PlanoV3 } from './telas/plano.jsx';
@@ -42,6 +42,7 @@ import {
   AjustarV3, CentroDasFotos, Comparar, FolhaFotoComparada, FolhaMandar, GaleriaFotoV3, GaleriaV3, LixeiraV3, NoTempo
 } from './telas/consultafotos.jsx';
 export const DESTINOS_V3 = {
+  pvTreino: PrimeiraVez, pvComida: PrimeiraVez, pvAcompanhar: PrimeiraVez,
   // Fase 1, fotos
   protocolo: SessaoDeFotos,
   passos: PassosDasFotos,

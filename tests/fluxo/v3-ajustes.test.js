@@ -12,16 +12,6 @@ async function comVisual(estado) {
   return a;
 }
 
-test('primeira vez: o aparelho vazio começa pelo que já está aqui, e "começar assim" leva ao Hoje', async () => {
-  const a = await comVisual();
-  assert.ok(a.$('[data-a="primeira-comeca"]'), 'a primeira vez');
-  assert.ok(a.$('[data-a="primeira-treinador"]') && a.$('[data-a="primeira-importa"]'), 'trazer o seu');
-  a.clicar('[data-a="primeira-comeca"]');
-  await a.esperar();
-  assert.ok(a.$('.v3-ld'), 'o Hoje, com a linha do dia');
-  a.fechar();
-});
-
 test('ajustes: a conta, o que aparece e o interruptor do visual', async () => {
   const a = await comVisual();
   a.v('ctx.abreAjustes');
@@ -40,7 +30,6 @@ test('ajustes: a conta, o que aparece e o interruptor do visual', async () => {
 
 test('ajustes se alcançam pelo app: pela folha "O que aparece" e pelo fim do Plano', async () => {
   const a = await comVisual();
-  a.v('ctx.comecaAqui');
   await a.esperar();
   // o ícone de ajuste do bloco do Hoje abre a folha; a última linha dela leva aos Ajustes
   a.clicar('[data-a="hoje-aparece"]');
@@ -68,7 +57,6 @@ test('confirmação: a folha nova, com "Deixar como está" como principal e com 
   const a = await app({ aba: 'agora', agora: agoraEstavel(15), estado: { logs: {}, done: [] }, painelManual: true });
   await a.pronto();
   a.v('ctx.fechaModoDeSessao');
-  a.v('ctx.comecaAqui');
   await a.esperar();
   a.E(`window.__r = 'nada'; pare({ texto: 'Apagar isto tira tudo.', sim: 'Apagar' }).then(r => { window.__r = r; });`);
   await a.esperar(80);
@@ -96,7 +84,6 @@ test('confirmação: a folha nova, com "Deixar como está" como principal e com 
 
 test('estados: a gravação que falhou vira a faixa fixa, e sem rede avisa sem bloquear', async () => {
   const a = await comVisual();
-  a.v('ctx.comecaAqui');
   a.E(`view.naoGuardado = { motivo: 'recusa', oQue: 'a série 2', valor: null, salvo: '' }; render();`);
   await a.esperar();
   assert.ok(/Não foi guardado: a série 2/.test(a.texto('.v3-estados')), a.texto('.v3-estados'));
@@ -127,7 +114,6 @@ test('estados: a gravação que falhou vira a faixa fixa, e sem rede avisa sem b
 
 test('colar a cópia como texto: confere antes, diz o que tem, e restaura pela porta de sempre', async () => {
   const a = await comVisual();
-  a.v('ctx.comecaAqui');
   a.v('ctx.abreAjustes');
   await a.esperar();
   assert.ok(a.$('[data-a="ajustes-apaga"]').classList.contains('v3-lin'), '"Voltar ao começo" é uma linha, não saída sublinhada');

@@ -20,7 +20,6 @@ async function comTreinoPassado(extra) {
     S.logs[logKey('A', 0)] = [{ t: t, sid: 77, sets: [[40, 10], [40, 9]] }];
   })()`);
   a.v('ctx.fechaModoDeSessao');
-  a.v('ctx.comecaAqui');
   await a.esperar();
   return a;
 }

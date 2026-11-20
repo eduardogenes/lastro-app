@@ -144,9 +144,13 @@ function pagFluxos() {
 let AUD = window.AUDITORIA || null;
 function pagAuditoria() {
   if (!AUD) return barra('auditoria') + `<main class="doc"><h1 class="capa">Auditoria</h1><p class="lead">Na etapa 5.</p></main>`;
+  function etapa(x) {
+    if (x.pendente) return ` <span class="tp">para a ${x.f}</span>`;
+    return x.f ? ` <span class="tp" style="background:var(--assunto-feito)">feito, ${x.f}</span>` : '';
+  }
   const tot = AUD.reduce((a, g) => a + g.a.length, 0), dado = AUD.reduce((a, g) => a + g.a.filter(x => x.t === 'dado').length, 0);
   return barra('auditoria') + `<main class="doc"><h1 class="capa">Auditoria da implementação</h1><p class="lead">O que o app construído (src/ui/v3, src/v3) faz diferente deste design system, tela por tela, com a correção. ${tot} achados; ${dado} mexem em dado ou regra e precisam de migração ou teste de domínio. É o que a próxima fase implementa. A versão escrita está em <b>05-auditoria.md</b>.</p>
-    <div class="aud">${AUD.map(g => `<details><summary><span>${g.g}</span><small>${g.a.length} ${g.a.length === 1 ? 'achado' : 'achados'}</small>${ic.dir}</summary>${g.a.map(x => `<div class="ach"><b><span class="tp ${x.t === 'dado' ? 'dado' : ''}">${x.t}</span>${x.o}${x.f ? ` <span class="tp" style="background:var(--assunto-feito)">feito, ${x.f}</span>` : ''}</b><div class="hj">Hoje: ${x.h}</div><div class="co">Correção: ${x.c}</div>${x.l ? `<div class="hj" style="font-size:12px;margin-top:2px">${x.l}</div>` : ''}</div>`).join('')}</details>`).join('')}</div></main>`;
+    <div class="aud">${AUD.map(g => `<details><summary><span>${g.g}</span><small>${g.a.length} ${g.a.length === 1 ? 'achado' : 'achados'}</small>${ic.dir}</summary>${g.a.map(x => `<div class="ach"><b><span class="tp ${x.t === 'dado' ? 'dado' : ''}">${x.t}</span>${x.o}${etapa(x)}</b><div class="hj">Hoje: ${x.h}</div><div class="co">Correção: ${x.c}</div>${x.l ? `<div class="hj" style="font-size:12px;margin-top:2px">${x.l}</div>` : ''}</div>`).join('')}</details>`).join('')}</div></main>`;
 }
 
 /* ---------------- interações extras ---------------- */

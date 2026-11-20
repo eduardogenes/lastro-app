@@ -25,6 +25,7 @@ export const ic = {
   cima: I(<path d="M6 14.5l6-6 6 6" />, 2.4),
   ajuste: I(<><path d="M4 8h10M18 8h2M4 16h2M10 16h10" /><circle cx="16" cy="8" r="2.2" /><circle cx="8" cy="16" r="2.2" /></>),
   lista: I(<path d="M4 7h16M4 12h16M4 17h10" />, 2.2),
+  texto: I(<path d="M5 6h14M5 10.5h14M5 15h9" />, 2.2),
   halter: I(<path d="M7 8v8M4 10v4M17 8v8M20 10v4M7 12h10" />, 2.2),
   prato: I(<><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3.5" /></>),
   camera: I(<><path d="M4 8.5h3l1.5-2.5h7L17 8.5h3v10H4z" /><circle cx="12" cy="13.2" r="3.2" /></>),

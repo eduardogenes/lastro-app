@@ -33,6 +33,7 @@ import type {
 } from './tipos';
 import type { ComoFoiARefeicao, DiaComida, DiaComidaHist } from './nutricao/tipos';
 import { MARCAS_DO_CORPO } from './corpo';
+import { ALIMENTOS_BASE } from './nutricao/alimentos';
 import { tamanhosDaMarca } from './nutricao/calculo';
 import { chaveDaLixeira, vivaDesde } from './lixeira';
 import type { LeituraDeGordura } from './corpo';
@@ -496,7 +497,7 @@ function uneSessoesDeFoto(
  *   mesmo dia é rara — mas quando houver, o registro mais recente é a leitura
  *   mais provável de estar certa.
  */
-function uneDiasDeComida(
+export function uneDiasDeComida(
   local: DiaComidaHist[], remoto: DiaComidaHist[], mortos: Record<string, number>
 ): { itens: DiaComidaHist[]; vindos: number; apagados: number; soDaqui: number } {
   const por: Record<string, DiaComidaHist> = {};
@@ -634,7 +635,7 @@ export function chaveDeCatalogo(idEx: IdEx): string { return 'ex:' + idEx; }
 
 function uneCatalogo<T>(
   local: Record<string, T>, remoto: Record<string, T>,
-  remotoManda: boolean, mortos: Record<string, number>
+  remotoManda: boolean, mortos: Record<string, number>, primeiraConta: boolean
 ): Record<string, T> {
   const saida: Record<string, T> = {};
   const carimbo = function (x: T | undefined) {
@@ -646,8 +647,8 @@ function uneCatalogo<T>(
   Object.keys(remoto || {}).forEach(function (k) { chaves[k] = 1; });
   Object.keys(chaves).forEach(function (k) {
     const a = (local || {})[k], b = (remoto || {})[k];
-    let x = a || b;
-    if (a && b) x = carimbo(b) > carimbo(a) ? b : carimbo(a) > carimbo(b) ? a : (remotoManda ? b : a);
+    let x = b || a;
+    if (a && b && !primeiraConta) x = carimbo(b) > carimbo(a) ? b : carimbo(a) > carimbo(b) ? a : (remotoManda ? b : a);
     const morto = mortos[chaveDeCatalogo(k)];
     if (morto != null && carimbo(x) <= morto) return;
     saida[k] = x as T;
@@ -692,6 +693,8 @@ export const DOCUMENTOS = [
   'carga'
 ] as const;
 export type Documento = typeof DOCUMENTOS[number];
+const TREINO = ['prog', 'progTreinador', 'rot'] as const;
+const PRESCRICAO = new Set<Documento>([...TREINO, 'comida', 'cadencia']);
 
 /** O valor de um documento dentro do estado. */
 export function valorDoDocumento(S: Partial<Estado> | null | undefined, d: Documento): unknown {
@@ -717,6 +720,48 @@ export function mtimeDe(S: Partial<Estado> | null | undefined): number {
     ? (S as { mtime: number }).mtime : 0;
 }
 
+function semItens(m: unknown): boolean {
+  return m == null || typeof m === 'object' && Object.keys(m).length === 0;
+}
+
+/** Na primeira fusão um carimbo, sozinho, não faz de um documento vazio uma prescrição. */
+function temPrescricao(s: Estado, d: Documento): boolean {
+  // O plano alimentar é feito de refeições; um alimento cadastrado ou oculto não é plano.
+  if (d === 'comida') return !semItens(s.comida?.plano);
+  // Uma semana toda em descanso, mesmo carimbada (marcou e desmarcou), não é cadência.
+  if (d === 'cadencia') return Array.isArray(s.cadencia) && s.cadencia.some(v => v !== 'descanso');
+  if (d === 'progTreinador') return !semItens(s.progTreinador?.dias);
+  return !semItens(valorDoDocumento(s, d)) && !documentoInicial(s, d);
+}
+
+/** Um documento inicial cede ao que a pessoa editou, mesmo se a conta ainda não tinha carimbos. */
+function documentoInicial(s: Estado, d: Documento): boolean {
+  if (!s.primeiraVez) return false;
+  if (d === 'dia' && s.dia) {
+    const dia = s.dia;
+    // Só ler o Hoje já prepara a data.
+    return !dia.agua && !dia.aguaM && !dia.aguaNaoContada && !dia.turno && !dia.cadencia &&
+      !dia.alta && !dia.aderencia && !dia.pordia && [dia.done, dia.escala, dia.como, dia.tam].every(semItens);
+  }
+  if (s.carimbos?.[d]) return false; // inclui a edição que retirou a última refeição
+  const valor = valorDoDocumento(s, d);
+  if (d === 'modulos' || semItens(valor)) return true;
+  if (d === 'comida') return [s.comida.plano, s.comida.alimentos, s.comida.ocultos].every(semItens);
+  if (d === 'compras') return s.compras.dias === 7 && [s.compras.comprado, s.compras.extras, s.compras.removidas].every(semItens);
+  if (d === 'cadencia') return Array.isArray(s.cadencia) && s.cadencia.every(v => v === 'descanso');
+  return valor === false || valor === 0;
+}
+
+function temRegistros(s: Estado): boolean {
+  return ![s.done, s.logs, s.cardio, s.progLog, s.comidaHist, s.aulas, s.ex, s.fotos, s.gordura,
+    s.protocolo?.sessoes, s.descanso, s.quadro, s.lousa, s.lixeira, s.apagados, s.promoPendente,
+    s.paraAvaliar, ...Object.values(s.body || {})].every(semItens);
+}
+
+export function soTemAbertura(s: Estado): boolean {
+  return !!s.primeiraVez && !temRegistros(s) && DOCUMENTOS.every(d => documentoInicial(s, d));
+}
+
 /**
  * Funde o estado local com o que veio da nuvem.
  *
@@ -725,16 +770,40 @@ export function mtimeDe(S: Partial<Estado> | null | undefined): number {
  * dois lados convergem para o MESMO documento — e uma segunda fusão dos mesmos
  * dois estados não muda mais nada.
  */
-export function funde(local: Estado, remoto: Estado, agora?: number): { estado: Estado; resumo: ResumoDaFusao } {
+export function funde(local: Estado, remoto: Estado, agora?: number, primeiraConta = false): { estado: Estado; resumo: ResumoDaFusao } {
   const t = agora == null ? Date.now() : agora;
-  const remotoManda = mtimeDe(remoto) > mtimeDe(local);
+  const iniciais = (s: Estado) => s.primeiraVez ? new Set(DOCUMENTOS.filter(d => documentoInicial(s, d))) : null;
+  const nl = iniciais(local), nr = iniciais(remoto);
+  const soInicioL = nl?.size === DOCUMENTOS.length, soInicioR = nr?.size === DOCUMENTOS.length;
+  let remotoManda = mtimeDe(remoto) > mtimeDe(local);
+  if (soInicioL !== soInicioR) remotoManda = soInicioL;
+  else if (soInicioL && soInicioR) {
+    const registrosL = temRegistros(local), registrosR = temRegistros(remoto);
+    if (registrosL !== registrosR) remotoManda = registrosR;
+    else if (local.primeiraVez !== remoto.primeiraVez) remotoManda = remoto.primeiraVez! > local.primeiraVez!;
+    else {
+      // Entre duas aberturas vazias, uma escolha confirmada vale mais do que pular tudo.
+      const escolheu = (s: Estado) => (['comida', 'peso', 'agua', 'cardio', 'fotos'] as const).some(k => s.modulos?.[k] !== 0);
+      if (escolheu(local) !== escolheu(remoto)) remotoManda = escolheu(remoto);
+    }
+  }
 
   // clone do lado que manda nos documentos: tudo que não é coleção vem dele
   // inteiro, e as coleções são sobrescritas logo abaixo
+  if (primeiraConta && local.plano !== remoto.plano) remotoManda = true;
   const base: Estado = JSON.parse(JSON.stringify(remotoManda ? remoto : local));
 
+  if (local.primeiraVez && remoto.primeiraVez) {
+    base.primeiraVez = local.primeiraVez >= remoto.primeiraVez ? local.primeiraVez : remoto.primeiraVez;
+  } else {
+    delete base.primeiraVez;
+  }
+
+  // Uma exclusão de exercício anterior ao login também cede ao catálogo da conta.
+  const lapidesLocais = local.apagados || {};
   const mortos = uneLapides(
-    (local as Estado & { apagados?: Record<string, number> }).apagados || {},
+    primeiraConta ? Object.fromEntries(Object.entries(lapidesLocais).filter(([k]) =>
+      !k.startsWith('ex:') || !remoto.ex?.[k.slice(3)])) : lapidesLocais,
     (remoto as Estado & { apagados?: Record<string, number> }).apagados || {},
     t
   );
@@ -761,23 +830,55 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   const cr = (remoto.carimbos || {}) as Record<string, number>;
   const carimbos: Record<string, number> = {};
   const remotoVence: Partial<Record<Documento, boolean>> = {};
+  const datasDiferentes = local.dia && remoto.dia && local.dia.data !== remoto.dia.data;
+  // O programa leva a sequência e a referência, inclusive a nula do dono. Também se pode só guardar a revisão.
+  const criterioTreino = primeiraConta ? TREINO.find(d => temPrescricao(remoto, d) || temPrescricao(local, d)) : undefined;
   let vieram = 0, ficaram = 0;
   DOCUMENTOS.forEach(function (d) {
     const sl = typeof cl[d] === 'number' ? cl[d] : 0;
     const sr = typeof cr[d] === 'number' ? cr[d] : 0;
-    const la = porDocumento ? (sr > sl || (sr === sl && remotoManda)) : remotoManda;
-    remotoVence[d] = la;
+    const outraData = d === 'dia' && datasDiferentes;
+    const inicialL = !outraData && !!nl?.has(d), inicialR = !outraData && !!nr?.has(d);
+    const desempate = outraData ? mtimeDe(remoto) > mtimeDe(local) : remotoManda;
+    let la = local.plano === remoto.plano && inicialL !== inicialR ? inicialL
+      : porDocumento ? (sr > sl || (sr === sl && desempate)) : desempate;
     const vl = valorDoDocumento(local, d), vr = valorDoDocumento(remoto, d);
     const iguais = JSON.stringify(vl === undefined ? null : vl) === JSON.stringify(vr === undefined ? null : vr);
-    carimbos[d] = Math.max(sl, sr);
+    carimbos[d] = Math.max(inicialL ? 0 : sl, inicialR ? 0 : sr);
     // Pela regra antiga, o documento que veio de lá é, para este aparelho, um
     // fato novo: o carimbo passa a dizer isso.
-    if (!porDocumento && la && !iguais) carimbos[d] = t;
+    if (!porDocumento && la && !iguais && !inicialL && !inicialR) carimbos[d] = t;
+    if (primeiraConta && PRESCRICAO.has(d)) {
+      const criterio = d === 'comida' || d === 'cadencia' ? d : criterioTreino ?? d;
+      if (temPrescricao(remoto, criterio)) { la = true; carimbos[d] = sr; }
+      else if (temPrescricao(local, criterio)) { la = false; carimbos[d] = Math.max(sl, sr + 1); }
+    }
+    remotoVence[d] = la;
     if (!iguais) { if (la) vieram++; else ficaram++; }
     if (d === 'poses') return;           // vai junto do protocolo, mais abaixo
     const v = la ? vr : vl;
     (base as unknown as Record<string, unknown>)[d] = v === undefined ? null : JSON.parse(JSON.stringify(v));
   });
+  // Redundância: quando o aparelho vence, o carimbo já passa o da conta (acima).
+  const sr0 = typeof cr.comida === 'number' ? cr.comida : 0;
+  if (primeiraConta && base.comida) {
+    // A biblioteca de alimentos se une nos dois sentidos; num id comum vale a da conta.
+    const outro = remotoVence.comida ? local.comida : remoto.comida;
+    const acrescimos = Object.entries(outro?.alimentos || {}).filter(([id, alimento]) => {
+      if (ALIMENTOS_BASE[id]) return false;
+      const atual = base.comida.alimentos?.[id];
+      if (remotoVence.comida) return !atual && !base.comida.ocultos?.[id];
+      return JSON.stringify(atual) !== JSON.stringify(alimento);
+    });
+    if (acrescimos.length) {
+      base.comida.alimentos = { ...(base.comida.alimentos || {}) };
+      for (const [id, alimento] of acrescimos) base.comida.alimentos[id] = { ...alimento };
+      // Só o bastante para chegar aos outros aparelhos com o mesmo plano: um
+      // carimbo de agora venceria uma edição mais nova que ainda não subiu.
+      carimbos.comida = Math.max(carimbos.comida || 0, remotoVence.comida ? 0 : sr0) + 1;
+      ficaram++;
+    }
+  }
   resumo.documentos = ficaram ? 'local' : (vieram ? 'remoto' : 'iguais');
 
   // ---- séries: mapa de exercício -> lista ----
@@ -814,6 +915,20 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
 
   // ---- dias de comida ----
   const cm = uneDiasDeComida(local.comidaHist || [], remoto.comidaHist || [], mortos);
+  // A virada já foi gravada de um lado. O outro ainda pode ter uma marca
+  // naquela data aberta. Só o dia fechado conhece o plano e os totais de então.
+  if (local.plano === remoto.plano && datasDiferentes && base.dia) {
+    const aberto = remotoVence.dia ? local.dia! : remoto.dia!;
+    const i = cm.itens.findIndex(h => h.d === aberto.data);
+    if (aberto.data < base.dia.data && i >= 0) {
+      const fechado = cm.itens[i];
+      const { data, ...registro } = aberto;
+      const pendente = { ...registro, d: data, m: 0, pv: fechado.pv, tot: fechado.tot };
+      const unidos = uneDiasDeComida([fechado], [pendente], mortos);
+      cm.itens.splice(i, 1, ...unidos.itens);
+      resumo.comidaDaqui += unidos.vindos;
+    }
+  }
   base.comidaHist = cm.itens.slice(-TETO.comida);
   resumo.apagados += cm.apagados;
   resumo.comidaDaqui += cm.soDaqui;
@@ -836,7 +951,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
     // tomadas uma vez (escala, cadência, turno, enquadramento) vinham SEMPRE do
     // lado local, mesmo quando o outro aparelho as havia respondido depois. O
     // `mtime` é o mesmo sinal que já decide os documentos duas linhas acima.
-    const comoHist = function (d: DiaComida, mtime: number): DiaComidaHist {
+    const comoHist = function (d: DiaComida, mtime: number, inicial: boolean): DiaComidaHist {
       return { d: d.data, done: Object.assign({}, d.done || {}), agua: d.agua || 0,
                aguaNaoContada: d.aguaNaoContada, aguaM: d.aguaM,
                escala: Object.assign({}, d.escala || {}),
@@ -849,11 +964,11 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
                aderencia: d.aderencia, pordia: d.pordia,
                cadencia: d.cadencia, alta: d.alta, turno: d.turno,
                tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 0,
-               m: (d as DiaComida & { m?: number }).m || mtime };
+               m: inicial ? 0 : (d as DiaComida & { m?: number }).m || mtime };
     };
     const ja = uneDiasDeComida(
-      [comoHist(local.dia, porDocumento ? (cl.dia || 0) : mtimeDe(local))],
-      [comoHist(remoto.dia, porDocumento ? (cr.dia || 0) : mtimeDe(remoto))],
+      [comoHist(local.dia, porDocumento ? (cl.dia || 0) : mtimeDe(local), !!nl?.has('dia'))],
+      [comoHist(remoto.dia, porDocumento ? (cr.dia || 0) : mtimeDe(remoto), !!nr?.has('dia'))],
       mortos
     );
     resumo.comidaDaqui += ja.soDaqui;
@@ -863,7 +978,9 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
                    cadencia: j.cadencia, alta: j.alta, turno: j.turno };
       // `m` não volta para `base.dia`: `DiaComida` não tem o campo, e o carimbo
       // que importa para a próxima fusão é o `mtime` do estado, logo abaixo.
-      if (j.aguaNaoContada) base.dia.aguaNaoContada = 1;
+      // A simples leitura do Hoje não desfaz a resposta explícita do outro aparelho.
+      if (j.aguaNaoContada || (!j.agua && (nl?.has('dia') && remoto.dia.aguaNaoContada ||
+          nr?.has('dia') && local.dia.aguaNaoContada))) base.dia.aguaNaoContada = 1;
       if (typeof j.aguaM === 'number') base.dia.aguaM = j.aguaM;
       if (j.como) base.dia.como = j.como;
       if (j.tam) base.dia.tam = j.tam;
@@ -1020,7 +1137,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   // Um cadastro feito no iPhone e outro no notebook ficam os dois; a mesma
   // entrada nos dois lados vem do lado que a mudou por último; e voltar ao nome
   // do treinador (que tira a entrada) não é desfeito pelo outro aparelho.
-  base.ex = uneCatalogo(local.ex || {}, remoto.ex || {}, remotoManda, mortos);
+  base.ex = uneCatalogo(local.ex || {}, remoto.ex || {}, remotoManda, mortos, primeiraConta);
 
   // o último backup é o mais recente dos dois: é fato sobre o passado, e o
   // maior dos dois é o verdadeiro em ambos

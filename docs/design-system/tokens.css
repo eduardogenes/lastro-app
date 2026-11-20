@@ -60,6 +60,8 @@
   --t-folha: 800 30px/1 var(--f-titulo);            /* título da folha */
   --t-acao: 800 30px/1 var(--f-titulo);             /* o nome na tela de ação: exercício, medida, dia */
   --t-secao: 700 17px/1.1 var(--f-titulo);          /* título de seção */
+  --t-escolha: 700 19px/1.15 var(--f-titulo);      /* título no cartão de escolha */
+  --t-escolha-apoio: 500 14px/1.35 var(--f-texto);  /* explicação da escolha */
   --t-nome: 700 17px/1.15 var(--f-titulo);          /* nome em linha de lista e em cartão */
   --t-nome-p: 700 16px/1.2 var(--f-titulo);         /* nome em lista densa: editor, compras, alimentos */
   --t-valor-linha: 800 19px/1 var(--f-titulo);      /* o número à direita da linha */
@@ -81,6 +83,9 @@
   /* ---------- espaço (base 2, ritmo de 4) ---------- */
   --margem: 20px;        /* lateral de toda tela e folha */
   --entre-secoes: 18px;  /* do fim de uma seção ao título da próxima */
+  --respiro-inferior: 28px; /* do rodapé ao fim da tela sem doca */
+  --lateral-escolha: 18px;  /* espaço interno nas laterais do cartão de escolha */
+  --e-0: 2px;            /* entre o nome da escolha e seu apoio */
   --e-1: 4px;
   --e-2: 6px;
   --e-3: 8px;            /* entre botões lado a lado, entre quadros */
@@ -115,6 +120,8 @@
   --botao: 58px;         /* principal e contorno */
   --botao-acao: 68px;    /* "Feito" no treino, "Guardar" na medição */
   --resposta: 48px;      /* ficha de resposta: Foi, sim / Quase */
+  --icone-escolha: 46px;  /* círculo do ícone no cartão de escolha */
+  --icone-em-linha: 22px; /* desenho dentro do círculo */
   --linha: 60px;         /* linha de lista */
   --doca: 64px;          /* altura da doca e do "+" */
 

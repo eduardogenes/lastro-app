@@ -275,6 +275,37 @@ button.v3-quadro { min-height: var(--alvo); }
 .v3-gigante { font: var(--t-gigante); letter-spacing: var(--e-gigante); display: flex; align-items: baseline; gap: var(--e-2); flex-wrap: wrap; font-variant-numeric: tabular-nums; }
 .v3-gigante small { font: 700 22px var(--f-titulo); letter-spacing: -.01em; }
 
+/* Primeira vez: o rodapé reserva a saída inclusive nos passos sem link. */
+.v3-inicio {
+  background: var(--fundo);
+  padding: 0 var(--margem) calc(var(--respiro-inferior) + var(--sa-bottom));
+}
+.v3-inicio .v3-acao-topo { margin-inline: calc(-1 * var(--margem)); }
+.v3-inicio .v3-cab { width: 100%; padding-right: var(--e-5); }
+.v3-inicio .v3-cab-vao { width: var(--alvo); }
+.v3-inicio .v3-cab h1 { font: var(--t-quadro); }
+.v3-inicio .v3-cab button { min-width: var(--alvo); min-height: var(--alvo); }
+.v3-inicio .v3-cab .v3-saida { padding-inline: var(--e-5); }
+.v3-inicio .v3-saida { margin-top: 0; }
+.v3-inicio > .v3-segs { margin-top: var(--e-1); }
+.v3-inicio .v3-acao-meio h2 { font: var(--t-heroi-m); letter-spacing: var(--e-heroi); text-wrap: balance; }
+.v3-inicio .v3-ligar { margin-top: var(--e-3); }
+.v3-inicio .v3-acao-pe { min-height: var(--botao); margin-top: var(--e-7); }
+.v3-escolha {
+  display: flex; align-items: center; gap: var(--e-6); width: 100%; text-align: left;
+  border-radius: var(--r-cartao); background: var(--superficie); box-shadow: inset 0 0 0 var(--fio-fino) var(--contorno);
+  padding: var(--e-7) var(--lateral-escolha); margin-top: var(--e-3);
+  transition: transform var(--d-toque) var(--mola), background var(--d-estado);
+}
+.v3-escolha:active { transform: scale(.97); }
+.v3-escolha b { display: block; font: var(--t-escolha); letter-spacing: var(--e-nome); }
+.v3-escolha small { display: block; margin-top: var(--e-0); font: var(--t-escolha-apoio); color: var(--texto-2); }
+.v3-escolha .v3-lin-o { flex-basis: var(--icone-escolha); height: var(--icone-escolha); }
+.v3-escolha .v3-lin-o svg { width: var(--icone-em-linha); height: var(--icone-em-linha); }
+.v3-escolha[aria-checked="true"] { background: var(--selecionado); box-shadow: inset 0 0 0 var(--fio-escolhido) var(--texto); }
+.v3-escolha[aria-checked="true"] small { color: var(--texto); }
+.v3-escolha[aria-checked="true"] .v3-lin-o { background: var(--acao); color: var(--assunto-treino); }
+
 /* ---- Folha ------------------------------------------------------------ */
 .v3-veu { position: fixed; inset: 0; background: var(--veu); z-index: 60; animation: v3-some-ao-contrario var(--d-veu) both; }
 @keyframes v3-some-ao-contrario { from { opacity: 0; } }

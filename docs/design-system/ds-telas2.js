@@ -390,7 +390,7 @@ tela({ id: 'pv-comida', n: 'Primeira vez: sua comida', g: 'ajustes', c: 'destino
       <div class="pe-f">${H.vai('Continuar ' + ic.seta, { ir: 'pv-acompanhar' })}<div class="saidas"></div></div></div>` });
 
 tela({ id: 'pv-acompanhar', n: 'Primeira vez: o que acompanhar', g: 'ajustes', c: 'destino', lugar: 'hoje', vai: ['hoje--vazio'],
-  r: () => `<header class="cab d"><button class="ico" data-voltar aria-label="Voltar">${ic.volta}</button><h1 class="l">O que acompanhar</h1><span style="min-width:44px"></span></header><div style="padding:4px var(--margem) 0">${H.segs(3, 2, 2)}</div>
+  r: () => `<header class="cab d"><button class="ico" data-voltar aria-label="Voltar">${ic.volta}</button><h1 class="l">O que acompanhar</h1><button class="saida" data-ir="hoje--vazio" style="padding:0 12px">pular</button></header><div style="padding:4px var(--margem) 0">${H.segs(3, 2, 2)}</div>
     <div class="passo-f">${H.secao('', '', `<h2 class="heroi m" style="margin-top:0">O que mais você quer ver?</h2><p class="txt">Nada aqui é obrigatório, e tudo se liga e desliga depois.</p><div class="lista" style="margin-top:8px">${H.chave('Peso', 'a pesagem da manhã', 1)}${H.chave('Água', 'contar copos', 0)}${H.chave('Cardio', 'sessões da semana', 0)}${H.chave('Fotos do corpo', 'sessão padronizada a cada 14 dias', 0)}</div>`)}
       <div class="pe-f">${H.vai('Abrir o app ' + ic.seta, { lugar: 'hoje' })}<div class="saidas"></div></div></div>` });
 

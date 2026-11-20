@@ -50,7 +50,7 @@ export interface DiaDeHoje {
 
 /** A rotação efetiva: a dele, ou a do treinador. */
 export function rotacao(S: Estado, padrao: Dia[]): Dia[] {
-  return (S.rot && S.rot.length) ? S.rot : padrao;
+  return S.rot && (S.rot.length || S.primeiraVez) ? S.rot : padrao;
 }
 
 /** A última sessão que conta para a rotação — avulsa não move a fila. */
@@ -76,8 +76,9 @@ function diaAbertoDe(S: Estado, d: Dia): boolean {
  * acontecido nesta volta (desde a última vez do primeiro treino): aí a volta
  * fecha e o próximo é o A.
  */
-export function proximoTreino(S: Estado, padrao: Dia[]): Dia {
+export function proximoTreino(S: Estado, padrao: Dia[]): Dia | null {
   const rot = rotacao(S, padrao);
+  if (!rot.length) return null;
   const aberto = (d: Dia) => diaAbertoDe(S, d);
   const conta = S.done.filter(x => x && x.day && !x.livre && !aberto(x.day));
   const u = conta.length ? conta[conta.length - 1] : null;

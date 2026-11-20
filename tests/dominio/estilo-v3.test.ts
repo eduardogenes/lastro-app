@@ -108,6 +108,16 @@ test('os tokens do app são os do design system: os mesmos nomes e valores', () 
   assert.deepStrictEqual([...app.entries()].sort(), [...ds.entries()].sort());
 });
 
+test('a primeira vez reserva a saída no rodapé e usa os tokens de espaço da referência', () => {
+  const app = semComentarios(ler('src/v3/componentes.css'));
+  const referencia = ler('docs/design-system/lastro.html');
+  assert.match(app, /\.v3-inicio \.v3-saida\s*\{[^}]*margin-top:\s*0;/);
+  assert.match(app, /\.v3-escolha\s*\{[^}]*padding:\s*var\(--e-7\) var\(--lateral-escolha\)/);
+  assert.match(app, /\.v3-escolha small\s*\{[^}]*margin-top:\s*var\(--e-0\)/);
+  assert.match(referencia, /\.esc\{[^}]*padding:var\(--e-7\) var\(--lateral-escolha\)/);
+  assert.match(referencia, /\.tela\{[^}]*padding-bottom:var\(--respiro-inferior\)/);
+});
+
 test('escolha única é radiogroup: o seletor, as fichas com escolha e a pergunta', () => {
   const base = ler('src/ui/v3/base.jsx');
   assert.match(base, /role="radiogroup"/);

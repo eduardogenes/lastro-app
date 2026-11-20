@@ -221,6 +221,68 @@ Campos novos entram sempre como opcionais e recebem padrão em
 `normalizaEstado()`, que roda no boot **e na importação de um backup** — um JSON
 de qualquer versão anterior chega às migrações pelo mesmo caminho que o disco.
 
+### Primeiro acesso e prescrição embutida
+
+Na primeira abertura sem estado legível em nenhuma das duas chaves, `estadoInicial()`
+cria um perfil pessoal no plano 12. O app traz os catálogos de exercícios e de
+alimentos para a pessoa poder montar o que recebeu. Programa, rotação, referência
+do treinador, refeições e histórico começam vazios. A semana começa sem dia de
+treino marcado. A lista completa de poses e os procedimentos de medição continuam
+disponíveis quando a pessoa escolhe acompanhá-los.
+
+O campo opcional `primeiraVez` guarda o passo 1, 2 ou 3. Qualquer inteiro a partir de 4 abre o Hoje
+nas visitas seguintes. Um estado anterior, mesmo com apenas programa ou plano e
+sem sessões, conserva o campo ausente, a cadência e as prescrições históricas.
+As fixtures dos planos 9, 10 e 11 percorrem as migrações até o 12.
+
+Colar a prescrição abre a revisão. Aplicar guarda a base do treinador e avança
+para a comida na mesma gravação. Quem escolhe acompanhar comida monta suas
+refeições no Plano. No último passo, Peso vem sugerido. Confirmar liga as chaves
+escolhidas. Pular deixa os módulos daquele passo como estavam. O perfil novo
+começa com todos desligados. Sem armazenamento persistente essas escolhas duram
+a sessão.
+
+Na primeira fusão de um perfil pessoal, se a conta tem programa, vêm dela o
+programa, a sequência e a referência do treinador em conjunto. Em uma conta
+anterior aos três passos, a referência nula ou ausente indica o programa
+embutido. Se só o aparelho tem programa, o trio vem dele. Se nenhum dos dois
+tem programa ativo, uma revisão guardada ainda serve de referência. O plano
+alimentar e a cadência são decididos separadamente: o plano vem da conta se ela
+tem ao menos uma refeição (um alimento cadastrado ou oculto não é plano), e a
+cadência vem da conta se ela tem ao menos um dia de treino (uma semana toda em
+descanso, mesmo carimbada, não é cadência). Senão, vêm do aparelho, com carimbo
+acima do da conta, para que a fusão seguinte com o aparelho que criou a conta
+não desfaça a decisão.
+
+Os registros e os catálogos de exercícios dos dois lados se unem. Em um ID
+comum, vale a entrada da conta. A biblioteca de alimentos também se une nos
+dois sentidos, com a entrada da conta valendo num id comum, venha o plano de
+qualquer lado. A adição avança o carimbo do documento de comida em um, o bastante
+para chegar aos aparelhos com o mesmo plano; um carimbo com a hora da fusão
+venceria a edição mais nova de outro aparelho que ainda não subiu.
+
+O texto das revisões aplicadas antes da primeira sincronia fica no histórico do
+programa. Quando prevalece o programa da conta, o aviso permite reabrir o último
+texto colado no aparelho.
+
+O aparelho grava `jaSincronizou` em `treino-sync-v1` ao guardar uma fusão ou
+confirmar um envio. O marcador fica fora da conta e da cópia de segurança.
+Sobrevive à saída da conta e à sessão expirada. Nos controles antigos, a versão
+vista (`v`) ou a data do último sucesso (`em`) já atestam uma sincronia. Só
+quando ambas as chaves de estado estão ausentes ou ilegíveis o aparelho esquece
+o marcador e a versão vista para recuperar a conta na próxima entrada.
+
+Nas fusões seguintes, cada edição do **plano alimentar** leva o carimbo do
+documento, inclusive a retirada da última refeição do plano. Desmarcar a última
+**refeição do dia** deixa a lápide `comida:<data>:<id>`. No mesmo dia as marcas
+dos dois aparelhos se unem com as lápides, mesmo quando um deles só abriu o Hoje.
+Datas diferentes seguem os carimbos do dia. Ao fechar uma data já presente no
+histórico, o app une as marcas ao registro daquela data se os dois estados
+estão na mesma versão do plano.
+A cópia leva o passo e as escolhas. Sem conta, uma cópia que contém só a abertura
+não substitui um aparelho com dados. O espelho escreve a ausência de treino,
+de prescrição do treinador e de refeições nos arquivos correspondentes.
+
 ---
 
 ## O programa é dado, não código
@@ -229,7 +291,7 @@ Três camadas.
 
 **`PROGRAMA`** é a prescrição do treinador, imutável, no código.
 
-**`S.prog`** é o programa dele, semeado do `PROGRAMA` e editável. Cada posição
+**`S.prog`** é o programa editável da pessoa. Nos aparelhos anteriores ao primeiro acesso em três passos, ele foi semeado do `PROGRAMA`. Cada posição
 de treino é um **slot**:
 
 ```js
@@ -424,7 +486,7 @@ E ela avisa: apagar histórico em silêncio é o tipo de coisa que se descobre
 semanas depois sem saber se foi bug.
 
 `PLANO_ATUAL` governa a versão do formato. As migrações rodam em cadeia no
-`load()` e também na importação.
+`load()`, na importação e ao receber uma versão anterior da conta.
 
 **1 → 2** (`migraPlano`) — troca do programa do treinador. As chaves eram
 posicionais, então o exercício novo herdaria a carga do antigo naquela posição.

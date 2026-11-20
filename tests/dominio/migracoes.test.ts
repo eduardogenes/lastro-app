@@ -404,6 +404,15 @@ function fixturePlano9(): Estado {
   return JSON.parse(readFileSync(p, 'utf8')) as Estado;
 }
 
+test('os planos antigos passam pela cadeia histórica sem ganhar o marcador de primeiro acesso', () => {
+  for (const s of [fixturePlano9(), fixturePlano10(), fixturePlano11()]) {
+    migraPlano10(s); migraPlano11(s); migraPlano12(s);
+    assert.strictEqual(s.primeiraVez, undefined);
+    assert.strictEqual(s.plano, 12);
+    assert.ok(s.comida.plano!.some(r => r.id === 'ceia'));
+  }
+});
+
 test('a fixture é o dado da época, e não a forma de hoje', () => {
   const S = fixturePlano9();
   assert.strictEqual(S.plano, 9);
@@ -600,7 +609,7 @@ test('10→11 insere a ceia no plano guardado', () => {
   assert.strictEqual(S.plano, 11);
 });
 
-test('a ceia do aparelho migrado é a MESMA do aparelho novo', () => {
+test('a ceia do aparelho migrado é a mesma da prescrição embutida do dono', () => {
   // A migração carrega uma cópia congelada que não referencia `PLANO_BASE`, de
   // propósito: migração lê o dado da época. Este teste é o que impede as duas
   // populações de nascerem diferentes.

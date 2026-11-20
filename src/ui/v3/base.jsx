@@ -50,10 +50,11 @@ export function Bloco({ cor = 'treino', linha0, quando, vivo, titulo, medio, apo
 }
 
 /** O CABEÇALHO FINO: lugar de consulta (`raiz`) ou destino (com `aoVoltar`). */
-export function Cabecalho({ titulo, nota, aoVoltar, acao, raiz }) {
+export function Cabecalho({ titulo, nota, aoVoltar, reservaVoltar, acao, raiz }) {
   return (
     <header class={cls('v3-cab', raiz && 'raiz')}>
-      {aoVoltar && <button onClick={aoVoltar} aria-label="Voltar">{ic.volta}</button>}
+      {aoVoltar ? <button onClick={aoVoltar} aria-label="Voltar">{ic.volta}</button>
+        : reservaVoltar && <span class="v3-cab-vao" aria-hidden="true" />}
       <h1 tabindex="-1">{titulo}</h1>
       {nota && <span class="v3-cab-n">{nota}</span>}
       {acao}
@@ -99,12 +100,13 @@ export function Apoio({ children }) { return <p class="v3-apoio">{children}</p>;
  * `marca` é o círculo da esquerda (número, letra ou ícone); `marcaTom` `f`
  * (feito: tinta com o certo em lima) ou `a` (agora: anel lima).
  */
-export function Linha({ titulo, apoio, valor, unidade, marca, marcaTom, quieta, mais, semSeta, aoTocar, ...resto }) {
+export function Linha({ titulo, apoio, valor, unidade, marca, marcaTom, quieta, mais, semSeta, aoTocar, children, ...resto }) {
   const dentro = <>
     {marca != null && <span class={cls('v3-lin-o', marcaTom)}>{marca}</span>}
     <span class="v3-lin-t"><b>{titulo}</b>{apoio && <span>{apoio}</span>}</span>
     {valor != null && <span class="v3-lin-v">{valor}{unidade && <small>{unidade}</small>}</span>}
     {aoTocar && !semSeta && (mais ? ic.mais : ic.dir)}
+    {children}
   </>;
   const c = cls('v3-lin', quieta && 'quieta');
   return aoTocar ? <button class={c} onClick={aoTocar} {...resto}>{dentro}</button> : <div class={c} {...resto}>{dentro}</div>;
@@ -159,6 +161,13 @@ export function Radios({ classe, rotulo, children }) {
 }
 /** O botão de uma escolha única: só o escolhido (ou o primeiro, sem escolha) entra no Tab. */
 export const radio = (on, primeiro, algum) => ({ role: 'radio', 'aria-checked': on ? 'true' : 'false', tabindex: on || (!algum && primeiro) ? 0 : -1 });
+
+/** Cartão de escolha única, dentro de Radios. */
+export function Escolha({ icone, titulo, apoio, ligada, aoMudar }) {
+  return <button class="v3-escolha" {...radio(ligada, false, true)} onClick={aoMudar}>
+    <span class="v3-lin-o">{icone}</span><span><b>{titulo}</b><small>{apoio}</small></span>
+  </button>;
+}
 
 /** O SELETOR: duas a quatro opções curtas lado a lado. `opcoes`: `[{ k, t }]`. */
 export function Seletor({ opcoes, valor, aoMudar, rotulo, prefixo }) {

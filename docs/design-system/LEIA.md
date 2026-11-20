@@ -46,8 +46,47 @@ marcado em `05-auditoria.md` com o commit.
 | 3. Tokens e componentes base | feita (`933171b`), depois da revisão: `src/v3/tokens.css` é cópia do design system (nomes por papel, guardada por teste), e o bloco, os botões, a saída, o seletor e as fichas como escolha única, a chave, os quadros, as faixas e a régua com as medidas de lá |
 | 4. Treino | feita (`318532f`), depois da revisão: a série com o par e uma régua só, sem rolar; o descanso com o "a seguir" e "Água +1"; o fim; pôr em dia como tela; a aula do box como tela de ação. O principal tem o mesmo retângulo em série, descanso e fim |
 | 5. Hoje, Dias, Corpo, Fotos, Semana, Plano, Ajustes | feita: Hoje feito (`1d2421d`) (o bloco em cada momento, a ação que gruda no topo, a exceção da refeição na folha, "Desfazer" no Comi, na noite e no lembrete, as faixas de estado com ícone e "Ver"); Dias (`12c15b0`, e o dia aberto, a sessão passada e a série passada, `e6a969c`); Corpo (`7418d77`); Semana (`0d32ca0`); Ajustes (`053e632`); Plano, e Semana e Fotos depois da revisão: o que vence hoje em destaque, o toque duplo nas respostas travado, "Aplicar no plano" com Desfazer, os dias de treino como círculos, a câmera sem rolar e com o disparo parado, apagar foto sem pergunta e com Desfazer, rádios e alvos de 44 |
-| 6. Os três de dado | em curso: o tamanho do "comi outra coisa" feito (`f3f82c0`: a folha com quatro respostas e "✓ Guardar", a marca `'fora'` com o tamanho, a fusão, a cópia, a pasta dos agentes; e, achados nas revisões, a lápide antes da união, a correção do pôr em dia pela lápide, a porção que segue a marca). A revisão do treinador mudança por mudança (o programa do treinador é a revisão inteira, o dele recebe as marcadas, o que fica de fora é diferença; desfazer). Parte 2 feita, depois de três rodadas das revisões de dado e de design (o toque duplo em Aplicar, "Tentar de novo" que aplica, os carimbos restaurados na falha, a aula e a lista numa chave só). Falta a primeira vez em três passos |
+| 6. Os três de dado | feita: o tamanho do "comi outra coisa" feito (`f3f82c0`: a folha com quatro respostas e "✓ Guardar", a marca `'fora'` com o tamanho, a fusão, a cópia, a pasta dos agentes; e, achados nas revisões, a lápide antes da união, a correção do pôr em dia pela lápide, a porção que segue a marca). A revisão do treinador mudança por mudança (o programa do treinador é a revisão inteira, o dele recebe as marcadas, o que fica de fora é diferença; desfazer). Parte 2 feita em `1aa7977`, depois de três rodadas das revisões de dado e de design (o toque duplo em Aplicar, "Tentar de novo" que aplica, os carimbos restaurados na falha, a aula e a lista numa chave só). Parte 3 (a primeira vez em três passos) feita, depois de seis rodadas da revisão de dado e três da de design (a primeira fusão com a conta: o trio de treino em bloco, plano e cadência decididos pelo conteúdo, catálogos unidos, o carimbo do aparelho que vence acima do da conta, entrar de novo sem desfazer edições; a âncora a 762 e o cabeçalho no WebKit). Peça 6 concluída |
 | 7. Revisão final | a fazer |
+
+**Peça 6, parte 3.** O aparelho novo começa com os dois catálogos e traz a
+própria prescrição. Os três passos aceitam pular. Conta e cópia ficam na saída
+do primeiro passo. O campo opcional e a precedência dos documentos na fusão
+estão em [Estado persistido](../ARQUITETURA.md#primeiro-acesso-e-prescrição-embutida).
+A 414 × 896, o botão principal tem x 20, y 762, largura 374 e altura 58 px
+nos três passos. O build e a página viva coincidem em Chromium e WebKit. No
+build, a medida também se repete com movimento reduzido. A
+[sonda de navegador](conferir-primeira-vez.mjs) confere os 12 retângulos.
+O título mantém x 56 e Voltar ocupa x 8 nos passos 2 e 3, inclusive na volta.
+Na quarta rodada, o programa da conta passou a trazer consigo a sequência e a
+referência do treinador, inclusive a referência embutida do dono. O plano
+alimentar da conta conserva os alimentos próprios que só o aparelho tem. Os
+exercícios exclusivos mantêm nome, grupo e séries. Entrar de novo, inclusive
+depois de a sessão expirar, respeita as edições feitas no intervalo. O texto colado pode ser
+reaberto no aviso e no histórico. O dia de comida respeita a exclusão da última
+marca e reúne marcas do dia aberto com o fechado na mesma versão do plano.
+Na quinta e na sexta rodadas, o plano alimentar e a cadência da conta só vencem
+com conteúdo (ao menos uma refeição, ao menos um dia de treino), a biblioteca de
+alimentos se une nos dois sentidos e, quando o aparelho vence a primeira fusão,
+o carimbo dele passa o da conta, para a fusão seguinte não desfazer a decisão.
+As revisões de dado e de design aprovaram (20/11/2026).
+
+Pendências da peça 6, parte 3, para a revisão final da peça 7:
+
+- **C1 · Falha ao guardar.** “Tentar de novo” quebra em três linhas. Seguir
+  `f-falhou` com um principal e uma saída para a cópia.
+- **C2 · Hoje vazio.** “Nada para agora.” quebra em duas linhas. Carregar a
+  Bricolage com o eixo óptico em `src/v3/fontes.css`.
+- **C3 · Módulos entre aparelhos pessoais.** As escolhas da primeira vez ficam
+  sem carimbo. Uma sincronização pode esconder módulos escolhidos no outro
+  aparelho. Os registros continuam guardados.
+- **Riscos de dado aceitos** (revisão de dado, 20/11). Nenhum perde registro:
+  um controle de sincronia antigo (sem `jaSincronizou`) num perfil pessoal trata
+  a próxima entrada como a primeira, o que só uma reversão de versão reproduz;
+  um alimento próprio apagado de propósito antes da primeira sincronia pode
+  voltar à biblioteca (não há lápide de alimento); com nenhum dos lados tendo
+  programa, uma referência do treinador guardada substitui a outra sem aviso (o
+  texto colado continua no histórico).
 
 Pendências que a revisão da peça 2 deixou para depois, de propósito:
 

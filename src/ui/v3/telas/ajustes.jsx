@@ -64,7 +64,7 @@ export function AjustesV3({ ctx }) {
       <Secao titulo="Recomeçar">
         <div>
           {d.difTxt && <Linha titulo="Voltar ao programa do treinador" apoio={d.difTxt} data-a="ajustes-restaura-programa" aoTocar={ctx.restauraPrograma} />}
-          <Linha titulo="Voltar ao plano do nutricionista" apoio="desfaz as suas mudanças na comida" data-a="ajustes-restaura-plano" aoTocar={ctx.restauraPlano} />
+          {d.temPlanoEmbutido && <Linha titulo="Voltar ao plano do nutricionista" apoio="desfaz as suas mudanças na comida" data-a="ajustes-restaura-plano" aoTocar={ctx.restauraPlano} />}
           {/* sem volta: abre a confirmação que diz o que se perde e o que não se perde */}
           <Linha titulo="Voltar ao começo" apoio="apaga tudo o que você registrou neste aparelho" data-a="ajustes-apaga" aoTocar={ctx.apagaTudo} />
         </div>

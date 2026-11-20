@@ -3,9 +3,11 @@
 // A fusão em si é testada em tests/dominio/sincronia.test.ts, sem app. Aqui é o
 // ciclo: quando puxa, quando funde, quando empurra, e o que acontece quando o
 // outro aparelho grava no meio do caminho.
-import { test } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { test, vi } from 'vitest';
 import assert from 'node:assert';
-import { app, agoraEstavel } from './harness.js';
+import { app, agoraEstavel, DIA } from './harness.js';
+import { montaArquivos } from '../../ferramentas/espelho/monta';
 
 /** Instala uma nuvem de mentira no escopo do app. */
 function nuvemFalsa(a, inicial) {
@@ -37,6 +39,26 @@ function nuvemFalsa(a, inicial) {
   `);
 }
 const nuvem = a => a.J('globalThis.__nuvem');
+
+function ligaComSenha(conta, a) {
+  conta.liga(a);
+  a.E(`
+    globalThis.__conectado = false;
+    globalThis.__expirou = false;
+    const puxa = NUVEM.puxa;
+    NUVEM.puxa = () => globalThis.__expirou ? Promise.resolve({ ok: false, erro: 'auth', msg: 'sessão expirada' }) : puxa();
+    NUVEM.sessao = () => globalThis.__conectado ? { email: 'ana@exemplo.com', uid: 'u1' } : null;
+    NUVEM.entrar = async email => { globalThis.__conectado = true; globalThis.__expirou = false; return { ok: true, v: { email } }; };
+    NUVEM.sair = async () => { globalThis.__conectado = false; return { ok: true }; };
+  `);
+}
+
+async function entraComSenha(a) {
+  a.v('ctx.nuvemCampo', 'email', 'ana@exemplo.com');
+  a.v('ctx.nuvemCampo', 'senha', 'senha-de-teste');
+  await a.v('ctx.entrarNaNuvem');
+  await vi.waitFor(() => assert.ok(a.dado('sync').v != null && !a.dado('sync').rodando));
+}
 
 test('sem conta, o app não fala com a nuvem', async () => {
   const a = await app();
@@ -700,3 +722,481 @@ test('voltar o tipo de carga ao padrão não é desfeito pelo outro aparelho', a
   cel.fechar(); note.fechar();
 });
 
+
+test('entrar na conta e juntar a cópia de um primeiro acesso conserva a prescrição e o histórico da conta', async () => {
+  const a = await app({ aba: 'agora', estado: null });
+  try {
+    await a.v('ctx.avancaInicio', true);
+    const copia = a.v('payload');
+    const conta = { plano: 12, logs: {}, done: [{ day: 'Z', t: 1090, sid: 1090 }],
+      prog: { Z: { name: 'Programa da conta', tag: '', ex: [] } }, rot: ['Z'],
+      comida: { plano: [{ id: 'meu', n: 'Plano da conta', t: '11:15', quando: 'sempre', itens: [] }], alimentos: {}, ocultos: {} } };
+    nuvemFalsa(a, { v: 1, data: conta });
+    await a.v('sincroniza');
+    assert.equal(a.S().primeiraVez, undefined);
+    assert.equal(a.S().prog.Z.name, 'Programa da conta');
+    await a.v('importText', copia);
+    await a.v('sincroniza');
+    for (const s of [a.S(), a.gravado(), nuvem(a).linha.data]) {
+      assert.deepEqual(s.rot, conta.rot);
+      assert.deepEqual(s.prog, conta.prog);
+      assert.deepEqual(s.comida.plano, conta.comida.plano);
+      assert.deepEqual(s.done, conta.done);
+      assert.equal(s.primeiraVez, undefined);
+    }
+  } finally { a.fechar(); }
+});
+
+test('entrar pelo aparelho novo migra o plano 9 da conta pelo mesmo caminho do disco', async () => {
+  const conta = JSON.parse(readFileSync(new URL('../dominio/fixtures/estado-plano-9.json', import.meta.url), 'utf8'));
+  const a = await app({ estado: null, aba: 'agora' });
+  try {
+    nuvemFalsa(a, { v: 1, data: conta });
+    await a.v('sincroniza');
+    const s = a.S();
+    assert.equal(s.plano, 12);
+    assert.deepEqual(s.prog, conta.prog);
+    assert.deepEqual(s.rot, conta.rot);
+    assert.deepEqual(s.body.peso, conta.body.peso);
+    assert.ok(s.comida.plano.some(r => r.id === 'ceia'));
+    assert.equal(s.primeiraVez, undefined);
+  } finally { a.fechar(); }
+});
+
+async function colaTreinoEConcluiInicio(a, texto) {
+  a.clicar('[data-a="inicio-continuar"]');
+  await a.esperar();
+  a.digitar('revisao-texto', texto);
+  for (const acao of ['revisao-le', 'revisao-aplica', 'inicio-pular', 'inicio-pular']) {
+    a.clicar('[data-a="' + acao + '"]');
+    await a.esperar();
+  }
+}
+
+test('a primeira fusão mantém a prescrição da conta e oferece reaplicar o texto colado antes de entrar', async () => {
+  const conta = JSON.parse(readFileSync(new URL('../dominio/fixtures/estado-plano-11.json', import.meta.url), 'utf8'));
+  conta.plano = 12;
+  conta.carimbos = { prog: conta.mtime - 1, rot: conta.mtime - 1 };
+  conta.carimbosEm = conta.mtime;
+  conta.progTreinador = { em: conta.mtime, data: null, rot: conta.rot, dias: conta.prog };
+  conta.progLog.push({ day: 'A', t: Date.now() + DIA, txt: 'Revisão no outro aparelho', textoRevisao: 'Outro texto' });
+  conta.ex = {
+    'remada-do-box': { n: 'Remada da conta', g: 'costas', car: 'livre', m: conta.mtime },
+    'extensao-do-box': { n: 'Extensão da conta', g: 'tríceps', car: 'pino', m: conta.mtime }
+  };
+  const texto = 'Treino B · Pernas\n- Leg press · 2 x 10-15';
+  const a = await app({ aba: 'agora', estado: null });
+  const toca = async seletor => { a.clicar(seletor); await a.esperar(); };
+  try {
+    await colaTreinoEConcluiInicio(a, texto);
+    await a.E(`S.comida.plano = [{ id: 'minha', n: 'Minha', itens: [], quando: 'sempre', t: '12:00' }];
+      S.ex['remada-do-box'] = { n: 'Remada local', g: 'costas', car: 'barra', m: Date.now() };
+      lapide(chaveDeCatalogo('extensao-do-box'));
+      S.cadencia = Array(7).fill('treino'); S.body.peso.push({ t: Date.now(), v: 71 }); save()`);
+    assert.deepEqual(a.S().rot, ['B']);
+    nuvemFalsa(a, { v: 3, data: conta });
+    await a.v('sincroniza', { manual: true });
+    for (const s of [a.S(), a.gravado(), nuvem(a).linha.data]) {
+      for (const k of ['prog', 'rot', 'progTreinador', 'comida', 'cadencia', 'ex']) assert.deepEqual(s[k], conta[k], k);
+      assert.equal(s.carimbos.prog, conta.carimbos.prog);
+      assert.equal(s.body.peso.length, conta.body.peso.length + 1);
+      assert.ok(s.progLog.some(x => x.textoRevisao === texto));
+    }
+    assert.equal(a.texto('#toast .aviso > span'), 'Ficou o programa da sua conta. O texto que você colou está guardado.');
+    assert.equal(a.texto('#toast button'), 'Rever texto');
+    const reaberto = await app({ aba: 'prescricao', estado: a.gravado() });
+    try {
+      reaberto.v('ctx.abrePrograma');
+      await reaberto.esperar();
+      reaberto.clicar('[data-a="prog-hist"]');
+      await reaberto.esperar();
+      const linha = reaberto.$$('.v3-lin').find(l => l.textContent.includes('revisão do treinador'));
+      assert.equal(linha.tagName, 'DIV');
+      reaberto.clicar(linha.querySelector('b'));
+      await reaberto.esperar();
+      assert.equal(reaberto.$('#revisao-texto'), null);
+      const rever = linha.querySelector('button.v3-peq.c');
+      assert.equal(rever?.textContent, 'Rever texto');
+      reaberto.clicar(rever);
+      await reaberto.esperar();
+      assert.equal(reaberto.$('#revisao-texto').value, texto);
+    } finally { reaberto.fechar(); }
+    await toca('[data-a="aviso-acao"]');
+    assert.equal(a.$('#revisao-texto').value, texto);
+    await toca('[data-a="revisao-le"]');
+    await toca('[data-a="revisao-aplica"]');
+    await a.v('sincroniza');
+    assert.deepEqual(nuvem(a).linha.data.rot, conta.rot);
+    assert.equal(nuvem(a).linha.data.prog.B.ex[0].s, 2);
+    assert.deepEqual(nuvem(a).linha.data.prog.A, conta.prog.A);
+  } finally { a.fechar(); }
+});
+
+test('depois da primeira fusão entre perfis pessoais uma edição local do plano volta a poder subir', async () => {
+  const a = await app({ aba: 'agora', estado: null });
+  try {
+    const conta = a.S();
+    conta.primeiraVez = 4;
+    conta.comida.plano = [{ id: 'conta', n: 'Refeição da conta', t: '12:00', quando: 'sempre', itens: [] }];
+    nuvemFalsa(a, { v: 7, data: conta });
+    a.E('sync.forcar = true'); // contabilidade de uma versão antiga
+    await a.v('sincroniza');
+    assert.deepEqual(a.S().comida.plano, conta.comida.plano);
+    assert.equal(a.dado('sync').forcar, false);
+    await a.E("S.comida.plano[0].n = 'Almoço alterado'; save()");
+    a.E('globalThis.__nuvem.linha.v++');
+    await a.v('sincroniza');
+    assert.equal(nuvem(a).linha.data.comida.plano[0].n, 'Almoço alterado');
+  } finally { a.fechar(); }
+});
+
+test('registro ilegível com versão de sincronia intacta volta a fundir ao pular o primeiro passo', async () => {
+  const conta = JSON.parse(readFileSync(new URL('../dominio/fixtures/estado-plano-11.json', import.meta.url), 'utf8'));
+  conta.plano = 12;
+  for (const controle of [{ v: 3 }, { v: 3, forcar: true }, { v: null, jaSincronizou: true }]) {
+    const a = await app({ aba: 'agora', estado: '{"logs": {', chaves: { 'treino-sync-v1': controle } });
+    try {
+      assert.equal(a.dado('sync').v, null);
+      const salvo = JSON.parse(a.window.localStorage.getItem('treino-sync-v1'));
+      assert.equal(salvo.v, null);
+      assert.equal(salvo.jaSincronizou, false);
+      nuvemFalsa(a, { v: 3, data: conta });
+      await a.v('ctx.avancaInicio', true);
+      await a.v('sincroniza');
+      for (const s of [a.gravado(), nuvem(a).linha.data]) {
+        assert.deepEqual(s.prog, conta.prog);
+        assert.deepEqual(s.comida.plano, conta.comida.plano);
+        assert.deepEqual(s.done, conta.done);
+      }
+    } finally { a.fechar(); }
+  }
+});
+
+test.each([false, true])('a virada entre dois aparelhos conserva café, almoço e jantar, virada já gravada = %s', async gravouVirada => {
+  const cel = await app({ aba: 'agora', estado: null }), tab = await app({ aba: 'agora', estado: null });
+  const conta = nuvemDeDois(null);
+  try {
+    for (let i = 0; i < 3; i++) await cel.v('ctx.avancaInicio', true);
+    await cel.E(`S.comida.plano = ['cafe', 'almoco', 'jantar'].map(id => ({ id, n:id, t:'12:00', quando:'sempre', itens:[] }));
+      S.modulos.comida = 1; save()`);
+    conta.liga(cel);
+    cel.v('ctx.marcaRefeicao', 'cafe');
+    await cel.v('sincroniza');
+    conta.liga(tab);
+    await tab.v('sincroniza');
+    const data = cel.S().dia.data;
+    cel.v('ctx.marcaRefeicao', 'jantar');
+    await cel.E('liberaSave()');
+    tab.v('ctx.marcaRefeicao', 'almoco');
+    await tab.v('sincroniza');
+    cel.viajar(DIA);
+    cel.v('diaDeComida');
+    if (gravouVirada) await cel.E('save()');
+    await cel.v('sincroniza');
+    cel.v('diaDeComida');
+    await cel.E('save()');
+    await cel.v('sincroniza');
+    for (const s of [cel.gravado(), conta.linha.data]) {
+      assert.ok(s.dia.data > data);
+      const fechados = s.comidaHist.filter(x => x.d === data);
+      assert.equal(fechados.length, 1);
+      assert.deepEqual(Object.keys(fechados[0].done).sort(), ['almoco','cafe','jantar']);
+    }
+  } finally { cel.fechar(); tab.fechar(); }
+});
+
+test('tirar do plano a única refeição marcada conserva a lápide ao encontrar a marca da conta', async () => {
+  const a = await app({ aba: 'agora', estado: null });
+  try {
+    await a.E(`S.primeiraVez = 4; S.comida.plano = [{ id:'almoco', n:'Almoço', t:'12:00', quando:'sempre', itens:[] }]; save()`);
+    nuvemFalsa(a, null);
+    a.v('ctx.marcaRefeicao', 'almoco');
+    await a.v('sincroniza');
+    const data = a.S().dia.data;
+    assert.ok(nuvem(a).linha.data.dia.done.almoco);
+    await a.v('ctx.removeRefeicao', 'almoco');
+    a.E('globalThis.__nuvem.linha.v++');
+    await a.v('sincroniza');
+    for (const s of [a.gravado(), nuvem(a).linha.data]) {
+      assert.deepEqual(s.dia.done, {});
+      assert.deepEqual(s.comida.plano, []);
+      assert.ok(s.apagados['comida:' + data + ':almoco']);
+    }
+  } finally { a.fechar(); }
+});
+
+test.each(['primeiros passos pulados', 'documentos esvaziados', 'documentos ausentes', 'só programa e sequência preenchidos', 'programa sem sequência', 'sequência sem programa'])(
+  'primeiro login com %s na conta conserva cada prescrição preenchida', async cenario => {
+    const conta = nuvemDeDois(null);
+    const tablet = await app({ aba: 'agora', estado: null });
+    const cel = await app({ aba: 'agora', estado: null });
+    try {
+      for (let i = 0; i < 3; i++) await tablet.v('ctx.avancaInicio', true);
+      ligaComSenha(conta, tablet);
+      await entraComSenha(tablet);
+      const remoto = conta.linha.data;
+      assert.deepEqual(remoto.prog, {});
+      assert.deepEqual(remoto.comida.plano, []);
+      if (cenario !== 'primeiros passos pulados') {
+        // Uma conta pode ser mais recente mesmo que o seu documento esteja vazio.
+        remoto.mtime = remoto.carimbosEm = Date.now() + DIA;
+        remoto.carimbos = {};
+        for (const k of ['prog', 'rot', 'progTreinador', 'comida', 'cadencia']) {
+          remoto.carimbos[k] = remoto.mtime;
+          if (cenario === 'documentos ausentes') delete remoto[k];
+        }
+        if (cenario !== 'documentos ausentes') {
+          remoto.progTreinador = { em: remoto.mtime, rot: [], dias: {} };
+          remoto.cadencia = [];
+        }
+        if (cenario === 'só programa e sequência preenchidos' || cenario === 'programa sem sequência') {
+          const dono = JSON.parse(readFileSync(new URL('../dominio/fixtures/estado-plano-11.json', import.meta.url), 'utf8'));
+          remoto.prog = { A:dono.prog.A };
+          remoto.rot = cenario === 'programa sem sequência' ? [] : ['A'];
+        }
+        if (cenario === 'sequência sem programa') remoto.rot = ['A'];
+      }
+      const temProgramaNaConta = Object.keys(remoto.prog || {}).length > 0;
+      await colaTreinoEConcluiInicio(cel, 'Treino B · Pernas\n- Leg press · 2 x 10-15');
+      await cel.E(`S.comida.plano = ['cafe','almoco'].map(id => ({ id, n:id, t:'12:00', quando:'sempre', itens:[] }));
+        S.cadencia[2] = 'treino'; S.body.peso.push({ t:Date.now(), v:64 }); save()`);
+      const antes = cel.S();
+      assert.deepEqual(antes.rot, ['B']);
+      ligaComSenha(conta, cel);
+      await entraComSenha(cel);
+      for (const s of [cel.S(), cel.gravado(), conta.linha.data]) {
+        for (const k of ['prog', 'rot', 'progTreinador', 'comida', 'cadencia']) {
+          const origem = temProgramaNaConta && ['prog', 'rot', 'progTreinador'].includes(k) ? remoto : antes;
+          assert.deepEqual(s[k], origem[k], k);
+          if (origem === remoto) assert.equal(s.carimbos[k], origem.carimbos[k], 'carimbo de ' + k);
+          // O aparelho que vence a primeira fusão passa o carimbo da conta, ou a
+          // fusão seguinte com o aparelho dela desfaria a decisão.
+          else assert.ok(s.carimbos[k] >= (origem.carimbos?.[k] || 0) && s.carimbos[k] > (remoto.carimbos?.[k] || 0), 'carimbo de ' + k);
+        }
+        assert.deepEqual(s.body.peso, antes.body.peso);
+      }
+      if (!temProgramaNaConta) {
+        assert.doesNotMatch(cel.texto('#toast'), /Ficou o programa da sua conta/);
+      }
+    } finally { cel.fechar(); tablet.fechar(); }
+  });
+
+test('colar só o treino B e entrar na conta do dono preserva a referência embutida, o alvo e a restauração', async () => {
+  const estado = JSON.parse(readFileSync(new URL('../dominio/fixtures/estado-plano-11.json', import.meta.url), 'utf8'));
+  const dono = await app({ aba:'agora', estado });
+  const a = await app({ aba:'agora', estado:null });
+  try {
+    const referencia = dono.J('baseTreinador()');
+    const rot = dono.J('rotTreinador()');
+    const alvo = dono.E('alvoTotal()');
+    assert.equal(alvo, 90);
+    assert.equal(dono.vJ('ctx.dadosDoApp').difTxt, null);
+    const arquivo = 'treino/programa-do-treinador.md';
+    const espelhoDoDono = montaArquivos(estado, { agora:estado.mtime })[arquivo];
+
+    await colaTreinoEConcluiInicio(a, 'Treino B · Pernas\n- Leg press · 2 x 10-15');
+    assert.deepEqual(a.S().progTreinador.rot, ['B']);
+    assert.equal(a.E('alvoTotal()'), 2);
+    const conta = nuvemDeDois({ v:3, data:estado });
+    ligaComSenha(conta, a);
+    await entraComSenha(a);
+
+    const copia = JSON.parse(a.v('payload')).data;
+    for (const s of [a.gravado(), copia, conta.linha.data]) {
+      assert.equal(s.progTreinador, null);
+      assert.deepEqual(s.prog, estado.prog);
+      assert.deepEqual(s.rot, estado.rot);
+    }
+    assert.deepEqual(a.J('baseTreinador()'), referencia);
+    assert.equal(a.E('alvoTotal()'), alvo);
+    assert.equal(a.vJ('ctx.dadosDoApp').difTxt, null);
+    assert.equal(montaArquivos(copia, { agora:estado.mtime })[arquivo], espelhoDoDono);
+
+    // Uma edição de verdade faz aparecer a ação de restaurar nos Ajustes.
+    await a.v('progSeries', 'A', 0, 1);
+    a.aba('ajustes');
+    await a.esperar();
+    a.clicar('[data-a="ajustes-restaura-programa"]');
+    await vi.waitFor(() => assert.deepEqual(a.gravado().prog, referencia));
+    await a.v('sincroniza');
+    assert.deepEqual(conta.linha.data.prog, referencia);
+    assert.deepEqual(conta.linha.data.rot, rot);
+  } finally { a.fechar(); dono.fechar(); }
+});
+
+test('a primeira fusão conserva o alimento exclusivo do aparelho e o plano e a biblioteca da conta', async () => {
+  const estado = JSON.parse(readFileSync(new URL('../dominio/fixtures/estado-plano-11.json', import.meta.url), 'utf8'));
+  estado.plano = 12;
+  estado.comida.alimentos['pasta-do-box'] = { n:'Pasta da conta', kcal:540, meu:1 };
+  estado.comida.ocultos.aveia = 1;
+  estado.carimbos = { comida:estado.mtime };
+  estado.carimbosEm = estado.mtime;
+  const conta = nuvemDeDois({ v:3, data:estado });
+  const dono = await app({ aba:'agora', estado, chaves:{ 'treino-sync-v1':{ v:3 } } });
+  const a = await app({ aba:'agora', estado:null });
+  try {
+    for (let i = 0; i < 3; i++) await a.v('ctx.avancaInicio', true);
+    const pao = { n:'Pão da padaria', cat:'padaria', u:'g', kcal:280, p:9, c:52, g:3 };
+    const id = a.v('ctx.salvaAlimento', null, pao);
+    a.v('ctx.salvaRefeicao', null, { n:'Café local', itens:[{ f:id, q:100 }] });
+    a.v('ctx.salvaAlimento', 'pasta-do-box', { n:'Pasta local', kcal:300 });
+    a.v('ctx.salvaAlimento', 'arroz', { kcal:999 });
+    a.v('ctx.salvaAlimento', 'aveia', { kcal:777 });
+    const cadastro = a.S().comida.alimentos[id];
+    const alimentos = { ...estado.comida.alimentos, [id]:cadastro };
+    ligaComSenha(conta, a);
+    await entraComSenha(a);
+
+    const copia = JSON.parse(a.v('payload')).data;
+    for (const s of [a.gravado(), copia, conta.linha.data]) {
+      assert.deepEqual(s.comida, { ...estado.comida, alimentos });
+    }
+    assert.equal(a.J('catalogoAlimentos()')[id].kcal, 280);
+    assert.match(montaArquivos(copia, { agora:estado.mtime })['nutricao/alimentos.csv'], /Pão da padaria,padaria,g,280,9,52,3,/);
+
+    // O dono só registrou peso enquanto o outro aparelho acrescentava o pão.
+    dono.viajar(2 * DIA);
+    await dono.E('S.body.peso.push({ t:Date.now(), v:70 }); save()');
+    conta.liga(dono);
+    await dono.v('sincroniza');
+    assert.deepEqual(dono.gravado().comida.alimentos, alimentos);
+    assert.deepEqual(conta.linha.data.comida.alimentos, alimentos);
+
+    a.viajar(3 * DIA);
+    await a.v('ctx.removeAlimento', id);
+    await a.v('sincroniza');
+    await dono.v('sincroniza');
+    assert.equal(dono.gravado().comida.alimentos[id], undefined, 'uma exclusão posterior vale nos dois aparelhos');
+    assert.equal(conta.linha.data.comida.alimentos[id], undefined);
+  } finally { a.fechar(); dono.fechar(); }
+});
+
+test.each(['sair', 'receber 401'])('entrar de novo depois de %s preserva a edição da refeição, o exercício e a exclusão locais', async como => {
+  const conta = nuvemDeDois(null);
+  let a = await app({ aba: 'agora', estado: null });
+  try {
+    for (let i = 0; i < 3; i++) await a.v('ctx.avancaInicio', true);
+    await a.E(`S.comida.plano = [{ id:'almoco', n:'Almoço', t:'12:00', quando:'sempre', itens:[] }];
+      S.ex.antigo = { n:'Máquina antiga', g:'costas', car:'pino', m:Date.now() }; save()`);
+    ligaComSenha(conta, a);
+    await entraComSenha(a);
+    assert.equal(conta.linha.data.comida.plano.length, 1);
+    if (como === 'sair') {
+      await a.v('ctx.sairDaNuvem');
+      const controle = a.window.localStorage.getItem('treino-sync-v1');
+      const estado = a.gravado();
+      a.fechar();
+      a = await app({ aba:'agora', estado, chaves:{ 'treino-sync-v1': controle } });
+      ligaComSenha(conta, a);
+    } else {
+      a.E('globalThis.__expirou = true');
+      await a.v('sincroniza');
+      assert.ok(a.dado('sync').expirou);
+    }
+    a.viajar(DIA);
+    await a.E(`S.comida.plano[0].n = 'Almoço novo';
+      S.comida.plano.push({ id:'jantar', n:'Jantar', t:'20:00', quando:'sempre', itens:[] });
+      S.ex.y = { n:'Máquina Y', g:'costas', car:'pino', m:Date.now() };
+      S.logs.y = [{ t:Date.now(), sid:Date.now(), sets:[[30,12]] }];
+      delete S.ex.antigo; lapide(chaveDeCatalogo('antigo')); save()`);
+    await entraComSenha(a);
+    for (const s of [a.S(), a.gravado(), conta.linha.data]) {
+      assert.deepEqual(s.comida.plano.map(r => r.n), ['Almoço novo','Jantar']);
+      assert.equal(s.ex.y.n, 'Máquina Y');
+      assert.deepEqual(s.logs.y[0].sets, [[30,12]]);
+      assert.equal(s.ex.antigo, undefined);
+      assert.ok(s.apagados['ex:antigo']);
+      assert.equal(s.jaSincronizou, undefined, 'o recibo pertence ao aparelho');
+    }
+    assert.equal(JSON.parse(a.window.localStorage.getItem('treino-sync-v1')).jaSincronizou, true);
+  } finally { a.fechar(); }
+});
+
+test('exercício exclusivo do aparelho conserva nome, grupo e séries na primeira fusão com a conta do dono', async () => {
+  const dono = JSON.parse(readFileSync(new URL('../dominio/fixtures/estado-plano-11.json', import.meta.url), 'utf8'));
+  dono.plano = 12;
+  dono.ex = { comum: { n:'Exercício da conta', g:'peito', car:'pino', m:dono.mtime } };
+  const a = await app({ aba: 'agora', estado: null });
+  try {
+    for (let i = 0; i < 3; i++) await a.v('ctx.avancaInicio', true);
+    await a.E(`S.ex['maquina-x'] = { n:'Máquina X', g:'quadríceps', car:'pino', m:Date.now() };
+      S.ex.comum = { n:'Nome local', g:'costas', car:'barra', m:Date.now() };
+      S.logs['maquina-x'] = [{ t:Date.now(), sid:Date.now(), sets:[[40,10]] }];
+      lapide(chaveDeCatalogo('removido-so-aqui')); save()`);
+    const conta = nuvemDeDois({ v:7, data:dono });
+    ligaComSenha(conta, a);
+    await entraComSenha(a);
+    for (const s of [a.S(), a.gravado(), conta.linha.data]) {
+      assert.deepEqual(s.rot, dono.rot);
+      assert.equal(s.ex['maquina-x']?.n, 'Máquina X');
+      assert.equal(s.ex['maquina-x'].g, 'quadríceps');
+      assert.deepEqual(s.logs['maquina-x'][0].sets, [[40,10]]);
+      assert.deepEqual(s.ex.comum, dono.ex.comum);
+      assert.ok(s.apagados['ex:removido-so-aqui']);
+    }
+    assert.equal(a.dado('CAT')['maquina-x'].n, 'Máquina X');
+    assert.equal(a.$('#toast .aviso-acao'), null, 'sem texto colado não há ação de primeira fusão');
+  } finally { a.fechar(); }
+});
+
+test.each([{ v: 7, em: 0 }, { v: null, em: 12345 }])(
+  'o controle antigo com v=$v e em=$em conserva o plano editado ao entrar de novo', async controle => {
+    const a = await app({ aba: 'agora', estado: { plano:12, primeiraVez:4, logs:{}, done:[] },
+      chaves: { 'treino-sync-v1': controle } });
+    try {
+      await a.E(`S.comida.plano = [{ id:'almoco', n:'Almoço antigo', t:'12:00', quando:'sempre', itens:[] }]; save()`);
+      const conta = nuvemDeDois({ v:7, data:a.gravado() });
+      a.viajar(DIA);
+      await a.E(`S.comida.plano[0].n = 'Almoço editado'; save()`);
+      ligaComSenha(conta, a);
+      await entraComSenha(a);
+      assert.equal(conta.linha.data.comida.plano[0].n, 'Almoço editado');
+      assert.equal(JSON.parse(a.window.localStorage.getItem('treino-sync-v1')).jaSincronizou, true);
+    } finally { a.fechar(); }
+  });
+
+test('só confirma a primeira sincronia depois de enviar ou guardar a fusão, mesmo se o próximo envio falhar', async () => {
+  const a = await app({ aba: 'agora', estado:null });
+  const controle = () => JSON.parse(a.window.localStorage.getItem('treino-sync-v1'));
+  try {
+    await a.v('ctx.avancaInicio', true);
+    await a.E(`S.comida.plano = [{ id:'almoco', n:'Da conta', t:'12:00', quando:'sempre', itens:[] }]; save()`);
+    const remoto = a.gravado();
+    await a.E(`S.comida.plano[0].n = 'Deste aparelho'; save()`);
+    nuvemFalsa(a, null);
+    a.E(`NUVEM.empurra = async () => ({ ok:false, erro:'rede', msg:'envio interrompido' })`);
+    await Promise.all([a.v('sincroniza'), a.v('sincroniza')]);
+    assert.equal(nuvem(a).puxadas, 1, 'dois disparos simultâneos abrem uma única primeira fusão');
+    assert.equal(controle().jaSincronizou, false, 'a conta ainda não recebeu o primeiro envio');
+    a.E(`globalThis.__nuvem.linha = ${JSON.stringify({ v:1, data:remoto })}`);
+    a.encheCota();
+    await a.v('sincroniza');
+    assert.equal(controle().jaSincronizou, false, 'a fusão só está em memória');
+    assert.equal(a.gravado().comida.plano[0].n, 'Deste aparelho');
+    a.encheCota(false);
+    await a.v('sincroniza');
+    assert.equal(a.gravado().comida.plano[0].n, 'Da conta');
+    assert.equal(controle().jaSincronizou, true, 'a fusão foi guardada mesmo com o envio interrompido');
+    assert.equal(controle().sujo, true);
+  } finally { a.fechar(); }
+});
+
+test('a sincronia entre os planos 9 e 12 mantém a marca antiga fora do dia já fechado no formato atual', async () => {
+  const antigo = JSON.parse(readFileSync(new URL('../dominio/fixtures/estado-plano-9.json', import.meta.url), 'utf8'));
+  assert.equal(antigo.dia.done.almoco, 1);
+  const data = antigo.dia.data;
+  const a = await app({ aba: 'agora' });
+  try {
+    await a.E(`diaDeComida();
+      S.comidaHist = [{ d:${JSON.stringify(data)}, done:{ jantar:Date.now() }, agua:0, escala:{}, pv:1, tot:{ kcal:2, p:0, c:0, g:0 }, m:Date.now() }];
+      save()`);
+    const fechado = a.S().comidaHist[0];
+    assert.ok(a.S().dia.data > data);
+    nuvemFalsa(a, { v:1, data:antigo });
+    await a.v('sincroniza');
+    for (const s of [a.gravado(), nuvem(a).linha.data]) {
+      assert.equal(s.plano, 12);
+      assert.deepEqual(s.comidaHist.find(h => h.d === data).done, fechado.done);
+    }
+  } finally { a.fechar(); }
+});

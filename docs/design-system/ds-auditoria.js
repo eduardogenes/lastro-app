@@ -2,7 +2,7 @@
    faz diferente do design system, com a correção. Cada achado foi conferido no
    código em 17/11/2026. Tipos: tamanho, espaço, cor, hierarquia, texto, estado,
    fluxo, acessibilidade, dado (mexe em dado ou regra: pede migração ou teste de
-   domínio). `f` diz em que peça da implementação o achado foi feito. Gera o
+   domínio). `f` indica a peça do achado. `pendente` reserva uma correção futura. Gera o
    05-auditoria.md. */
 window.AUDITORIA = [
   { g: 'Fluidez e estabilidade (07-fluidez-e-estabilidade.md)', a: [
@@ -29,7 +29,9 @@ window.AUDITORIA = [
     { t: 'estado', f: 'peça 2 (o componente, a foto e o pular; aplicar no plano feito na peça 5, Semana; tirar alimento fica para a revisão final)', o: 'Sem aviso com "Desfazer" padronizado', h: 'Há frase de feito em alguns pontos (global.css), mas apagar foto, pular exercício e aplicar no plano não oferecem desfazer do mesmo jeito.', c: 'Um componente só (pílula de tinta, 6 s, "Desfazer" em lima, acima da doca) para tudo que é reversível com efeito longe da tela.', l: 'src/v3/global.css, src/ui/v3/base.jsx' }
   ] },
   { g: 'Hoje', a: [
-    { t: 'dado', o: 'Primeira vez começa com o programa do dono', h: '"Comece pelo que já está aqui" oferece o programa e o plano que vêm embutidos no app.', c: 'Decisão do dono (17/11): três passos (seu treino, sua comida, o que acompanhar), cada um pulável; a pessoa nova começa vazia. O aparelho do dono não muda. Pede decidir o que o app embute para quem é novo (teste de domínio do estado inicial).', l: 'PrimeiraVez em hoje.jsx; enderecoVazio e o estado padrão em src/main.jsx' },
+    { t: 'letra', f: 'peça 7', pendente: true, o: 'C2 · Hoje vazio', h: '“Nada para agora.” quebra em duas linhas com a fonte que traz apenas o eixo de peso.', c: 'Carregar a variante da Bricolage com o eixo óptico.', l: 'src/v3/fontes.css' },
+    { t: 'dado', f: 'peça 7', pendente: true, o: 'C3 · Escolhas de módulos em dois aparelhos', h: 'As escolhas da primeira vez ficam sem carimbo. A sincronia pode esconder módulos escolhidos no outro aparelho.', c: 'Rever o carimbo dessas escolhas na fusão entre perfis pessoais.', l: 'guardaPasso em src/main.jsx' },
+    { t: 'dado', o: 'Primeira vez começa com o programa do dono (parte 3 implementada, em revisão)', h: '"Comece pelo que já está aqui" oferece o programa e o plano que vêm embutidos no app.', c: 'Decisão do dono (17/11): três passos (seu treino, sua comida, o que acompanhar), cada um pulável; a pessoa nova começa vazia. O aparelho do dono não muda. O estado inicial traz os catálogos e recebe a prescrição da pessoa. No build a 414 × 896, o principal mede 374 × 58 px em (20, 762) nos três passos, em Chromium e WebKit.', l: 'PrimeiraVez em hoje.jsx, primeira-vez.ts, sincronia.ts e src/main.jsx' },
     { t: 'dado', f: 'peça 6', o: '"Comi outra coisa" sem o tamanho', h: 'Marca só "fora".', c: 'Decisão do dono (17/11): guardar o tamanho (parecido, bem mais, bem menos, não sei). Campo novo na marca da refeição, com fusão, cópia de segurança e a pasta dos agentes; teste de domínio e do espelho.', l: 'marcaLinhaDaComida em src/main.jsx; ferramentas/espelho/monta.ts' },
     { t: 'hierarquia', f: 'peça 5, Hoje', o: 'A exceção da refeição dentro do bloco', h: '"Não foi assim" troca os botões do bloco por dois de contorno e uma saída (sem principal).', c: 'O bloco fica com "Comi" e "Ver"; "Não foi assim" abre a folha com as três respostas (outra coisa, não comi, não sei). Um principal por bloco, sempre.', l: 'Momento em hoje.jsx' },
     { t: 'espaço', f: 'peça 5, Hoje', o: 'Lembrete das fotos fora do padrão de aviso', h: 'Bloco próprio (.v3-lembrete) com duas saídas sublinhadas.', c: 'Caixa lilás (aviso dentro da tela) com "Abrir as fotos" pequeno cheio e "Agora não" de contorno.', l: 'hoje.jsx, src/v3/registro.css' }
@@ -57,6 +59,7 @@ window.AUDITORIA = [
     { t: 'estado', f: 'peça 5, Ajustes', o: 'Colar a cópia como texto', h: 'Só restaurar por arquivo.', c: 'Folha "Colar a cópia" em Ajustes: campo de texto longo, "Conferir o texto", o resumo do que tem nela, e a confirmação de restaurar.', l: 'ajustes.jsx' }
   ] },
   { g: 'Ajustes', a: [
+    { t: 'hierarquia', f: 'peça 7', pendente: true, o: 'C1 · Falha ao guardar', h: '“Tentar de novo” quebra em três linhas ao lado de “Baixar uma cópia de segurança”.', c: 'Seguir f-falhou com um botão principal e uma saída para a cópia.', l: 'src/ui/v3/pare.jsx' },
     { t: 'fluxo', f: 'peça 5, Ajustes', o: 'Apagar tudo como saída sublinhada', h: '"Apagar todo o histórico deste aparelho" em saída discreta.', c: 'Linha "Voltar ao começo" na seção Recomeçar, que abre a confirmação dizendo o que se perde e o que não se perde.', l: 'ajustes.jsx' },
     { t: 'texto', f: 'peça 5, Ajustes', o: 'Interruptor de visual que não existe mais', h: 'A seção "Visual" ainda é desenhada (titulo="Visual").', c: 'Tirar: o visual antigo saiu na Fase 5.', l: 'ajustes.jsx:61' }
   ] }

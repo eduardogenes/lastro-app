@@ -280,6 +280,8 @@ export interface EntradaProgLog {
   day: Dia;
   txt: string;
   motivo?: string;
+  /** Texto colado neste aparelho antes da primeira fusão com uma conta. */
+  textoRevisao?: string;
   /** quando foi alterada pela última vez */
   m?: number;
 }
@@ -709,7 +711,7 @@ export interface EstadoCompras {
 
 /** A metade de comida do estado. Espelha a de treino: biblioteca + plano. */
 export interface EstadoComida {
-  /** o plano dele, semeado do PLANO_BASE e editável */
+  /** plano editável; começa vazio no perfil pessoal */
   plano: Refeicao[] | null;
   /** o catálogo dele, sobrepondo o que vem do código */
   alimentos: Record<string, Partial<Alimento>>;
@@ -728,6 +730,8 @@ export interface EstadoComida {
 
 /** O estado persistido inteiro, sob a chave `lastro-v1`. */
 export interface Estado {
+  /** Presente só em perfis que começaram sem prescrição. A partir de 4 a abertura está concluída. */
+  primeiraVez?: number;
   /** histórico por ID DE EXERCÍCIO, nunca por posição */
   logs: Record<IdEx, Log[]>;
   done: Sessao[];
@@ -748,7 +752,7 @@ export interface Estado {
   export: number;
   /** versão do formato */
   plano: number;
-  /** o programa dele, semeado do PROGRAMA e editável */
+  /** programa editável; começa vazio no perfil pessoal */
   prog: Record<Dia, Treino> | null;
   rot: Dia[] | null;
   /** o catálogo dele */
