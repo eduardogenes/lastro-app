@@ -33,25 +33,41 @@ export const corDe = cor => `var(--${CORES[cor] || CORES.treino})`;
  */
 /**
  * A faixa da barra do sistema (o `body::before` do global.css) toma a cor do
- * bloco enquanto o bloco encosta nela: no topo da tela a cor sobe até o
- * relógio, como num app do iPhone. Rolado para longe, a faixa volta ao papel,
- * e nada do conteúdo passa por baixo do relógio.
+ * bloco colorido que encosta no topo: a cor sobe até o relógio, como num app
+ * do iPhone. Rolado para longe, a faixa volta ao papel e nada do conteúdo
+ * passa por baixo do relógio. Um vigia só, para a página inteira: olha o DOM a
+ * cada mudança e a cada rolagem, e não depende da ordem em que as telas montam.
  */
-function useCorDoTopo(ref, cor) {
-  useEffect(() => {
-    const el = ref.current, raiz = document.documentElement;
-    if (!el || typeof IntersectionObserver !== 'function') return;
-    const sa = parseFloat(getComputedStyle(raiz).getPropertyValue('--sa-top')) || 0;
-    const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { raiz.style.setProperty('--cor-topo', cor); raiz.dataset.corTopo = '1'; }
-      else if (raiz.style.getPropertyValue('--cor-topo') === cor) { raiz.style.removeProperty('--cor-topo'); delete raiz.dataset.corTopo; }
-    }, { rootMargin: '0px 0px -' + Math.max(0, window.innerHeight - sa - 1) + 'px 0px' });
-    obs.observe(el);
-    return () => {
-      obs.disconnect();
-      if (raiz.style.getPropertyValue('--cor-topo') === cor) { raiz.style.removeProperty('--cor-topo'); delete raiz.dataset.corTopo; }
-    };
-  }, [cor]);
+let vigiaDoTopo = false;
+function vigiaACorDoTopo() {
+  if (vigiaDoTopo || typeof document === 'undefined') return;
+  vigiaDoTopo = true;
+  const raiz = document.documentElement;
+  let pedido = 0;
+  const pinta = () => {
+    pedido = 0;
+    let cor = '';
+    const blocos = document.querySelectorAll('#app .v3-bloco');
+    for (let i = 0; i < blocos.length; i++) {
+      const el = blocos[i];
+      if (el.closest('.v3-folha-w, [data-sai], [inert]')) continue;
+      const r = el.getBoundingClientRect();
+      if (r.top <= 1 && r.bottom > 2 && r.width > 0) { cor = getComputedStyle(el).backgroundColor; break; }
+    }
+    if (cor) { if (raiz.style.getPropertyValue('--cor-topo') !== cor) raiz.style.setProperty('--cor-topo', cor); }
+    else if (raiz.style.getPropertyValue('--cor-topo')) raiz.style.removeProperty('--cor-topo');
+  };
+  const quadro = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : f => setTimeout(f, 16);
+  const agenda = () => { if (!pedido) pedido = quadro(pinta); };
+  window.addEventListener('scroll', agenda, { passive: true });
+  window.addEventListener('resize', agenda);
+  if (typeof MutationObserver === 'function') new MutationObserver(agenda).observe(document.getElementById('app') || document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+  // a cor do bloco muda com transição: confere de novo quando ela termina
+  document.addEventListener('transitionend', agenda, true);
+  document.addEventListener('animationend', agenda, true);
+  document.addEventListener('visibilitychange', agenda);
+  window.addEventListener('pageshow', agenda);
+  agenda();
 }
 
 export function Bloco({ cor = 'treino', linha0, quando, vivo, titulo, medio, apoio, fino, chave, children }) {
@@ -59,10 +75,9 @@ export function Bloco({ cor = 'treino', linha0, quando, vivo, titulo, medio, apo
   if (medio == null) medio = String(titulo == null ? '' : titulo).length > 12;
   const anima = Bloco.ultima !== chave && chave != null;
   Bloco.ultima = chave;
-  const ref = useRef(null);
-  useCorDoTopo(ref, corDe(cor));
+  useEffect(vigiaACorDoTopo, []);
   return (
-    <section ref={ref} class={cls('v3-bloco', fino && 'fino')} style={`--v3-cor:${corDe(cor)}`}>
+    <section class={cls('v3-bloco', fino && 'fino')} style={`--v3-cor:${corDe(cor)}`}>
       {linha0 && <div class="v3-bloco-l0">{linha0}</div>}
       <div class={anima ? 'anima' : undefined} key={chave}>
         {quando && <p class="v3-bloco-q">{vivo && <i />}{quando}</p>}
