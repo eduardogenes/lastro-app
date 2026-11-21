@@ -5,7 +5,7 @@
 // Os lugares continuam com as chaves de sempre no estado (`agora`,
 // `prescricao`): o que muda é o nome que a pessoa lê, "Hoje" e "Plano".
 
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { ic } from './icones.jsx';
 
 export const LUGARES = [
@@ -61,14 +61,53 @@ export function Tira({ t, aoTocar }) {
   );
 }
 
+/**
+ * No app instalado no iPhone, com a página mais curta que a tela (o Hoje
+ * quase vazio), o iOS ancora o que é `fixed` embaixo num fundo que desconta a
+ * barra de status, e a doca sobe uns 45 pt em relação aos outros lugares. A
+ * doca mede onde ficou e volta para o fundo de verdade da tela. Fora do app
+ * instalado não faz nada.
+ */
+function useDocaNoFundo(ref) {
+  useEffect(() => {
+    const instalado = navigator.standalone === true ||
+      (typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches);
+    if (!instalado) return;
+    let pedido = 0;
+    const acerta = () => {
+      pedido = 0;
+      const el = ref.current; if (!el) return;
+      el.style.translate = '';
+      const deitado = window.innerWidth > window.innerHeight;
+      const alto = deitado ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+      const r = el.getBoundingClientRect();
+      const desvio = alto - parseFloat(getComputedStyle(el).bottom || '0') - r.bottom;
+      if (Math.abs(desvio) >= 2 && Math.abs(desvio) <= 80) el.style.translate = '0 ' + Math.round(desvio) + 'px';
+    };
+    const agenda = () => { if (!pedido) pedido = requestAnimationFrame(acerta); };
+    window.addEventListener('resize', agenda);
+    window.addEventListener('orientationchange', agenda);
+    window.addEventListener('pageshow', agenda);
+    const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(agenda) : null;
+    if (ro) ro.observe(document.body);
+    agenda();
+    return () => {
+      window.removeEventListener('resize', agenda); window.removeEventListener('orientationchange', agenda);
+      window.removeEventListener('pageshow', agenda); if (ro) ro.disconnect();
+    };
+  }, []);
+}
+
 export function Doca({ ativa, onMuda, aoRegistrar, tira, aoVoltarAoTreino }) {
   const mini = useEncolhe();
   const teclado = useTecladoAberto();
+  const ref = useRef(null);
+  useDocaNoFundo(ref);
   // no Hoje, o bloco do momento (e, rolado, a pílula que gruda no topo) já diz
   // que o treino está aberto: a tira diria a mesma coisa duas vezes
   const mostraTira = !!tira && ativa !== 'agora';
   return (
-    <div class={'v3 v3-doca' + (mini ? ' mini' : '') + (teclado ? ' oculta' : '')}>
+    <div ref={ref} class={'v3 v3-doca' + (mini ? ' mini' : '') + (teclado ? ' oculta' : '')}>
       {mostraTira && <Tira t={tira} aoTocar={aoVoltarAoTreino} />}
       <nav class="v3-doca-n" aria-label="Lugares">
         {LUGARES.map(l => (
