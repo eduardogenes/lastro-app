@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "docs/design-system/inventario.html"
+        ],
+        "createdAt": "2026-11-18T00:20:15.367Z",
+        "reason": "Claude: os chips .contraste mostram de propósito o cinza #77766D reprovado sobre cada cor (documentação do erro do protótipo)"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "docs/design-system/inventario.html"
+        ],
+        "createdAt": "2026-11-18T00:20:15.393Z",
+        "reason": "Claude: os chips .contraste mostram de propósito o contraste reprovado do protótipo; o texto da página usa #68675F (5,1 no papel) e tinta"
+      }
+    ]
+  }
+}

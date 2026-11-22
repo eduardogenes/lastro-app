@@ -1,527 +1,417 @@
-/* ============================================================
-   A BANCADA — o palco de mesa. Ver src/palco.js para o porquê.
+/*
+ * A bancada de mesa. O app roda em outro documento, dentro do vidro. A luz
+ * vem do alto à esquerda. O metal projeta uma sombra mais longa que a da
+ * ficha de papel, que assenta na mesma superfície. A cota mede só o vidro.
+ *
+ * A mesa usa o papel, a tinta, a seleção e a tipografia do app. As medidas
+ * físicas do iPhone pertencem à bancada. No telefone a raiz abaixo não existe.
+ */
+html[data-palco="bancada"] {
+  color-scheme: light;
 
-   Tudo aqui está trancado atrás de `[data-palco="bancada"]`, que só
-   o computador recebe. No telefone estas regras existem no arquivo
-   e não casam com nada.
+  /* Enquadramento. A ficha conserva seu lugar quando o telefone gira. */
+  --pl-enquadramento: 1080px;
+  --pl-margem-x: clamp(var(--e-7), 3vw, 56px);
+  --pl-margem-y: clamp(var(--e-5), 3.2vh, 42px);
+  --pl-vao: clamp(var(--e-7), 4vw, 72px);
+  --pl-lado: clamp(284px, 28vw, 360px);
+  --pl-respiro-ficha: clamp(var(--e-7), 2vw, 28px);
+  --pl-antes-do-telefone: 2.4fr;
+  --pl-reserva-cota: 36px;
+  --pl-fio: 1px;
+  --pl-papel-luz: rgba(246, 243, 236, .48);
+  --pl-mesa: linear-gradient(var(--pl-papel-luz), var(--pl-papel-luz)), url('/palco/mesa.webp');
+  --pl-sombra-ficha: drop-shadow(0 1px 1px rgba(61, 49, 32, .21)) drop-shadow(4px 8px 8px rgba(61, 49, 32, .13));
+  --pl-papel-ficha: var(--superficie);
+  --pl-meia-ficha: 51%; /* as máscaras se encontram também em largura fracionária */
+  --pl-pique: 5px;
+  --pl-borda-pique: calc(var(--pl-pique) + .5px);
+  --pl-picote: repeating-linear-gradient(to right, var(--contorno) 0 var(--e-0), transparent var(--e-0) var(--e-2));
+  --pl-foco-afasta: 3px;
+  --pl-mini-escala: 21;
+  --pl-mini-faixa: 48px;
+  --pl-mini-faixa-baixa: 38px;
+  --pl-mini-canto: 4px;
+  --pl-mini-ilha: 34%;
+  --pl-mini-inicio: 3px;
+  --pl-icone-giro: 20px;
+  --pl-traco-icone: 2;
+  --pl-t-modelo: 760 clamp(26px, 2.65vw, 38px)/1 var(--f-titulo);
 
-   ---- As quatro licenças, e de quem elas são ----
+  /* Chassi, vidro e teclas físicas. A luz na quina é mais estreita que o aro. */
+  --pl-metal-1: #B1A99C;
+  --pl-metal-2: #FAF7EC;
+  --pl-metal-3: #8E897E;
+  --pl-metal-4: #C9C3B7;
+  --pl-metal-5: #756F65;
+  --pl-metal-6: #E3DED3;
+  --pl-luz: rgba(255, 255, 255, .62);
+  --pl-escuro: rgba(74, 66, 48, .20);
+  --pl-chanfro: rgba(255, 255, 255, .86);
+  --pl-fenda: rgba(25, 22, 16, .56);
+  --pl-moldura: #10100F;
+  --pl-vidro: #070706;
+  --pl-grelha: #353430;
+  --pl-aro: 3px;
+  --pl-fio-metal: .75px;
+  --pl-metal: conic-gradient(from 208deg, transparent, var(--pl-luz) 38deg, var(--pl-escuro) 94deg,
+                var(--pl-luz) 148deg, var(--pl-escuro) 198deg, var(--pl-luz) 248deg, var(--pl-escuro) 308deg, transparent),
+              linear-gradient(152deg, var(--pl-metal-6), var(--pl-metal-2) 9%, var(--pl-metal-3) 26%,
+                var(--pl-metal-4) 46%, var(--pl-metal-5) 62%, var(--pl-metal-2) 84%, var(--pl-metal-1));
+  --pl-contato: rgba(52, 43, 28, .40);
+  --pl-projetada: rgba(64, 50, 30, .24);
+  /* A luz segue a hora (palco.js, `sol`): -1 de manhã, 0 ao meio-dia e à
+     noite, 1 no fim da tarde. A sombra cai para o lado oposto. */
+  --pl-sol: -1;
+  --pl-sombra-casco: 0 0 0 var(--pl-fio-metal) var(--pl-fenda),
+                     calc(var(--pl-sol) * -2px) 4px 4px -1px var(--pl-contato),
+                     calc(var(--pl-sol) * -8px) 12px 13px -4px var(--pl-projetada),
+                     calc(var(--pl-sol) * -22px) 30px 32px -10px var(--pl-projetada);
+  /* O nome gravado na mesa: um tom do próprio papel, com a luz numa borda e a
+     sombra na outra, como papel prensado. */
+  --pl-relevo: #D4CCBA;
+  --pl-relevo-luz: rgba(255, 253, 246, .9);
+  --pl-relevo-sombra: rgba(70, 56, 32, .22);
+  --pl-t-gravado: 800 clamp(150px, 40vh, 460px)/.78 var(--f-titulo);
+  --pl-gravado-espaco: -.065em;
+  --pl-poca-de-luz: rgba(255, 251, 242, .55);
+  --pl-mini-escala: 8.6;
+  --pl-mini-aro: 1.5px;
+  --pl-mini-moldura: 2.5px;
+  --pl-mini-canto: 8px;
+  --pl-prateleira: 1.5px;
+  --pl-ergue: -5px;
+  --pl-girar-d: 46px;
+  --pl-tecla-espessura: 4px;
+  --pl-tecla-saliente: 3px;
+  --pl-tecla-raio: 2px;
+  --pl-sombra-tecla: 0 0 0 var(--pl-fio-metal) var(--pl-fenda);
+  --pl-metal-tecla: var(--pl-metal-5), var(--pl-metal-2) 45%, var(--pl-metal-4);
+  --pl-reflexo-lente: radial-gradient(circle at 34% 30%, var(--pl-metal-3), var(--pl-vidro) 72%);
+  --pl-se-falante: 46px;
+  --pl-se-fenda: 5px;
+  --pl-se-camera: 8px;
+  --pl-se-inicio: 46px;
 
-   O DESIGN.md tem seis inegociáveis, e a bancada rompe três. Não
-   por descuido: porque ela não é o app. É a MESA onde o app está
-   pousado, e mesa e instrumento não seguem a mesma regra.
-
-   1. RAIO ZERO -> o aparelho tem 62px de canto contínuo.
-      É a mesma licença da miniatura de foto (`--ins-raio-foto`):
-      forma que o mundo já tem, não caixa arredondada por gosto.
-      Um iPhone de canto reto não seria mais fiel ao sistema; seria
-      só um retângulo com um app dentro.
-
-   2. NUNCA SOMBRA -> o aparelho projeta uma.
-      A sombra é o que separa "objeto pousado numa superfície" de
-      "desenho colado numa página", e é a coisa toda que a bancada
-      tem a dizer. Ela pertence ao OBJETO. Nada dentro da tela
-      ganhou sombra, e é por isso que a tela continua lendo como
-      tela: ela é a única região plana da composição.
-
-   3. OS TEMPOS DO APP -> a bancada tem os dela.
-      Três movimentos: o pouso, uma vez, na abertura; a virada,
-      quando se gira o aparelho; e o painel com a régua pousando
-      depois dele. Os três são estado — "chegou", "virou" —, com
-      tempos e curva próprios (`--pl-dur-*`, `--pl-curva`, no bloco
-      de tokens abaixo), e moram no mesmo portão por adesão do app:
-      sob "Reduzir movimento" nenhum deles roda. O app dentro do
-      vidro segue a regra dele, e nenhum dos dois comemora nada.
-
-   4. A CAMADA DO SISTEMA NÃO USA AS FONTES DO APP.
-      Relógio, sinal e bateria são do iOS, e escrevê-los em Space
-      Grotesk seria o app assinando o que não é dele. Vão na fonte
-      do sistema, como no aparelho de verdade.
-
-   O prefixo é `pl-`, e não `ins-`, pelo mesmo motivo: `ins-` é a
-   língua do que se vê DENTRO do app, e a bancada está do lado de
-   fora do vidro.
-   ============================================================ */
-
-:root {
-  /* ---- Titânio: a mesma família de cinza esverdeado do canvas,
-     em sete paradas, porque metal escovado é o que acontece quando
-     uma superfície devolve duas luzes em ângulos diferentes. Uma
-     parada só daria plástico. ---- */
-  --pl-metal-1: #B9B3A7;
-  --pl-metal-2: #F4F1EA;
-  --pl-metal-3: #A39D90;
-  --pl-metal-4: #D6D1C6;
-  --pl-metal-5: #8F897C;
-  --pl-metal-6: #E4E0D7;
-
-  /* O vidro é mais preto que o canvas do app, e essa diferença de
-     três pontos é o que faz a tela parecer ACESA dentro da moldura.
-     Igualar os dois apaga o aparelho. */
-  --pl-vidro:   #000000;
-
-  /* A luz que corre pela BORDA. O degradê linear sozinho resolve o queixo
-     largo do iPhone com botão e não resolve o trilho de 11px do resto: ao
-     longo de 11 pixels ele quase não muda, e o metal sai chapado. Estas duas
-     entram por cima num degradê CÔNICO, que dá a cada aresta um tom diferente
-     — que é literalmente o que uma peça usinada faz com uma luz de estúdio. */
-  --pl-luz:     rgba(255, 255, 255, .62);
-  --pl-escuro:  rgba(74, 66, 48, .20);
-
-  --pl-chanfro: rgba(255, 255, 255, .85);   /* o fio de luz na quina usinada */
-  --pl-fenda:   rgba(16, 15, 12, .55);      /* a junta entre metal e vidro */
-  --pl-moldura: #0B0B0A;                    /* a borda preta do vidro, entre o aro e a tela */
-  --pl-grelha:  #2B2B28;                    /* o alto-falante e o aro do botão Início, sobre a moldura */
-  --pl-aro:     3px;                        /* o aro de titânio, visto de frente */
-  --pl-sombra-perto: rgba(58, 50, 32, .28); /* o contato com a mesa */
-  --pl-sombra-longe: rgba(58, 50, 32, .16); /* a luz de cima, longa e mole */
-  --pl-bloom:   transparent;
-
-  --pl-sistema:      #0F0F0D;               /* tinta do relógio e dos ícones: tela clara, sistema escuro */
-  --pl-sistema-meia: rgba(15, 15, 13, .38);
-
-  /* O piso da bancada. O canvas do app é chapado; aqui há um
-     levante no centro, e é ele que dá à sombra do aparelho algo
-     mais claro que ela para escurecer. Sombra preta sobre preto
-     chapado não existe. */
-  --pl-piso-1:  #FBF9F4;   /* a luz cai no centro da mesa */
-  --pl-piso-2:  #F1EDE3;
-  --pl-piso-3:  #E6E0D2;
-
+  /* O relógio e a bateria são do sistema do aparelho. As medidas aqui são
+     em pontos antes da escala, como a viewport do iframe. */
+  --pl-sinal-w: 18px;
+  --pl-wifi-w: 16px;
+  --pl-icone-sistema-h: 12px;
+  --pl-sistema: var(--texto);
+  --pl-sistema-meia: var(--veu);
   --pl-font-sistema: -apple-system, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --pl-t-hora: 600 15px/1 var(--pl-font-sistema);
+  --pl-t-hora-se: 13px;
+  --pl-ilha-margem: 11px;
+  --pl-ilha-larga: 125px;
+  --pl-ilha-estreita: 36px;
+  --pl-lente: 9px;
+  --pl-lente-margem: 13px;
+  --pl-status-vao: 5px;
+  --pl-bateria-w: 25px;
+  --pl-bateria-h: var(--pl-icone-sistema-h);
+  --pl-bateria-canto: 3.5px;
+  --pl-bateria-polo: 1.6px;
+  --pl-bateria-carga: .68;
+  --pl-gestos-w: 140px;
+  --pl-gestos-h: 5px;
 
-  /* ---- O movimento da bancada: os tempos e a curva dela ----
-     Fora da escala do app pela licença 3, e por isso aqui e não em
-     tokens.css — mas NOMEADOS, como o titânio: tempo solto numa regra
-     reprova na guarda de estilo do mesmo jeito que cor solta. */
-  --pl-dur-pousa:     520ms;   /* o aparelho pousa, uma vez, na abertura */
-  --pl-dur-painel:    420ms;   /* o painel e a régua pousam depois dele... */
-  --pl-atraso-painel: 140ms;   /* ...com este atraso, para não chegar junto */
-  --pl-dur-vira:      300ms;   /* a virada ao girar o aparelho */
-  /* Desacelera longo e assenta. Nenhum ponto de controle fora de [0, 1]:
-     o objeto chega e para, sem quicar. */
+  /* O giro troca a viewport de uma vez. Só a silhueta assenta. */
+  --pl-dur-pousa: 420ms;
+  --pl-dur-vira: 240ms;
   --pl-curva: cubic-bezier(.16, 1, .3, 1);
+  --pl-angulo-vira: -2deg;
+  --pl-escala-vira: .985;
 }
 
-/* ---- O app cru sai de cena --------------------------------------------
-   Especificidade por atributo + id, sem `!important`. O `#timer` é
-   `display: flex` sempre desde a peça 3 do motion (fora de cena ele fica
-   layoutado e invisível, para poder subir e descer); quem declara o `display`
-   dele é só `#timer`, com (0,1,0,0). O `#toast` não declara `display` nenhum
-   desde a peça 7 (no app a região viva nunca some: fica vazia). Aqui é o
-   documento de FORA da bancada, onde o app não monta (quem roda é o iframe) e
-   o esqueleto cru do `index.html` sai de cena inteiro — a região daqui nunca
-   recebe aviso; a que fala é a do aparelho. */
-html[data-palco="bancada"] body { overflow: hidden; }
+html[data-palco="bancada"] body { overflow: hidden; color: var(--texto); background: var(--superficie-quieta); }
 html[data-palco="bancada"] #app,
 html[data-palco="bancada"] #toast,
 html[data-palco="bancada"] #timer,
 html[data-palco="bancada"] #deitado { display: none; }
 
-/* ---- O palco ---------------------------------------------------------- */
-
 .pl {
-  --pl-lado: 260px;
-  position: fixed; inset: 0; z-index: 1;
-  /* Três colunas com a do meio livre: a coluna vazia da esquerda tem a
-     largura do painel, e é ela que põe o APARELHO no centro da janela em vez
-     de centrar o conjunto. O objeto é o assunto; o painel é a legenda dele. */
-  display: grid; grid-template-columns: var(--pl-lado) auto var(--pl-lado);
-  align-items: center; justify-content: center;
-  gap: 24px; padding: 40px;
-  background: radial-gradient(88% 68% at 50% 36%,
-              var(--pl-piso-1) 0%, var(--pl-piso-2) 56%, var(--pl-piso-3) 100%);
-  /* clip e não hidden: o horizonte transborda de propósito para os
-     dois lados, e `hidden` viraria `auto` no outro eixo — barra de
-     rolagem transitória num palco que não rola. */
-  overflow: clip;
+  position: fixed; inset: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+  padding: var(--pl-margem-y) var(--pl-margem-x);
+  background: var(--superficie-quieta);
+  background-image: radial-gradient(ellipse 70% 60% at calc(50% + var(--pl-sol) * 32%) 12%, var(--pl-poca-de-luz), transparent 70%),
+                    var(--pl-mesa);
+  background-position: center; background-size: cover; background-repeat: no-repeat;
+  color: var(--texto); overflow: hidden;
 }
+[data-luz="noite"] { --pl-poca-de-luz: rgba(255, 251, 242, .25); }
 
-.pl-cena { grid-column: 2; position: relative; padding: 26px 34px 0; }
-
-/* A superfície. Um fio, de ponta a ponta da janela, na base do
-   aparelho: sem ele o objeto flutua, e flutuar é o que a versão
-   antiga desta tela já fazia. */
-.pl-horizonte {
-  position: absolute; bottom: 0; left: -100vw; right: -100vw; height: 1px;
-  background: linear-gradient(90deg,
-              transparent, var(--divisoria) 22%, var(--divisoria) 78%, transparent);
+.pl-cena {
+  position: relative; z-index: 1;
+  min-width: 0; min-height: 0; align-self: stretch; margin-bottom: var(--pl-reserva-cota);
+  display: grid; grid-template-columns: minmax(0, 1.18fr) auto minmax(0, 1fr);
+  align-items: center;
 }
-
-/* ---- O aparelho ------------------------------------------------------- */
-
+.pl-exemplar { grid-column: 2; position: relative; }
+.pl-cota {
+  pointer-events: none; position: absolute; top: 100%; inset-inline: 0; margin: var(--e-7) auto 0;
+  width: calc(var(--pl-w) * var(--pl-k));
+  display: flex; align-items: center; gap: var(--e-5);
+  color: var(--texto-2); font: var(--t-legenda); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.pl-cota::before, .pl-cota::after {
+  content: ''; flex: 1; height: var(--e-2); align-self: start;
+  margin-top: var(--e-0); border-bottom: var(--pl-fio) solid var(--contorno);
+}
+.pl-cota::before { border-left: var(--pl-fio) solid var(--contorno); }
+.pl-cota::after { border-right: var(--pl-fio) solid var(--contorno); }
+/* O aro cresce para fora do vidro. A viewport e os recuos do sistema
+   continuam em pontos do modelo, mesmo numa janela de computador pequena. */
 .pl-aparelho {
-  position: relative; box-sizing: border-box;
-  width:  calc((var(--pl-w) + 2 * var(--pl-mx)) * var(--pl-k));
+  position: relative; isolation: isolate; box-sizing: border-box;
+  width: calc((var(--pl-w) + 2 * var(--pl-mx)) * var(--pl-k));
   height: calc((var(--pl-h) + 2 * var(--pl-my)) * var(--pl-k));
   padding: calc((var(--pl-my) - var(--pl-aro)) * var(--pl-k)) calc((var(--pl-mx) - var(--pl-aro)) * var(--pl-k));
   border: calc(var(--pl-aro) * var(--pl-k)) solid transparent;
   border-radius: calc(var(--pl-rc) * var(--pl-k));
-  background:
-    linear-gradient(var(--pl-moldura), var(--pl-moldura)) padding-box,
-    conic-gradient(from 208deg,
-      transparent      0deg,  var(--pl-luz)     38deg, var(--pl-escuro)  94deg,
-      var(--pl-luz)  148deg,  var(--pl-escuro) 198deg, var(--pl-luz)    248deg,
-      var(--pl-escuro) 308deg, transparent      360deg),
-    linear-gradient(152deg,
-      var(--pl-metal-6)  0%, var(--pl-metal-2)  9%, var(--pl-metal-3) 26%,
-      var(--pl-metal-4) 46%, var(--pl-metal-5) 62%, var(--pl-metal-2) 84%,
-      var(--pl-metal-1) 100%) border-box;
-  box-shadow:
-    0 0 0 calc(.5px * var(--pl-k)) var(--pl-fenda),
-    0 calc(2px * var(--pl-k))  calc(4px * var(--pl-k))   0 var(--pl-sombra-perto),
-    0 calc(30px * var(--pl-k)) calc(60px * var(--pl-k))  calc(-18px * var(--pl-k)) var(--pl-sombra-longe),
-    0 calc(70px * var(--pl-k)) calc(120px * var(--pl-k)) calc(-40px * var(--pl-k)) var(--pl-sombra-longe);
+  background: linear-gradient(var(--pl-moldura), var(--pl-moldura)) padding-box, var(--pl-metal);
+  box-shadow: var(--pl-sombra-casco);
 }
-/* O fio de luz na quina usinada, por cima do aro. */
 .pl-aparelho::after {
-  content: ""; position: absolute; inset: calc(-1 * var(--pl-aro) * var(--pl-k));
-  border-radius: inherit; pointer-events: none;
-  box-shadow: inset 0 0 0 calc(.75px * var(--pl-k)) var(--pl-chanfro);
+  content: ''; position: absolute; inset: calc(-1 * var(--pl-aro) * var(--pl-k)); pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 calc(var(--pl-fio-metal) * var(--pl-k)) var(--pl-chanfro);
 }
-@supports (corner-shape: squircle) { .pl-aparelho::after { corner-shape: squircle; } }
-
-/* O halo da tela acesa. Fica ATRÁS do aparelho (z-index negativo
-   dentro do contexto de empilhamento do palco) e é quase invisível
-   de propósito: perceber o halo é o defeito, perceber que a tela
-   está ligada é o efeito. */
-.pl-aparelho::before {
-  content: ""; position: absolute; inset: -18%; z-index: -1;
-  background: radial-gradient(closest-side, var(--pl-bloom), transparent 74%);
-  pointer-events: none;
-}
-
-/* Canto contínuo, e não circular: é o que a Apple desenha e o que
-   separa "iPhone" de "retângulo com raio". Chegou ao Chrome em 139;
-   onde não existe, o `border-radius` acima já entrega a silhueta. */
-@supports (corner-shape: squircle) {
-  .pl-aparelho, .pl-vidro { corner-shape: squircle; }
-}
-
 .pl-vidro {
   position: relative; overflow: hidden;
-  width:  calc(var(--pl-w) * var(--pl-k));
-  height: calc(var(--pl-h) * var(--pl-k));
-  border-radius: calc(var(--pl-raio) * var(--pl-k));
-  background: var(--pl-vidro);
+  width: calc(var(--pl-w) * var(--pl-k)); height: calc(var(--pl-h) * var(--pl-k));
+  border-radius: calc(var(--pl-raio) * var(--pl-k)); background: var(--pl-vidro);
+  /* Uma máscara opaca mantém o iframe no recorte do vidro quando o compositor
+     do Chromium libera a camada da animação. O raio sozinho deixa quinas pretas. */
+  mask-image: linear-gradient(var(--pl-vidro), var(--pl-vidro));
 }
 
-/* A tela roda em tamanho REAL e é escalada por transform. A viewport
-   de dentro continua sendo 402 × 874 — é isso que faz media query,
-   svh, fixed e sticky se resolverem sozinhos lá dentro. Escalar a
-   largura em vez do transform daria uma janela estreita, não um
-   telefone. */
 .pl-tela, .pl-sistema {
-  position: absolute; top: 0; left: 0;
-  width: var(--pl-w); height: var(--pl-h);
-  transform: scale(var(--pl-k));
-  transform-origin: top left;
+  position: absolute; top: 0; left: 0; width: var(--pl-w); height: var(--pl-h);
+  transform: scale(var(--pl-k)); transform-origin: top left;
 }
 .pl-tela { border: 0; display: block; background: var(--fundo); }
-
-/* ---- A camada do sistema ---------------------------------------------
-   Ilha, relógio e barra de gestos são desenhados por cima do app,
-   como no aparelho: lá o app também passa por baixo deles. Não
-   recebem ponteiro — clicar na ilha é clicar no app que está atrás. */
 .pl-sistema { pointer-events: none; color: var(--pl-sistema); }
 
 .pl-ilha {
-  position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
-  width: 125px; height: 36px; border-radius: 18px;
-  background: var(--pl-vidro);
+  position: absolute; top: var(--pl-ilha-margem); left: 50%; transform: translateX(-50%);
+  width: var(--pl-ilha-larga); height: var(--pl-ilha-estreita);
+  border-radius: var(--r-pilula); background: var(--pl-vidro);
 }
 .pl-ilha-lente {
-  position: absolute; top: 50%; right: 13px; transform: translateY(-50%);
-  width: 9px; height: 9px; border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, var(--pl-metal-3), var(--pl-vidro) 72%);
-  box-shadow: 0 0 0 1px var(--pl-fenda);
+  position: absolute; top: 50%; right: var(--pl-lente-margem); transform: translateY(-50%);
+  width: var(--pl-lente); height: var(--pl-lente); border-radius: 50%;
+  background: var(--pl-reflexo-lente); box-shadow: 0 0 0 var(--pl-fio) var(--pl-fenda);
 }
 [data-familia="botao"] .pl-ilha { display: none; }
 
-/* Deitado, a ilha vai para a borda ESQUERDA e vira em pé junto com
-   o aparelho: ela é peça física, gira com o metal. */
+/* A ilha gira com o metal. A barra de gestos acompanha a tela. */
 [data-orientacao="paisagem"][data-familia="ilha"] .pl-ilha {
-  top: 50%; left: 11px; transform: translateY(-50%);
-  width: 36px; height: 125px;
+  top: 50%; left: var(--pl-ilha-margem); transform: translateY(-50%);
+  width: var(--pl-ilha-estreita); height: var(--pl-ilha-larga);
 }
 [data-orientacao="paisagem"] .pl-ilha-lente {
-  top: 13px; right: 50%; transform: translateX(50%);
+  top: var(--pl-lente-margem); right: 50%; transform: translateX(50%);
 }
-
 .pl-status {
-  position: absolute; top: 11px; left: 0; right: 0; height: 36px;
-  display: grid; grid-template-columns: 1fr 125px 1fr; align-items: center;
-  font: 600 15px/1 var(--pl-font-sistema);
-  letter-spacing: .01em; font-variant-numeric: tabular-nums;
+  position: absolute; top: var(--pl-ilha-margem); inset-inline: 0; height: var(--pl-ilha-estreita);
+  display: grid; grid-template-columns: 1fr var(--pl-ilha-larga) 1fr; align-items: center;
+  font: var(--pl-t-hora); font-variant-numeric: tabular-nums;
 }
-.pl-hora   { grid-column: 1; justify-self: center; }
-.pl-icones { grid-column: 3; justify-self: center; display: flex; align-items: center; gap: 5px; }
+.pl-hora { grid-column: 1; justify-self: center; }
+.pl-icones { grid-column: 3; justify-self: center; display: flex; align-items: center; gap: var(--pl-status-vao); }
 
+.pl-sinal, .pl-wifi { height: var(--pl-icone-sistema-h); }
+.pl-sinal { width: var(--pl-sinal-w); }
+.pl-wifi { width: var(--pl-wifi-w); }
 .pl-bateria {
-  position: relative; display: block; width: 25px; height: 12px;
-  border: 1px solid var(--pl-sistema-meia); border-radius: 3.5px;
+  position: relative; display: block; width: var(--pl-bateria-w); height: var(--pl-bateria-h);
+  border: var(--pl-fio) solid var(--pl-sistema-meia); border-radius: var(--pl-bateria-canto);
 }
 .pl-bateria::after {
-  content: ""; position: absolute; top: 50%; right: -3.5px; transform: translateY(-50%);
-  width: 1.6px; height: 4px; border-radius: 0 1px 1px 0;
+  content: ''; position: absolute; top: 50%; right: calc(-1 * var(--pl-bateria-canto)); transform: translateY(-50%);
+  width: var(--pl-bateria-polo); height: var(--e-1); border-radius: 0 var(--pl-fio) var(--pl-fio) 0;
   background: var(--pl-sistema-meia);
 }
 .pl-bateria > i {
-  position: absolute; inset: 1.5px; width: auto; right: auto;
-  display: block; border-radius: 1.5px;
-  background: var(--pl-sistema);
-  /* 68%: bateria de quem já usou o telefone hoje. Cheia lê como
-     enfeite; vazia lê como aviso. */
-  width: calc((100% - 3px) * .68);
+  position: absolute; inset: var(--fio-fino) auto var(--fio-fino) var(--fio-fino);
+  width: calc((100% - 2 * var(--fio-fino)) * var(--pl-bateria-carga));
+  border-radius: var(--fio-fino); background: var(--pl-sistema);
 }
-
-/* Sem entalhe a faixa é a barra inteira, e o relógio volta para a
-   esquerda — é o iPhone antes do Face ID. */
 [data-familia="botao"] .pl-status {
   top: 0; height: var(--pl-sat);
-  display: flex; justify-content: space-between; padding: 0 16px;
-  font-size: 13px;
+  display: flex; justify-content: space-between; padding-inline: var(--e-7); font-size: var(--pl-t-hora-se);
 }
-
-/* Deitado, o iPhone com Face ID esconde a barra de status. */
 [data-orientacao="paisagem"][data-familia="ilha"] .pl-status { display: none; }
-
-/* A barra de gestos é SOFTWARE: fica sempre embaixo da tela como
-   ela está, e não gira com o metal. É a diferença dela para a ilha,
-   e a bancada respeita as duas. */
 .pl-gestos {
-  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-  width: 140px; height: 5px; border-radius: 3px;
-  background: var(--pl-sistema); opacity: .92;
+  position: absolute; bottom: var(--e-3); left: 50%; transform: translateX(-50%);
+  width: var(--pl-gestos-w); height: var(--pl-gestos-h); border-radius: var(--r-pilula); background: var(--pl-sistema);
 }
 [data-familia="botao"] .pl-gestos { display: none; }
 
-/* ---- Os botões físicos -----------------------------------------------
-   A silhueta é o que faz o objeto ser lido como telefone antes de
-   qualquer detalhe: sem eles, uma barra de metal com tela dentro. */
 .pl-botao {
   position: absolute; z-index: -1;
-  background: linear-gradient(90deg, var(--pl-metal-5), var(--pl-metal-2) 45%, var(--pl-metal-4));
-  box-shadow: 0 0 0 calc(.5px * var(--pl-k)) var(--pl-fenda), 0 calc(1px * var(--pl-k)) calc(2px * var(--pl-k)) var(--pl-sombra-perto);
+  border-radius: calc(var(--pl-tecla-raio) * var(--pl-k));
+  background: linear-gradient(to right, var(--pl-metal-tecla)); box-shadow: var(--pl-sombra-tecla);
 }
 .pl-botao[data-borda="esq"], .pl-botao[data-borda="dir"] {
-  top: calc(var(--pl-b-y) * var(--pl-k));
-  width: calc(4px * var(--pl-k));
-  height: calc(var(--pl-b-h) * var(--pl-k));
-  border-radius: calc(2px * var(--pl-k));
+  top: calc(var(--pl-b-y) * var(--pl-k)); width: calc(var(--pl-tecla-espessura) * var(--pl-k)); height: calc(var(--pl-b-h) * var(--pl-k));
 }
-.pl-botao[data-borda="esq"] { left: calc((-3px - var(--pl-aro)) * var(--pl-k)); }
-.pl-botao[data-borda="dir"] { right: calc((-3px - var(--pl-aro)) * var(--pl-k)); }
-
+.pl-botao[data-borda="esq"] { left: calc((-1 * var(--pl-tecla-saliente) - var(--pl-aro)) * var(--pl-k)); }
+.pl-botao[data-borda="dir"] { right: calc((-1 * var(--pl-tecla-saliente) - var(--pl-aro)) * var(--pl-k)); }
 .pl-botao[data-borda="cima"], .pl-botao[data-borda="baixo"] {
-  left: calc(var(--pl-b-y) * var(--pl-k));
-  height: calc(4px * var(--pl-k));
-  width: calc(var(--pl-b-h) * var(--pl-k));
-  border-radius: calc(2px * var(--pl-k));
-  background: linear-gradient(180deg, var(--pl-metal-5), var(--pl-metal-2) 45%, var(--pl-metal-4));
+  left: calc(var(--pl-b-y) * var(--pl-k)); height: calc(var(--pl-tecla-espessura) * var(--pl-k)); width: calc(var(--pl-b-h) * var(--pl-k));
+  background: linear-gradient(to bottom, var(--pl-metal-tecla));
 }
-.pl-botao[data-borda="cima"]  { top: calc((-3px - var(--pl-aro)) * var(--pl-k)); }
-.pl-botao[data-borda="baixo"] { bottom: calc((-3px - var(--pl-aro)) * var(--pl-k)); }
+.pl-botao[data-borda="cima"] { top: calc((-1 * var(--pl-tecla-saliente) - var(--pl-aro)) * var(--pl-k)); }
+.pl-botao[data-borda="baixo"] { bottom: calc((-1 * var(--pl-tecla-saliente) - var(--pl-aro)) * var(--pl-k)); }
 
-/* ---- Os queixos do aparelho com botão --------------------------------- */
-
-.pl-queixo { display: none; position: absolute; align-items: center; justify-content: center; gap: 14px; }
+.pl-queixo { display: none; position: absolute; align-items: center; justify-content: center; gap: calc(var(--e-6) * var(--pl-k)); }
 [data-familia="botao"] .pl-queixo { display: flex; }
-
-.pl-queixo-topo { top: 0; left: 0; right: 0; height: calc(var(--pl-my) * var(--pl-k)); }
-.pl-queixo-base { bottom: 0; left: 0; right: 0; height: calc(var(--pl-my) * var(--pl-k)); }
-
-/* Girando no sentido anti-horário, o topo do aparelho encosta na
-   esquerda e a base vai para a direita. */
+.pl-queixo-topo { top: 0; inset-inline: 0; height: calc(var(--pl-my) * var(--pl-k)); }
+.pl-queixo-base { bottom: 0; inset-inline: 0; height: calc(var(--pl-my) * var(--pl-k)); }
 [data-orientacao="paisagem"] .pl-queixo-topo {
-  top: 0; bottom: 0; right: auto; height: auto; width: calc(var(--pl-mx) * var(--pl-k));
-  flex-direction: column;
+  top: 0; bottom: 0; right: auto; height: auto; width: calc(var(--pl-mx) * var(--pl-k)); flex-direction: column;
 }
 [data-orientacao="paisagem"] .pl-queixo-base {
   top: 0; bottom: 0; left: auto; height: auto; width: calc(var(--pl-mx) * var(--pl-k));
-  flex-direction: column;
 }
-
 .pl-alto-falante {
-  width: calc(46px * var(--pl-k)); height: calc(5px * var(--pl-k));
-  border-radius: calc(3px * var(--pl-k)); background: var(--pl-grelha);
+  width: calc(var(--pl-se-falante) * var(--pl-k)); height: calc(var(--pl-se-fenda) * var(--pl-k));
+  border-radius: var(--r-pilula); background: var(--pl-grelha);
 }
 .pl-lente {
-  width: calc(8px * var(--pl-k)); height: calc(8px * var(--pl-k)); border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, var(--pl-metal-3), var(--pl-vidro) 70%);
+  width: calc(var(--pl-se-camera) * var(--pl-k)); height: calc(var(--pl-se-camera) * var(--pl-k));
+  border-radius: 50%; background: var(--pl-reflexo-lente);
 }
 .pl-home {
-  width: calc(46px * var(--pl-k)); height: calc(46px * var(--pl-k)); border-radius: 50%;
-  box-shadow: inset 0 0 0 calc(1.5px * var(--pl-k)) var(--pl-grelha);
+  width: calc(var(--pl-se-inicio) * var(--pl-k)); height: calc(var(--pl-se-inicio) * var(--pl-k));
+  border-radius: 50%; box-shadow: inset 0 0 0 calc(var(--fio-fino) * var(--pl-k)) var(--pl-grelha);
 }
 [data-orientacao="paisagem"] .pl-alto-falante {
-  width: calc(5px * var(--pl-k)); height: calc(46px * var(--pl-k));
+  width: calc(var(--pl-se-fenda) * var(--pl-k)); height: calc(var(--pl-se-falante) * var(--pl-k));
 }
+/* A ficha é um único pedaço de papel. Na janela baixa só ela rola;
+   o enquadramento do aparelho continua o mesmo enquanto se escolhe. */
+/* ---- A vitrine ----------------------------------------------------------
+   Sem painel. O modelo vem gravado na mesa, gigante, atrás do aparelho; as
+   medidas são a linha de ficha técnica no canto; os outros aparelhos esperam
+   em pé numa prateleira, e o lugar do que está na mesa fica vazio. */
+.pl-painel { position: absolute; inset: 0; pointer-events: none; }
+.pl-painel > * { pointer-events: auto; }
 
-/* ---- As réguas -------------------------------------------------------
-   Não são grade de blueprint. São a resposta escrita para "de que
-   tamanho é isto", que é a pergunta que a bancada existe para
-   responder — e o projeto inteiro é feito de número que diz de onde
-   veio. Traço a cada 50, número a cada 100 (200 na vertical), e a
-   medida final sempre, mesmo fora do passo. */
-.pl-regua { position: absolute; color: var(--texto-legenda); }
-.pl-regua-x { top: 0; left: 34px; right: 0; height: 26px; }
-.pl-regua-y { top: 26px; left: 0; bottom: 0; width: 34px; }
-
-.pl-tick { position: absolute; display: block; background: var(--tracejado); }
-
-.pl-regua-x .pl-tick {
-  bottom: 0; left: calc(var(--pl-t) * var(--pl-k));
-  width: 1px; height: 5px;
+.pl-marcador, .pl-leitura { position: absolute; z-index: 2; left: var(--pl-margem-x); margin: 0; }
+.pl-marcador {
+  top: var(--pl-margem-y); display: flex; align-items: baseline; gap: var(--e-3);
+  font: var(--t-legenda); color: var(--texto-2);
 }
-.pl-regua-x .pl-tick[data-r="1"] { height: 9px; background: var(--tracejado); }
-.pl-regua-x .pl-tick > b {
-  position: absolute; bottom: 12px; left: 0; transform: translateX(-50%);
+.pl-lastro { font: var(--t-escolha); letter-spacing: var(--e-titulo); color: var(--texto); }
+.pl-leitura {
+  top: calc(var(--pl-margem-y) + 40px); display: grid; gap: var(--e-2);
+  font: var(--t-legenda); color: var(--texto-2); font-variant-numeric: tabular-nums;
 }
+.pl-cel { display: block; }
+.pl-val { font-weight: 700; color: var(--texto); }
 
-.pl-regua-y .pl-tick {
-  right: 0; top: calc(var(--pl-t) * var(--pl-k));
-  height: 1px; width: 5px;
-}
-.pl-regua-y .pl-tick[data-r="1"] { width: 9px; background: var(--tracejado); }
-.pl-regua-y .pl-tick > b {
-  position: absolute; right: 12px; top: 0; transform: translateY(-50%);
-  text-align: right; white-space: nowrap;
-}
-
-.pl-tick > b {
-  display: block;
-  font: 400 10px/1 var(--f-texto);
-  letter-spacing: .04em; color: var(--texto-legenda);
-}
-.pl-tick[data-fim="1"] { background: var(--texto-legenda); }
-.pl-tick[data-fim="1"] > b { color: var(--texto-legenda); }
-
-/* ---- O painel --------------------------------------------------------- */
-
-.pl-painel {
-  grid-column: 3;
-  width: var(--pl-lado); display: flex; flex-direction: column; gap: 28px;
-}
-
-.pl-id { display: flex; flex-direction: column; gap: 8px; }
 .pl-nome {
-  margin: 0;
-  font: 800 30px/1 var(--f-titulo); letter-spacing: -.035em;
-  color: var(--texto);
+  position: absolute; z-index: 0; left: calc(var(--pl-margem-x) - .045em); bottom: calc(var(--pl-margem-y) - .1em);
+  margin: 0; pointer-events: none; white-space: nowrap;
+  font: var(--pl-t-gravado); letter-spacing: var(--pl-gravado-espaco);
+  color: var(--pl-relevo);
+  text-shadow: calc(var(--pl-sol) * -1px) 1.5px 0 var(--pl-relevo-luz),
+               calc(var(--pl-sol) * 1px) -1px 0 var(--pl-relevo-sombra);
 }
-
-.pl-leitura { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; border-top: 1.5px solid var(--divisoria); }
-.pl-cel { display: flex; flex-direction: column; gap: 5px; padding: 14px 0; border-bottom: 1.5px solid var(--divisoria); }
-.pl-val {
-  font: 700 18px/1 var(--f-texto); letter-spacing: -.02em;
-  color: var(--texto); font-variant-numeric: tabular-nums;
+.pl-nome small {
+  display: block; margin: 0 0 .5em .3em;
+  font: 700 clamp(15px, 1.4vw, 19px)/1 var(--f-titulo); letter-spacing: var(--e-titulo);
+  color: var(--texto-2); text-shadow: none;
 }
+.pl-nome small:empty { display: none; }
 
-.pl-secao { display: flex; flex-direction: column; gap: 10px; }
-.pl-lista { display: flex; flex-direction: column; }
-
-.pl-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-
-.pl-lista { gap: 6px; }
-.pl-item {
-  display: grid; grid-template-columns: 20px 1fr auto;
-  align-items: center; gap: 12px;
-  width: 100%; min-height: 52px; padding: 8px 14px 8px 12px;
-  border: 1.5px solid transparent; border-radius: 16px;
-  background: transparent; font: inherit; color: inherit;
-  text-align: left; cursor: pointer;
-  transition: background-color var(--d-toque) ease, border-color var(--d-toque) ease;
+/* a prateleira: os aparelhos em pé, na escala uns dos outros */
+.pl-fila {
+  position: absolute; z-index: 2; right: var(--pl-margem-x); bottom: var(--pl-margem-y);
+  display: flex; align-items: flex-end; gap: var(--e-7);
+  padding: 0 var(--e-3) var(--e-6);
+  background: linear-gradient(var(--contorno), var(--contorno)) left calc(100% - 26px) / 100% var(--pl-prateleira) no-repeat;
 }
-.pl-item:hover { background: var(--superficie-quieta); }
-.pl-item.on { background: var(--superficie); border-color: var(--texto); }
+.pl-lista { display: flex; align-items: flex-end; gap: var(--e-7); }
+.pl-item, .pl-girar {
+  box-sizing: border-box; appearance: none; cursor: pointer; background: transparent; border: 0; padding: 0;
+  display: flex; flex-direction: column; align-items: center; gap: var(--e-5);
+  color: var(--texto-2); font: inherit;
+}
+.pl-item-n { font: var(--t-legenda); white-space: nowrap; }
+.pl-item[aria-pressed="true"] .pl-item-n, .pl-girar[aria-pressed="true"] .pl-item-n { color: var(--texto); font-weight: 700; }
 
-/* O ponto de status do sistema, reusado: a bancada não inventa um
-   símbolo novo para dizer "este é o de agora". */
 .pl-marca {
-  justify-self: center; box-sizing: border-box;
-  width: var(--pl-mw, 14px); height: var(--pl-mh, 30px);
-  border: 1.5px solid var(--contorno); border-radius: 3.5px;
-  background: var(--superficie);
+  position: relative; box-sizing: border-box; display: block;
+  width: calc(var(--pl-mini-w) / var(--pl-mini-escala));
+  height: calc(var(--pl-mini-h) / var(--pl-mini-escala));
+  border: var(--pl-mini-aro) solid transparent; border-radius: var(--pl-mini-canto);
+  background: linear-gradient(var(--pl-moldura), var(--pl-moldura)) padding-box, var(--pl-metal) border-box;
+  box-shadow: calc(var(--pl-sol) * -3px) 5px 7px -3px var(--pl-projetada);
 }
-.pl-item.on .pl-marca { border-color: var(--texto); background: var(--assunto-treino); }
-
-.pl-item-n { font: 600 15px/1.2 var(--f-texto); color: var(--texto-2); }
-/* text-4, não text-5: a medida ao lado do nome é o que se ESCOLHE nesta lista,
-   e a 11px o nível 5 dá 3,2:1 — reprova em AA. O nível 5 fica para o
-   redundante, que aqui não é o caso. */
-.pl-item-d { font: 500 12px/1 var(--f-texto); color: var(--texto-legenda); font-variant-numeric: tabular-nums; }
-.pl-item.on .pl-item-n { color: var(--texto); }
-.pl-item.on .pl-item-d { color: var(--texto-legenda); }
-.pl-item:hover .pl-item-n { color: var(--texto); }
-
-.pl-tecla {
-  font: 500 11px/1 var(--f-texto); letter-spacing: .02em; border-radius: 6px; background: var(--fundo);
-  /* minúscula sempre: dentro do .pl-acao herdaria o caixa-alta do botão, e o
-     mesmo atalho apareceria escrito de dois jeitos em duas linhas vizinhas */
-  text-transform: none;
-  color: var(--texto-legenda); border: 1px solid var(--divisoria);
-  padding: 4px 6px; min-width: 16px; text-align: center;
+/* a tela da miniatura: o papel do app, com a ilha */
+.pl-marca > i {
+  position: absolute; inset: var(--pl-mini-moldura); border-radius: calc(var(--pl-mini-canto) - 3px);
+  background: var(--fundo);
 }
-
-.pl-acao {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  width: 100%; min-height: 48px; padding: 0 8px 0 18px;
-  border: 1.5px solid var(--contorno); border-radius: var(--r-pilula);
-  background: var(--superficie);
-  font: 600 15px/1 var(--f-texto); color: var(--texto);
-  cursor: pointer;
+.pl-marca > i::before {
+  content: ''; position: absolute; top: 3px; left: 50%; transform: translateX(-50%);
+  width: 30%; height: 3px; border-radius: var(--r-pilula); background: var(--pl-moldura);
 }
-.pl-acao:hover { border-color: var(--texto); }
-.pl-acao[aria-pressed="true"] { border-color: var(--texto); background: var(--superficie-quieta); }
-
-.pl-nota {
-  margin: 0; max-width: 34ch;
-  font: 400 13px/1.5 var(--f-texto); color: var(--texto-legenda);
-  text-wrap: pretty;
+.pl-item[data-familia="botao"] .pl-marca > i { inset: 14% var(--pl-mini-moldura); border-radius: 1px; }
+.pl-item[data-familia="botao"] .pl-marca > i::before { display: none; }
+/* o que está na mesa: o lugar vazio, só o contorno de onde ele saiu */
+.pl-item[aria-pressed="true"] .pl-marca {
+  background: transparent; box-shadow: none;
+  border: var(--fio-fino) dashed var(--contorno);
 }
+.pl-item[aria-pressed="true"] .pl-marca > i { display: none; }
 
-/* Teclado tem que ver onde está. O app desliga o outline nos campos
-   porque lá o foco é desenhado pela borda ácida; aqui não há esse
-   desenho, então o anel volta. */
-.pl :focus-visible {
-  outline: 1px solid var(--foco); outline-offset: 3px;
+.pl-girar .pl-girar-c, .pl-girar svg {
+  width: var(--pl-girar-d); height: var(--pl-girar-d); box-sizing: border-box; padding: 12px;
+  border-radius: 50%; border: var(--fio-fino) solid var(--contorno); background: var(--superficie);
+  stroke-width: var(--pl-traco-icone); color: var(--texto);
 }
+.pl-girar[aria-pressed="true"] svg { background: var(--texto); color: var(--superficie); border-color: var(--texto); }
+.pl :focus-visible { outline: var(--fio-escolhido) solid var(--foco); outline-offset: var(--pl-foco-afasta); border-radius: var(--pl-mini-canto); }
 
-/* ---- Janela estreita: cai a legenda, fica o objeto -------------------- */
-
-.pl[data-compacta="1"] { --pl-lado: 0px; gap: 0; }
-.pl[data-compacta="1"] .pl-painel,
-.pl[data-compacta="1"] .pl-regua { display: none; }
-.pl[data-compacta="1"] .pl-cena { padding: 0; }
-
-/* ---- Movimento: três, e todos são estado -----------------------------
-   No portão por adesão, como os do app: fora do bloco cada peça já está no
-   último quadro — aparelho, painel e régua parados e inteiros. A classe do
-   pouso e a da virada, quem põe é `palco.js`, perguntando à porta do
-   movimento (`src/ui/movimento.js`) na hora de cada uma. */
+/* Janela média: o aparelho vai para a esquerda e a prateleira continua à
+   direita, sem cruzar com ele. Estreita: a prateleira desce para baixo. */
+@media (max-width: 80em) {
+  html[data-palco="bancada"] { --pl-t-gravado: 800 clamp(110px, 26vh, 300px)/.78 var(--f-titulo); }
+  .pl-cena { grid-template-columns: minmax(0, .5fr) auto minmax(0, 1fr); }
+}
+@media (max-width: 56em) {
+  html[data-palco="bancada"] { --pl-t-gravado: 800 clamp(90px, 20vw, 180px)/.78 var(--f-titulo); }
+  .pl-cena { margin-bottom: calc(var(--pl-reserva-cota) + 170px); grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .pl-fila { right: 50%; transform: translateX(50%); }
+  .pl-leitura, .pl-nome { display: none; }
+}
+@media (max-height: 40em) {
+  html[data-palco="bancada"] { --pl-mini-escala: 12; }
+  .pl-leitura { display: none; }
+}
 
 @keyframes pl-pousa {
-  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  from { opacity: 0; transform: translateY(calc(-1 * var(--e-3))); }
   to   { opacity: 1; transform: none; }
 }
-
-/* A virada não anima largura nem altura — ver `assenta` em palco.js:
-   animar layout aqui faria o iframe refluir a cada quadro. As medidas
-   trocam de uma vez e o que vira é só transform. */
 @keyframes pl-vira {
-  from { opacity: .35; transform: rotate(calc(var(--pl-sentido, 1) * -5deg)) scale(.955); }
-  to   { opacity: 1; transform: none; }
+  from { transform: rotate(calc(var(--pl-sentido) * var(--pl-angulo-vira))) scale(var(--pl-escala-vira)); }
+  to   { transform: none; }
 }
-
 @media (prefers-reduced-motion: no-preference) {
-  .pl-pousa { animation: pl-pousa var(--pl-dur-pousa) var(--pl-curva) both; }
-  .pl-vira  { animation: pl-vira  var(--pl-dur-vira)  var(--pl-curva) both; }
-
-  .pl-painel, .pl-regua { animation: pl-pousa var(--pl-dur-painel) var(--pl-curva) var(--pl-atraso-painel) both; }
+  .pl-pousa { animation: pl-pousa var(--pl-dur-pousa) var(--pl-curva); }
+  .pl-vira  { animation: pl-vira var(--pl-dur-vira) var(--pl-curva); }
+  /* tocar numa miniatura a ergue da prateleira, com a sombra mais longa */
+  .pl-marca, .pl-girar svg { transition: transform var(--d-estado) var(--pl-curva), box-shadow var(--d-estado) var(--pl-curva); }
+  .pl-item:not([aria-pressed="true"]):hover .pl-marca { transform: translateY(var(--pl-ergue)); box-shadow: calc(var(--pl-sol) * -5px) 11px 12px -4px var(--pl-projetada); }
+  .pl-girar:hover svg { transform: rotate(-30deg); }
+  .pl-nome { transition: color var(--d-estado); }
 }
-
-/* os rótulos da bancada (antes usavam as classes do visual antigo) */
-:root { --t-meta-palco: 12px; }
-.pl-rotulo { font: 600 12px/1.35 var(--f-texto); color: var(--texto-legenda); letter-spacing: .02em; }
-.pl-proc { font: italic 400 12px/1.4 var(--f-texto); color: var(--texto-legenda); }

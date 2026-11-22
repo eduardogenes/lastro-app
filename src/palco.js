@@ -41,8 +41,7 @@
    isso a bancada ESCREVE os números na raiz do documento de dentro
    (`aplicaSeguranca`, abaixo), e o app segue tratando `--sa-top` e
    companhia como sempre tratou. É a única concessão, cabe em cinco
-   linhas, e está dita na nota do painel: aqui a área segura é
-   desenhada, não medida.
+   linhas. A ficha ao lado do aparelho identifica os recuos simulados.
 
    ---- Saída ----
 
@@ -202,8 +201,7 @@ function montaBancada() {
   const estado = {
     aparelho: aparelhoDe(guardado.aparelho) || aparelhoDe(PADRAO),
     deitado: !!guardado.deitado,
-    k: 1,
-    compacta: null
+    k: 1
   };
 
   const raiz = document.createElement('div');
@@ -217,26 +215,29 @@ function montaBancada() {
     botoes:   raiz.querySelector('.pl-botoes'),
     tela:     raiz.querySelector('.pl-tela'),
     relogio:  raiz.querySelector('.pl-hora'),
-    reguaX:   raiz.querySelector('.pl-regua-x'),
-    reguaY:   raiz.querySelector('.pl-regua-y'),
+    cota:     raiz.querySelector('.pl-cota'),
     nome:     raiz.querySelector('.pl-nome'),
     leitura:  raiz.querySelector('.pl-leitura'),
     lista:    raiz.querySelector('.pl-lista'),
     girar:    raiz.querySelector('.pl-girar')
   };
 
-  APARELHOS.forEach(function (a) {
+  APARELHOS.forEach(function (a, i) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'pl-item';
     b.dataset.id = a.id;
-    b.innerHTML =
-      // A marca é o aparelho em miniatura, na proporção dele: o SE baixo e
-      // largo, o Pro Max alto. Ler a forma é mais rápido que ler o número.
-      '<span class="pl-marca" aria-hidden="true" style="--pl-mw:' + (a.w / 27).toFixed(1) +
-        'px;--pl-mh:' + (a.h / 27).toFixed(1) + 'px"></span>' +
-      '<span class="pl-item-n">' + a.nome + '</span>' +
-      '<span class="pl-item-d">' + a.w + ' × ' + a.h + '</span>';
+    b.dataset.familia = a.fam;
+    b.setAttribute('aria-label', a.nome);
+    b.setAttribute('aria-keyshortcuts', 'Alt+' + (i + 1));
+    b.title = a.nome + ' · ' + a.w + ' × ' + a.h + ' pt · Alt ' + (i + 1);
+    // Todos na mesma escala, incluindo os queixos do SE.
+    b.style.setProperty('--pl-mini-w', (a.w + 2 * a.mx) + 'px');
+    b.style.setProperty('--pl-mini-h', (a.h + 2 * a.my) + 'px');
+    // A miniatura em pé, na escala dos outros. A do aparelho que está na
+    // mesa fica vazia: só o contorno do lugar de onde ele saiu.
+    b.innerHTML = '<span class="pl-marca" aria-hidden="true"><i></i></span>' +
+                  '<span class="pl-item-n">' + a.nome.replace('iPhone ', '') + '</span>';
     b.addEventListener('click', function () { troca(a); });
     el.lista.appendChild(b);
   });
@@ -265,16 +266,18 @@ function montaBancada() {
     if (!doc) return;
     doc.addEventListener('keydown', function (e) {
       if (!e.altKey || e.metaKey || e.ctrlKey) return;
-      const n = Number(e.key);
+      // Option transforma o caractere no macOS. O código físico ainda indica a tecla.
+      const n = /^Digit[1-4]$/.test(e.code) ? Number(e.code.slice(-1)) : Number(e.key);
       if (n >= 1 && n <= APARELHOS.length) { troca(APARELHOS[n - 1]); e.preventDefault(); return; }
       if (e.key === 'r' || e.key === 'R' || e.code === 'KeyR') { gira(); e.preventDefault(); }
     });
   }
 
-  addEventListener('resize', ajusta);
+  new ResizeObserver(ajusta).observe(el.cena);
 
   pinta();
   relogio();
+  sol();
   // A porta do movimento é perguntada AGORA, e de novo a cada virada — antes a
   // preferência era lida uma vez, ao montar, e quem ligasse "Reduzir
   // movimento" com a bancada aberta continuava vendo o aparelho virar.
@@ -307,7 +310,7 @@ function montaBancada() {
    * Animar layout aqui significaria o iframe refluindo a 60 quadros
    * por segundo, com o app recalculando a tela inteira em cada um: o
    * que se veria é engasgo, não rotação. As medidas trocam de uma
-   * vez, e o que anima é uma virada de 300ms em transform e opacity,
+   * vez, e o que anima é uma virada curta em transform,
    * que o compositor resolve sem tocar no documento de dentro. O
    * olho lê "virou"; a máquina não paga nada por isso.
    */
@@ -338,17 +341,17 @@ function montaBancada() {
     s.setProperty('--pl-sat', a.sat + 'px');
 
     silhueta(a);
-    reguas(larg, alt);
+    el.cota.textContent = larg + ' pt';
     ajusta();
     seguranca();
 
     el.tela.title = 'O app num ' + a.nome + ' simulado, ' +
                     (estado.deitado ? 'deitado' : 'em pé');
-    el.nome.textContent = a.nome;
+    el.nome.innerHTML = '<small>' + (a.nome.indexOf('iPhone ') === 0 ? 'iPhone' : '') + '</small>' +
+                        '<span>' + a.nome.replace('iPhone ', '') + '</span>';
 
     [].forEach.call(el.lista.children, function (b) {
       const on = b.dataset.id === a.id;
-      b.classList.toggle('on', on);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
     el.girar.setAttribute('aria-pressed', estado.deitado ? 'true' : 'false');
@@ -374,65 +377,16 @@ function montaBancada() {
     }).join('');
   }
 
-  /**
-   * As réguas. Não são grade de blueprint: são a resposta escrita
-   * para "de que tamanho é isto", que é a pergunta que a bancada
-   * existe para responder. Traço a cada 50, número a cada 100 na
-   * horizontal e a cada 200 na vertical, e a medida final sempre —
-   * mesmo fora do passo, porque é ela que interessa.
-   */
-  function reguas(larg, alt) {
-    el.reguaX.innerHTML = ticks(larg, 50, 100);
-    // A vertical não repete o zero: a origem já está escrita na horizontal,
-    // e os dois a 20px um do outro leem como gagueira, não como medida.
-    el.reguaY.innerHTML = ticks(alt, 50, 200).replace('<b>0</b>', '');
-  }
-
-  function ticks(total, passo, rotulo) {
-    let html = '';
-    for (let n = 0; n < total; n += passo) {
-      // A medida final é a que interessa, e ela SEMPRE entra. O traço do passo
-      // que cai perto demais dela sai — senão 400 e 402 se sobrepõem e os dois
-      // ficam ilegíveis, que é pior que faltar um.
-      if (total - n < passo * 0.9) continue;
-      const marcado = n % rotulo === 0;
-      html += '<i class="pl-tick" data-r="' + (marcado ? '1' : '0') +
-              '" style="--pl-t:' + n + 'px">' + (marcado ? '<b>' + n + '</b>' : '') + '</i>';
-    }
-    return html + '<i class="pl-tick" data-r="1" data-fim="1" style="--pl-t:' + total +
-           'px"><b>' + total + '</b></i>';
-  }
-
-  /**
-   * A escala. Nunca AMPLIA: um telefone maior do que é seria a
-   * mentira mais fácil de contar aqui. Só reduz, e quando reduz o
-   * painel diz de quanto — o número na tela sempre responde de onde
-   * veio, inclusive este.
-   */
+  /* A mesa reserva espaço para a ficha e a cota em CSS. Só o casco encolhe
+     para caber no espaço medido. O iframe continua com a viewport do modelo. */
   function ajusta() {
     const a = estado.aparelho;
-    const larg = estado.deitado ? a.h : a.w;
-    const alt  = estado.deitado ? a.w : a.h;
-    const mx = estado.deitado ? a.my : a.mx;
-    const my = estado.deitado ? a.mx : a.my;
-
-    // Painel e réguas saem quando a janela aperta: o objeto é o que
-    // importa, e a legenda é do que se abre mão primeiro.
-    const compacta = innerWidth < 1040;
-    if (compacta !== estado.compacta) {
-      estado.compacta = compacta;
-      raiz.dataset.compacta = compacta ? '1' : '0';
-    }
-
-    // 80 = goteira do palco; 260 = painel + vão; 68 = as duas réguas
-    // (a da esquerda desenha, a da direita só reserva a simetria); 26 = a de cima.
-    const dispW = innerWidth  - 80 - (compacta ? 0 : 260 + 68);
-    const dispH = innerHeight - 80 - (compacta ? 0 : 26);
-
-    const k = Math.min(1, dispW / (larg + 2 * mx), dispH / (alt + 2 * my));
-    estado.k = Math.max(0.3, Math.round(k * 1000) / 1000);
+    const largura = a.w + 2 * a.mx;
+    const altura = a.h + 2 * a.my;
+    estado.k = Math.min(1,
+      el.cena.clientWidth / (estado.deitado ? altura : largura),
+      el.cena.clientHeight / (estado.deitado ? largura : altura));
     el.cena.style.setProperty('--pl-k', estado.k);
-
     leitura();
   }
 
@@ -440,24 +394,38 @@ function montaBancada() {
     const a = estado.aparelho;
     const larg = estado.deitado ? a.h : a.w;
     const alt  = estado.deitado ? a.w : a.h;
-    const um = estado.k >= 0.999;
+    const inteira = estado.k === 1;
+    const escala = inteira ? '1:1' : (Math.floor(estado.k * 1000) / 10).toLocaleString('pt-BR') + '%';
     const lado = estado.deitado && a.fam === 'ilha' ? a.sat : 0;
     const seg = estado.deitado
       ? lado + ' · ' + (a.sab ? 21 : 0)
       : a.sat + ' · ' + a.sab;
 
     el.leitura.innerHTML = [
-      celula('tela', larg + ' × ' + alt, 'pt · ' + (estado.deitado ? 'paisagem' : 'retrato')),
-      celula('densidade', '@' + a.dpr + '×', a.w * a.dpr + ' × ' + a.h * a.dpr + ' px'),
-      celula('área segura', seg, estado.deitado ? 'lados · base' : 'topo · base'),
-      celula('escala', um ? '1:1' : estado.k.toFixed(2) + '×', um ? 'tamanho real' : 'reduzido para caber')
+      celula(larg + ' × ' + alt, 'pt, ' + (estado.deitado ? 'deitado' : 'em pé')),
+      celula('@' + a.dpr + '×', (larg * a.dpr) + ' × ' + (alt * a.dpr) + ' px'),
+      celula(seg, 'pt de área segura, ' + (estado.deitado ? 'lados · base' : 'topo · base')),
+      celula(escala, inteira ? 'tamanho real' : 'reduzido para caber')
     ].join('');
   }
 
-  function celula(rotulo, valor, fonte) {
-    return '<div class="pl-cel"><span class="pl-rotulo">' + rotulo + '</span>' +
-           '<b class="pl-val">' + valor + '</b>' +
-           '<i class="pl-proc">' + fonte + '</i></div>';
+  function celula(valor, detalhe) {
+    return '<span class="pl-cel"><b class="pl-val">' + valor + '</b> ' + detalhe + '</span>';
+  }
+
+  /**
+   * A luz da mesa segue a hora de verdade. De manhã ela entra pela esquerda
+   * e a sombra cai para a direita; à tarde, o contrário; à noite a luz é de
+   * cima, curta e mole. `--pl-sol` vai de -1 (manhã) a 1 (fim de tarde).
+   */
+  function sol() {
+    const agora = new Date();
+    const h = agora.getHours() + agora.getMinutes() / 60;
+    const noite = h < 5.5 || h > 20.5;
+    const x = noite ? 0 : Math.max(-1, Math.min(1, (h - 13) / 7));
+    raiz.style.setProperty('--pl-sol', x.toFixed(2));
+    raiz.dataset.luz = noite ? 'noite' : 'dia';
+    setTimeout(sol, 10 * 60 * 1000);
   }
 
   /** O relógio do sistema é do sistema: hora de verdade, virando no minuto. */
@@ -503,73 +471,63 @@ function leGuardado() {
 function esqueleto() {
   return `
 <div class="pl-cena">
-  <div class="pl-regua pl-regua-y" aria-hidden="true"></div>
-  <div class="pl-regua pl-regua-x" aria-hidden="true"></div>
+  <div class="pl-exemplar">
+    <div class="pl-aparelho">
+      <div class="pl-botoes" aria-hidden="true"></div>
 
-  <div class="pl-aparelho">
-    <div class="pl-botoes" aria-hidden="true"></div>
+      <div class="pl-queixo pl-queixo-topo" aria-hidden="true">
+        <i class="pl-alto-falante"></i><i class="pl-lente"></i>
+      </div>
 
-    <div class="pl-queixo pl-queixo-topo" aria-hidden="true">
-      <i class="pl-alto-falante"></i><i class="pl-lente"></i>
-    </div>
+      <div class="pl-vidro">
+        <iframe class="pl-tela" title="O app no aparelho simulado"
+                allow="camera; microphone; screen-wake-lock; fullscreen; clipboard-write"></iframe>
 
-    <div class="pl-vidro">
-      <iframe class="pl-tela" title="O app no aparelho simulado"
-              allow="camera; microphone; screen-wake-lock; fullscreen; clipboard-write"></iframe>
-
-      <div class="pl-sistema" aria-hidden="true">
-        <div class="pl-ilha"><i class="pl-ilha-lente"></i></div>
-        <div class="pl-status">
-          <span class="pl-hora">--:--</span>
-          <span class="pl-icones">
-            <svg class="pl-sinal" width="18" height="12" viewBox="0 0 18 12" fill="currentColor">
-              <rect x="0"  y="8" width="3" height="4"  rx="1"/>
-              <rect x="5"  y="6" width="3" height="6"  rx="1"/>
-              <rect x="10" y="3" width="3" height="9"  rx="1"/>
-              <rect x="15" y="0" width="3" height="12" rx="1"/>
-            </svg>
-            <svg class="pl-wifi" width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
-              <path d="M8 11.4 5.9 8.9a3.2 3.2 0 0 1 4.2 0L8 11.4Z"/>
-              <path d="M3.7 6.3 5 7.8a4.7 4.7 0 0 1 6 0l1.3-1.5a6.7 6.7 0 0 0-8.6 0Z"/>
-              <path d="M1.4 3.6 2.7 5.1a8.2 8.2 0 0 1 10.6 0l1.3-1.5a10.2 10.2 0 0 0-13.2 0Z"/>
-            </svg>
-            <span class="pl-bateria"><i></i></span>
-          </span>
+        <div class="pl-sistema" aria-hidden="true">
+          <div class="pl-ilha"><i class="pl-ilha-lente"></i></div>
+          <div class="pl-status">
+            <span class="pl-hora">--:--</span>
+            <span class="pl-icones">
+              <svg class="pl-sinal" viewBox="0 0 18 12" fill="currentColor">
+                <rect x="0"  y="8" width="3" height="4"  rx="1"/>
+                <rect x="5"  y="6" width="3" height="6"  rx="1"/>
+                <rect x="10" y="3" width="3" height="9"  rx="1"/>
+                <rect x="15" y="0" width="3" height="12" rx="1"/>
+              </svg>
+              <svg class="pl-wifi" viewBox="0 0 16 12" fill="currentColor">
+                <path d="M8 11.4 5.9 8.9a3.2 3.2 0 0 1 4.2 0L8 11.4Z"/>
+                <path d="M3.7 6.3 5 7.8a4.7 4.7 0 0 1 6 0l1.3-1.5a6.7 6.7 0 0 0-8.6 0Z"/>
+                <path d="M1.4 3.6 2.7 5.1a8.2 8.2 0 0 1 10.6 0l1.3-1.5a10.2 10.2 0 0 0-13.2 0Z"/>
+              </svg>
+              <span class="pl-bateria"><i></i></span>
+            </span>
+          </div>
+          <div class="pl-gestos"></div>
         </div>
-        <div class="pl-gestos"></div>
+      </div>
+
+      <div class="pl-queixo pl-queixo-base" aria-hidden="true">
+        <i class="pl-home"></i>
       </div>
     </div>
 
-    <div class="pl-queixo pl-queixo-base" aria-hidden="true">
-      <i class="pl-home"></i>
-    </div>
+    <div class="pl-cota" aria-hidden="true"></div>
   </div>
-
-  <div class="pl-horizonte" aria-hidden="true"></div>
 </div>
 
-<aside class="pl-painel">
-  <div class="pl-id">
-    <span class="pl-rotulo">aparelho</span>
-    <h2 class="pl-nome"></h2>
-  </div>
-
-  <div class="pl-leitura"></div>
-
-  <div class="pl-secao">
-    <div class="pl-cab">
-      <span class="pl-rotulo">aparelhos</span>
-      <kbd class="pl-tecla">alt 1—4</kbd>
-    </div>
-    <div class="pl-lista"></div>
-  </div>
-
-  <div class="pl-secao">
-    <button type="button" class="pl-girar pl-acao">
-      <span>Girar o aparelho</span><kbd class="pl-tecla">alt r</kbd>
+<aside class="pl-painel" aria-label="Bancada do Lastro">
+  <p class="pl-marcador"><span class="pl-lastro">Lastro</span><span>na mesa</span></p>
+  <h1 class="pl-nome" aria-live="polite"></h1>
+  <p class="pl-leitura"></p>
+  <div class="pl-fila">
+    <div class="pl-lista" role="group" aria-label="Trocar de aparelho (Alt 1 a 4)"></div>
+    <button type="button" class="pl-girar" aria-keyshortcuts="Alt+R" aria-label="Girar o aparelho" title="Girar o aparelho · Alt R">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19.5 12a7.5 7.5 0 11-2.6-5.7M19.5 4v4.5H15"/>
+      </svg>
+      <span class="pl-item-n">girar</span>
     </button>
   </div>
-
 </aside>
 `;
 }

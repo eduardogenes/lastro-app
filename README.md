@@ -265,14 +265,13 @@ npm run preview    # serve o dist/, para conferir o service worker
 npm run tipos      # tsc --noEmit
 ```
 
-**No computador o app abre dentro de um iPhone.** É a *bancada*: `npm run dev`
-numa janela de mesa mostra o app rodando num iframe de 402 × 874, com moldura,
-barra de status, área segura simulada e réguas medindo o aparelho. Troca de
-aparelho com `alt 1`…`alt 4`, gira com `alt r`. Não é enfeite: dentro do iframe
-`100svh`, `@media (orientation)`, `position: fixed`, `sticky` e `env(safe-area)`
-valem o que valeriam no telefone — que é justamente o que uma janela de 1900px
-não consegue provar. Para ver o app cru na janela, `?palco=0` na URL. O porquê
-inteiro está no cabeçalho de [src/palco.js](src/palco.js).
+**No computador o app abre dentro de um iPhone.** Na bancada, uma linha sob o
+vidro indica a largura da tela em pontos. A ficha ao lado mostra a resolução,
+a área segura simulada e a escala na mesa. Clique numa das quatro miniaturas
+ou use `Alt 1` a `Alt 4` para escolher o modelo. `Alt R` gira o aparelho.
+O iframe conserva a tela aberta e usa a viewport do modelo escolhido, de
+402 × 874 pontos no iPhone 16 Pro. Para abrir o app diretamente na janela,
+use `?palco=0`. [Como funciona a bancada](src/palco.js).
 
 Estrutura:
 
