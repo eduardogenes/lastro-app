@@ -169,7 +169,11 @@ Cada papel fica entre 5 e 9 ferramentas.
 **Claude**
 - **O conector remoto funciona no claude.ai e no Cowork rodando no computador.** A conexão sai dos servidores da Anthropic, então o servidor precisa ser público, sem porta própria na URL. Os planos individuais adicionam pelo "+" e depois "Add custom connector". O plano Free fica limitado a um conector. Fonte: [conectores personalizados](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp).
 
-## O que o dono faz no início da etapa 1
+## Feito pelo dono em 23/11/2026
+
+No painel do Supabase, o servidor OAuth foi ligado, com a URL do site `https://lastro-app-eduardogenes-projects.vercel.app`, o caminho de autorização `/autorizar` e o registro dinâmico ligado. Conferido nos metadados: `registration_endpoint` em `/auth/v1/oauth/clients/register`, PKCE S256 e `none` como método de autenticação do cliente. A tela `/autorizar` ainda não existe e é o primeiro passo da etapa 1.
+
+## O que o dono fazia no início da etapa 1 (já feito)
 
 No painel do Supabase, em Authentication, depois OAuth Server:
 1. ligar o servidor OAuth;
