@@ -109,8 +109,7 @@ it('o estado inicial tem os catálogos disponíveis, sem prescrição, agenda, m
 
 it.each([9, 10, 11, 12])('o aparelho vazio mais recente cede os documentos ao plano %i nos dois sentidos', versao => {
   const s = estadoInicial();
-  const conta: Estado = JSON.parse(readFileSync(new URL('./fixtures/estado-plano-' + Math.min(versao, 11) + '.json', import.meta.url), 'utf8'));
-  conta.plano = versao;
+  const conta: Estado = JSON.parse(readFileSync(new URL('./fixtures/estado-plano-' + versao + '.json', import.meta.url), 'utf8'));
   const aberto = structuredClone(conta.dia!);
   s.dia = { data: aberto.data, agua: 0, done: {}, escala: {} };
   s.mtime = conta.mtime + 10000;
@@ -120,7 +119,8 @@ it.each([9, 10, 11, 12])('o aparelho vazio mais recente cede os documentos ao pl
   for (const [a, b] of [[s, conta], [conta, s]]) {
     const r = funde(a, b).estado;
     expect(r.primeiraVez).toBeUndefined();
-    expect(r.plano).toBe(versao);
+    // O 13 só acrescenta a coleção de faltas. Até o 11, o documento ainda precisa migrar.
+    expect(r.plano).toBe(versao === 12 ? 13 : versao);
     for (const k of ['prog', 'rot', 'comida', 'cadencia', 'protocolo', 'dia'] as const) expect(r[k]).toEqual(conta[k]);
     expect(r.modulos ?? null).toEqual(conta.modulos ?? null);
     expect(r.body.peso).toHaveLength(conta.body.peso.length + 1);

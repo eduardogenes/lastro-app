@@ -23,6 +23,6 @@ export function estadoInicial(): Estado {
     aulas: [], quadro: null, dia: null, comidaHist: [], ajuste: 0, ajusteHist: [],
     gordura: [], perfManual: null, compras: { comprado: {}, extras: [], removidas: {}, dias: 7 },
     promoPendente: [], fotos: {}, protocolo: { poses: null, sessoes: [] },
-    descanso: {}, lixeira: [], apagados: {}, mtime: 0
+    descanso: {}, falta: {}, lixeira: [], apagados: {}, mtime: 0
   };
 }

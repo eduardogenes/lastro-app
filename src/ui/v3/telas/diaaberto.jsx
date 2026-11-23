@@ -65,6 +65,7 @@ export function DiaAbertoV3({ ctx }) {
                   )}
                 </div>
               ))}
+            {d.falta && <Linha titulo="Falta" apoio={d.falta.motivo || 'Sem motivo dito'} />}
             {d.descanso && (
               <div>
                 <Linha marca="—" titulo="Descanso" apoio={d.descansoDetalhe} />
@@ -135,7 +136,7 @@ export function FolhaPoeODiaGeralV3({ ctx, f }) {
                aoTocar={fecha(() => ctx.abreSessaoDoDia({ k: 'lancar', t: t }))} />
         {d.podeDescanso && !d.descanso && (
           <Linha marca={ic.ok} titulo="Foi descanso" apoio="marca o dia como descanso" semSeta data-a="poe-descanso"
-                 aoTocar={fecha(() => { ctx.alternaDescansoDoDia(t); ctx.avisaComDesfazer('Dia marcado como descanso.', () => ctx.alternaDescansoDoDia(t)); })} />
+                 aoTocar={fecha(() => ctx.alternaDescansoDoDia(t, true))} />
         )}
         {d.podeCardio && (
           <Linha marca={ic.coracao} titulo="Fiz cardio" apoio="bike, esteira, outro" data-a="poe-cardio"

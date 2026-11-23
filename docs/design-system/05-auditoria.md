@@ -78,6 +78,7 @@ Ordem sugerida: primeiro o que se perde (Ajustes inalcançável, tira do treino 
 
 | Tipo | O quê | Hoje | Correção | Onde |
 |---|---|---|---|---|
+| visual e dado | Calendário de Dias e Phosphor regular, implementados | O mês distinguia treino e comida e aceitava marcar descanso. | O mês distingue as respostas da comida, o turno, o cardio, fotos e medidas. O dia escolhido volta selecionado. A pessoa pode tirar a resposta. Uma resposta coberta por treino reaparece ao apagar a última sessão do dia. A grade e os ícones seguem a referência aprovada. Na rodada 1, tinta, aros e tipografia foram conferidos no CSS aplicado. A medição nos dois motores após as correções segue pendente por bloqueio de IPC. | dias.jsx, icones.jsx, frequencia.ts e a tela Dias da página viva |
 | fluxo | **Responder os dias em menta durante a tarefa** (feito, peça 5, Dias) | TelaDeAcao cor="menta" do começo ao fim. | Lilás (a pergunta do dia) durante; menta só na tela final ("13 dias respondidos"). | ResponderDias em dias.jsx |
 | estado | **Colar a cópia como texto** (feito, peça 5, Ajustes) | Só restaurar por arquivo. | Folha "Colar a cópia" em Ajustes: campo de texto longo, "Conferir o texto", o resumo do que tem nela, e a confirmação de restaurar. | ajustes.jsx |
 

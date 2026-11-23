@@ -26,6 +26,7 @@ test('ao girar, a ficha dá os pontos e pixels em paisagem e o app conserva o do
   try {
     const documento = a.doc.querySelector('.pl-tela').contentDocument;
     a.clicar('.pl-item[data-id="16"]');
+    assert.equal(a.$('.pl-girar svg').getAttribute('viewBox'), '0 0 256 256');
     a.clicar('.pl-girar');
     const ficha = a.doc.querySelector('.pl-leitura').textContent;
     assert.ok(ficha.includes('852 × 393'), 'a tela em pontos acompanha o giro');

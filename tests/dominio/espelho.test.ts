@@ -227,3 +227,32 @@ it.each([
   const arquivo = montaArquivos({ ...S, progTreinador: { em: T, data, rot: S.rot, dias: S.prog } }, { agora: T });
   expect(arquivo['treino/programa-do-treinador.md']).toContain('datada de ' + esperado + '.');
 });
+
+it('um mês só com faltas chega ao treinador, em ordem e com o motivo quando foi dito', () => {
+  const { S } = estado();
+  const falta = { '2026-09-20': { m: T }, '2026-09-02': { m: T, motivo: 'plantão [UTI]', detalhe: { turno: 'noite' } } };
+  const arquivos = montaArquivos({ ...S, falta }, { agora: T });
+  const h = arquivos['treino/historico/2026-09.md'];
+  expect(h).toContain('02/09/2026 · plantão \\[UTI\\]');
+  expect(h).toMatch(/## Faltas\n\n- .*02\/09\/2026[^\n]*\n- .*20\/09\/2026\n/);
+  expect(h).toMatch(/0 sessões .* · 2 faltas\n/);
+  expect(arquivos['LEIA-ME.md']).toMatch(/historico\/AAAA-MM\.md[^\n]*faltas/);
+  expect(JSON.parse(arquivos['bruto/estado.json']).falta).toEqual(falta);
+});
+
+it('o espelho também resolve sessão, descanso e lápide quando a cópia ainda contém a falta antiga', () => {
+  const { S } = estado();
+  const falta = Object.fromEntries(['26', '27', '28'].map(d => ['2026-10-' + d, { m: T, motivo: 'viagem' }]));
+  const h = montaArquivos({ ...S, falta, descanso: { '2026-10-27': T + 1 }, apagados: { 'falta:2026-10-26': T } },
+    { agora: T + 2 })['treino/historico/2026-10.md'];
+  expect(h).not.toContain('## Faltas');
+  expect(h).toContain('1 dia marcado como descanso · 0 faltas');
+  expect(h).toMatch(/## Descanso[\s\S]*27\/10\/2026/);
+  const semSessao = montaArquivos({ ...S, done: [], falta, descanso: { '2026-10-27': T + 1 }, apagados: { 'falta:2026-10-26': T } },
+    { agora: T + 2 })['treino/historico/2026-10.md'];
+  expect(semSessao).toContain('1 dia marcado como descanso · 1 falta\n');
+  expect(semSessao).toMatch(/## Faltas\n\n- .*28\/10\/2026 · viagem/);
+  const descansoComSessao = montaArquivos({ ...S, descanso: { '2026-10-28': T } }, { agora: T })['treino/historico/2026-10.md'];
+  expect(descansoComSessao).toContain('0 dias marcados como descanso · 0 faltas');
+  expect(descansoComSessao).not.toContain('## Descanso');
+});

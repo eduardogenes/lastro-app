@@ -403,9 +403,61 @@ button.q{min-height:var(--alvo)}
 .decide small{display:block;font:500 13px/1.4 var(--f-texto);color:var(--texto-2);margin-top:3px}
 
 /* ---- dias ---- */
-.mes-nav{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 0;text-align:center;font:700 16px var(--f-titulo)}
-.mes-nav .ico:disabled{color:var(--marca)}
-.mes{display:grid;gap:6px}
+.v3-dias .v3-cab.raiz, .v3-dias .cab { align-items: center; }
+.v3-mes-nav { display: flex; align-items: center; text-align: center; }
+.v3-mes-nav button { width: var(--alvo); height: var(--alvo); display: grid; place-items: center; }
+.v3-mes-nav button:disabled { color: var(--marca); }
+.v3-mes-nav svg { width: var(--icone-em-linha); height: var(--icone-em-linha); }
+.v3-mes-nav b { font: var(--t-nome-p); }
+
+.v3-cal-resumo { display: flex; flex-wrap: wrap; gap: var(--e-1) var(--e-3); padding: var(--e-6) var(--margem) var(--e-1); }
+.v3-cal-resumo div { flex: 1; display: grid; align-content: start; gap: var(--e-1); }
+.v3-cal-resumo b { font: var(--t-resumo-mes); letter-spacing: var(--e-titulo); font-variant-numeric: tabular-nums; }
+.v3-cal-resumo b small { font: var(--t-rotulo); color: var(--texto-2); letter-spacing: normal; }
+.v3-cal-resumo span, .v3-cal-resumo > small { font: var(--t-legenda); color: var(--texto-legenda); }
+.v3-cal-resumo > small { flex-basis: 100%; }
+.v3-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--dia-intervalo); margin-inline: var(--e-6); }
+.v3-cal-h { padding: var(--e-6) 0 var(--e-2); text-align: center; color: var(--texto-legenda); font: var(--t-legenda); }
+.v3-cal .v3-dia, .v3-cal-leg { --dia-fundo: var(--fundo); }
+.v3-cal .v3-dia { position: relative; width: 100%; height: var(--dia-altura); padding: 0; border: 0; border-radius: var(--e-7); color: var(--texto); background: var(--fundo); }
+.v3-cal [data-comida="sim"], .v3-cal-leg [data-comida="sim"] { --dia-fundo: var(--assunto-feito); --dia-tinta: var(--texto); background: var(--dia-fundo); }
+.v3-cal [data-comida="quase"], .v3-cal-leg [data-comida="quase"] { --dia-fundo: var(--fundo); --dia-tinta: var(--texto); background: linear-gradient(135deg, var(--assunto-feito) 50%, var(--fundo) 50%); box-shadow: inset 0 0 0 var(--dia-contorno-quase) var(--divisoria); }
+.v3-cal .v3-dia[aria-pressed="true"] { outline: var(--fio-forte) solid var(--texto); outline-offset: var(--e-0); }
+.v3-cal .v3-dia:focus-visible { outline: var(--fio-escolhido) dashed var(--foco); outline-offset: var(--e-0); }
+.v3-cal .v3-dia small { position: absolute; top: var(--dia-intervalo); left: var(--e-2); font: var(--t-legenda); line-height: 1; color: var(--dia-tinta, var(--texto-2)); font-variant-numeric: tabular-nums; }
+.v3-cal .v3-dia:disabled small { color: var(--marca); }
+.v3-cal .hoje small { top: var(--e-0); left: var(--e-0); padding: var(--e-0) var(--e-1); border-radius: var(--r-pilula); background: var(--acao); color: var(--texto-sobre-acao); }
+.v3-cal-arco { width: var(--dia-arco); height: var(--e-5); }
+.v3-dia .v3-cal-arco { position: absolute; top: var(--dia-intervalo); right: var(--e-1); }
+.v3-dia.hoje .v3-cal-arco { right: 0; }
+.v3-cal-bola { position: absolute; left: 50%; top: var(--e-8); transform: translateX(-50%); width: var(--dia-bola); height: var(--dia-bola); border-radius: 50%; display: grid; place-items: center; text-align: center; font: var(--t-nome-p); }
+.v3-cal-bola.desc, .v3-cal-bola.falta { font: var(--t-legenda); line-height: 1; }
+.v3-cal-bola.desc { color: var(--dia-tinta, var(--texto-2)); }
+.v3-cal-bola.aberto { color: var(--dia-tinta, var(--texto-legenda)); }
+.v3-cal-bola.treino { font: var(--t-letra-treino); }
+.v3-cal-bola.treino.longa, .v3-cal-bola.hx { font: var(--t-sigla-treino); }
+.v3-cal-bola.treino, .v3-cal-leg .treino { background: var(--acao); color: var(--texto-sobre-acao); }
+.v3-cal-bola.hx, .v3-cal-leg .hx { background: var(--assunto-corpo); box-shadow: inset 0 0 0 var(--fio-fino) var(--texto); }
+.v3-cal-bola.falta, .v3-cal-leg .falta { text-decoration: underline; text-decoration-color: var(--contorno); text-decoration-thickness: var(--fio-fino); text-underline-offset: var(--e-0); }
+.v3-cal-bola.cardio, .v3-cal-leg .cardio { --anel-cardio: 0 0 0 var(--fio-escolhido) var(--dia-fundo), 0 0 0 calc(var(--fio-escolhido) + var(--fio-fino)) var(--texto); box-shadow: var(--anel-cardio); }
+.v3-cal-bola.hx.cardio { box-shadow: inset 0 0 0 var(--fio-fino) var(--texto), var(--anel-cardio); }
+.v3-cal-corpo { position: absolute; bottom: var(--e-0); right: var(--dia-intervalo); display: flex; gap: var(--e-0); color: var(--dia-tinta, var(--texto-2)); }
+.v3-cal-corpo svg, .v3-cal-leg svg:not(.v3-cal-arco) { width: var(--dia-sinal); height: var(--dia-sinal); }
+.v3-cal-leg { display: flex; flex-wrap: wrap; gap: var(--e-3) var(--e-6); padding: var(--e-6) var(--margem) 0; font: var(--t-legenda); color: var(--texto-2); }
+.v3-cal-leg span { display: inline-flex; align-items: center; gap: var(--e-2); }
+.v3-cal-leg i { min-width: var(--icone-em-linha); height: var(--icone-em-linha); border-radius: 50%; display: grid; place-items: center; font: var(--t-legenda); }
+.v3-cal-leg .treino, .v3-cal-leg .hx { font: var(--t-sigla-treino); }
+.v3-cal-leg .hx { min-width: var(--e-9); color: var(--texto); }
+.v3-cal-leg [data-comida="sim"], .v3-cal-leg [data-comida="quase"] { min-width: var(--e-8); height: var(--e-8); border-radius: var(--e-2); }
+.v3-cal-leg .cardio { min-width: var(--e-6); height: var(--e-6); margin-inline: var(--e-1); background: var(--acao); }
+
+.v3-dias .v3-cal-det { margin: var(--e-7) var(--e-6) 0; padding: var(--e-7); border-radius: var(--r-detalhe-dia); background: var(--superficie); box-shadow: inset 0 0 0 var(--fio-fino) var(--divisoria); }
+.v3-cal-det .v3-quadro, .v3-cal-det .q { min-height: var(--dia-quadro); padding: var(--e-4) var(--e-5); background: var(--fundo); border-radius: var(--e-7); box-shadow: none; }
+.v3-cal-det .v3-quadro b, .v3-cal-det .q b { font: var(--t-valor-linha); }
+.v3-cal-det .v3-perg, .v3-cal-det .pergunta, .v3-cal-freq { margin-top: var(--e-5); }
+.v3-cal-freq > p:first-child { font: var(--t-nome-p); }
+.v3-cal-det .v3-ficha, .v3-cal-det .fita-f button { min-height: var(--alvo); background: var(--fundo); box-shadow: none; }
+.v3-cal-det .v3-ficha[aria-checked="true"], .v3-cal-det .fita-f button[aria-checked="true"] { background: var(--acao); color: var(--texto-sobre-acao); }
 .sem{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .sem > span{text-align:center;font:700 12px var(--f-texto);color:var(--texto-legenda)}
 .dd{aspect-ratio:1;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 14px var(--f-titulo);box-shadow:inset 0 0 0 1.5px var(--contorno);position:relative;width:100%;min-height:44px}

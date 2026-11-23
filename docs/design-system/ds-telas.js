@@ -234,36 +234,79 @@ tela({ id: 'f-foto-aparelho', n: 'Foto do aparelho', g: 'treino', c: 'folha', ba
     : `${H.vazio('Sem foto ainda', 'Tire uma do aparelho como ele fica na sua academia, com a regulagem que você usa.', H.vai(ic.cam + ' Tirar a foto') )}`) });
 
 /* ======================= DIAS ======================= */
-const MES = { 1: 'A', 2: '·', 3: 'B', 4: 'D', 5: 'B', 6: 'E', 7: 'HX', 10: 'B', 11: 'C', 12: 'D', 13: 'A' };
-const COM = { 1: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 10: 1, 11: 1, 12: 1 };
+const AMOSTRAS_DO_MES = {
+  0: { hoje: 20, horario: '06h15',
+    dias: { 1:'A m', 2:'falta:doença', 3:'B m', 4:'D m', 5:'B m', 6:'E t', 7:'HX m', 8:'desc', 10:'B m', 11:'C m', 12:'D n', 13:'A m', 14:'D m', 15:'desc', 16:'A t', 17:'desc', 18:'B m', 19:'C m', 20:'D m' },
+    comida: { 10:'sim', 11:'sim', 12:'sim', 13:'sim', 14:'quase', 16:'sim', 17:'sim', 18:'sim', 19:'sim' },
+    cardio: [3, 10, 13, 17, 19], corpo: { 1:'fotos', 15:'fotos e medidas', 18:'medidas' },
+    peso: { 20:'77,6', 18:'77,4', 13:'77,2' } },
+  '-1': { hoje: null, horario: '06h10',
+    dias: { 1:'A m',2:'B m',3:'HX m',4:'desc',5:'C m',6:'D t',7:'E m',8:'A m',9:'B m',10:'HX m',11:'desc',12:'C m',13:'D m',14:'falta:viagem',15:'E n',18:'desc',25:'desc',28:'falta:',16:'A m',17:'HX m',19:'B m',20:'C m',21:'D m',22:'E t',23:'A m',24:'HX m',26:'B m',27:'C m',29:'D m',30:'E m',31:'HX m' },
+    comida: { 1:'sim',2:'sim',3:'sim',5:'sim',6:'quase',7:'sim',8:'sim',9:'sim',12:'sim',13:'sim',15:'sim',16:'sim',19:'quase',20:'sim',21:'sim',22:'sim',23:'sim',26:'sim',27:'sim',28:'sim',29:'sim',30:'sim' },
+    cardio: [2, 6, 9, 13, 16, 20, 23, 27, 30], corpo: { 4:'fotos e medidas', 18:'fotos', 25:'medidas' },
+    peso: { 2:'76,8', 9:'77,0', 16:'77,1', 23:'77,3', 30:'77,5' } }
+};
+const MOTIVOS_DO_MES = ['doença', 'preguiça', 'viagem', 'trabalho', 'outro'];
+const COMIDA_DO_MES = { sim: 'Foi, sim', quase: 'Quase', naosei: 'Não lembro', com: 'Por refeição' };
+
+function arcoDoMes(turno) {
+  const ponto = { m: [3, 10], t: [15, 5], n: [27, 10] }[turno];
+  return ponto ? `<svg class="v3-cal-arco" viewBox="0 0 30 14" aria-hidden="true"><path d="M3 10 Q15 0 27 10" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".35"/><circle cx="${ponto[0]}" cy="${ponto[1]}" r="2.6" fill="currentColor"/></svg>` : '';
+}
+
 tela({ id: 'dias', n: 'Dias', g: 'dias', c: 'lugar', lugar: 'dias',
-  d: 'O mês em grade: preto é treino (com a letra), o ponto é comida respondida, riscado é dia em branco. Embaixo, o dia escolhido, com a pergunta da comida.',
-  es: [['treino', 'dia com treino'], ['branco', 'dia em branco'], ['hoje', 'hoje']], vai: ['dia-aberto', 'responder'],
+  d: 'O mês em sete colunas. O fundo mostra a comida, a bola o treino e o arco o turno. No dia escolhido dá para corrigir comida, descanso e falta.',
+  es: [['hoje', 'hoje'], ['treino', 'dia com treino'], ['branco', 'dia em branco'], ['falta', 'falta com motivo'], ['corpo', 'fotos e medidas']], vai: ['dia-aberto', 'responder'],
   r: e => {
-    const deslocamento = topo().mes || 0, corrente = deslocamento === 0;
+    const deslocamento = topo().mes || 0;
     const inicio = new Date(2026, 10 + deslocamento, 1);
     const fim = new Date(2026, 11 + deslocamento, 0).getDate();
-    const mes = inicio.toLocaleDateString('pt-BR', { month: 'long' });
-    const sel = topo().dia || (corrente ? (e === 'branco' ? 9 : e === 'hoje' ? 16 : 13) : 1);
-    const treinoDe = d => corrente && MES[d] && MES[d] !== '·' ? MES[d] : '';
-    const comidaDe = d => corrente && COM[d];
+    const mes = inicio.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    const m = AMOSTRAS_DO_MES[deslocamento] || { dias: {}, comida: {}, cardio: [], corpo: {}, peso: {} };
+    const vividos = m.hoje || fim, fechados = m.hoje ? vividos - 1 : fim;
+    const sel = topo().dia || (!deslocamento && { branco: 9, treino: 13, falta: 2, corpo: 15 }[e]) || vividos;
     const celulas = Array(inicio.getDay()).fill('<span></span>');
+    let treinos = 0, respondidos = 0, escolhido;
     for (let d = 1; d <= fim; d++) {
-      const t = treinoDe(d), comida = comidaDe(d), hoje = corrente && d === 16, futuro = corrente && d > 16;
-      celulas.push(`<button class="dd ${t ? 't' : ''} ${!t && !comida && !hoje && !futuro ? 'v' : ''} ${futuro ? 'fut' : ''} ${hoje ? 'hoje' : ''} ${d === sel ? 'sel' : ''}" ${futuro ? 'disabled' : 'data-dia="' + d + '"'} aria-pressed="${d === sel}" aria-label="dia ${d}${t ? ', treino ' + t : ''}${comida ? ', comida respondida' : ''}"><small>${d}</small>${t}${comida ? '<i class="c"></i>' : ''}</button>`);
+      const edicao = topo().respostasDias?.[[deslocamento, d]] || {};
+      const [registro, turno] = (m.dias[d] || '').split(' ');
+      const letra = registro === 'desc' || registro.startsWith('falta') ? '' : registro;
+      const frequencia = edicao.frequencia ?? (registro === 'desc' ? 'desc' : registro.startsWith('falta') ? 'falta' : '');
+      const motivo = edicao.motivo ?? registro.split(':')[1];
+      const comida = edicao.comida || m.comida[d], cardio = m.cardio.includes(d);
+      const fotos = m.corpo[d]?.includes('fotos'), medidas = m.corpo[d]?.includes('medidas');
+      const tipo = letra === 'HX' ? 'hx' : letra ? 'treino' : frequencia || 'aberto';
+      const centro = letra || frequencia || '?', futuro = d > vividos;
+      const extras = [cardio && 'cardio', fotos && 'fotos', medidas && 'medidas'].filter(Boolean);
+      if (letra) treinos++;
+      if (comida && d <= fechados) respondidos++;
+      if (d === sel) escolhido = { letra, frequencia, motivo, comida, extras };
+      const descricao = [d + ' de ' + mes, letra || frequencia, { m: 'manhã', t: 'tarde', n: 'noite' }[turno], COMIDA_DO_MES[comida], ...extras].filter(Boolean).join(', ');
+      celulas.push(`<button class="v3-dia ${d === m.hoje ? 'hoje' : ''}" data-comida="${comida || ''}" data-dia="${d}" aria-label="${descricao}" aria-pressed="${d === sel}" ${futuro ? 'disabled' : ''}><small>${d}</small>${futuro ? '' : arcoDoMes(turno) + `<span class="v3-cal-bola ${tipo} ${cardio ? 'cardio' : ''}">${centro}</span><span class="v3-cal-corpo">${fotos ? ic.camera : ''}${medidas ? ic.medida : ''}</span>`}</button>`);
     }
-    let sem = '';
-    for (let i = 0; i < celulas.length; i += 7) sem += '<div class="sem">' + celulas.slice(i, i + 7).join('') + '</div>';
-    const t = treinoDe(sel);
-    const data = new Date(inicio.getFullYear(), inicio.getMonth(), sel);
-    const titulo = data.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).replace('-feira', '');
-    return H.cab('Dias', mes + (corrente ? ' · 10 treinos em 16 dias' : ' · sem registros'), { lugar: 1 }) + `<div class="mes-nav"><button class="ico" data-mes="-1" aria-label="Mês anterior">${ic.volta}</button><b>${mes} de ${inicio.getFullYear()}</b><button class="ico" data-mes="1" aria-label="Próximo mês" ${corrente ? 'disabled' : ''}>${ic.dir}</button></div><section class="secao" style="padding-top:6px"><div class="sem" style="margin-bottom:6px">${['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(x => `<span>${x}</span>`).join('')}</div><div class="mes">${sem}</div>
-      <div class="legm"><span><i style="background:var(--texto);height:14px;border-radius:50%"></i>treino</span><span><i style="width:7px;height:7px;margin:0 8.5px 0 3.5px;border-radius:50%;background:var(--assunto-feito);box-shadow:0 0 0 1px var(--texto)"></i>comida respondida</span><span><i style="height:14px;border-radius:50%;background:repeating-linear-gradient(135deg,var(--superficie-quieta) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px var(--divisoria)"></i>comida em branco</span></div></section>
-      ${H.secao(titulo + (corrente && sel === 16 ? ' · hoje' : ''), '', `${H.quadros([{ v: t && t !== '·' ? 'Treino ' + t : '—', l: t && t !== '·' ? '20 séries · 58 min' : 'sem treino', ir: 'dia-aberto' }, { v: corrente && (sel === 13 || sel === 16) ? '77,4' : '—', l: 'peso' }, { v: corrente && sel === 13 ? '8 de 14' : '—', l: 'água' }], 3)}
-        ${corrente && sel === 13 ? H.pergunta('Comida: foi como o plano', 'Conta para os 14 dias da regra. Toque para corrigir.', ['Foi, sim', 'Quase', 'Não lembro'], 'Foi, sim') : H.pergunta('A comida deste dia foi como o plano?', 'Sem resposta, o dia fica fora da conta. Não vira zero.', ['Foi, sim', 'Quase', 'Não lembro'])}
-        <div class="acoes">${H.alt('Abrir o dia ' + ic.seta, { cheio: 1, ir: 'dia-aberto' })}</div>`)}
-      ${H.secao('', '', `<div class="acoes" style="margin-top:0">${H.vai('Responder os dias em branco ' + ic.seta, { ir: 'responder' })}</div><p class="txt"><span class="n">9</span> de 14 respondidos. A regra do nutricionista precisa de 11.</p>`)}
-      ${!corrente ? '' : H.secao('No mês', 'até ontem, 15/11', H.quadros([{ v: '4,75', l: 'dias de treino por semana' }, { v: '06h15', l: 'horário mais comum' }, { v: '1', l: 'cardio no mês' }], 3))}`; } });
+    const { letra, frequencia, motivo, comida, extras } = escolhido;
+    const titulo = new Date(2026, 10 + deslocamento, sel).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).replace('-feira', '');
+    const fichas = (grupo, ops, k, rotulo) => `<div data-resposta-dia="${grupo}" data-escolhido="${sel}">${H.fichas(ops, k, rotulo)}</div>`;
+    const retirar = frequencia ? `<button class="saida" data-tirar-resposta data-resposta-dia="frequencia" data-escolhido="${sel}">Tirar a resposta</button>` : '';
+    const pergunta = !letra && sel !== m.hoje ? `<div class="v3-cal-freq"><p>${frequencia ? 'Descanso ou falta?' : 'Sem treino neste dia. Foi descanso ou falta?'}</p>${fichas('frequencia', ['Descanso', 'Falta'], ['desc', 'falta'].indexOf(frequencia), 'Descanso ou falta')}${frequencia === 'falta' ? '<p class="txt">O motivo, se quiser dizer. Continua sendo falta.</p>' + fichas('motivo', MOTIVOS_DO_MES, MOTIVOS_DO_MES.indexOf(motivo), 'Motivo da falta') : ''}${retirar}</div>` : '';
+    const alimento = comida === 'com' ? '<p class="txt">Comida marcada refeição por refeição.</p>' :
+      `<div data-resposta-dia="comida" data-escolhido="${sel}">${H.pergunta(comida ? 'Comida: ' + ({ sim: 'foi como o plano', quase: 'quase como o plano', naosei: 'não lembro' }[comida]) : 'A comida deste dia foi como o plano?', comida === 'naosei' ? 'Fica fora da conta, não vira zero. Toque para corrigir.' : comida ? 'Conta para os 14 dias da regra. Toque para corrigir.' : 'Sem resposta, o dia fica fora da conta. Não vira zero.', ['Foi, sim', 'Quase', 'Não lembro'], COMIDA_DO_MES[comida])}</div>`;
+    const nav = `<div class="v3-mes-nav"><button data-mes="-1" aria-label="Mês anterior">${ic.volta}</button><b>${mes}</b><button data-mes="1" aria-label="Próximo mês" ${m.hoje ? 'disabled' : ''}>${ic.dir}</button></div>`;
+    const legenda = [['<i class="treino">A</i>', 'treino'], ['<i class="hx">HX</i>', 'HYROX'], ['<i>desc</i>', 'descanso'], ['<i class="falta">falta</i>', 'falta'], ['<i>?</i>', 'sem resposta'], ['<i data-comida="sim"></i>', 'comida no plano'], ['<i data-comida="quase"></i>', 'quase'], ['<i class="cardio"></i>', 'cardio'], [arcoDoMes('m'), 'turno'], [ic.camera, 'fotos'], [ic.medida, 'medidas']];
+    const quadros = H.quadros([
+      { v: letra === 'HX' ? 'HYROX' : letra ? 'Treino ' + letra : frequencia === 'desc' ? 'Descanso' : frequencia ? 'Falta' : '?',
+        l: letra ? '18 séries' : frequencia === 'falta' ? motivo || 'sem motivo dito' : 'sem treino', ir: 'dia-aberto' },
+      { v: m.peso[sel] || '—', u: m.peso[sel] && 'kg', l: 'peso' },
+      { v: comida === 'sim' ? 'No plano' : COMIDA_DO_MES[comida] || '—', l: comida ? 'comida' : 'comida sem resposta' }], 3);
+    const ultimos = Array.from({ length: 14 }, (_, i) => AMOSTRAS_DO_MES[0].hoje - i - 1);
+    const n14 = ultimos.filter(d => topo().respostasDias?.[[0, d]]?.comida || AMOSTRAS_DO_MES[0].comida[d]).length;
+    return `<div class="v3-dias"><header class="cab"><h1>Dias</h1>${nav}</header>
+      <div class="v3-cal-resumo"><div><b>${treinos}</b><span>treinos em ${vividos} dias</span></div><div><b>${respondidos}<small> de ${fechados}</small></b><span>dias com a comida respondida</span></div><div><b>${m.horario || '—'}</b><span>horário mais comum</span></div>${m.hoje ? '<small>até ontem, 19/11</small>' : ''}</div>
+      <div class="v3-cal v3-cal-h" aria-hidden="true">${'DSTQQSS'.split('').map(x => '<span>' + x + '</span>').join('')}</div>
+      <div class="v3-cal" role="group" aria-label="${mes}">${celulas.join('')}</div><div class="v3-cal-leg" role="group" aria-label="Legenda do mês">${legenda.map(([i, l]) => '<span>' + i + l + '</span>').join('')}</div>
+      <section class="secao v3-cal-det"><h2 class="h">${titulo}${sel === m.hoje ? ' · hoje' : ''}</h2><div class="corpo">${quadros}${extras.length ? '<p class="txt">Também: ' + extras.join(' · ') + '</p>' : ''}${pergunta}${alimento}<div class="acoes">${H.alt('Abrir o dia ' + ic.seta, { cheio: 1, ir: 'dia-aberto' })}</div></div></section>
+      ${H.secao('', '', H.vai('Responder os dias em branco ' + ic.seta, { ir: 'responder' }) + '<p class="txt">' + n14 + ' de 14 dias fechados respondidos. A regra do nutricionista precisa de 11.</p>')}</div>`;
+  } });
 
 tela({ id: 'responder', n: 'Responder os dias', g: 'dias', c: 'acao', lugar: 'dias',
   d: 'Um dia por tela, do mais recente para trás. Um toque por dia; "voltar um" desfaz o último; "todos os que faltam" responde de uma vez.',

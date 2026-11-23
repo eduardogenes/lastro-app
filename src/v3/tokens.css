@@ -129,6 +129,19 @@
   --doca: 64px;          /* altura da doca e do "+" */
   --doca-lugar: 46px;    /* cada lugar apagado da doca: passa do alvo de 44 e deixa "Semana" caber */
 
+  /* ---------- calendário de Dias ---------- */
+  --dia-altura: 62px;
+  --dia-intervalo: 5px;
+  --r-detalhe-dia: 24px;
+  --dia-bola: 32px;
+  --dia-arco: 24px;
+  --dia-sinal: 13px;
+  --dia-quadro: 66px;
+  --dia-contorno-quase: 1px;
+  --t-letra-treino: 800 16px/1 var(--f-titulo);
+  --t-sigla-treino: 800 12px/1 var(--f-titulo);
+  --t-resumo-mes: 800 26px/.95 var(--f-titulo);
+
   /* ---------- elevação: só o que flutua tem sombra ---------- */
   --sombra-flutua: 0 12px 30px -12px rgba(15, 15, 13, .55); /* doca, "+" */
   --sombra-gruda: 0 10px 24px -14px rgba(15, 15, 13, .5);   /* a ação que gruda no topo, a tira do treino */

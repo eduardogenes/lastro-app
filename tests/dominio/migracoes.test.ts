@@ -10,7 +10,7 @@ import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import {
   ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano9,
-  migraPlano10, migraPlano11, migraPlano12, CEIA_PLANO_11, PASSO_ARROZ_PLANO_12, GRADE_ARROZ_PLANO_12
+  migraPlano10, migraPlano11, migraPlano12, migraPlano13, CEIA_PLANO_11, PASSO_ARROZ_PLANO_12, GRADE_ARROZ_PLANO_12
 } from '../../src/dominio/migracoes';
 import { MARCAS_DA_BIO } from '../../src/dominio/corpo';
 import { ALIMENTOS_BASE, PLANO_BASE } from '../../src/dominio/nutricao/alimentos';
@@ -405,10 +405,15 @@ function fixturePlano9(): Estado {
 }
 
 test('os planos antigos passam pela cadeia histórica sem ganhar o marcador de primeiro acesso', () => {
-  for (const s of [fixturePlano9(), fixturePlano10(), fixturePlano11()]) {
+  const plano12 = JSON.parse(readFileSync(new URL('./fixtures/estado-plano-12.json', import.meta.url), 'utf8')) as Estado;
+  for (const s of [fixturePlano9(), fixturePlano10(), fixturePlano11(), plano12]) {
     migraPlano10(s); migraPlano11(s); migraPlano12(s);
+    const antes = structuredClone(s);
+    migraPlano13(s);
+    assert.deepEqual(s, { ...antes, plano: 13, falta: {} });
+    migraPlano13(s);
+    assert.deepEqual(s, { ...antes, plano: 13, falta: {} });
     assert.strictEqual(s.primeiraVez, undefined);
-    assert.strictEqual(s.plano, 12);
     assert.ok(s.comida.plano!.some(r => r.id === 'ceia'));
   }
 });

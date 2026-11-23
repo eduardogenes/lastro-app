@@ -35,7 +35,6 @@ html[data-palco="bancada"] {
   --pl-mini-ilha: 34%;
   --pl-mini-inicio: 3px;
   --pl-icone-giro: 20px;
-  --pl-traco-icone: 2;
   --pl-t-modelo: 760 clamp(26px, 2.65vw, 38px)/1 var(--f-titulo);
 
   /* Chassi, vidro e teclas físicas. A luz na quina é mais estreita que o aro. */
@@ -373,10 +372,11 @@ html[data-palco="bancada"] #deitado { display: none; }
 }
 .pl-item[aria-pressed="true"] .pl-marca > i { display: none; }
 
-.pl-girar .pl-girar-c, .pl-girar svg {
+.pl-girar svg {
+  display: block;
   width: var(--pl-girar-d); height: var(--pl-girar-d); box-sizing: border-box; padding: 12px;
   border-radius: 50%; border: var(--fio-fino) solid var(--contorno); background: var(--superficie);
-  stroke-width: var(--pl-traco-icone); color: var(--texto);
+  color: var(--texto);
 }
 .pl-girar[aria-pressed="true"] svg { background: var(--texto); color: var(--superficie); border-color: var(--texto); }
 .pl :focus-visible { outline: var(--fio-escolhido) solid var(--foco); outline-offset: var(--pl-foco-afasta); border-radius: var(--pl-mini-canto); }

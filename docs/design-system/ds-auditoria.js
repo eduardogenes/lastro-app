@@ -55,6 +55,7 @@ window.AUDITORIA = [
     { t: 'estado', f: 'peça 5, Plano', o: 'O que vence hoje não se destaca', h: 'O prazo aparece na linha pequena de cada mudança (g.vence), mas uma que vence hoje tem o mesmo peso das outras; venceHoje não é usado na tela.', c: 'Vencendo hoje, um aviso de atenção acima da mudança ("Vence hoje, no treino B"), e as respostas como fichas ("Só aquele dia" / "Passa a valer").', l: 'plano.jsx; src/main.jsx:10716' }
   ] },
   { g: 'Dias, Corpo, Fotos', a: [
+    { t: 'dado', f: 'calendário de Dias', o: 'Calendário de Dias e Phosphor regular', h: 'O mês distinguia treino e comida e aceitava marcar descanso.', c: 'O mês distingue as respostas da comida, o turno, o cardio, fotos e medidas. O dia escolhido volta selecionado. A pessoa pode tirar a resposta. Uma resposta coberta por treino reaparece ao apagar a última sessão do dia. A medição em Chromium e WebKit após as correções da rodada 1 segue pendente por bloqueio de IPC.', l: 'dias.jsx, icones.jsx e frequencia.ts' },
     { t: 'fluxo', f: 'peça 5, Dias', o: 'Responder os dias em menta durante a tarefa', h: 'TelaDeAcao cor="menta" do começo ao fim.', c: 'Lilás (a pergunta do dia) durante; menta só na tela final ("13 dias respondidos").', l: 'ResponderDias em dias.jsx' },
     { t: 'estado', f: 'peça 5, Ajustes', o: 'Colar a cópia como texto', h: 'Só restaurar por arquivo.', c: 'Folha "Colar a cópia" em Ajustes: campo de texto longo, "Conferir o texto", o resumo do que tem nela, e a confirmação de restaurar.', l: 'ajustes.jsx' }
   ] },

@@ -195,10 +195,8 @@ objetos vem de preenchimento (superfície sobre fundo) ou de contorno.
 
 ## Ícones
 
-- Desenho próprio, em grade de 24, traço arredondado (pontas e junções
-  redondas), sem preenchimento.
-- Traço: **2** nos ícones de conteúdo (lugares, prato, câmera), **2,2 a 2,4**
-  nas setas e no "x", **2,6** no "+", **2,8** no certo.
+- Phosphor Icons, peso **regular**, licença MIT. Os caminhos em grade de 256
+  usam o preenchimento `currentColor`. A doca, o “+” e a série usam o mesmo peso.
 - Tamanhos: 20 (dentro de linha e de ficha), 22 (no bloco e no botão), 24
   (no cabeçalho e na tela de ação), 28 (no "+").
 - Ícone nunca anda sozinho onde o sentido não é óbvio: botão só com ícone tem
@@ -206,8 +204,7 @@ objetos vem de preenchimento (superfície sobre fundo) ou de contorno.
   lixeira e repetir a fala.
 - Nunca emoji, nunca caractere no lugar de desenho (a seta ▶ do protótipo da
   câmera sozinho vira o ícone de tocar).
-- O ícone de dúvida do protótipo tem coordenadas quebradas
-  (`1.300-2 2.500`); o desenho certo está na página viva.
+- Na grade de Dias, câmera e régua ocupam 13 px e têm o nome acessível no dia.
 
 ## Movimento
 

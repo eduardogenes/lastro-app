@@ -70,8 +70,8 @@ test('exportar carrega todos os campos do estado', async () => {
      // e o carimbo de cada documento: sem ele, o programa importado perderia
      // para a cópia velha do outro aparelho na primeira fusão
      'carimbos', 'carimbosEm',
-     // os dias que ele marcou como descanso
-     'descanso', 'fotos', 'promoPendente',
+     // a frequência respondida por dia
+     'descanso', 'falta', 'fotos', 'promoPendente',
      // a lixeira das fotos do corpo: o que foi apagado volta por 30 dias
      'lixeira',
      // o que aparece (direção 3): as partes que a pessoa ligou ou desligou;
@@ -1002,4 +1002,22 @@ test('ctx.alternaColar abre e fecha a área de colar, e ctx.dadosDoApp conta o a
     'cardio, peso e cintura entram no acervo: ' + vm.resumo);
   assert.match(vm.backupTxt, /nunca exportou/, 'e cobra o backup que nunca houve');
   a.fechar();
+});
+
+test('a cópia restaura a falta com motivo e as lápides das respostas corrigidas', async () => {
+  const a = await app(), t = Date.now() - 3 * DIA;
+  const d = a.v('hojeISO', t);
+  try {
+    await a.v('ctx.respondeFrequencia', d, 'descanso');
+    await a.v('ctx.respondeFrequencia', d, 'falta', 'doença');
+    const copia = a.v('payload'), salvo = JSON.parse(copia).data;
+    await a.v('wipe');
+    assert.match(a.perguntas().at(-1), /tira 1 falta deste aparelho/);
+    assert.deepEqual(a.gravado().falta, {});
+    assert.ok(a.gravado().apagados['falta:' + d] >= salvo.falta[d].m);
+    await a.v('importText', copia);
+    assert.deepEqual(a.gravado().falta[d], { m: salvo.falta[d].m, motivo: 'doença' });
+    assert.equal(a.gravado().apagados['descanso:' + d], salvo.apagados['descanso:' + d]);
+    assert.equal(a.gravado().descanso[d], undefined);
+  } finally { a.fechar(); }
 });

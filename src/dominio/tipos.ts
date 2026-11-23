@@ -728,6 +728,10 @@ export interface EstadoComida {
   v?: number;
 }
 
+export type MotivoFalta = 'doença' | 'preguiça' | 'viagem' | 'trabalho' | 'outro';
+/** A leitura preserva também os campos e motivos escritos por versões posteriores. */
+export interface Falta { m: number; motivo?: string; [campo: string]: unknown }
+
 /** O estado persistido inteiro, sob a chave `lastro-v1`. */
 export interface Estado {
   /** Presente só em perfis que começaram sem prescrição. A partir de 4 a abertura está concluída. */
@@ -902,14 +906,6 @@ export interface Estado {
    */
   fotos: Record<IdEx, FotoRef>;
   /**
-   * Dias marcados como descanso, por data ('AAAA-MM-DD' → quando foi marcado).
-   *
-   * Não entra em `done` de propósito: lá dentro ele viraria treino em toda
-   * contagem que percorre sessões — o bloco de 48, a média semanal, a rotação.
-   * Aqui ele responde só à pergunta que o calendário não sabia responder: o dia
-   * está vazio porque você descansou ou porque esqueceu de registrar?
-   */
-  /**
    * O protocolo de fotos de acompanhamento.
    *
    * `poses` é a ordem/seleção dele, semeada do PROTOCOLO do código — mesmo par
@@ -923,7 +919,13 @@ export interface Estado {
     poses: PoseId[] | null;
     sessoes: SessaoFoto[];
   };
+  /**
+   * Dias marcados como descanso, por data local e instante da resposta.
+   * Em `done`, o descanso viraria treino em toda contagem de sessões, inclusive
+   * no bloco de 48, na média semanal e na rotação.
+   */
   descanso: Record<string, number>;
+  falta?: Record<string, Falta>;
   /**
    * A lixeira das fotos do corpo: o que foi apagado ou substituído, por 30
    * dias (dominio/lixeira.ts). Coleção com chave natural e lápide, como as

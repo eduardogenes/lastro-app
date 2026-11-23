@@ -40,7 +40,9 @@ test('o cabeçalho reserva o lugar de Voltar só no primeiro passo e a escolha u
     const cab = '.v3-inicio .v3-cab';
     assert.equal(a.$(cab).firstElementChild.getAttribute('aria-hidden'), 'true');
     assert.ok(a.$(cab + ' > .v3-cab-vao'));
-    assert.equal(a.$('[role="radio"] svg path').getAttribute('d'), 'M5 6h14M5 10.5h14M5 15h9');
+    const icones = readFileSync(new URL('../../src/ui/v3/icones.jsx', import.meta.url), 'utf8');
+    const texto = icones.match(/texto: I\('([^']+)'\)/)[1];
+    assert.equal(a.$('[role="radio"] svg path').getAttribute('d'), texto);
     for (let passo = 2; passo <= 3; passo++) {
       await toca(a, pular);
       assert.equal(a.$(cab).firstElementChild.getAttribute('aria-label'), 'Voltar');
@@ -187,7 +189,7 @@ for (const versao of [9, 10, 11]) {
       const s = a.S();
       assert.equal(a.$(pular), null);
       assert.equal(s.primeiraVez, undefined);
-      assert.equal(s.plano, 12);
+      assert.equal(s.plano, a.dado('PLANO_ATUAL'));
       assert.deepEqual(s.prog, fixture.prog);
       assert.deepEqual(s.rot, fixture.rot);
       assert.deepEqual(s.body.peso, fixture.body.peso);

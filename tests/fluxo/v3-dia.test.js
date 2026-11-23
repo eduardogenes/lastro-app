@@ -29,6 +29,22 @@ async function abreODia(a, t) {
   await a.esperar(40);
 }
 
+test('Desfazer o descanso recupera o motivo e o campo que vieram de um build posterior', async () => {
+  const d = dataLocal(ONTEM), falta = { m: ONTEM, motivo: 'plantão', detalhe: { turno: 'noite' } };
+  const a = await app({ agora: agoraEstavel(10), estado: { plano: 13, logs: {}, done: [], falta: { [d]: falta } } });
+  try {
+    await abreODia(a, ONTEM);
+    const toca = async seletor => { a.clicar(seletor); await a.esperar(); };
+    await toca('[data-a="dia-poe"]');
+    await toca('[data-a="poe-descanso"]');
+    assert.ok(a.gravado().descanso[d]);
+    await toca('[data-a="aviso-acao"]');
+    const { m, ...voltou } = a.gravado().falta[d];
+    assert.ok(m > falta.m);
+    assert.deepEqual(voltou, { motivo: falta.motivo, detalhe: falta.detalhe });
+  } finally { a.fechar(); }
+});
+
 test('dias: "Abrir o dia" leva ao dia aberto novo, com o treino daquele dia', async () => {
   const a = await comTreinoPassado();
   a.v('ctx.vaiPara', 'dias');

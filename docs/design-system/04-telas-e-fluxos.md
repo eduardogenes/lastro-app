@@ -45,7 +45,7 @@ Camadas: **lugar** (tem doca), **destino** (tela cheia com voltar), **tela de a�
 
 | Tela | Camada | Estados | Chega-se de | Leva a |
 |---|---|---|---|---|
-| **Dias**<br>O mês em grade: preto é treino (com a letra), o ponto é comida respondida, riscado é dia em branco. Embaixo, o dia escolhido, com a pergunta da comida. | lugar | dia com treino; dia em branco; hoje | Responder os dias | O dia aberto, Responder os dias |
+| **Dias**<br>O resumo do mês vem antes da grade de sete colunas. A comida pinta o fundo em menta ou meia diagonal. A bola leva a letra do treino, com HX em lilás, arco de turno e anel de cardio. Câmera e régua indicam fotos e medidas. Embaixo, o dia escolhido reúne treino, peso, comida e os outros registros. Dia passado sem treino aceita descanso ou falta, com motivo opcional e a ação “Tirar a resposta”. Ao voltar do dia aberto, a grade mantém a escolha. | lugar | hoje, treino, dia em branco, falta com motivo, fotos e medidas | Responder os dias | O dia aberto, Responder os dias |
 | **Responder os dias**<br>Um dia por tela, do mais recente para trás. Um toque por dia; "voltar um" desfaz o último; "todos os que faltam" responde de uma vez. | tela de ação | um dia; o fim | Dias, Semana | Semana, Dias |
 | **O dia aberto**<br>Tudo o que aconteceu num dia, para conferir e corrigir: o treino (que abre a sessão), o cardio, o peso, a comida refeição por refeição. | destino | dia de treino; nenhum registro | Dias | Sessão passada, Pôr o dia em dia, Registrar treino passado, Cardio |
 | **Pôr o dia em dia**<br>Para o dia que ficou em branco: o que foi, de uma vez. | folha sobre O dia aberto | — | O dia aberto | Registrar treino passado, Cardio |

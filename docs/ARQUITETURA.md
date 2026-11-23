@@ -221,10 +221,38 @@ Campos novos entram sempre como opcionais e recebem padrão em
 `normalizaEstado()`, que roda no boot **e na importação de um backup** — um JSON
 de qualquer versão anterior chega às migrações pelo mesmo caminho que o disco.
 
+### Frequência no calendário de Dias
+
+Cada data local aceita uma resposta explícita. Em `S.descanso`, o valor é o
+instante da marca. Em `S.falta`, é um objeto com `m` (última edição em ms) e
+`motivo` opcional. Esta versão oferece doença, preguiça, viagem, trabalho e
+outro ao gravar. Ao ler, conserva inclusive motivos e campos novos. Sem sessão
+e sem resposta, a data fica em aberto. A cadência semanal serve à prescrição.
+Somente `S.done` conta como treino, inclusive um treino fora da prescrição.
+
+Na correção vence a resposta mais recente. Em empate entre aparelhos prevalece
+descanso. Entre duas faltas com o mesmo carimbo, o desempate é pela ordem dos
+motivos no texto. Se também coincidirem, fica a entrada com o JSON mais longo
+após ordenar as chaves e, para tamanhos iguais, a maior em ordem textual.
+Remover só o motivo também carimba a falta. As lápides
+`descanso:AAAA-MM-DD` e `falta:AAAA-MM-DD` acompanham trocas e apagamentos.
+Enquanto houver uma sessão na data, o calendário, o cartão do dia e o espelho
+mostram o treino. A resposta continua guardada com o carimbo original e
+reaparece ao apagar a última sessão. A fusão e a cópia preservam a marca
+e as lápides. O histórico mensal do espelho conta as faltas visíveis e
+lista suas datas com os motivos declarados.
+
+O resumo conta dias com treino até hoje e dias com a comida respondida até
+ontem. Uma marca de refeição conta uma resposta e aparece como **Por refeição**,
+sobre papel. **Não lembro** também conta uma resposta no mês e fica fora da
+conta nutricional. Só **Foi, sim** e **Quase** pintam o fundo. A câmera indica
+uma sessão do protocolo com foto. A régua indica uma fita ou dobra registrada.
+O peso tem seu próprio quadro. O arco usa a primeira sessão com hora conhecida.
+
 ### Primeiro acesso e prescrição embutida
 
 Na primeira abertura sem estado legível em nenhuma das duas chaves, `estadoInicial()`
-cria um perfil pessoal no plano 12. O app traz os catálogos de exercícios e de
+cria um perfil pessoal no plano 13. O app traz os catálogos de exercícios e de
 alimentos para a pessoa poder montar o que recebeu. Programa, rotação, referência
 do treinador, refeições e histórico começam vazios. A semana começa sem dia de
 treino marcado. A lista completa de poses e os procedimentos de medição continuam
@@ -233,7 +261,7 @@ disponíveis quando a pessoa escolhe acompanhá-los.
 O campo opcional `primeiraVez` guarda o passo 1, 2 ou 3. Qualquer inteiro a partir de 4 abre o Hoje
 nas visitas seguintes. Um estado anterior, mesmo com apenas programa ou plano e
 sem sessões, conserva o campo ausente, a cadência e as prescrições históricas.
-As fixtures dos planos 9, 10 e 11 percorrem as migrações até o 12.
+As fixtures dos planos 9, 10, 11 e 12 percorrem as migrações até o 13.
 
 Colar a prescrição abre a revisão. Aplicar guarda a base do treinador e avança
 para a comida na mesma gravação. Quem escolhe acompanhar comida monta suas
@@ -540,6 +568,15 @@ além disso foi o `LEGADO`: exercício que sai do programa some do catálogo e o
 histórico dele vira exercício fantasma, com o slug cru no lugar do nome. O
 `LEGADO` os mantém nomeados, com o grupo muscular certo, e `sub:1` em vez de
 `arq:1` para continuarem disponíveis nas listas de troca.
+
+**12 → 13** (`migraPlano13`) acrescenta a coleção de faltas, inicialmente
+vazia. Prescrição e alimentação conservam o formato e os carimbos. Um aparelho
+no build 12 pode partir do próprio estado ao fundir e enviar à conta um estado
+inteiro sem as faltas que só estavam na nuvem. Importar uma cópia no build 12
+também descarta essa coleção. Um aparelho atualizado que ainda guarda as faltas
+as reenvia na próxima sincronia. Uma cópia que as contenha pode ser restaurada
+no build 13 e sincronizada. Se a conta foi sobrescrita e nenhum aparelho ou
+cópia conservou as faltas, perde-se o registro, inclusive os motivos.
 
 ---
 

@@ -49,6 +49,8 @@
    janela, para quando o que se quer é a tela e não o objeto.
    ============================================================ */
 
+import { render } from 'preact';
+import { ic } from './ui/v3/icones.jsx';
 import { podeMover } from './ui/movimento.js';
 
 /**
@@ -207,6 +209,7 @@ function montaBancada() {
   const raiz = document.createElement('div');
   raiz.className = 'pl';
   raiz.innerHTML = esqueleto();
+  render(ic.gira, raiz.querySelector('.pl-girar-c'));
   document.body.appendChild(raiz);
 
   const el = {
@@ -522,9 +525,7 @@ function esqueleto() {
   <div class="pl-fila">
     <div class="pl-lista" role="group" aria-label="Trocar de aparelho (Alt 1 a 4)"></div>
     <button type="button" class="pl-girar" aria-keyshortcuts="Alt+R" aria-label="Girar o aparelho" title="Girar o aparelho · Alt R">
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19.5 12a7.5 7.5 0 11-2.6-5.7M19.5 4v4.5H15"/>
-      </svg>
+      <span class="pl-girar-c"></span>
       <span class="pl-item-n">girar</span>
     </button>
   </div>

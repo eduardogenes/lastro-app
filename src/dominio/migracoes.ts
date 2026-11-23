@@ -24,7 +24,7 @@ import type { Item, Refeicao } from './nutricao/tipos';
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-export const PLANO_ATUAL = 12;
+export const PLANO_ATUAL = 13;
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -846,4 +846,11 @@ export function migraPlano12(S: Estado): Resultado12 | null {
 
   S.plano = 12;
   return r;
+}
+
+// Plano 13: as datas sem resposta continuam em aberto, inclusive no domingo.
+export function migraPlano13(s: Estado): void {
+  if (s.plano >= 13) return;
+  s.falta ??= {};
+  s.plano = 13;
 }

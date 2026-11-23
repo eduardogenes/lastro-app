@@ -86,3 +86,14 @@ O que ela prova:
   120 g de arroz dentro do plano DEPOIS do fechamento: `CTX.aplicaAjuste` não
   chama `planoMudou()`. Não é o que a 11 → 12 conserta — fica registrado aqui
   porque é o dado mostrando o defeito, e não uma leitura de código.
+
+## `estado-plano-12.json`
+
+Gerada em uma cópia do commit `54d45c0` com `vite build`. No harness desse
+build, `app({ agora })` abriu o perfil já usado em 16/11/2026 às 10h locais.
+`ctx.marcaRefeicao('almoco')` marcou o almoço. `alternaDescanso` marcou os
+dias 14 e 15. Depois, `abrirAdicionar` e `lancaTreino('livre')` registraram
+um treino no dia 15. O arquivo é o `JSON.stringify(a.gravado())` dessa sessão.
+
+O plano 12 guardava os dois descansos, inclusive o do dia com treino. O campo
+`falta` ainda não existia e `apagados` estava vazio.

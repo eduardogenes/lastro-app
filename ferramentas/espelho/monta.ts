@@ -26,6 +26,7 @@ import type { LeituraDeGordura } from '../../src/dominio/corpo';
 import {
   CARGAS, DORES, ROT_BASE, exercicioFantasma, montaCatalogo, semeiaProg
 } from '../../src/dominio/programa';
+import { uneFrequencia } from '../../src/dominio/frequencia';
 import { ARQUIVO } from '../../src/dominio/migracoes';
 import { MEDIDAS_DO_CORPO } from '../../src/dominio/corpo';
 import {
@@ -509,15 +510,24 @@ function nomeDoMes(am: string): string {
   return MESES[Number(p[1]) - 1] + ' de ' + p[0];
 }
 
-function historicoPorMes(b: Base, ctx: Contexto): Arquivos {
-  const meses = new Map<string, { sessoes: SessaoMontada[]; cardio: Cardio[]; descanso: string[] }>();
+function historicoPorMes(b: Base): Arquivos {
+  const meses = new Map<string, { sessoes: SessaoMontada[]; cardio: Cardio[]; descanso: string[]; faltas: string[] }>();
   const mes = function (am: string) {
-    if (!meses.has(am)) meses.set(am, { sessoes: [], cardio: [], descanso: [] });
+    if (!meses.has(am)) meses.set(am, { sessoes: [], cardio: [], descanso: [], faltas: [] });
     return meses.get(am)!;
   };
   sessoesMontadas(b).forEach(function (x) { mes(dataLocal(x.m.t).slice(0, 7)).sessoes.push(x); });
   lista<Cardio>(b.S.cardio).forEach(function (c) { if (c && numero(c.t) != null) mes(dataLocal(c.t).slice(0, 7)).cardio.push(c); });
-  Object.keys(obj<number>(b.S.descanso)).forEach(function (d) { if (DATA_ISO.test(d)) mes(d.slice(0, 7)).descanso.push(d); });
+  const comTreino = new Set(b.sessoes.map(s => dataLocal(s.t)));
+  const { descanso, falta } = uneFrequencia(b.S, {}, { ...b.S.apagados });
+  Object.keys(descanso).forEach(function (d) { if (!comTreino.has(d) && DATA_ISO.test(d)) mes(d.slice(0, 7)).descanso.push(d); });
+
+  for (const d of Object.keys(falta).sort()) {
+    if (comTreino.has(d)) continue;
+    const f = falta[d];
+    const motivo = f.motivo && cel(String(f.motivo).replace(/[\\`*_[\]<>&~]/g, '\\$&'));
+    mes(d.slice(0, 7)).faltas.push('- ' + dataIsoBR(d) + (motivo ? ' · ' + motivo : ''));
+  }
 
   const r: Arquivos = {};
   Array.from(meses.keys()).sort().forEach(function (am) {
@@ -527,7 +537,8 @@ function historicoPorMes(b: Base, ctx: Contexto): Arquivos {
       return a + x.regs.reduce(function (s, rg) { return s + lista<Serie>(rg.l.sets).filter(Boolean).length; }, 0);
     }, 0);
     L.push(M.sessoes.length + (M.sessoes.length === 1 ? ' sessão' : ' sessões') + ' · ' + series + ' séries · ' +
-      M.cardio.length + ' de cardio · ' + M.descanso.length + (M.descanso.length === 1 ? ' dia marcado' : ' dias marcados') + ' como descanso', '');
+      M.cardio.length + ' de cardio · ' + M.descanso.length + (M.descanso.length === 1 ? ' dia marcado' : ' dias marcados') +
+      ' como descanso · ' + qtd(M.faltas.length, 'falta', 'faltas'), '');
     M.sessoes.forEach(function (x) { L.push(...linhasDaSessao(b, x)); });
     if (M.cardio.length) {
       L.push('## Cardio', '', '| Dia | Hora | Modalidade | Minutos | Intensidade |', '|---|---|---|---|---|');
@@ -539,6 +550,7 @@ function historicoPorMes(b: Base, ctx: Contexto): Arquivos {
     if (M.descanso.length) {
       L.push('## Descanso', '', 'Dias marcados como descanso: ' + M.descanso.sort().map(dataIsoBR).join(' · ') + '.', '');
     }
+    if (M.faltas.length) L.push('## Faltas', '', ...M.faltas, '');
     r['treino/historico/' + am + '.md'] = L.join('\n');
   });
   return r;
@@ -982,7 +994,7 @@ const MAPA: Array<[string, string]> = [
   ['treino/programa.md', 'O programa que o app executa hoje: rotação, exercícios, séries, repetições, RIR e descanso.'],
   ['treino/programa-do-treinador.md', 'O programa como o treinador prescreveu. O atual pode ter divergido dele.'],
   ['treino/mudancas.md', 'Decisões registradas sobre o programa, e as mudanças que esperam decisão.'],
-  ['treino/historico/AAAA-MM.md', 'Um arquivo por mês: cada sessão, exercício por exercício, série por série, com notas, dor, cardio e descanso.'],
+  ['treino/historico/AAAA-MM.md', 'Um arquivo por mês: cada sessão, exercício por exercício, série por série, com notas, dor, cardio, descanso e faltas.'],
   ['treino/series.csv', 'Todas as séries numa tabela só, para calcular tendência, volume e carga.'],
   ['treino/cardio.csv', 'As sessões de cardio.'],
   ['treino/exercicios.md', 'Cada exercício: grupo muscular, como a carga é digitada, quantas sessões, foto do aparelho.'],
@@ -1070,7 +1082,7 @@ export function montaArquivos(estado: unknown, ctx: Contexto): Arquivos {
     'treino/programa.md': programaAtual(b, ctx),
     'treino/programa-do-treinador.md': programaDoTreinador(b, ctx),
     'treino/mudancas.md': mudancas(b, ctx),
-    ...historicoPorMes(b, ctx),
+    ...historicoPorMes(b),
     'treino/series.csv': seriesCsv(b),
     'treino/cardio.csv': cardioCsv(b),
     'treino/exercicios.md': exercicios(b, ctx)

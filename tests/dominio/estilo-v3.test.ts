@@ -114,6 +114,13 @@ test('a nota dos lugares usa o espaço disponível e a do cabeçalho com Voltar 
   assert.match(css, /\.v3-cab\.raiz \.v3-cab-n\s*\{[^}]*max-width:\s*none;/);
 });
 
+test('a página viva usa as mesmas regras da grade e da legenda de Dias que o app', () => {
+  const grade = (fonte: string) => fonte.match(/\.v3-cal \{[\s\S]*?(?=\.v3-dias \.v3-cal-det \{)/)?.[0];
+  const app = grade(ler('src/v3/fotos.css'));
+  assert.ok(app);
+  assert.equal(grade(ler('docs/design-system/lastro.html')), app);
+});
+
 test('a primeira vez reserva a saída no rodapé e usa os tokens de espaço da referência', () => {
   const app = semComentarios(ler('src/v3/componentes.css'));
   const referencia = ler('docs/design-system/lastro.html');
@@ -130,4 +137,15 @@ test('escolha única é radiogroup: o seletor, as fichas com escolha e a pergunt
   assert.match(base, /'aria-checked'/);
   const css = semComentarios(ler('src/v3/componentes.css'));
   assert.ok(!/\.v3-sel button\[aria-pressed/.test(css), 'o seletor não usa mais aria-pressed');
+});
+
+test('a galeria oferece os mesmos caminhos Phosphor regular do app, com preenchimento na grade de 256', () => {
+  const desenhos = (s: string) => Object.fromEntries([...s.matchAll(/^  (\w+): I\('([^']+)'\)/gm)].map(m => [m[1], m[2]]));
+  const app = ler('src/ui/v3/icones.jsx'), pagina = ler('docs/design-system/ds-base.js');
+  const icones = desenhos(app);
+  for (const k of ['hoje', 'dias', 'corpo', 'semana', 'plano', 'mais', 'ok', 'pula', 'troca', 'tripe', 'nivel',
+    'agua', 'peso', 'medida', 'cardio', 'manha', 'tarde', 'noite']) assert.match(icones[k], /^M/);
+  assert.deepEqual(desenhos(pagina), icones);
+  assert.match(app, /viewBox="0 0 256 256" fill="currentColor"/);
+  assert.doesNotMatch(app, /\bstroke[=-]/);
 });

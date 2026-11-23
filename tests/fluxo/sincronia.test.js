@@ -754,7 +754,7 @@ test('entrar pelo aparelho novo migra o plano 9 da conta pelo mesmo caminho do d
     nuvemFalsa(a, { v: 1, data: conta });
     await a.v('sincroniza');
     const s = a.S();
-    assert.equal(s.plano, 12);
+    assert.equal(s.plano, a.dado('PLANO_ATUAL'));
     assert.deepEqual(s.prog, conta.prog);
     assert.deepEqual(s.rot, conta.rot);
     assert.deepEqual(s.body.peso, conta.body.peso);
@@ -1183,7 +1183,7 @@ test('só confirma a primeira sincronia depois de enviar ou guardar a fusão, me
   } finally { a.fechar(); }
 });
 
-test('a sincronia entre os planos 9 e 12 mantém a marca antiga fora do dia já fechado no formato atual', async () => {
+test('a sincronia entre o plano 9 e o atual mantém a marca antiga fora do dia já fechado no formato atual', async () => {
   const antigo = JSON.parse(readFileSync(new URL('../dominio/fixtures/estado-plano-9.json', import.meta.url), 'utf8'));
   assert.equal(antigo.dia.done.almoco, 1);
   const data = antigo.dia.data;
@@ -1197,8 +1197,64 @@ test('a sincronia entre os planos 9 e 12 mantém a marca antiga fora do dia já 
     nuvemFalsa(a, { v:1, data:antigo });
     await a.v('sincroniza');
     for (const s of [a.gravado(), nuvem(a).linha.data]) {
-      assert.equal(s.plano, 12);
+      assert.equal(s.plano, a.dado('PLANO_ATUAL'));
       assert.deepEqual(s.comidaHist.find(h => h.d === data).done, fechado.done);
     }
+  } finally { a.fechar(); }
+});
+
+test('dois aparelhos conservam a falta corrigida quando um treino é lançado e depois apagado', async () => {
+  const agora = agoraEstavel(10), ontem = agora - DIA;
+  const cel = await app({ agora }), note = await app({ agora: agora + 60000 });
+  const conta = nuvemDeDois(null);
+  const d = cel.v('hojeISO', ontem);
+  try {
+    conta.liga(cel); conta.liga(note);
+    await cel.v('ctx.respondeFrequencia', d, 'falta', 'doença');
+    await cel.v('sincroniza'); await note.v('sincroniza');
+    assert.equal(note.gravado().falta[d].motivo, 'doença');
+    await note.v('ctx.respondeFrequencia', d, 'descanso');
+    await note.v('sincroniza'); await cel.v('sincroniza');
+    assert.ok(cel.gravado().descanso[d]); assert.equal(cel.gravado().falta[d], undefined);
+    await cel.v('ctx.respondeFrequencia', d, 'falta', 'viagem');
+    const falta = cel.gravado().falta[d];
+    note.v('abrirAdicionar', ontem);
+    await note.v('lancaTreino', 'livre');
+    note.v('abrirAdicionar', ontem);
+    await note.v('lancaTreino', 'A');
+    await note.v('sincroniza'); await cel.v('sincroniza'); await note.v('sincroniza');
+    for (const s of [cel.gravado(), note.gravado(), conta.linha.data]) {
+      assert.equal(s.done.filter(x => x.livre).length, 1);
+      assert.equal(s.descanso[d], undefined);
+      assert.deepEqual(s.falta[d], falta);
+      assert.ok((s.apagados['falta:' + d] || 0) < falta.m);
+    }
+    for (const aparelho of [cel, note]) {
+      assert.equal(aparelho.vJ('ctx.mes').celulas.find(c => c.iso === d).falta, null);
+    }
+    await note.v('ctx.editaSessao', note.gravado().done.find(x => x.livre).t);
+    await note.v('sincroniza'); await cel.v('sincroniza');
+    assert.equal(cel.vJ('ctx.mes').celulas.find(c => c.iso === d).falta, null, 'a segunda sessão ainda cobre a falta');
+    await note.v('ctx.editaSessao', note.gravado().done.find(x => x.day === 'A').t);
+    await note.v('sincroniza'); await cel.v('sincroniza');
+    for (const aparelho of [cel, note]) {
+      assert.deepEqual(aparelho.vJ('ctx.mes').celulas.find(c => c.iso === d).falta, falta);
+    }
+    assert.deepEqual(conta.linha.data.done, []);
+    assert.deepEqual(conta.linha.data.falta[d], falta);
+  } finally { cel.fechar(); note.fechar(); }
+});
+
+test('a falta gravada antes de entrar sobe mesmo com a conta no plano 12 e o aparelho sem envio pendente', async () => {
+  const a = await app({ agora: agoraEstavel(10) });
+  try {
+    const d = a.v('hojeISO', agoraEstavel(10) - DIA);
+    const antigo = a.S(); antigo.plano = 12; delete antigo.falta;
+    await a.v('ctx.respondeFrequencia', d, 'falta', 'trabalho');
+    assert.equal(a.dado('sync').sujo, false);
+    nuvemFalsa(a, { v: 1, data: antigo });
+    await a.v('sincroniza');
+    assert.deepEqual(nuvem(a).linha.data.falta[d], a.gravado().falta[d]);
+    assert.equal(nuvem(a).linha.data.plano, 13);
   } finally { a.fechar(); }
 });

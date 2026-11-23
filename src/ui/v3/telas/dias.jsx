@@ -1,90 +1,126 @@
-// DIAS no visual novo (Fase 4): o mês em grade, com a letra do treino e a
-// marca da comida em cada dia, o dia escolhido embaixo, e a sequência de
-// "responder os dias", um por tela. Protótipo: docs/redesign-3/prototipos/
-// hoje.html ("Dias"). Dados: `ctx.mes`, `ctx.respostaDoDia`,
-// `ctx.responderDiasV3`; as respostas gravam por `ctx.respondeODia`.
-
-import { useState } from 'preact/hooks';
+// Dias. A grade lê os registros do mês; a resposta de frequência só vem da pessoa.
+import { useLayoutEffect, useRef } from 'preact/hooks';
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Botao, Cabecalho, Pergunta, Quadros, Secao, Segmentos, TelaDeAcao } from '../base.jsx';
+import { Acoes, Apoio, Botao, Cabecalho, Fichas, Pergunta, Quadros, Saida, Secao, Segmentos, TelaDeAcao } from '../base.jsx';
 
 const RESPOSTAS = [{ k: 'sim', t: 'Foi, sim' }, { k: 'quase', t: 'Quase' }, { k: 'naosei', t: 'Não lembro' }];
 const DITA = { sim: 'foi como o plano', quase: 'quase como o plano', naosei: 'não lembro' };
+const COMIDA = { sim: 'No plano', quase: 'Quase', naosei: 'Não lembro', com: 'Por refeição' };
+
+function Arco({ turno }) {
+  const x = { manha: 3, tarde: 15, noite: 27 }[turno];
+  return <svg class="v3-cal-arco" viewBox="0 0 30 14" aria-hidden="true">
+    <path d="M3 10 Q15 0 27 10" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".35" />
+    <circle cx={x} cy={turno === 'tarde' ? 5 : 10} r="2.6" fill="currentColor" />
+  </svg>;
+}
+
+function Celula({ dia: d, comida, escolhida, escolher }) {
+  const tipo = d.principal === 'HX' ? 'hx' : d.principal ? 'treino' : d.descanso ? 'desc' : d.falta ? 'falta' : 'aberto';
+  const texto = d.principal || (d.descanso ? 'desc' : d.falta ? 'falta' : '?');
+  return <button class={'v3-dia' + (d.hoje ? ' hoje' : '')} data-comida={comida && d.resposta || undefined} disabled={d.futuro}
+    data-a={'dia-' + d.iso} aria-label={d.rotulo} aria-pressed={escolhida} onClick={() => escolher(d.iso)}>
+    <small>{d.n}</small>
+    {!d.futuro && <>
+      {d.periodo && <Arco turno={d.periodo.k} />}
+      <span class={'v3-cal-bola ' + tipo + (d.cardio ? ' cardio' : '') + (texto.length > 2 ? ' longa' : '')}>{texto}</span>
+      {(d.fotos || d.medidas) && <span class="v3-cal-corpo" aria-hidden="true">{d.fotos && ic.camera}{d.medidas && ic.medida}</span>}
+    </>}
+  </button>;
+}
+
+function Legenda({ comida }) {
+  return <div class="v3-cal-leg" role="group" aria-label="Legenda do mês">
+    <span><i class="treino">A</i>treino</span><span><i class="hx">HX</i>HYROX</span>
+    <span><i>desc</i>descanso</span><span><i class="falta">falta</i>falta</span><span><i>?</i>sem resposta</span>
+    {comida && <><span><i data-comida="sim" />comida no plano</span><span><i data-comida="quase" />quase</span></>}
+    <span><i class="cardio" />cardio</span><span><Arco turno="manha" />turno</span>
+    <span>{ic.camera}fotos</span><span>{ic.medida}medidas</span>
+  </div>;
+}
+
+function DiaEscolhido({ ctx, c, comida }) {
+  const cartaoAoTirar = useRef(null);
+  const dia = ctx.resumoDoDiaV3(c.iso);
+  const extras = [c.cardio && 'cardio', c.fotos && 'fotos', c.medidas && 'medidas'].filter(Boolean);
+  const frequencia = c.descanso ? 'descanso' : c.falta ? 'falta' : null;
+  const resposta = c.resposta;
+  const treino = c.principal === 'HX' ? 'HYROX' : dia.treino?.titulo || (c.principal ? 'Treino fora' : c.descanso ? 'Descanso' : c.falta ? 'Falta' : '?');
+
+  function tirarResposta(evento) {
+    const cartao = evento.currentTarget.closest('.v3-cal-det');
+    // Mantém a rolagem mesmo quando saem o botão e os motivos da falta.
+    cartao.style.minHeight = cartao.getBoundingClientRect().height + 'px';
+    cartaoAoTirar.current = cartao;
+    ctx.respondeFrequencia(c.iso, null);
+  }
+  useLayoutEffect(() => {
+    if (frequencia || !cartaoAoTirar.current) return;
+    cartaoAoTirar.current.querySelector('[data-a="frequencia-descanso"]')?.focus({ preventScroll: true });
+    cartaoAoTirar.current = null;
+  }, [frequencia]);
+
+  return <Secao classe="v3-cal-det" titulo={c.rotulo.split(':')[0] + (c.hoje ? ' · hoje' : '')}>
+    <Quadros colunas={comida ? 3 : 2} itens={[
+      { k: 't', valor: treino, rotulo: c.outrosTreinos || dia.treino?.apoio || (c.principal ? 'fora da prescrição' : c.falta ? c.falta.motivo || 'sem motivo dito' : 'sem treino'), aoTocar: () => ctx.abreDia(c.abre) },
+      { k: 'p', valor: dia.peso || '—', unidade: dia.peso ? 'kg' : null, rotulo: 'peso' },
+      ...(comida ? [{ k: 'c', valor: COMIDA[resposta] || '—', rotulo: resposta ? 'comida' : 'comida sem resposta' }] : [])]} />
+    {extras.length > 0 && <Apoio>Também: {extras.join(' · ')}</Apoio>}
+    {!c.principal && !c.hoje && <div class="v3-cal-freq">
+      <p>{frequencia ? 'Descanso ou falta?' : 'Sem treino neste dia. Foi descanso ou falta?'}</p>
+      <Fichas rotulo="Descanso ou falta" prefixo="frequencia-"
+        opcoes={[{ k: 'descanso', t: 'Descanso' }, { k: 'falta', t: 'Falta' }].map(o => ({ ...o, on: frequencia === o.k }))}
+        aoTocar={k => { if (k !== frequencia) ctx.respondeFrequencia(c.iso, k); }} />
+      {c.falta && <>
+        <Apoio>O motivo, se quiser dizer. Continua sendo falta.</Apoio>
+        <Fichas rotulo="Motivo da falta" prefixo="motivo-" opcoes={ctx.motivosFalta.map(k => ({ k, t: k, on: c.falta.motivo === k }))}
+          aoTocar={k => ctx.respondeFrequencia(c.iso, 'falta', c.falta.motivo === k ? undefined : k)} />
+      </>}
+      {frequencia && <Saida data-a="frequencia-tirar" onClick={tirarResposta}>Tirar a resposta</Saida>}
+    </div>}
+    {comida && (resposta === 'com' ? <Apoio>Comida marcada refeição por refeição.</Apoio> :
+      <Pergunta pergunta={resposta ? 'Comida: ' + DITA[resposta] : 'A comida deste dia foi como o plano?'}
+        nota={resposta === 'naosei' ? 'Fica fora da conta, não vira zero. Toque para corrigir.'
+          : resposta ? 'Conta para os 14 dias da regra. Toque para corrigir.' : 'Sem resposta, o dia fica fora da conta. Não vira zero.'}
+        respostas={RESPOSTAS} valor={resposta} aoResponder={k => ctx.respondeODia(c.iso, k)} />)}
+    <Acoes><Botao tipo="contorno" cheio data-a="dia-abre" onClick={() => ctx.abreDia(c.abre)}>Abrir o dia {ic.seta}</Botao></Acoes>
+  </Secao>;
+}
 
 export function DiasV3({ ctx }) {
   const m = ctx.mes();
-  const [sel, setSel] = useState(null);
-  const passados = m.celulas.filter(c => !c.futuro);
-  const c = sel ? m.celulas.filter(x => x.iso === sel)[0] : passados[passados.length - 1];
-  const treinos = m.celulas.filter(x => x.principal && x.principal !== 'desc.').length;
-  const resposta = c ? ctx.respostaDoDia(c.iso) : null;
-  const r14 = ctx.respondidosV3();
-  const dia = c ? ctx.resumoDoDiaV3(c.iso) : null;
-  const mesNome = m.titulo.split(' de ')[0];
+  const vividos = m.celulas.filter(c => !c.futuro);
+  const fechados = vividos.filter(c => !c.hoje);
+  const c = vividos.find(x => x.iso === m.escolhido) || vividos[vividos.length - 1];
   const comida = ctx.moduloLigado('comida');
-  const diasVistos = passados.length;
-  const pad = h => h.replace(/^(\d):/, '0$1:').replace(':', 'h');
-  const vazios = [];
-  for (let i = 0; i < m.offset; i++) vazios.push(<span key={'v' + i} />);
-  return (
-    <div class="v3">
-      <Cabecalho titulo="Dias" raiz nota={mesNome + ' · ' + treinos + (treinos === 1 ? ' treino' : ' treinos') + ' em ' + diasVistos + (diasVistos === 1 ? ' dia' : ' dias')} />
-      <div class="v3-mes-nav">
-        <button data-a="mes-anterior" onClick={() => ctx.mudaMes(-1)} aria-label={'Mês anterior: ' + m.anterior}>{ic.volta}</button>
-        <b>{m.titulo}</b>
-        <button data-a="mes-proximo" disabled={!m.podeAvancar} onClick={() => ctx.mudaMes(1)} aria-label={'Próximo mês: ' + m.proximo}>{ic.dir}</button>
-      </div>
-      <div class="v3-pad">
-        <div class="v3-cal v3-cal-h" aria-hidden="true">{m.dias.map((d, i) => <span key={i}>{d.charAt(0).toUpperCase()}</span>)}</div>
-        <div class="v3-cal" role="group" aria-label={m.titulo}>
-          {vazios}
-          {m.celulas.map(x => (
-            <button key={x.iso} disabled={x.futuro} data-a={'dia-' + x.iso} aria-label={x.rotulo} aria-pressed={c && c.iso === x.iso ? 'true' : 'false'}
-                    class={['v3-dia', x.principal && x.principal !== 'desc.' ? 't' : '', x.hoje ? 'hoje' : '', x.futuro ? 'fut' : '',
-                            comida && x.comida === 'sem' && !(x.principal && x.principal !== 'desc.') ? 'branco' : '', c && c.iso === x.iso ? 'sel' : ''].filter(Boolean).join(' ')}
-                    onClick={() => setSel(x.iso)}>
-              <small>{x.n}</small>{x.principal && x.principal !== 'desc.' ? x.principal : ''}
-              {comida && x.comida === 'com' && <i class="v3-cal-c" aria-hidden="true" />}
-            </button>
-          ))}
-        </div>
-        <div class="v3-legm" role="group" aria-label="Legenda do mês">
-          <span><i class="t" />treino</span>{comida && <><span><i class="c" />comida respondida</span><span><i class="v" />comida em branco</span></>}
-        </div>
-      </div>
-      {c && (
-        <Secao titulo={c.rotulo.split(':')[0] + (c.hoje ? ' · hoje' : '')}>
-          <Quadros colunas={3} itens={[
-            { k: 't', valor: dia.treino ? dia.treino.titulo : '—', rotulo: dia.treino ? dia.treino.apoio : 'sem treino', aoTocar: () => ctx.abreDia(c.abre) },
-            { k: 'p', valor: dia.peso || '—', unidade: dia.peso ? 'kg' : null, rotulo: 'peso' },
-            ...(dia.agua === undefined ? [] : [{ k: 'a', valor: dia.agua || '—', rotulo: 'água' }])]} />
-          {/* a pergunta fica depois de respondida: as respostas corrigem */}
-          {comida && (c.comida !== 'com' || resposta) ? (
-            <Pergunta pergunta={resposta ? 'Comida: ' + DITA[resposta] : 'A comida deste dia foi como o plano?'}
-                      nota={resposta === 'naosei' ? 'Fica fora da conta, não vira zero. Toque para corrigir.'
-                        : resposta ? 'Conta para os 14 dias da regra. Toque para corrigir.' : 'Sem resposta, o dia fica fora da conta. Não vira zero.'}
-                      respostas={RESPOSTAS} valor={resposta} aoResponder={k => ctx.respondeODia(c.iso, k)} />
-          ) : comida && c.comida === 'com' ? <Apoio>Comida marcada refeição por refeição.</Apoio> : null}
-          <Acoes><Botao tipo="contorno" cheio data-a="dia-abre" onClick={() => ctx.abreDia(c.abre)}>Abrir o dia {ic.seta}</Botao></Acoes>
-        </Secao>
-      )}
-      {ctx.moduloLigado('comida') && (
-        <Secao>
-          <Acoes class="v3-acoes-0"><Botao data-a="responder-dias" onClick={ctx.abreResponderDias}>Responder os dias em branco {ic.seta}</Botao></Acoes>
-          <Apoio><span class="v3-n">{r14.n}</span> de {r14.de} dias fechados respondidos. A regra do nutricionista precisa de 11.</Apoio>
-        </Secao>
-      )}
-      {(m.treino || m.horario || m.cardio.n > 0) && (
-        <Secao titulo="No mês" nota={m.ate}>
-          <Quadros colunas={3} itens={[
-            { k: 'sem', valor: m.treino && m.treino.valor ? m.treino.valor : '—', rotulo: 'dias de treino por semana' },
-            { k: 'hora', valor: m.horario ? pad(m.horario.mediana) : '—', rotulo: 'horário mais comum' },
-            { k: 'card', valor: String(m.cardio.n), rotulo: 'cardio no mês' }]} />
-        </Secao>
-      )}
-      <div class="v3-fim-da-tela" />
+  const treinos = vividos.filter(x => x.principal).length;
+  const r14 = ctx.respondidosV3();
+  const nav = <div class="v3-mes-nav">
+    <button data-a="mes-anterior" onClick={() => ctx.mudaMes(-1)} aria-label={'Mês anterior: ' + m.anterior}>{ic.volta}</button>
+    <b>{m.titulo}</b>
+    <button data-a="mes-proximo" disabled={!m.podeAvancar} onClick={() => ctx.mudaMes(1)} aria-label={'Próximo mês: ' + m.proximo}>{ic.dir}</button>
+  </div>;
+  return <div class="v3 v3-dias">
+    <Cabecalho titulo="Dias" raiz acao={nav} />
+    <div class="v3-cal-resumo">
+      <div><b>{treinos}</b><span>{treinos === 1 ? 'treino' : 'treinos'} em {vividos.length} {vividos.length === 1 ? 'dia' : 'dias'}</span></div>
+      {comida && <div><b>{fechados.filter(x => x.resposta).length}<small> de {fechados.length}</small></b><span>dias com a comida respondida</span></div>}
+      <div><b>{m.horario?.mediana.padStart(5, '0') || '—'}</b><span>horário mais comum</span></div>
+      {m.ate && <small>{m.ate}</small>}
     </div>
-  );
+    <div class="v3-cal v3-cal-h" aria-hidden="true">{m.dias.map((d, i) => <span key={i}>{d.charAt(0).toUpperCase()}</span>)}</div>
+    <div class="v3-cal" role="group" aria-label={m.titulo}>
+      {Array.from({ length: m.offset }, (_, i) => <span key={i} />)}
+      {m.celulas.map(x => <Celula key={x.iso} dia={x} comida={comida} escolhida={x.iso === c?.iso} escolher={ctx.escolheDiaDoMes} />)}
+    </div>
+    <Legenda comida={comida} />
+    {c && <DiaEscolhido key={c.iso} ctx={ctx} c={c} comida={comida} />}
+    {comida && <Secao>
+      <Acoes class="v3-acoes-0"><Botao data-a="responder-dias" onClick={ctx.abreResponderDias}>Responder os dias em branco {ic.seta}</Botao></Acoes>
+      <Apoio><span class="v3-n">{r14.n}</span> de {r14.de} dias fechados respondidos. A regra do nutricionista precisa de 11.</Apoio>
+    </Secao>}
+    <div class="v3-fim-da-tela" />
+  </div>;
 }
 
 /**

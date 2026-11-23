@@ -32,6 +32,7 @@ import type {
   ItemDaLixeira, PedidoDeAvaliacao, PromoPendente, QualMarca, Sessao, SessaoFoto
 } from './tipos';
 import type { ComoFoiARefeicao, DiaComida, DiaComidaHist } from './nutricao/tipos';
+import { chaveDeDescanso, chaveDeFalta, frequenciaDifere, uneFrequencia } from './frequencia';
 import { MARCAS_DO_CORPO } from './corpo';
 import { ALIMENTOS_BASE } from './nutricao/alimentos';
 import { tamanhosDaMarca } from './nutricao/calculo';
@@ -85,6 +86,8 @@ export interface ResumoDaFusao {
    * depois de um build antigo ter fundido o dia sem ele, por exemplo.
    */
   comidaDaqui: number;
+  /** A conta ainda precisa receber uma resposta de frequência ou sua lápide. */
+  frequenciaDaqui: boolean;
   /** de que lado vieram os documentos (programa, plano de comida, cadência) */
   documentos: 'local' | 'remoto' | 'iguais';
   /** true quando nada mudou de nenhum lado — o app não precisa nem salvar */
@@ -145,7 +148,7 @@ export function chaveDePromo(p: Pick<PromoPendente, 'sid' | 't'>): string {
 
 /** O modelo de aula. A chave é o id, que nasce com ele e não muda ao renomear. */
 export function chaveDeAula(a: Pick<ModeloDeAula, 'id'>): string { return 'aula:' + a.id; }
-export function chaveDeDescanso(dataISO: string): string { return 'descanso:' + dataISO; }
+export { chaveDeDescanso } from './frequencia';
 export function chaveDeLeitura(l: { d: string }): string { return 'gordura:' + l.d; }
 /** O pedido de avaliação: o par com a pose. */
 export function chaveDePedido(p: { pose: string; de: string; ate: string }): string { return 'avaliar:' + p.pose + ':' + p.de + ':' + p.ate; }
@@ -235,6 +238,7 @@ function chavesDoEstado(S: Partial<Estado> | null | undefined): Record<string, 1
     });
   });
 
+  Object.keys(S.falta || {}).forEach(d => { k[chaveDeFalta(d)] = 1; });
   Object.keys(S.descanso || {}).forEach(function (d) { k[chaveDeDescanso(d)] = 1; });
   // referência sem versão a fusão descarta dos DOIS lados, e por isso ela não
   // ressuscita: lápide para ela seria peso sem efeito
@@ -289,7 +293,10 @@ export function lapidesDoApagamento(
   const ficou = chavesDoEstado(depois);
   const saida: Record<string, number> = {};
   Object.keys(chavesDoEstado(antes)).forEach(function (k) {
-    if (!ficou[k]) saida[k] = agora;
+    if (ficou[k]) return;
+    const em = k.startsWith('falta:') ? antes?.falta?.[k.slice(6)]?.m :
+      k.startsWith('descanso:') ? antes?.descanso?.[k.slice(9)] : 0;
+    saida[k] = Math.max(agora, em || 0);
   });
   return saida;
 }
@@ -754,7 +761,7 @@ function documentoInicial(s: Estado, d: Documento): boolean {
 
 function temRegistros(s: Estado): boolean {
   return ![s.done, s.logs, s.cardio, s.progLog, s.comidaHist, s.aulas, s.ex, s.fotos, s.gordura,
-    s.protocolo?.sessoes, s.descanso, s.quadro, s.lousa, s.lixeira, s.apagados, s.promoPendente,
+    s.protocolo?.sessoes, s.descanso, s.falta, s.quadro, s.lousa, s.lixeira, s.apagados, s.promoPendente,
     s.paraAvaliar, ...Object.values(s.body || {})].every(semItens);
 }
 
@@ -790,8 +797,13 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
 
   // clone do lado que manda nos documentos: tudo que não é coleção vem dele
   // inteiro, e as coleções são sobrescritas logo abaixo
-  if (primeiraConta && local.plano !== remoto.plano) remotoManda = true;
+  // A versão 13 acrescentou só a coleção de faltas. Os documentos do 12 têm o mesmo formato.
+  const mesmoFormato = local.plano === remoto.plano ||
+    (local.plano === 12 && remoto.plano === 13) || (local.plano === 13 && remoto.plano === 12);
+  if (primeiraConta && !mesmoFormato) remotoManda = true;
   const base: Estado = JSON.parse(JSON.stringify(remotoManda ? remoto : local));
+
+  if (mesmoFormato && local.plano !== remoto.plano) base.plano = 13;
 
   if (local.primeiraVez && remoto.primeiraVez) {
     base.primeiraVez = local.primeiraVez >= remoto.primeiraVez ? local.primeiraVez : remoto.primeiraVez;
@@ -810,7 +822,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
 
   const resumo: ResumoDaFusao = {
     series: 0, sessoes: 0, medidas: 0, cardio: 0, fotosCorpo: 0, ajustesCorpo: 0, apagados: 0,
-    comidaDaqui: 0,
+    comidaDaqui: 0, frequenciaDaqui: false,
     documentos: 'iguais',
     identicos: false
   };
@@ -825,7 +837,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
   // migrar o documento velho que venceu. Misturar documentos dos dois lados
   // deixaria um deles no formato errado sem migração nenhuma.
   const porDocumento = carimbosConfiaveis(local) && carimbosConfiaveis(remoto) &&
-                       (local.plano || 0) === (remoto.plano || 0);
+                       mesmoFormato;
   const cl = (local.carimbos || {}) as Record<string, number>;
   const cr = (remoto.carimbos || {}) as Record<string, number>;
   const carimbos: Record<string, number> = {};
@@ -840,7 +852,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
     const outraData = d === 'dia' && datasDiferentes;
     const inicialL = !outraData && !!nl?.has(d), inicialR = !outraData && !!nr?.has(d);
     const desempate = outraData ? mtimeDe(remoto) > mtimeDe(local) : remotoManda;
-    let la = local.plano === remoto.plano && inicialL !== inicialR ? inicialL
+    let la = mesmoFormato && inicialL !== inicialR ? inicialL
       : porDocumento ? (sr > sl || (sr === sl && desempate)) : desempate;
     const vl = valorDoDocumento(local, d), vr = valorDoDocumento(remoto, d);
     const iguais = JSON.stringify(vl === undefined ? null : vl) === JSON.stringify(vr === undefined ? null : vr);
@@ -917,7 +929,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
   const cm = uneDiasDeComida(local.comidaHist || [], remoto.comidaHist || [], mortos);
   // A virada já foi gravada de um lado. O outro ainda pode ter uma marca
   // naquela data aberta. Só o dia fechado conhece o plano e os totais de então.
-  if (local.plano === remoto.plano && datasDiferentes && base.dia) {
+  if (mesmoFormato && datasDiferentes && base.dia) {
     const aberto = remotoVence.dia ? local.dia! : remoto.dia!;
     const i = cm.itens.findIndex(h => h.d === aberto.data);
     if (aberto.data < base.dia.data && i >= 0) {
@@ -1077,20 +1089,8 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
   pl.itens.sort(porTempo);
   base.progLog = pl.itens.slice(-TETO.progLog);
 
-  // ---- dias de descanso: mapa de data, com lápide ----
-  // União simples não bastaria: desmarcar num aparelho seria desfeito pelo
-  // outro, que ainda tem a marca. A lápide resolve, igual às coleções.
-  const descanso: Record<string, number> = {};
-  [local.descanso || {}, remoto.descanso || {}].forEach(function (m) {
-    Object.keys(m).forEach(function (k) {
-      const quando = m[k];
-      if (typeof quando !== 'number') return;
-      const morto = mortos[chaveDeDescanso(k)];
-      if (morto != null && quando <= morto) return;
-      if (descanso[k] == null || quando > descanso[k]) descanso[k] = quando;
-    });
-  });
-  base.descanso = descanso;
+  Object.assign(base, uneFrequencia(local, remoto, mortos));
+  resumo.frequenciaDaqui = frequenciaDifere(base, remoto, mortos, remoto.apagados);
 
   // ---- fotos: mapa de referência, vence a mais recente ----
   // Só a referência funde aqui. Os bytes vivem no Cache Storage de cada
@@ -1150,7 +1150,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
 
   resumo.identicos = resumo.series === 0 && resumo.sessoes === 0 && resumo.medidas === 0 &&
                      resumo.cardio === 0 && resumo.fotosCorpo === 0 && resumo.ajustesCorpo === 0 &&
-                     resumo.comidaDaqui === 0 &&
+                     resumo.comidaDaqui === 0 && !resumo.frequenciaDaqui && !frequenciaDifere(base, local, mortos, local.apagados) &&
                      resumo.apagados === 0 && resumo.documentos !== 'remoto';
 
   return { estado: base, resumo: resumo };

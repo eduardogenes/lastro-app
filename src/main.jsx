@@ -55,11 +55,12 @@ import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGR
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor, proximaCarga, estadoDaProgressao } from './dominio/progressao';
-import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12 } from './dominio/migracoes';
+import { MOTIVOS_FALTA, respondeFrequencia, uneFrequencia } from './dominio/frequencia';
+import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12, migraPlano13 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
-  chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
+  chaveDeAula, chaveDeCardio, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
   chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde, soTemAbertura,
   lapidesDoApagamento, uneLapides, uneDiasDeComida, DOCUMENTOS, valorDoDocumento, TETO, TETO_PEDIDOS, chaveDeCatalogo
 } from './dominio/sincronia';
@@ -341,7 +342,7 @@ function corpoDoBackup(body) {
 
 
 let S = estadoInicial();
-let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, modoSessao:false, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
+let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, modoSessao:false, edit:null, retro:false, nota:null, carga:null, mes:0, diaDoMes:null, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, prog:null, medida:null, aulas:false, rapido:false,
   protocolo:null, comparar:null, evolucao:null, diaAberto:null, ajuste:null, camera:null, ajustes:false };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
@@ -430,7 +431,7 @@ function normalizaEstado() {
   if (!S.carimbos || typeof S.carimbos !== 'object') S.carimbos = {};
   if (typeof S.carimbosEm !== 'number') S.carimbosEm = 0;
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
-  if (!S.descanso || typeof S.descanso !== 'object') S.descanso = {};
+  Object.assign(S, uneFrequencia(S, {}, S.apagados));
   if (!S.fotos || typeof S.fotos !== 'object') S.fotos = {};
   // O protocolo de fotos entra como campo novo e opcional — sem migração, que
   // é para reformatar dado existente, e aqui não há dado existente. Um backup
@@ -510,6 +511,7 @@ function migraEstado() {
   migraPlano10(S);
   migraPlano11(S);
   migraPlano12(S);
+  migraPlano13(S);
   garanteProgramaERotacao();
   return { arquivados, m3, m7 };
 }
@@ -1787,7 +1789,7 @@ async function garanteBytesDoCorpo(datas) {
 /** A fusão trouxe algo do outro lado? Então o nosso documento precisa subir. */
 function temQueEmpurrar(r) {
   return r.series > 0 || r.sessoes > 0 || r.medidas > 0 || r.cardio > 0 ||
-         r.fotosCorpo > 0 || r.ajustesCorpo > 0 || r.comidaDaqui > 0 || r.apagados > 0 || r.documentos === 'local';
+         r.fotosCorpo > 0 || r.ajustesCorpo > 0 || r.comidaDaqui > 0 || r.frequenciaDaqui || r.apagados > 0 || r.documentos === 'local';
 }
 
 /** Mudar o histórico dele em silêncio seria pior que não sincronizar. */
@@ -2135,26 +2137,23 @@ function sessoesDoDia(t) { return S.done.filter(function (x) { return sameDay(x.
 /** Aquele dia foi descanso? */
 function ehDescanso(t) { return !!(S.descanso && S.descanso[hojeISO(t)]); }
 
-/**
- * Marca ou desmarca um dia como descanso.
- *
- * Só faz sentido em dia SEM sessão: se há treino registrado, o fato já
- * respondeu a pergunta, e deixar as duas marcas conviverem seria o app
- * afirmando duas coisas contrárias sobre o mesmo dia.
- */
-async function alternaDescanso(t) {
+/** A resposta só pode mudar enquanto o dia estiver sem sessão. */
+async function alternaDescanso(t, comDesfazer = false) {
   const iso = hojeISO(t);
   if (sessoesDoDia(t).length) { toast('Este dia tem treino registrado.'); return; }
-  if (S.descanso[iso]) {
-    delete S.descanso[iso];
-    lapide(chaveDeDescanso(iso));
-    await save(); render();
-    toast('Marca de descanso removida.');
-  } else {
-    S.descanso[iso] = Date.now();
-    await save(); render();
-    toast('Dia marcado como descanso.');
-  }
+  const escolha = S.descanso[iso] ? null : 'descanso';
+  const faltaAnterior = S.falta[iso];
+  if (!respondeFrequencia(S, iso, escolha, undefined, Date.now())) return;
+  const marcado = S.descanso[iso];
+  await save(); render();
+  if (comDesfazer && escolha) {
+    avisoComAcao('Dia marcado como descanso.', 'Desfazer', async () => {
+      if (S.descanso[iso] !== marcado || !respondeFrequencia(S, iso, faltaAnterior ? 'falta' : null, undefined, Date.now())) return;
+      // Desfazer restaura a entrada guardada, inclusive se veio de um build mais novo.
+      if (faltaAnterior) S.falta[iso] = { ...faltaAnterior, m: S.falta[iso].m };
+      await save(); render();
+    });
+  } else toast(escolha ? 'Dia marcado como descanso.' : 'Marca de descanso removida.');
   fecharAdicionar();
 }
 
@@ -2803,7 +2802,7 @@ const CTX = {
     const vindoDeFora = view.aba !== a;
     view.aba = a;
     view.prog = null; view.hist = null; view.retro = false;
-    view.sessao = null; view.add = null; view.mes = 0;
+    view.sessao = null; view.add = null; view.mes = 0; view.diaDoMes = null;
     // O que reaparece não pousa de novo: a aba nasce inteira a cada troca, e a
     // forma da refeição recém-marcada pousaria outra vez (peça 8 do motion).
     view.formaRecem = null;
@@ -4464,7 +4463,7 @@ function mesRef() {
 function mudaMes(n) {
   const novo = (view.mes || 0) + n;
   if (novo > 0) return;
-  view.mes = novo;
+  view.mes = novo; view.diaDoMes = null;
   render();
 }
 
@@ -5353,6 +5352,7 @@ async function importText(txt) {
         carimbos: (d.carimbos && typeof d.carimbos === 'object') ? d.carimbos : {},
         carimbosEm: typeof d.carimbosEm === 'number' ? d.carimbosEm : 0,
         apagados: (d.apagados && typeof d.apagados === 'object') ? d.apagados : {},
+        falta: d.falta,
         descanso: (d.descanso && typeof d.descanso === 'object') ? d.descanso : {},
         fotos: (d.fotos && typeof d.fotos === 'object') ? d.fotos : {},
         // Coleção desde o plano 10, e o backup pode ser de antes: o documento
@@ -7148,6 +7148,8 @@ async function wipe() {
   const medidas = MARCAS_DO_CORPO.reduce(function (a, k) { return a + ((S.body && S.body[k]) || []).length; }, 0);
   const sai = [
     [S.done.length, 'sessão', 'sessões'],
+    [Object.keys(S.descanso).length, 'descanso marcado', 'descansos marcados'],
+    [Object.keys(S.falta).length, 'falta', 'faltas'],
     [(S.comidaHist || []).length, 'dia de comida', 'dias de comida'],
     [medidas, 'medida do corpo', 'medidas do corpo'],
     [S.cardio.length, 'cardio', 'cardios'],
@@ -10398,42 +10400,54 @@ CTX.mes = function () {
   const porData = {};
   (Array.isArray(S.comidaHist) ? S.comidaHist : []).forEach(function (h) { if (h && h.d) porData[h.d] = h; });
 
+  const datasFotos = new Set(S.protocolo.sessoes
+    .filter(s => Object.values(s.fotos || {}).some(f => f && Number.isFinite(f.v)))
+    .map(s => s.d));
+  const datasMedidas = new Set();
+  for (const medida of medidasDeMedir()) {
+    for (const marca of S.body[medida.k] || []) {
+      if (marca.t >= ini && marca.t < fim) datasMedidas.add(hojeISO(marca.t));
+    }
+  }
   const celulas = [];
   for (let i = 1; i <= nDias; i++) {
     const dia = new Date(ano, mesN, i, 12).getTime();
     const hoje = sameDay(dia, agora);
     const futuro = !hoje && dia > agora;
     const marcas = futuro ? [] : sessoesDoDia(dia).slice().sort(function (a, b) { return a.t - b.t; });
-    const letras = marcas.filter(function (m) { return !m.livre; }).map(letraDoRegistro);
+    const iso = hojeISO(dia);
+    const letras = marcas.filter(m => !m.livre).map(m =>
+      /^hyrox$/i.test(S.prog?.[m.day]?.name) ? 'HX' : m.day);
     const fora = marcas.some(function (m) { return m.livre; });
     const desc = !marcas.length && !futuro && ehDescanso(dia);
     const cardio = futuro ? 0 : cardioDoDia(dia).length;
-    // O período em que o treino começou (manhã, tarde, noite; os marcadores
-    // são os de PERIODOS), pela
-    // primeira sessão com hora. Voltou a pedido do dono (21/10), como era antes
-    // do redesenho: o canto da célula e a legenda embaixo do mês. Treino
-    // registrado sem hora não diz período.
-    const comHora = futuro ? null : marcas.filter(temHora)[0] || null;
+    const falta = !marcas.length && !futuro ? S.falta[iso] : null;
+    const fotos = !futuro && datasFotos.has(iso), medidas = !futuro && datasMedidas.has(iso);
+    const comHora = marcas.find(temHora);
     const per = comHora ? periodoDe(comHora.t) : null;
-    const h = porData[hojeISO(dia)];
-    const comida = futuro || hoje ? null : (h && diaInterpretavel(h) ? 'com' : 'sem');
-    const partes = [];
-    marcas.forEach(function (m) {
-      partes.push(m.livre ? 'treino fora da prescrição' : diaAberto(m.day) ? 'aula' : 'treino ' + m.day);
-    });
+    const h = hoje && S.dia?.data === iso ? S.dia : porData[iso];
+    const resposta = futuro ? null : respostaDoDia(h) || (h && diaInterpretavel(h) ? 'com' : null);
+    const partes = letras.map(l => l === 'HX' ? 'HYROX' : 'treino ' + l);
+    if (fora) partes.push('treino fora da prescrição');
     const desc0 = partes.length > 1 ? [partes.slice(0, -1).join(', ') + ' e ' + partes[partes.length - 1]] : partes;
     const ditos = desc0.slice();
     if (per) ditos.push('de ' + per.nome);
+    if (!futuro && !marcas.length && !desc && !falta) ditos.push('sem treino registrado');
     if (desc) ditos.push('descanso marcado');
     if (cardio) ditos.push(cardio === 1 ? 'cardio' : cardio + ' cardios');
-    if (comida) ditos.push(comida === 'com' ? 'comida com marca' : 'comida sem marca');
+    if (falta) ditos.push('falta' + (falta.motivo ? ', ' + falta.motivo : ''));
+    if (fotos) ditos.push('fotos');
+    if (medidas) ditos.push('medidas');
+    if (!futuro && ligado(S.modulos, 'comida')) {
+      ditos.push('comida ' + ({ sim: 'no plano', quase: 'quase', naosei: 'não lembro', com: 'por refeição' }[resposta] || 'sem resposta'));
+    }
     if (hoje) ditos.push('hoje');
     const d = new Date(dia);
     celulas.push({
-      n: i, iso: hojeISO(dia), hoje: hoje, futuro: futuro,
-      principal: letras.length ? letras.join(' ') : fora ? 'fora' : desc ? 'desc.' : '',
-      extra: letras.length && fora ? '+fora' : null,
-      descanso: desc, cardio: cardio, comida: comida,
+      n: i, iso, hoje, futuro,
+      principal: letras.includes('HX') ? 'HX' : letras[0] || (fora ? 'fora' : ''),
+      outrosTreinos: marcas.length > 1 ? partes.join(' · ') : null,
+      descanso: desc, falta, cardio, resposta, fotos, medidas,
       periodo: per ? { k: per.k, rot: per.rot } : null,
       rotulo: DIAS_LONGOS[d.getDay()] + ', ' + i + ' de ' + MESES[mesN] + (ditos.length ? ': ' + ditos.join(', ') : ''),
       // Hoje abre o dia como os outros (dono, 21/10): é onde se vê e se corrige o
@@ -10454,7 +10468,7 @@ CTX.mes = function () {
   if (ins.semHora) fora.push(ins.semHora === 1 ? 'o treino registrado sem hora' : 'os ' + ins.semHora + ' treinos registrados sem hora');
   if (ins.fora) fora.push(ins.fora === 1 ? 'o treino fora da prescrição' : 'os ' + ins.fora + ' treinos fora da prescrição');
   const diaCurto = function (t) { return DIAS_CURTOS[new Date(t).getDay()] + ' ' + fmtDate(t); };
-  const temAlgo = S.done.length > 0 || S.cardio.length > 0 ||
+  const temAlgo = Object.keys(S.falta).length > 0 || Object.keys(S.descanso).length > 0 || S.done.length > 0 || S.cardio.length > 0 ||
     (Array.isArray(S.comidaHist) && S.comidaHist.some(diaInterpretavel));
 
   return {
@@ -10467,6 +10481,7 @@ CTX.mes = function () {
     offset: new Date(ini).getDay(),
     dias: DIAS_CURTOS,
     celulas: celulas,
+    escolhido: view.diaDoMes,
     periodos: PERIODOS.map(function (p) { return { k: p.k, rot: p.rot, nome: p.nome }; }),
     vazio: !temAlgo,
     treino: L
@@ -10505,7 +10520,12 @@ CTX.abreDia = function (t) {
 };
 CTX.fechaDia = function () { view.diaAberto = null; view.cardioAberto = null; view.cardioNoDia = null; render(); saiDoDestino('dia'); };
 CTX.abreCardioDoDia = function (t) { view.cardioAberto = view.cardioAberto === t ? null : t; render(); };
-CTX.alternaDescansoDoDia = function (t) { return alternaDescanso(t); };
+CTX.motivosFalta = MOTIVOS_FALTA;
+CTX.respondeFrequencia = async function (data, escolha, motivo) {
+  if (data >= hojeISO() || !respondeFrequencia(S, data, escolha, motivo, Date.now())) return;
+  await save(); render();
+};
+CTX.alternaDescansoDoDia = alternaDescanso;
 
 CTX.diaAberto = function () {
   const t = view.diaAberto;
@@ -10515,6 +10535,7 @@ CTX.diaAberto = function () {
   const marcas = sessoesDoDia(t).slice().sort(function (a, b) { return a.t - b.t; });
   const cardios = cardioDoDia(t).slice().sort(function (a, b) { return a.t - b.t; });
   const desc = !marcas.length && ehDescanso(t);
+  const falta = !marcas.length && S.falta[iso];
 
   const sessoes = marcas.map(function (m) {
     const feitas = m.livre ? 0 : Object.keys(S.logs).reduce(function (n, k) {
@@ -10573,13 +10594,14 @@ CTX.diaAberto = function () {
     titulo: DIAS_LONGOS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()],
     volta: 'Voltar para ' + MESES[d.getMonth()],
     procedencia: marcas.length ? 'dia de treino, pela sessão registrada'
-               : desc ? 'descanso, marcado por você' : 'nada registrado',
+               : desc ? 'descanso, marcado por você' : falta ? 'falta, marcada por você' : 'nada registrado',
     registros: sessoes.concat(listaCardio).sort(function (a, b) { return a.t - b.t; }),
     peso: (function () {
       const p = (S.body.peso || []).filter(function (x) { return sameDay(x.t, t); }).slice(-1)[0];
       return p ? { valor: fmtDec(p.v), v: p.v, t: p.t, hora: horaHHMM(p.t).replace(':', 'h'), data: fmtDate(p.t) } : null;
     })(),
-    vazio: !marcas.length && !desc && !cardios.length,
+    vazio: !marcas.length && !desc && !falta && !cardios.length,
+    falta,
     descanso: desc,
     // "marcado agora, às 21h22 · não conta como treino em nenhuma conta" (estado 9)
     descansoDetalhe: desc ? (function () {
@@ -10589,7 +10611,7 @@ CTX.diaAberto = function () {
       return quando + 'não conta como treino em nenhuma conta';
     })() : null,
     // o palpite do dia vazio, dito como palpite (estado 5)
-    palpite: !marcas.length && !desc
+    palpite: !marcas.length && !desc && !falta
       ? 'Pelo padrão semanal, ' + DIAS_LONGOS[d.getDay()] + ' é dia de ' +
         (cadenciaDaSemana()[d.getDay()] === 'treino' ? 'treino' : 'descanso') + ' — é palpite.'
       : null,
@@ -10616,6 +10638,7 @@ CTX.diaAberto = function () {
   };
 };
 
+CTX.escolheDiaDoMes = function (iso) { view.diaDoMes = iso; render(); };
 CTX.mudaMes = function (n) { mudaMes(n); };
 
 // ---------- tela cheia: detalhe da sessão ----------
@@ -13971,26 +13994,17 @@ CTX.respondidosV3 = function () {
   const todos = diasParaResponder();
   return { n: todos.filter(function (x) { return x.resposta || x.marcado; }).length, de: todos.length };
 };
-/**
- * O DIA ESCOLHIDO em Dias, em três quadros: o treino (letra, séries e tempo),
- * o peso e a água daquele dia.
- */
+/** No dia escolhido, o treino e a última pesagem da data. */
 CTX.resumoDoDiaV3 = function (iso) {
-  const t = new Date(iso + 'T12:00:00').getTime();
-  const ms = sessoesDoDia(t).filter(function (m) { return !m.livre; });
-  const m = ms[0] || null;
+  const t = instanteDaData(iso);
+  const m = sessoesDoDia(t).find(m => !m.livre);
   let series = 0;
   if (m) Object.keys(S.logs).forEach(function (k) { (S.logs[k] || []).forEach(function (l) { if (l.sid === m.sid) series += l.sets.filter(Boolean).length; }); });
   const peso = (S.body.peso || []).filter(function (x) { return sameDay(x.t, t); }).slice(-1)[0];
-  const h = iso === hojeISO() ? (S.dia && S.dia.data === iso ? S.dia : null)
-    : (Array.isArray(S.comidaHist) ? S.comidaHist : []).filter(function (x) { return x && x.d === iso; })[0];
   return {
-    treino: m ? { titulo: diaAberto(m.day) ? 'Aula' : 'Treino ' + m.day,
+    treino: m ? { titulo: m.day === 'HX' ? 'HYROX' : 'Treino ' + m.day,
                   apoio: (series ? series + (series === 1 ? ' série' : ' séries') : 'sem série') + (m.dur ? ' · ' + fmtDur(m.dur) : '') } : null,
-    peso: peso ? fmtDec(peso.v) : null,
-    // hoje conta desde o zero, como no Hoje; um dia passado sem registro fica "—"
-    agua: ligado(S.modulos, 'agua') ? (iso === hojeISO() && !(h && h.aguaNaoContada) ? ((h && h.agua) || 0) + ' de ' + COPOS_DO_DIA
-      : h && !h.aguaNaoContada && h.agua ? h.agua + ' de ' + COPOS_DO_DIA : null) : undefined
+    peso: peso ? fmtDec(peso.v) : null
   };
 };
 CTX.responderDiasV3 = function () {
@@ -14065,6 +14079,7 @@ CTX.quatorzeDias = function () {
 
   return {
     celulas: celulas,
+    escolhido: view.diaDoMes,
     primeiro: DIAS_CURTOS[d0.getDay()] + ' ' + fmtDate(d0.getTime()),
     conta: 'Dias conhecidos nos últimos 14: ',
     regra: 'A regra do nutricionista precisa de ' + MIN_REGISTRADOS + '.',
