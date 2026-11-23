@@ -146,9 +146,40 @@ Cada papel fica entre 5 e 9 ferramentas.
 3. **O resto da escrita:** os registros simples do assistente, os recados e a proposta de plano do nutricionista, com o formato a definir.
 4. **Depois:** gráficos dentro da conversa (extensão MCP Apps), prompts prontos ("revisão semanal") e, se o modelo por recado apertar, especialistas que respondem sozinhos pelo Agent SDK. Isso já seria outro projeto.
 
-## Em aberto
+## Conferido antes da etapa 1 (23/11/2026)
 
-- Confirmar na prática se o Supabase Auth anuncia CIMD. Se não anunciar, o Claude usa DCR, que continua aceito.
-- Confirmar a rota de funções na Vercel num projeto Vite, a pasta `api/` ao lado do `dist`.
-- Confirmar se o Cowork aceita conector remoto. Se aceitar, o espelho fica só para cópia local.
-- O formato da proposta de plano alimentar, que entra na etapa 3.
+**Supabase (projeto `wetwqqrrgormwyktewlm`)**
+- **O servidor OAuth 2.1 existe, mas está desligado neste projeto.** Os metadados de `/.well-known/oauth-authorization-server/auth/v1` respondem `404 feature_disabled: "OAuth server is disabled"`.
+  - O `openid-configuration` já anuncia `authorize`, `token`, PKCE S256, `offline_access` e `none` em `token_endpoint_auth_methods_supported`.
+  - Ele ainda não traz `registration_endpoint`, porque o servidor está desligado.
+- **Está em beta e é grátis em todos os planos.** Os usuários que entram contam nos usuários ativos por mês. Fonte: [primeiros passos](https://supabase.com/docs/guides/auth/oauth-server/getting-started).
+- **Não há CIMD.** É um pedido aberto ([supabase/auth#2850](https://github.com/supabase/auth/issues/2850)). O Claude cai no DCR, que funciona.
+- **As chaves de assinatura já são assimétricas (ES256)**, no `jwks.json`. O servidor MCP valida os tokens contra o JWKS, sem segredo compartilhado.
+- **O RLS de `estado` usa `auth.uid() = dono`.** O token OAuth traz o `sub` do usuário, então as políticas existentes valem sem mudança.
+- O cadastro público está desligado no painel. O DCR registra **clientes** (o Claude), não usuários, e isso não abre cadastro.
+- O app fala com o Supabase por `fetch`, sem o `supabase-js`. A tela de consentimento chama a API REST de autorizações do Auth da mesma forma.
+
+**Vercel**
+- O projeto é Vite, com saída em `dist`. Não há `rewrites` no `vercel.json`, então a pasta `api/` na raiz vira funções Node sem colidir com o app.
+  - O caminho oficial de servidor junto ao Vite é o Nitro ([guia](https://vercel.com/docs/frameworks/full-stack/vite-with-nitro)).
+  - A pasta `api/` simples também funciona, mas com um cuidado: o código importado de fora de `api/` precisa entrar no pacote da função. Vale testar com o `monta.ts`.
+- **`mcp-handler` 2.0** fala a especificação 2026-07-28 com o SDK v2 e tem uma camada sem estado para clientes da era 2025 ([changelog](https://vercel.com/changelog/latest-mcp-spec-now-supported-in-mcp-handler)). Exige Node 20 ou mais (aqui é 22) e zod 4.
+  - O SDK v2 só fala 2026-07-28 com opt-in. Nenhuma fonte diz qual versão o Claude negocia, e a camada de compatibilidade cobre as duas.
+
+**Claude**
+- **O conector remoto funciona no claude.ai e no Cowork rodando no computador.** A conexão sai dos servidores da Anthropic, então o servidor precisa ser público, sem porta própria na URL. Os planos individuais adicionam pelo "+" e depois "Add custom connector". O plano Free fica limitado a um conector. Fonte: [conectores personalizados](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp).
+
+## O que o dono faz no início da etapa 1
+
+No painel do Supabase, em Authentication, depois OAuth Server:
+1. ligar o servidor OAuth;
+2. definir o caminho de autorização como `/autorizar`, no domínio de produção do app;
+3. ligar o registro dinâmico de clientes ("Dynamic OAuth Apps").
+
+Só depois que a tela `/autorizar` existir, para ninguém cair numa página vazia.
+
+## Ainda em aberto
+
+- Pasta `api/` simples ou Nitro: decidir no primeiro passo da etapa 1, testando o pacote com o `monta.ts`.
+- A versão de protocolo que o Claude negocia: medir no primeiro teste, pelo cabeçalho.
+- O formato da proposta de plano alimentar, para a etapa 3.
