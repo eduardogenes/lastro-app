@@ -5,6 +5,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { app, DIA } from './harness.js';
+import { montaArquivos } from '../../ferramentas/espelho/monta';
 
 const TEXTO = `Revisão 21/09
 Treino B · Pernas completas + panturrilhas
@@ -626,9 +627,56 @@ Treino IA · Glúteo + posterior
   assert.strictEqual(hip.car, 'barra', 'com o tipo de carga que a linha disse');
   assert.strictEqual(hip.cue, 'pausa de 1 s no topo; costelas para baixo', 'e a dica inteira, com o ";"');
   const pr = a.E('Object.keys(S.ex).filter(k => S.ex[k].n === "Prancha lateral com giro").map(k => S.ex[k])')[0];
-  assert.deepStrictEqual([pr.car, pr.u, pr.q].join(' '), 'corpo seg 30', 'a prancha nasce sem carga e em segundos');
+  assert.deepStrictEqual([pr.car, pr.u || '-', pr.q || '-', pr.g || '-'].join(' '), 'corpo - - -', 'a prancha nasce sem carga e sem grupo; a grandeza fica no slot');
   const IA = JSON.parse(a.E('JSON.stringify((S.prog.IA || S.progTreinador.dias.IA).ex.map(x => [x.s, x.r, x.u || "", x.q || 0, x.bi || 0]))'));
   assert.deepStrictEqual(IA, [[4, '8–12', '', 0, 0], [3, '10', '', 0, 1], [2, '', 'seg', 30, 0]],
     'no programa: a faixa, o bi-set do pallof com a prancha e a série de tempo');
+  a.fechar();
+});
+
+test('tempo e bi-set deixados de fora viram diferença; e uma revisão que volta o tempo para repetições grava repetições', async () => {
+  const r1 = `Revisão 23/11
+Treino IA · Core
+- Pallof press · 3 x 10 · 60 s
+- Prancha lateral com giro · 2 x 30 s · 60 s`;
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  await revisaoLida(a, r1); a.clicar('[data-a="revisao-aplica"]'); await a.esperar(120);
+  const pid = a.E('Object.keys(S.ex).find(k => S.ex[k].n === "Prancha lateral com giro")');
+  // a revisão 2 muda o tempo e põe o bi-set; ele deixa as duas de fora
+  await revisaoLida(a, r1.replace('2 x 30 s', '2 x 45 s').replace('3 x 10 · 60 s', '3 x 10 · 60 s · dica: bi-set com o de baixo').replace('23/11', '24/11'));
+  for (const m of a.vJ('ctx.revisao').grupos.flatMap(g => g.mudancas)) a.clicar('[data-a="mud-' + m.k + '"]');
+  await a.esperar();
+  a.clicar('[data-a="revisao-aplica"]'); await a.esperar(120);
+  const dif = a.E('JSON.stringify(difDoDia("IA").map(x => x.k + ": " + x.txt))');
+  assert.match(dif, /tempo: Prancha lateral com giro: 30 s, não 45 s/);
+  assert.match(dif, /bi: Pallof press: sem bi-set, não bi-set/);
+  // a revisão 3 volta a prancha para repetições, por lado; agora ele aceita tudo
+  await revisaoLida(a, r1.replace('2 x 30 s', '3 x 10/lado').replace('23/11', '25/11'));
+  a.clicar('[data-a="revisao-aplica"]'); await a.esperar(120);
+  const slot = JSON.parse(a.E('JSON.stringify(treino("IA").ex.find(x => x.id === ' + JSON.stringify(pid) + '))'));
+  assert.deepStrictEqual([slot.s, slot.r, slot.u || null], [3, '10', null], 'a série vai ao histórico como repetições: o catálogo não insiste em segundos');
+  const prog = montaArquivos(a.S(), { agora: Date.now() })['treino/programa.md'];
+  const linha = prog.split('\n').filter(l => /Prancha lateral com giro/.test(l)).join(' | ');
+  assert.ok(/\b10\b/.test(linha) && !/\b(30|45) ?s\b/.test(linha), 'o espelho mostra repetições: ' + linha);
+  a.fechar();
+});
+
+test('o "por perna" deixado de fora vira diferença, e o espelho o mostra', async () => {
+  const r1 = `Revisão 23/11
+Treino IB · Pernas
+- Afundo reverso com halteres · 3 x 8-12 · 90 s`;
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  await revisaoLida(a, r1); a.clicar('[data-a="revisao-aplica"]'); await a.esperar(120);
+  await revisaoLida(a, r1.replace('3 x 8-12', '3 x 8-12/perna').replace('23/11', '24/11'));
+  const ms = a.vJ('ctx.revisao').grupos.flatMap(g => g.mudancas);
+  assert.deepStrictEqual(ms.map(m => m.titulo), ['Afundo reverso com halteres: 8–12 repetições → 8–12 repetições por perna']);
+  a.clicar('[data-a="mud-' + ms[0].k + '"]'); await a.esperar();
+  a.clicar('[data-a="revisao-aplica"]'); await a.esperar(120);
+  const dif = a.E('JSON.stringify(difDoDia("IB").map(x => x.txt))');
+  assert.match(dif, /Afundo reverso com halteres: 8–12 repetições, não 8–12 repetições por perna/);
+  const doTreinador = montaArquivos(a.S(), { agora: Date.now() })['treino/programa-do-treinador.md'];
+  assert.match(doTreinador.split('\n').filter(l => /Afundo reverso/.test(l)).join(' '), /8[–-]12 por perna/);
   a.fechar();
 });

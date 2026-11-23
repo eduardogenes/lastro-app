@@ -1120,7 +1120,10 @@ consome. Uma unidade nova mal fechada faz o app mentir na metade da comida,
 longe de onde o erro foi cometido.
 
 Pelo mesmo motivo, movimento com grandeza entra no catálogo com `g: ''`: um
-burpee com grupo muscular viraria série de peito no painel de volume.
+burpee com grupo muscular viraria série de peito no painel de volume. Vale
+também para o exercício de tempo que nasce da revisão em texto ("2 x 40 s ·
+core"): o grupo escrito na linha não vai ao catálogo, e a grandeza (`u`, `q`)
+fica só no slot, porque uma revisão seguinte pode trocá-lo para repetições.
 
 ### Sem migração
 

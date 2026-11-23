@@ -341,16 +341,31 @@ test('uma palavra em comum não faz candidato: "Rosca direta" não é a Rosca ma
   assert.deepStrictEqual(c['Rosca direta'], { k: 'novo' });
 });
 
-test('a dica vai até o fim da linha, com ";" dentro, e o bi-set dela vira marca', () => {
+test('a dica vai até o próximo "·", com ";" dentro, e o bi-set dela marca sem sair da dica', () => {
   const r = lerRevisao(`Treino SA · Peito
 - Crucifixo na polia · 3 x 10-15 · RIR 1 · 90 s · peito superior · dica: bi-set com o de baixo; mãos até o queixo; última série RIR 0
-- Elevação lateral na polia · 4 x 12-20 · RIR 1 · 90 s · deltoide lateral · dica: cabo por trás do corpo`);
-  assert.deepStrictEqual(r.problemas, []);
-  const [cr, el] = r.dias[0].ex;
+- Elevação lateral na polia · 4 x 12-20 · RIR 1 · 90 s · deltoide lateral · dica: cabo por trás do corpo; não faça bi-set aqui
+- Tríceps na polia · 3 x 10-15 · dica: bi-set com o de baixo;`);
+  const [cr, el, tr] = r.dias[0].ex;
   assert.strictEqual(cr.bi, 1);
-  assert.strictEqual(cr.cue, 'mãos até o queixo; última série RIR 0');
+  assert.strictEqual(cr.cue, 'bi-set com o de baixo; mãos até o queixo; última série RIR 0', 'a frase fica: nenhuma tela mostra o bi-set');
   assert.strictEqual(cr.g, 'peito superior');
-  assert.strictEqual(el.bi, undefined);
+  assert.strictEqual(el.bi, undefined, '"não faça bi-set" não marca');
+  assert.strictEqual(tr.bi, undefined, 'o último do treino não tem com quem fazer bi-set');
+  assert.strictEqual(tr.cue, 'bi-set com o de baixo', 'e o ";" que sobra sai');
+  assert.deepStrictEqual(r.problemas.map(p => p.motivo), ['Tríceps na polia pede bi-set, mas é o último do Treino SA; fica sem bi-set']);
+});
+
+test('a dica no meio da linha ou logo depois do nome é lida como no build a4e2922', () => {
+  const r = lerRevisao(`Treino A · Peito
+- Supino · dica: controle a descida · 3 x 8
+- Remada · 3 x 8-12 · dica: peito no apoio · RIR 1 · 2 min · costas
+- Crucifixo ; 3 x 10-15 ; RIR 1 ; dica: devagar`);
+  assert.deepStrictEqual(r.problemas, []);
+  const [su, re, cr] = r.dias[0].ex;
+  assert.deepStrictEqual([su.s, su.r, su.cue], [3, '8', 'controle a descida']);
+  assert.deepStrictEqual([re.s, re.r, re.rir, re.d, re.g, re.cue], [3, '8–12', '1', 120, 'costas', 'peito no apoio']);
+  assert.deepStrictEqual([cr.s, cr.r, cr.rir, cr.cue], [3, '10–15', '1', 'devagar'], 'o ";" antigo como separador continua valendo');
 });
 
 test('série de tempo vira segundos; "/lado" e "/perna" vão para a dica; "90 s" sozinho continua descanso', () => {
@@ -361,7 +376,7 @@ test('série de tempo vira segundos; "/lado" e "/perna" vão para a dica; "90 s"
   assert.deepStrictEqual(r.problemas, []);
   const [pr, af, al] = r.dias[0].ex;
   assert.deepStrictEqual([pr.s, pr.r, pr.u, pr.q, pr.d, pr.cue], [2, '', 'seg', 30, 60, 'por lado; comece pela esquerda']);
-  assert.deepStrictEqual([af.s, af.r, af.u, af.d, af.cue], [3, '8–12', undefined, 90, 'por perna']);
+  assert.deepStrictEqual([af.s, af.r, af.u, af.d, af.cue, af.lado], [3, '8–12', undefined, 90, 'por perna', 'perna']);
   assert.deepStrictEqual([al.u, al.q, al.d], ['seg', 40, undefined]);
 });
 
@@ -392,4 +407,63 @@ test('a revisão leva tempo e bi-set para o programa, e a mudança deles aparece
   assert.deepStrictEqual(pr.campos, ['q', 'bi']);
   const depois = aplicaMudancas(velho, velho, novo, mud, 2000)!;
   assert.deepStrictEqual([depois.ex[0].q, depois.ex[0].bi], [45, 1]);
+});
+
+test('repetições para tempo e de volta: uma frase só, a unidade certa, e o aplicar troca a grandeza do slot', () => {
+  const ids = { 'Prancha': 'prancha' };
+  const reps: TreinoDoPrograma = { name: 'Core', ex: [{ id: 'prancha', s: 3, r: '8–12', d: 60, desde: 0 }] };
+  const tempo = treinoDaRevisao(lerRevisao('Treino C · Core\n- Prancha · 2 x 40 s · 60 s').dias[0], ids, reps, () => 60, 1);
+  const ida = mudancasDoTreino('C', reps, tempo, reps, id => id === 'prancha' ? 'Prancha' : id);
+  assert.deepStrictEqual(ida.map(m => m.titulo), ['Prancha: 3 → 2 séries']);
+  assert.strictEqual(ida[0].detalhe, '8–12 repetições → 40 s');
+  assert.ok(!/2 × /.test(ida[0].texto.replace('2 séries', '')), ida[0].texto);
+  const t1 = aplicaMudancas(reps, reps, tempo, ida, 2)!;
+  assert.deepStrictEqual([t1.ex[0].s, t1.ex[0].r, t1.ex[0].u, t1.ex[0].q], [2, '', 'seg', 40]);
+  const volta = treinoDaRevisao(lerRevisao('Treino C · Core\n- Prancha · 3 x 10/lado · 60 s').dias[0], ids, tempo, () => 60, 3);
+  const vm = mudancasDoTreino('C', tempo, volta, t1, id => id === 'prancha' ? 'Prancha' : id);
+  assert.strictEqual(vm[0].titulo, 'Prancha: 2 → 3 séries');
+  assert.strictEqual(vm[0].detalhe, '40 s → 10 repetições por lado');
+  const t2 = aplicaMudancas(t1, tempo, volta, vm, 4)!;
+  assert.deepStrictEqual([t2.ex[0].s, t2.ex[0].r, t2.ex[0].u, t2.ex[0].q, t2.ex[0].lado], [3, '10', undefined, undefined, 'lado'],
+    'de volta a repetições: a série vai ao histórico como repetições');
+  const so = mudancasDoTreino('C', reps, tempo, undefined, id => id);
+  assert.ok(/1 exercício, 2 séries/.test(so[0].titulo + so[0].detalhe), 'treino novo resume pelas séries');
+});
+
+test('"/lado" num exercício que já existe é dito na mudança; o bi-set nomeia o par e começa desmarcado se o seguinte dele é outro', () => {
+  const v: TreinoDoPrograma = { name: 'P', ex: [{ id: 'afundo', s: 3, r: '8–12', d: 90, desde: 0 }, { id: 'pallof', s: 3, r: '10', d: 60, desde: 0 }, { id: 'prancha', s: 2, r: '', u: 'seg', q: 30, d: 60, desde: 0 }] };
+  const meu: TreinoDoPrograma = { name: 'P', ex: [v.ex[0], v.ex[1], { id: 'minha', s: 2, r: '10', d: 60, desde: 0 }, v.ex[2]] };
+  const nomes: Record<string, string> = { afundo: 'Afundo', pallof: 'Pallof press', prancha: 'Prancha lateral' };
+  const lida = lerRevisao(`Treino P · P
+- Afundo · 3 x 8-12/perna · 90 s
+- Pallof press · 3 x 10 · 60 s · dica: bi-set com o de baixo
+- Prancha lateral · 2 x 45 s · 60 s`);
+  const novo = treinoDaRevisao(lida.dias[0], { 'Afundo': 'afundo', 'Pallof press': 'pallof', 'Prancha lateral': 'prancha' }, v, () => 60, 1);
+  const m = mudancasDoTreino('P', v, novo, meu, id => nomes[id]);
+  const af = m.find(x => x.id === 'afundo')!, pa = m.find(x => x.id === 'pallof')!, pr = m.find(x => x.id === 'prancha')!;
+  assert.strictEqual(af.titulo, 'Afundo: 8–12 repetições → 8–12 repetições por perna');
+  assert.strictEqual(pa.titulo, 'Pallof press: passa a ser bi-set com Prancha lateral');
+  assert.strictEqual(pa.desmarcada, true, 'no programa dele o seguinte é outro exercício');
+  assert.strictEqual(pr.titulo, 'Prancha lateral: 30 s → 45 s');
+});
+
+test('"sem bi-set" e "não faça bi-set" não marcam; o "/lado" sozinho num exercício de tempo é dito como lado; entrar em bi-set sem o par começa desmarcada', () => {
+  const r = lerRevisao(`Treino A · A
+- Um · 3 x 8 · dica: sem bi-set com o de baixo
+- Dois · 3 x 8 · dica: não faça bi-set com o de baixo
+- Três · 3 x 8`);
+  assert.deepStrictEqual(r.dias[0].ex.map(x => x.bi), [undefined, undefined, undefined]);
+  const v: TreinoDoPrograma = { name: 'P', ex: [{ id: 'prancha', s: 2, r: '', u: 'seg', q: 30, d: 60, desde: 0 }, { id: 'par', s: 3, r: '10', d: 60, desde: 0 }] };
+  const meu: TreinoDoPrograma = { name: 'P', ex: [v.ex[0]] };
+  const lida = lerRevisao(`Treino P · P
+- Prancha · 2 x 30 s/lado · 60 s
+- Novo · 3 x 8 · dica: bi-set com o de baixo
+- Par · 3 x 10 · 60 s`);
+  const novo = treinoDaRevisao(lida.dias[0], { Prancha: 'prancha', Novo: 'novo', Par: 'par' }, v, () => 60, 1);
+  const m = mudancasDoTreino('P', v, novo, meu, id => ({ prancha: 'Prancha', novo: 'Novo', par: 'Par' } as Record<string, string>)[id]);
+  const pr = m.find(x => x.id === 'prancha')!, nv = m.find(x => x.id === 'novo')!;
+  assert.strictEqual(pr.titulo, 'Prancha: passa a ser por lado', 'e não "30 s → 30 s"');
+  assert.deepStrictEqual(pr.campos, ['r']);
+  assert.ok(/bi-set com Par/.test(nv.detalhe || ''), nv.detalhe || '');
+  assert.strictEqual(nv.desmarcada, true, 'o par saiu do programa dele: entra desmarcada');
 });

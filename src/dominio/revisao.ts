@@ -43,6 +43,8 @@ export interface ExDaRevisao {
   q?: number;
   /** 1 quando a dica diz "bi-set com o de baixo": faz bi-set com o exercício seguinte */
   bi?: 1;
+  /** 'lado' ou 'perna' quando a contagem é de cada lado ("3 x 8-12/perna") */
+  lado?: 'lado' | 'perna';
   /** o tipo de carga, quando a linha diz ("carga: por lado"); só vale para exercício novo */
   car?: 'pino' | 'lado' | 'barra' | 'halter' | 'halter1' | 'corpo' | 'assist';
 }
@@ -98,16 +100,19 @@ function faixa(a: string, b?: string): string { return b ? a + TRACO + b : a; }
  * ("3 min", "2:30", "90 s"), grupo muscular e "dica: …" são opcionais. O que
  * não for entendido vira problema dito, e não chute.
  *
- * A dica vai até o fim da linha, e o ";" dentro dela é texto, não separador:
- * o treinador escreve dicas em frases. Por isso ela vem por último.
+ * A dica vai até o próximo "·" ou "|", e o ";" dentro dela é texto, não
+ * separador: o treinador escreve dicas em frases. Ela pode vir em qualquer
+ * lugar depois do nome. Fora da dica, o ";" continua separando campos.
  *
  * Séries de tempo ("2 x 40 s", "2 x 30 s/lado") viram `u: 'seg'` com `q` em
  * segundos, como a prancha do catálogo; "x 40 s" só é tempo junto do "x": "90 s"
- * sozinho continua sendo descanso. "/lado" e "/perna" depois das repetições vão
- * para a dica ("por lado"), porque a contagem é a de cada lado.
+ * sozinho continua sendo descanso. "/lado" e "/perna" depois das repetições
+ * ficam no slot (`lado`) e na dica ("por lado"): a contagem é a de cada lado, e
+ * a mudança de um exercício que já existe diz isso.
  *
- * "bi-set com o de baixo" na dica marca o bi-set com o exercício seguinte, e sai
- * da dica: a tela já mostra o bi-set.
+ * "bi-set com o de baixo" na dica marca o bi-set com o exercício seguinte e
+ * continua na dica, porque nenhuma tela mostra o bi-set. "Não faça bi-set" não
+ * marca. Bi-set no último exercício do treino vira problema dito.
  *
  * "carga: placa | por lado | barra | halteres | halter unilateral | corpo |
  * assistido" diz o tipo de carga de um exercício NOVO. O app rotula e nunca
@@ -140,9 +145,16 @@ export function lerRevisao(texto: string): LeituraDaRevisao {
     const item = linha.match(/^(?:[-•*]|\d+[.)])\s*(.+)$/);
     if (!item) { out.problemas.push({ linha: linha, motivo: 'não é cabeçalho de treino nem exercício' }); return; }
     if (!atual) { out.problemas.push({ linha: linha, motivo: 'exercício antes de qualquer "Treino X"' }); return; }
-    // a dica vai até o fim da linha: o ";" dentro dela é frase, não campo
-    const dica = item[1].match(/^(.*?)(?:\s*[·|;]\s*)dica\s*:\s*(.+)$/i);
-    const campos = (dica ? dica[1] : item[1]).split(/\s*[·|;]\s*/).map(limpa).filter(Boolean);
+    // Os campos se separam por "·" e "|". A dica vai até o próximo deles: o ";" dentro dela é
+    // frase. Fora da dica, o ";" continua separando campos, como nas revisões antigas.
+    const grandes = item[1].split(/\s*[·|]\s*/).map(limpa).filter(Boolean);
+    const campos: string[] = [];
+    let dicaLida: string | null = null;
+    grandes.forEach(function (g, gi) {
+      const d = g.match(/^dica\s*:\s*(.*)$/i);
+      if (d && gi > 0) { dicaLida = dicaLida ? dicaLida + '; ' + d[1] : d[1]; return; }
+      g.split(/\s*;\s*/).map(limpa).filter(Boolean).forEach(function (c) { campos.push(c); });
+    });
     const ex: Partial<ExDaRevisao> = { n: campos[0] };
     const notas: string[] = [];
     const sobra: string[] = [];
@@ -150,12 +162,12 @@ export function lerRevisao(texto: string): LeituraDaRevisao {
       let m;
       if ((m = c.match(/^(\d+)\s*[x×]\s*(\d+)\s*s(?:eg(?:undos)?)?(?:\s*\/\s*(lado|perna))?$/i))) {
         ex.s = +m[1]; ex.r = ''; ex.u = 'seg'; ex.q = +m[2];
-        if (m[3]) notas.push('por ' + m[3].toLowerCase());
+        if (m[3]) { ex.lado = m[3].toLowerCase() as 'lado' | 'perna'; notas.push('por ' + ex.lado); }
         return;
       }
       if ((m = c.match(/^(\d+)\s*[x×]\s*(\d+)(?:\s*(?:[–-]|a)\s*(\d+))?(?:\s*\/\s*(lado|perna))?$/i))) {
         ex.s = +m[1]; ex.r = faixa(m[2], m[3]);
-        if (m[4]) notas.push('por ' + m[4].toLowerCase());
+        if (m[4]) { ex.lado = m[4].toLowerCase() as 'lado' | 'perna'; notas.push('por ' + ex.lado); }
         return;
       }
       if ((m = c.match(/^(\d+)\s*s[ée]ries?\s+de\s+(\d+)(?:\s*(?:[–-]|a)\s*(\d+))?/i))) { ex.s = +m[1]; ex.r = faixa(m[2], m[3]); return; }
@@ -168,15 +180,15 @@ export function lerRevisao(texto: string): LeituraDaRevisao {
       if ((m = c.match(/^(\d+)\s*min(?:utos?)?$/i))) { ex.d = +m[1] * 60; return; }
       if ((m = c.match(/^(\d+):(\d\d)$/))) { ex.d = +m[1] * 60 + +m[2]; return; }
       if ((m = c.match(/^(\d+)\s*s(?:eg(?:undos)?)?$/i))) { ex.d = +m[1]; return; }
-      if ((m = c.match(/^dica\s*:\s*(.+)$/i))) { ex.cue = m[1]; return; }
+      // a dica depois de ";" (revisão antiga, que separava tudo por ";"): vale até o fim do trecho
+      if ((m = c.match(/^dica\s*:\s*(.+)$/i))) { dicaLida = dicaLida ? dicaLida + '; ' + m[1] : m[1]; return; }
       sobra.push(c);
     });
-    if (dica) {
-      let cue = limpa(dica[2]);
-      if (/\bbi-?set com o (?:de baixo|seguinte|pr[oó]ximo)\b/i.test(cue)) {
-        ex.bi = 1;
-        cue = limpa(cue.replace(/\bbi-?set com o (?:de baixo|seguinte|pr[oó]ximo)\b\s*[;,.]?\s*/i, ''));
-      }
+    if (dicaLida != null) {
+      const cue = limpa(String(dicaLida)).replace(/[\s;,]+$/, '');
+      // "bi-set com o de baixo" marca o bi-set e FICA na dica: nenhuma tela mostra o bi-set.
+      // "não faça bi-set" não marca.
+      if (!/\b(?:n[ãa]o|sem)\b[^;,.]*\bbi-?set\b/i.test(cue) && /\bbi-?set com o (?:de baixo|seguinte|pr[oó]ximo)\b/i.test(cue)) ex.bi = 1;
       if (cue) ex.cue = cue;
     }
     if (notas.length) ex.cue = notas.concat(ex.cue ? [ex.cue] : []).join('; ');
@@ -197,6 +209,14 @@ export function lerRevisao(texto: string): LeituraDaRevisao {
     if (!nomePorSlug.has(chave)) nomePorSlug.set(chave, ex.n);
     ex.n = nomePorSlug.get(chave)!;
     atual.ex.push(ex as ExDaRevisao);
+  });
+  // bi-set no último exercício do treino não tem com quem: é dito, e o slot não o leva
+  out.dias.forEach(function (d) {
+    const ultimo = d.ex[d.ex.length - 1];
+    if (ultimo && ultimo.bi) {
+      delete ultimo.bi;
+      out.problemas.push({ linha: ultimo.n, motivo: ultimo.n + ' pede bi-set, mas é o último do Treino ' + d.dia + '; fica sem bi-set' });
+    }
   });
   return out;
 }
@@ -313,7 +333,7 @@ export function casaNomes(
 // séries" muda as séries do slot dele e deixa as repetições que ele escolheu.
 
 /** Um slot do programa, como esta parte lê e escreve (os outros campos passam intactos). */
-export interface SlotDoPrograma { id: string; s: number; r: string; d?: number; rir?: string; desde?: number; u?: 'seg' | 'm' | 'cal' | 'rep'; q?: number; bi?: 0 | 1; [k: string]: unknown }
+export interface SlotDoPrograma { id: string; s: number; r: string; d?: number; rir?: string; desde?: number; u?: 'seg' | 'm' | 'cal' | 'rep'; q?: number; bi?: 0 | 1; lado?: 'lado' | 'perna'; [k: string]: unknown }
 /** Um treino do programa. */
 export interface TreinoDoPrograma { name?: string; tag?: string; aberto?: 1; ex: SlotDoPrograma[] }
 
@@ -373,6 +393,7 @@ export function treinoDaRevisao(
     if (rir) sl.rir = rir;
     if (x.u) { sl.u = x.u; sl.q = x.q; }
     if (x.bi) sl.bi = 1;
+    if (x.lado) sl.lado = x.lado;
     return sl;
   });
   const t: TreinoDoPrograma = { name: d.nome || (velho && velho.name) || ('Treino ' + d.dia), tag: (velho && velho.tag) || '', ex: ex };
@@ -384,26 +405,35 @@ export function treinoDaRevisao(
 function camposQueMudam(v: SlotDoPrograma, n: SlotDoPrograma): CampoDoSlot[] {
   const c: CampoDoSlot[] = [];
   if (v.s !== n.s) c.push('s');
-  if (v.r !== n.r) c.push('r');
+  if (v.r !== n.r || (v.lado || '') !== (n.lado || '')) c.push('r');
   if ((v.rir || '') !== (n.rir || '')) c.push('rir');
   if ((v.d || 0) !== (n.d || 0)) c.push('d');
-  if ((v.u || '') !== (n.u || '') || (v.q || 0) !== (n.q || 0)) c.push('q');
+  if ((v.u || '') !== (n.u || '') || (v.u && (v.q || 0) !== (n.q || 0))) c.push('q');
   if (!!v.bi !== !!n.bi) c.push('bi');
   return c;
 }
 
-function fraseDoCampo(c: CampoDoSlot, v: SlotDoPrograma, n: SlotDoPrograma): string {
+const UNIDADE_DITA: Record<string, string> = { seg: 's', m: 'm', cal: 'cal', rep: 'rep' };
+/** O que cada passada pede, na unidade certa: "8–12 repetições por perna", "40 s", "500 m". */
+function medida(x: SlotDoPrograma, comPalavra = true): string {
+  if (x.u && x.q != null) return x.q + ' ' + UNIDADE_DITA[x.u];
+  return x.r + (comPalavra ? ' repetições' : '') + (x.lado ? ' por ' + x.lado : '');
+}
+function fraseDoCampo(c: CampoDoSlot, v: SlotDoPrograma, n: SlotDoPrograma, par?: string): string {
   if (c === 's') return v.s + ' → ' + n.s + ' séries';
-  if (c === 'r') return v.r + ' → ' + n.r + ' repetições';
+  // só a faixa mudou: "6–10 → 8–12 repetições"; mudou a unidade ou o lado: as duas medidas inteiras
+  if (c === 'r' && !v.u && !n.u && (v.lado || '') === (n.lado || '')) return v.r + ' → ' + n.r + ' repetições' + (n.lado ? ' por ' + n.lado : '');
+  // só o lado mudou, num exercício de tempo: "30 s → 30 s" não diz nada
+  if (c === 'r' && v.u && v.u === n.u && v.q === n.q) return n.lado ? 'passa a ser por ' + n.lado : 'deixa de ser por ' + v.lado;
+  if (c === 'r' || c === 'q') return medida(v) + ' → ' + medida(n);
   if (c === 'rir') return 'sobrando ' + (v.rir || '—') + ' → ' + (n.rir || '—');
-  if (c === 'q') return (v.u === 'seg' ? v.q + ' s' : 'repetições') + ' → ' + (n.u === 'seg' ? n.q + ' s' : 'repetições');
-  if (c === 'bi') return n.bi ? 'passa a ser bi-set com o seguinte' : 'deixa de ser bi-set';
+  if (c === 'bi') return n.bi ? 'passa a ser bi-set' + (par ? ' com ' + par : ' com o seguinte') : 'deixa de ser bi-set';
   return 'descanso ' + descansoEscrito(v.d || 0) + ' → ' + descansoEscrito(n.d || 0);
 }
 
 /** "3 × 8–12, RIR 1, descanso 2min": a prescrição inteira, para o histórico. */
 function prescricao(x: SlotDoPrograma): string {
-  return x.s + ' × ' + (x.u === 'seg' ? x.q + ' s' : x.r) + (x.bi ? ', bi-set com o seguinte' : '') + (x.rir ? ', RIR ' + x.rir : '') + (typeof x.d === 'number' && x.d ? ', descanso ' + fmtDesc(x.d) : '');
+  return x.s + ' × ' + medida(x, false) + (x.bi ? ', bi-set com o seguinte' : '') + (x.rir ? ', RIR ' + x.rir : '') + (typeof x.d === 'number' && x.d ? ', descanso ' + fmtDesc(x.d) : '');
 }
 
 /**
@@ -478,26 +508,39 @@ export function mudancasDoTreino(
       const m = dele[x.id];
       const camposDele = m ? camposQueMudam(m, x) : undefined;
       const ja = !!m && !camposDele!.length;
+      // entra em bi-set com o seguinte: se o par não estará no programa dele (saiu dele antes), começa desmarcada
+      const par = x.bi ? novo.ex[i + 1] : undefined;
+      const semPar = !!x.bi && (!par || (!dele[par.id] && !!antes[par.id]));
       out.push({ k: dia + ':entra:' + x.id, dia: dia, tipo: 'entra', id: x.id, campos: camposDele, sinal: '+',
                  titulo: nomeDe(x.id) + ' entra',
-                 detalhe: x.s + ' × ' + x.r + (onde ? ', ' + onde : '') + (ja ? ' · já está no seu programa' : m ? ' · no seu programa: ' + m.s + ' × ' + m.r : ''),
+                 detalhe: x.s + ' × ' + medida(x, false) + (par ? ', bi-set com ' + nomeDe(par.id) : '') + (onde ? ', ' + onde : '') + (ja ? ' · já está no seu programa' : m ? ' · no seu programa: ' + m.s + ' × ' + medida(m, false) : ''),
                  texto: nomeDe(x.id) + ' entra (' + prescricao(x) + (onde ? ', ' + onde : '') + ')',
+                 desmarcada: semPar || undefined,
                  jaEsta: ja || undefined });
       return;
     }
     const campos = camposQueMudam(v, x);
     if (!campos.length) return;
     const m = dele[x.id];
-    const ja = !!m && campos.every(function (c) { return (m[c] || '') === (x[c] || ''); });
+    const ja = !!m && !camposQueMudam(m, x).some(function (c) { return campos.indexOf(c) >= 0; });
     const seu = !m ? 'não está no seu programa'
       : ja ? 'o seu já está assim'
-      : (m.s !== v.s || m.r !== v.r) ? 'no seu programa: ' + m.s + ' × ' + m.r : null;
-    const frases = campos.map(function (c) { return fraseDoCampo(c, v, x); });
+      : (m.s !== v.s || medida(m) !== medida(v)) ? 'no seu programa: ' + m.s + ' × ' + medida(m, false) : null;
+    // o par do bi-set é o exercício seguinte no treino do treinador
+    const par = novo.ex[i + 1] ? nomeDe(novo.ex[i + 1].id) : undefined;
+    // trocar de repetições para tempo (ou o contrário) é uma frase só: "8–12 repetições → 40 s"
+    const frasesDe = campos.filter(function (c) { return !(c === 'r' && campos.indexOf('q') >= 0); });
+    const frases = frasesDe.map(function (c) { return fraseDoCampo(c, v, x, par); });
+    // o bi-set casa com o seguinte do treinador; se no programa dele o seguinte é outro, começa desmarcada
+    const dI = m ? meu.ex.findIndex(function (z) { return z.id === x.id; }) : -1;
+    const seguinteDele = dI >= 0 && meu.ex[dI + 1] ? meu.ex[dI + 1].id : null;
+    const biDesmarcado = campos.indexOf('bi') >= 0 && !!x.bi && (!novo.ex[i + 1] || seguinteDele !== novo.ex[i + 1].id);
     out.push({ k: dia + ':muda:' + x.id, dia: dia, tipo: 'muda', id: x.id, campos: campos,
                sinal: x.s > v.s ? '↑' : x.s < v.s ? '↓' : '~',
                titulo: nomeDe(x.id) + ': ' + frases[0],
                detalhe: frases.slice(1).concat(seu ? [seu] : []).join(' · ') || null,
                texto: nomeDe(x.id) + ': ' + frases.join(', '),
+               desmarcada: biDesmarcado || undefined,
                jaEsta: ja || !m || undefined });
   });
 
@@ -506,8 +549,8 @@ export function mudancasDoTreino(
     const ja = !dele[v.id];
     out.push({ k: dia + ':sai:' + v.id, dia: dia, tipo: 'sai', id: v.id, sinal: '−',
                titulo: nomeDe(v.id) + ' sai',
-               detalhe: 'era ' + v.s + ' × ' + v.r + (ja ? ' · já não está no seu programa' : ''),
-               texto: nomeDe(v.id) + ' sai (era ' + v.s + ' × ' + v.r + ')',
+               detalhe: 'era ' + v.s + ' × ' + medida(v, false) + (ja ? ' · já não está no seu programa' : ''),
+               texto: nomeDe(v.id) + ' sai (era ' + v.s + ' × ' + medida(v, false) + ')',
                jaEsta: ja || undefined });
   });
 
@@ -575,6 +618,7 @@ export function aplicaMudancas(
       if (c === 'rir') { if (n.rir) sl.rir = n.rir; else delete sl.rir; return; }
       if (c === 'q') { if (n.u) { sl.u = n.u; sl.q = n.q; } else { delete sl.u; delete sl.q; } return; }
       if (c === 'bi') { if (n.bi) sl.bi = 1; else delete sl.bi; return; }
+      if (c === 'r') { sl.r = n.r; if (n.lado) sl.lado = n.lado; else delete sl.lado; return; }
       (sl as Record<string, unknown>)[c] = n[c];
     });
   };

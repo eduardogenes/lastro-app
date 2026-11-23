@@ -320,9 +320,10 @@ function situacaoDaFoto(caminho: string, ctx: Contexto): string | null {
 function alvoDoSlot(s: Slot, ex: Exercicio): string {
   const u = s.u || ex.u;
   const q = s.q != null ? s.q : ex.q;
-  if (!u) return s.r || '';
+  const lado = s.lado ? ' por ' + s.lado : '';
+  if (!u) return (s.r || '') + lado;
   const ROT: Record<Unidade, string> = { m: 'm', cal: 'cal', rep: 'reps', seg: 's' };
-  return (q != null ? br(q) + ' ' : '') + ROT[u];
+  return (q != null ? br(q) + ' ' : '') + ROT[u] + lado;
 }
 
 /**

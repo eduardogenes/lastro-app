@@ -314,7 +314,7 @@ function treino(d) {
     // e 15 cal no outro, e quem decide é a lousa do box. O catálogo só diz com
     // o que o campo nasce preenchido.
     return { id:sl.id, n:e.n, car:e.car, g:e.g, c:e.c, cue:e.cue, u:sl.u || e.u,
-             q:sl.q, peg:e.peg, pegPe:e.pegPe,
+             q:sl.q, lado:sl.lado, peg:e.peg, pegPe:e.pegPe,
              s:sl.s, r:sl.r, d:sl.d, rir:sl.rir || '', desde:sl.desde, bi:sl.bi || 0,
              mod:sl.mod || 0, orig:sl.orig || sl.id };
   }) };
@@ -3707,7 +3707,7 @@ function aplicaAoOficial(d, mods, motivo) {
 // oficial. É o oposto da edição do dia, e a tela diz isso o tempo todo.
 function difDoDia(d) {
   const bt = baseTreinador()[d];
-  const base = bt ? bt.ex.map(function (sl) { return { id: sl.id, s: sl.s, r: sl.r, d: sl.d, rir: sl.rir }; }) : null;
+  const base = bt ? bt.ex.map(function (sl) { return { id: sl.id, s: sl.s, r: sl.r, d: sl.d, rir: sl.rir, u: sl.u, q: sl.q, bi: sl.bi, lado: sl.lado }; }) : null;
   const meu = (S.prog[d] || { ex: [] }).ex;
   if (!base) return [{ k:'novo', txt:'treino criado por você' }];
 
@@ -3737,9 +3737,18 @@ function difDoDia(d) {
     // que era depois. O histórico do programa recebe as duas, e uma gramática
     // por origem faria o mesmo registro falar de dois jeitos.
     if (x.s !== b.s) out.push({ k:'sets', txt: nomeEx(x.id) + ': ' + x.s + ' séries, não ' + b.s });
-    if (x.r !== b.r) out.push({ k:'reps', txt: nomeEx(x.id) + ': ' + x.r + ' repetições, não ' + b.r });
+    const trocouUnidade = (x.u || '') !== (b.u || '');
+    // repetições ↔ tempo é uma diferença só, dita pela linha do tempo abaixo
+    if (!trocouUnidade && (x.r !== b.r || (x.lado || '') !== (b.lado || ''))) {
+      const rep = function (z) { return z.r + ' repetições' + (z.lado ? ' por ' + z.lado : ''); };
+      out.push({ k:'reps', txt: nomeEx(x.id) + ': ' + rep(x) + ', não ' + rep(b) });
+    }
     if (x.d !== b.d) out.push({ k:'desc', txt: nomeEx(x.id) + ': descanso de ' + fmtDesc(x.d) + ', não ' + fmtDesc(b.d) });
     if ((x.rir || '') !== (b.rir || '')) out.push({ k:'rir', txt: nomeEx(x.id) + ': sobrando ' + (x.rir || '—') + ', não ' + (b.rir || '—') });
+    // o tempo (ou a grandeza) e o bi-set também são do treinador: deixados de fora, viram diferença
+    const passada = function (z) { return (z.u && z.q != null ? z.q + ' ' + ({ seg: 's', m: 'm', cal: 'cal', rep: 'rep' })[z.u] : z.r + ' repetições') + (z.lado ? ' por ' + z.lado : ''); };
+    if ((x.u || '') !== (b.u || '') || (x.q || 0) !== (b.q || 0)) out.push({ k:'tempo', txt: nomeEx(x.id) + ': ' + passada(x) + ', não ' + passada(b) });
+    if (!!x.bi !== !!b.bi) out.push({ k:'bi', txt: nomeEx(x.id) + ': ' + (x.bi ? 'bi-set com o seguinte' : 'sem bi-set') + ', não ' + (b.bi ? 'bi-set' : 'sem bi-set') });
   });
   const saiuPorTroca = {};
   Object.keys(trocado).forEach(function (k) { saiuPorTroca[trocado[k]] = 1; });
@@ -4009,10 +4018,10 @@ CTX.incorporaRevisao = async function (evento) {
         return;
       }
       if (CAT[id] || S.ex[id]) return;
-      // série de tempo ("2 x 40 s"): sem carga, e o campo nasce em segundos, como a prancha
-      S.ex[id] = x.u === 'seg'
-        ? { n: x.n, car: x.car || 'corpo', g: x.g || '', c: 0, cue: x.cue || '', u: 'seg', q: x.q, m: Date.now() }
-        : { n: x.n, car: x.car || 'pino', g: x.g || '', c: 0, cue: x.cue || '', m: Date.now() };
+      // série de tempo ("2 x 40 s"): sem carga. A grandeza fica no SLOT, e não no catálogo: se uma
+      // revisão seguinte trocar o slot para repetições, o catálogo não pode continuar dizendo segundos
+      // e, como todo movimento com grandeza, sem grupo: a prancha não vira série de core no volume
+      S.ex[id] = { n: x.n, car: x.car || (x.u === 'seg' ? 'corpo' : 'pino'), g: x.u === 'seg' ? '' : (x.g || ''), c: 0, cue: x.cue || '', m: Date.now() };
       criados.push(id);
     });
   });

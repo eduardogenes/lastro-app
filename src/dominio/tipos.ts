@@ -109,6 +109,8 @@ export interface Slot {
   desde: number;
   /** 1 quando é bi-set com o exercício seguinte */
   bi?: 0 | 1;
+  /** 'lado' ou 'perna' quando a faixa é de cada lado ("3 × 8–12 por perna"); vem da revisão em texto */
+  lado?: 'lado' | 'perna';
   /** 1 quando o slot é resultado de um mod do dia */
   mod?: 0 | 1;
   /** id original da posição, mesmo depois de uma troca */
