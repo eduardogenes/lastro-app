@@ -77,7 +77,7 @@ export function ExercicioV3({ ctx }) {
               // a sessão abre inteira, e é lá que cada série se corrige
               return s.sessao != null
                 ? <button key={s.t} class="v3-sess" data-a="ex-sessao" aria-label={'Sessão de ' + s.data + ': abrir para ver ou corrigir'}
-                          onClick={() => ctx.abreSessaoDoHistorico(s.sessao)}>{dentro}</button>
+                          onClick={() => ctx.abreSessaoDoHistorico(s.sessao, s.sid)}>{dentro}</button>
                 : <div key={s.t} class="v3-sess">{dentro}</div>;
             })}
           </div>

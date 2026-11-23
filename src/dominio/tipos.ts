@@ -224,8 +224,8 @@ export interface Sessao {
   pulados?: number[];
   /** exercícios feitos MESMO ASSIM com dor repetida — a escolha fica no dia (§7.4) */
   dorMesmoAssim?: string[];
-  /** 1 quando o horário é confiável */
-  hora?: 0 | 1;
+  /** 1 para a hora exata. Com apenas o turno, t serve para ordenar a sessão. */
+  hora?: 0 | 1 | 'turno';
   dl?: 0 | 1;
   retro?: 0 | 1;
   /** o que mudou no dia, tenha virado permanente ou não */

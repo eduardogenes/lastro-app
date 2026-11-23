@@ -1,7 +1,7 @@
 // Dias. A grade lê os registros do mês; a resposta de frequência só vem da pessoa.
-import { useLayoutEffect, useRef } from 'preact/hooks';
+import { CartaoRegistro } from './registrotreino.jsx';
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Botao, Cabecalho, Fichas, Pergunta, Quadros, Saida, Secao, Segmentos, TelaDeAcao } from '../base.jsx';
+import { Acoes, Apoio, Botao, Cabecalho, Pergunta, Quadros, Secao, Segmentos, TelaDeAcao } from '../base.jsx';
 
 const RESPOSTAS = [{ k: 'sim', t: 'Foi, sim' }, { k: 'quase', t: 'Quase' }, { k: 'naosei', t: 'Não lembro' }];
 const DITA = { sim: 'foi como o plano', quase: 'quase como o plano', naosei: 'não lembro' };
@@ -23,7 +23,9 @@ function Celula({ dia: d, comida, escolhida, escolher }) {
     <small>{d.n}</small>
     {!d.futuro && <>
       {d.periodo && <Arco turno={d.periodo.k} />}
-      <span class={'v3-cal-bola ' + tipo + (d.cardio ? ' cardio' : '') + (texto.length > 2 ? ' longa' : '')}>{texto}</span>
+      {d.segunda ? <span class="v3-cal-dupla">{[texto, d.segunda].map((l, i) =>
+        <span key={i} class={'v3-cal-bola ' + (l === 'HX' ? 'hx' : 'treino') + (l.length > 2 ? ' longa' : '') + (i === 1 && d.cardio ? ' cardio' : '')}>{l}</span>)}</span>
+        : <span class={'v3-cal-bola ' + tipo + (d.cardio ? ' cardio' : '') + (texto.length > 2 ? ' longa' : '')}>{texto}</span>}
       {(d.fotos || d.medidas) && <span class="v3-cal-corpo" aria-hidden="true">{d.fotos && ic.camera}{d.medidas && ic.medida}</span>}
     </>}
   </button>;
@@ -40,44 +42,19 @@ function Legenda({ comida }) {
 }
 
 function DiaEscolhido({ ctx, c, comida }) {
-  const cartaoAoTirar = useRef(null);
   const dia = ctx.resumoDoDiaV3(c.iso);
-  const extras = [c.cardio && 'cardio', c.fotos && 'fotos', c.medidas && 'medidas'].filter(Boolean);
-  const frequencia = c.descanso ? 'descanso' : c.falta ? 'falta' : null;
+  const extras = [c.fotos && 'fotos', c.medidas && 'medidas'].filter(Boolean);
   const resposta = c.resposta;
   const treino = c.principal === 'HX' ? 'HYROX' : dia.treino?.titulo || (c.principal ? 'Treino fora' : c.descanso ? 'Descanso' : c.falta ? 'Falta' : '?');
 
-  function tirarResposta(evento) {
-    const cartao = evento.currentTarget.closest('.v3-cal-det');
-    // Mantém a rolagem mesmo quando saem o botão e os motivos da falta.
-    cartao.style.minHeight = cartao.getBoundingClientRect().height + 'px';
-    cartaoAoTirar.current = cartao;
-    ctx.respondeFrequencia(c.iso, null);
-  }
-  useLayoutEffect(() => {
-    if (frequencia || !cartaoAoTirar.current) return;
-    cartaoAoTirar.current.querySelector('[data-a="frequencia-descanso"]')?.focus({ preventScroll: true });
-    cartaoAoTirar.current = null;
-  }, [frequencia]);
-
-  return <Secao classe="v3-cal-det" titulo={c.rotulo.split(':')[0] + (c.hoje ? ' · hoje' : '')}>
-    <Quadros colunas={comida ? 3 : 2} itens={[
+  const nada = !c.hoje && !c.principal && !c.descanso && !c.falta && !c.cardio;
+  return <Secao classe="v3-cal-det" titulo={c.rotulo.split(':')[0] + (c.hoje ? ' · hoje' : '')} nota={nada ? 'sem nada registrado' : null}>
+    {(c.principal || c.descanso || c.falta || dia.peso || resposta) ? <Quadros colunas={comida ? 3 : 2} itens={[
       { k: 't', valor: treino, rotulo: c.outrosTreinos || dia.treino?.apoio || (c.principal ? 'fora da prescrição' : c.falta ? c.falta.motivo || 'sem motivo dito' : 'sem treino'), aoTocar: () => ctx.abreDia(c.abre) },
       { k: 'p', valor: dia.peso || '—', unidade: dia.peso ? 'kg' : null, rotulo: 'peso' },
-      ...(comida ? [{ k: 'c', valor: COMIDA[resposta] || '—', rotulo: resposta ? 'comida' : 'comida sem resposta' }] : [])]} />
+      ...(comida ? [{ k: 'c', valor: COMIDA[resposta] || '—', rotulo: resposta ? 'comida' : 'comida sem resposta' }] : [])]} /> : null}
     {extras.length > 0 && <Apoio>Também: {extras.join(' · ')}</Apoio>}
-    {!c.principal && !c.hoje && <div class="v3-cal-freq">
-      <p>{frequencia ? 'Descanso ou falta?' : 'Sem treino neste dia. Foi descanso ou falta?'}</p>
-      <Fichas rotulo="Descanso ou falta" prefixo="frequencia-"
-        opcoes={[{ k: 'descanso', t: 'Descanso' }, { k: 'falta', t: 'Falta' }].map(o => ({ ...o, on: frequencia === o.k }))}
-        aoTocar={k => { if (k !== frequencia) ctx.respondeFrequencia(c.iso, k); }} />
-      {c.falta && <>
-        <Apoio>O motivo, se quiser dizer. Continua sendo falta.</Apoio>
-        <Fichas rotulo="Motivo da falta" prefixo="motivo-" opcoes={ctx.motivosFalta.map(k => ({ k, t: k, on: c.falta.motivo === k }))}
-          aoTocar={k => ctx.respondeFrequencia(c.iso, 'falta', c.falta.motivo === k ? undefined : k)} />
-      </>}
-      {frequencia && <Saida data-a="frequencia-tirar" onClick={tirarResposta}>Tirar a resposta</Saida>}
-    </div>}
+    <CartaoRegistro ctx={ctx} data={c.iso} />
     {comida && (resposta === 'com' ? <Apoio>Comida marcada refeição por refeição.</Apoio> :
       <Pergunta pergunta={resposta ? 'Comida: ' + DITA[resposta] : 'A comida deste dia foi como o plano?'}
         nota={resposta === 'naosei' ? 'Fica fora da conta, não vira zero. Toque para corrigir.'

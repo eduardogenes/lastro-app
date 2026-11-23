@@ -39,7 +39,7 @@ import {
   ajusteNoItem, quantidadePrescrita, totalDaRefeicao, totalDoDia, totalRegistrado
 } from '../../src/dominio/nutricao/calculo';
 import { CADENCIA_PADRAO, cadenciaPrevista } from '../../src/dominio/dia';
-import { DIAS_CURTOS, DIAS_LONGOS, MESES, fmtDesc, fmtDur, fmtHora } from '../../src/dominio/formato';
+import { DIAS_CURTOS, DIAS_LONGOS, MESES, fmtDesc, fmtDur, fmtHora, periodoDe } from '../../src/dominio/formato';
 import { BUCKET_APARELHOS, BUCKET_CORPO } from '../../src/infra/supabase';
 import { APOIADO, NIVEL_FRENTE, NIVEL_LADO, TREMOR, noNivel } from '../../src/infra/nivel';
 import { extDoOriginal } from '../../src/infra/corpo';
@@ -462,6 +462,7 @@ function linhasDaSessao(b: Base, x: SessaoMontada): string[] {
 
   const fatos: string[] = [];
   if (temHora(m)) fatos.push('começou às ' + fmtHora(m.t));
+  else if (m.hora === 'turno') fatos.push('de ' + periodoDe(m.t).nome + ' (sem hora exata)');
   if (m.dur > 0) fatos.push(fmtDur(m.dur) + ' de treino');
   if (S.sessao && S.sessao.sid === m.sid) fatos.push('em andamento');
   if (m.dl) fatos.push('deload');
@@ -496,7 +497,7 @@ function linhasDaSessao(b: Base, x: SessaoMontada): string[] {
     L.push('- ' + nome + ' — ' + (feitas.length ? feitas.map(function (s) { return serieTexto(s, l.u, l.q); }).join(' · ') : 'sem série completa'));
     if (l.rir && !feitas.some(function (s) { return typeof s[2] === 'number'; })) L.push('  - RIR da última série: ' + l.rir);
     if (l.aq) L.push('  - feito com aproximação');
-    if (l.dp) L.push('  - registrado depois do treino, com os números da última vez (podem ter sido corrigidos); não foi anotado série a série');
+    if (l.dp) L.push('  - registrado depois do treino, com números declarados');
     if (lista<string>(l.dor).length) L.push('  - dor: ' + lista<string>(l.dor).map(dor).join(', '));
     if (l.obs) L.push('  - nota: ' + cel(l.obs));
   });
@@ -1042,12 +1043,12 @@ function leiaMe(b: Base, ctx: Contexto, existentes: Set<string>): string {
   L.push('- **Série de musculação:** `carga × repetições (RIR n)`. RIR é quantas repetições sobraram antes da falha. Séries antigas podem não ter RIR.');
   L.push('- **Carga:** é o número digitado, sem conversão. "kg/lado" é o peso de UM lado (sem a barra); em halteres, o de UMA mão; "+kg" é o que foi somado ao peso do corpo; "ajuda" é o contrapeso da máquina assistida (menos é mais força). Ver `treino/exercicios.md`.');
   L.push('- **Movimentos medidos por distância ou caloria** (remo, corrida, sled): o resultado é o TEMPO, e menos é melhor. Por repetição ou tempo (wall ball, prancha): o resultado é QUANTO saiu, e mais é melhor.');
-  L.push('- **Hora do treino** só aparece quando é confiável (sessão lançada depois sem hora informada fica sem).');
+  L.push('- **Hora do treino** só aparece quando é confiável (o histórico pode dizer só o turno e a coluna de hora fica vazia).');
   L.push('- **Totais de comida** de dias fechados foram congelados no fechamento, contra o plano daquela data: mudar o plano depois não reescreve o passado. Refeição marcada "fora do plano" ou "não sabe" entra com os números do plano; "não comeu" não entra.');
   L.push('- **O tamanho da refeição fora do plano.** Desde novembro de 2026, quem marca "comi outra coisa" diz o tamanho comparado ao da refeição do plano, sem pesar: parecido, bem mais, bem menos ou não sabe. Aparece entre parênteses em `refeicoes_marcadas`. É o que a pessoa disse, não uma medida, e não muda os totais: eles continuam com os números do plano. Marca sem tamanho é de antes, ou veio do "pôr o dia em dia", que não pergunta.');
   L.push('- **Registro por exceção.** Desde novembro de 2026 o app deixa responder o dia inteiro de uma vez ("a comida foi como o plano?": sim, quase, não lembro). Esses dias têm `respondido_pelo_dia` = 1 em `dias.csv`: as refeições aparecem sem hora, porque a hora da marca é a da resposta. "Quase" é `como_foi_o_dia` = fora; "não lembro" é perdido, e o dia não conta para a regra.');
   L.push('- **A revisão do treinador entra mudança por mudança** (desde novembro de 2026). `programa-do-treinador.md` é a revisão inteira, como ele mandou; a pessoa escolhe quais mudanças entram no programa dela (`programa.md`). O que ela deixou de fora aparece em `mudancas.md`, na linha da revisão, depois de "Ficou de fora:". As mudanças que ela já tinha feito e a revisão não tocou continuam no programa dela.');
-  L.push('- **Séries registradas depois** (`registrado_depois` = 1 em `series.csv`): a pessoa treinou, não anotou na hora e marcou depois, com a carga e as repetições da última vez (podem ter sido corrigidas). Contam como as outras.');
+  L.push('- **Séries registradas depois** (`registrado_depois` = 1 em `series.csv`): a pessoa treinou, não anotou na hora e marcou depois, repetindo a última sessão, seguindo a prescrição ou ajustando os números. Contam como as outras.');
   L.push('- **Fotos fora do padrão** (coluna "Padrão" em `fotos.md`): a pessoa tirou mesmo sem acertar o que está escrito ali. A linha "Mudou em relação à sessão anterior" diz se a luz, a roupa ou o lugar mudaram.');
   L.push('- **Água** em copos; vazio quando ele marcou que não contou (é diferente de zero).');
   L.push('- **Medidas com fita** (`medidas.csv`): quando a medida é de um lado só, é sempre o direito. `onde_mediu` é o ponto onde a fita passou; o app preenche com o ponto padrão de cada medida, e a pessoa pode trocar.');

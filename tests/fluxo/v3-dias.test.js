@@ -71,9 +71,11 @@ test('dia sem treino aceita falta, motivo opcional, correção e treino registra
   try {
     assert.equal(a.$('[data-a="frequencia-falta"]'), null, 'hoje continua em curso');
     await toca('[data-a="dia-' + d + '"]');
-    assert.match(a.texto('.v3-cal-freq'), /Sem treino neste dia\. Foi descanso ou falta\?/);
+    assert.match(a.texto('.v3-cal-freq'), /O que foi esse dia\?/);
     await toca('[data-a="frequencia-falta"]');
     assert.deepEqual(a.$$('.v3-cal-freq [data-a^="motivo-"]').map(b => b.textContent), ['doença', 'preguiça', 'viagem', 'trabalho', 'outro']);
+    assert.equal(a.gravado().falta[d], undefined, 'escolher Falta ainda não guarda');
+    await toca('[data-a="frequencia-guardar"]');
     assert.equal(a.gravado().falta[d].motivo, undefined);
     await toca('[data-a="motivo-viagem"]');
     await toca('[data-a="frequencia-falta"]');
@@ -178,8 +180,9 @@ test('Tirar a resposta volta ao ponto de interrogação e grava as lápides de d
   try {
     await toca(celula);
     for (const escolha of ['descanso', 'falta']) {
-      assert.equal(a.texto('.v3-cal-freq > p'), 'Sem treino neste dia. Foi descanso ou falta?');
+      assert.equal(a.texto('.v3-cal-freq > p'), 'O que foi esse dia?');
       await toca('[data-a="frequencia-' + escolha + '"]');
+      if (escolha === 'falta') await toca('[data-a="frequencia-guardar"]');
       assert.equal(a.texto('.v3-cal-freq > p'), 'Descanso ou falta?');
       if (escolha === 'falta') await toca('[data-a="motivo-viagem"]');
       const s = a.gravado(), em = s.descanso[d] || s.falta[d].m;
@@ -199,7 +202,7 @@ test('Tirar a resposta volta ao ponto de interrogação e grava as lápides de d
       assert.deepEqual(a.vJ('funde', s, depois, em + 10).estado.falta, {});
       assert.deepEqual(a.vJ('funde', depois, s, em + 10).estado.descanso, {});
     }
-    assert.equal(a.texto('.v3-cal-freq > p'), 'Sem treino neste dia. Foi descanso ou falta?');
+    assert.equal(a.texto('.v3-cal-freq > p'), 'O que foi esse dia?');
   } finally { foco.mockRestore(); a.fechar(); }
 });
 
@@ -307,7 +310,8 @@ test('o mês distingue as respostas da comida, os três turnos, HYROX e os regis
     assert.ok(celula(-1).disabled);
     assert.equal(celula(-1).children.length, 1);
     celula(1).click(); await a.esperar();
-    assert.match(a.texto('.v3-cal-det'), /Também: cardio · fotos · medidas/);
+    assert.match(a.texto('.v3-cal-det'), /Também: fotos · medidas/);
+    assert.match(a.texto('.v3-reg-cardio-ok'), /Cardio: 15 min de bike\./);
     celula(3).click(); await a.esperar();
     assert.match(a.texto('.v3-cal-det'), /Por refeição/);
     assert.equal(celula(3).dataset.comida, 'com');

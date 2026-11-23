@@ -365,7 +365,7 @@ function vaiPara(alvo, empilha = true) {
   desenhaAparelho();
 }
 function voltar() {
-  if (P.folha) { P.folha = null; desenhaAparelho(); return; }
+  if (P.folha) { P.folha = P.folha.anterior || null; desenhaAparelho(); return; }
   if (P.pilha.length > 1) { P.pilha.pop(); desenhaAparelho(); return; }
   const t = TELAS[topo().id];
   if (t.c !== 'lugar') { P.pilha = [{ id: t.lugar || 'hoje', e: null }]; const l = TELAS[P.pilha[0].id]; P.pilha[0].e = l.es ? l.es[0][0] : null; desenhaAparelho(); }

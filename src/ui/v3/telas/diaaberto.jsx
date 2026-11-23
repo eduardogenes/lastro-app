@@ -50,9 +50,9 @@ export function DiaAbertoV3({ ctx }) {
         <Secao titulo="Treino">
           <div>
             {d.registros.map(r => r.k === 'sessao'
-              ? <Linha key={'s' + r.t} marca={r.letra === 'fora' ? '•' : r.letra === 'aula' ? ic.halter : r.letra} marcaTom="f"
+              ? <Linha key={'s' + (r.sid ?? r.t)} marca={r.letra === 'fora' ? '•' : r.letra === 'aula' ? ic.halter : r.letra} marcaTom="f"
                        titulo={r.titulo} apoio={r.detalhe} data-a="dia-sessao"
-                       aoTocar={() => ctx.abreSessaoDoDia({ k: 'sessao', t: r.t })} />
+                       aoTocar={() => ctx.abreSessaoDoDia({ k: 'sessao', t: r.t, sid: r.sid })} />
               : (
                 <div key={'c' + r.t} class={'v3-dia-cardio' + (r.igual ? ' igual' : '')}>
                   <Linha marca={ic.coracao} titulo={r.titulo} apoio={r.detalhe} data-a="dia-cardio" aria-expanded={r.aberto ? 'true' : 'false'}
@@ -79,7 +79,7 @@ export function DiaAbertoV3({ ctx }) {
         <Secao titulo="Cardio neste dia">
           <div class="v3-dia-ed">
             <CamposDoCardio campos={d.cardioNovo} prefixo="dia-cardio-novo-" aoTocar={(campo, k) => ctx.cardioNoDiaSet(campo, k)} />
-            <Acoes><Botao data-a="dia-cardio-grava" onClick={ctx.gravaCardioNoDia}>Guardar</Botao></Acoes>
+            <Acoes><Botao data-a="dia-cardio-grava" onClick={() => ctx.gravaCardioNoDia()}>Guardar</Botao></Acoes>
             <Apoio>Entra sem hora: o dia é este, a hora não foi anotada.</Apoio>
             {d.cardioNovo.falhou && <Caixa tom="atencao" titulo="Não guardei." nota={d.cardioNovo.falhou} />}
             <Saida data-a="dia-cardio-novo" onClick={ctx.abreCardioNoDia}>Fechar o cardio</Saida>
@@ -125,19 +125,12 @@ export function DiaAbertoV3({ ctx }) {
 export function FolhaPoeODiaGeralV3({ ctx, f }) {
   const d = ctx.diaAberto();
   if (!d) return null;
-  const t = meioDia(f.data);
   const resposta = ctx.respostaDoDia(f.data);
   const fecha = fn => () => { ctx.fechaFolha(); fn(); };
   return (
     <Folha titulo="Pôr o dia em dia" sub={d.titulo.charAt(0).toUpperCase() + d.titulo.slice(1) + '. O que entrar aqui fica marcado como registrado depois.'}
            aoFechar={() => ctx.fechaFolha()}>
       <div class="v3-opcoes">
-        <Linha marca={ic.halter} titulo="Treinei neste dia" apoio="qual treino foi, e os exercícios como da última vez" data-a="poe-treinei"
-               aoTocar={fecha(() => ctx.abreSessaoDoDia({ k: 'lancar', t: t }))} />
-        {d.podeDescanso && !d.descanso && (
-          <Linha marca={ic.ok} titulo="Foi descanso" apoio="marca o dia como descanso" semSeta data-a="poe-descanso"
-                 aoTocar={fecha(() => ctx.alternaDescansoDoDia(t, true))} />
-        )}
         {d.podeCardio && (
           <Linha marca={ic.coracao} titulo="Fiz cardio" apoio="bike, esteira, outro" data-a="poe-cardio"
                  aoTocar={fecha(() => { if (!d.cardioNovo) ctx.abreCardioNoDia(); })} />
@@ -146,6 +139,7 @@ export function FolhaPoeODiaGeralV3({ ctx, f }) {
       {ctx.moduloLigado('comida') && (
         <>
           <div class="v3-sec-h v3-folha-h"><h3>A comida</h3></div>
+          <Saida data-a="poe-refeicoes" onClick={fecha(() => ctx.abrePoeODia(f.data))}>Corrigir refeição por refeição</Saida>
           <Respostas sobreFundo rotulo="A comida deste dia foi como o plano?" valor={resposta}
                      opcoes={[{ k: 'sim', t: 'Foi, sim' }, { k: 'quase', t: 'Quase' }, { k: 'naosei', t: 'Não lembro' }]}
                      aoResponder={k => ctx.respondeODia(f.data, k)} />

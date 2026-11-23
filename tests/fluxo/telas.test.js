@@ -329,11 +329,12 @@ test('ctx.abreSessaoDoDia despacha pelos dois tipos que o dia aberto dá', async
   await a.esperar(60);
   assert.strictEqual(a.vista().sessao.day, 'B', 'abriu a sessão daquele instante, e só ela');
 
-  // (2) `k: 'lancar'` — o lançamento retroativo, e a sessão sai da tela
+  // (2) A folha conserva a sessão que está por baixo.
   a.v('ctx.abreSessaoDoDia', { k: 'lancar', t: tB });
   await a.esperar(60);
-  assert.ok(a.vista().add, 'abriu o lançamento retroativo');
-  assert.strictEqual(a.vista().sessao, null, 'e fechou a sessão que estava na tela');
+  assert.ok(a.$('[role="dialog"][aria-label="Registrar um treino"]'));
+  a.v('ctx.fechaFolha');
+  assert.equal(a.vista().sessao.t, tB);
   a.fechar();
 });
 

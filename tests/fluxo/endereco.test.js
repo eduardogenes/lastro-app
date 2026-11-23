@@ -83,8 +83,12 @@ test('cada passo pode ser pulado e o Hoje vazio permite registrar um treino livr
     for (const k of ['comida', 'peso', 'agua', 'cardio', 'fotos']) assert.equal(a.v('ctx.moduloLigado', k), false);
     assert.equal(a.gravado().primeiraVez, 4);
     await toca(a, '[data-a="hoje-treino-livre"]');
-    assert.equal(a.$('[data-a="lanca-previsto"]'), null);
-    await toca(a, '[data-a="lanca-livre"]');
+    assert.equal(a.$('.v3-reg-letras .previsto'), null);
+    assert.equal(a.$$('.v3-reg-letras button').length, 1);
+    for (const k of ['livre', 'dur-45']) await toca(a, '[data-a="registro-' + k + '"]');
+    // o relógio é o de verdade: o turno é o primeiro que já começou hoje (nunca no futuro)
+    await toca(a, '[data-a^="registro-turno-"]');
+    await toca(a, '[data-a="registro-livre-guardar"]');
     assert.ok(a.S().done[0].livre);
     assert.deepEqual(a.S().rot, []);
   } finally { a.fechar(); }

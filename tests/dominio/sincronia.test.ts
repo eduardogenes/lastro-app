@@ -1058,3 +1058,13 @@ test('o como-eu-medi viaja com a medida na fusão, e morre com a lápide dela', 
   assert.deepStrictEqual(funde(r, apagado, T0 + 1).estado.body.braco, [],
     'a lápide da medida leva o texto junto: não sobra lembrete de medida apagada');
 });
+
+test('duas sessões no mesmo instante (só turno, dois aparelhos) ficam em ordem de sid, nas duas ordens da fusão', () => {
+  const t = T0 - DIA;
+  const a = estado({ done: [{ day: 'C', t, sid: t + 900, retro: 1, m: t + 900 }] as Estado['done'] });
+  const b = estado({ done: [{ day: 'B', t, sid: t + 500, retro: 1, m: t + 500 }] as Estado['done'] });
+  for (const [x, y] of [[a, b], [b, a]]) {
+    const r = funde(x, y, T0).estado;
+    assert.deepStrictEqual(r.done.map(s => s.day), ['B', 'C'], 'mesmo t: desempata pelo sid');
+  }
+});

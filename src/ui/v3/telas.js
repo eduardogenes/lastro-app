@@ -13,6 +13,7 @@ import { FolhaAulaTexto, FolhaDorEx, FolhaListaTreino, FolhaMenuSessaoV3, FolhaM
 import { ExercicioV3, FolhaFotoV3, FolhaRenomeiaEx, Progressao } from './telas/progressao.jsx';
 import { ProgramaV3, RevisaoV3 } from './telas/programa.jsx';
 import { FolhaCardioV3, FolhaComiOutra, FolhaOQueAparece, FolhaRefeicaoV3, FolhaRegistrar, FolhaTipoDoDia, HojeV3, PrimeiraVez } from './telas/hoje.jsx';
+import { FolhaRegistroTreino, FolhaAjustarRegistro } from './telas/registrotreino.jsx';
 import { DiasV3, ResponderDias } from './telas/dias.jsx';
 import { FolhaAplicar, FolhaMusculos, RetrospectivaV3, SemanaV3 } from './telas/semana.jsx';
 import { FolhaAlimentos, FolhaCompras, FolhaRefeicaoDoPlano, PlanoV3 } from './telas/plano.jsx';
@@ -78,6 +79,6 @@ export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoCompara
   ligarMedidas: FolhaLigarMedidas, comoMedir: FolhaComoMedir, corrigeMarca: FolhaCorrigeMarca, bio: FolhaBioV3,
   listaTreino: FolhaListaTreino, mudarEx: FolhaMudarEx, dorEx: FolhaDorEx, aulaTexto: FolhaAulaTexto, menuSessao: FolhaMenuSessaoV3,
   renomeiaEx: FolhaRenomeiaEx,
-  registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, poeODia: FolhaPoeODiaV3, poeODiaGeral: FolhaPoeODiaGeralV3, seriePassada: FolhaSeriePassada,
+  registroTreino: FolhaRegistroTreino, ajustarRegistro: FolhaAjustarRegistro, registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, poeODia: FolhaPoeODiaV3, poeODiaGeral: FolhaPoeODiaGeralV3, seriePassada: FolhaSeriePassada,
   editaRefeicao: FolhaEditaRefeicaoV3, seletor: FolhaSeletorV3, editaAlimento: FolhaEditaAlimentoV3, catalogo: FolhaCatalogo, foto: FolhaFotoV3, refeicao: FolhaRefeicaoV3, comiOutra: FolhaComiOutra, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos, aplicar: FolhaAplicar, colarCopia: FolhaColarCopia,
   refeicaoDoPlano: FolhaRefeicaoDoPlano, alimentos: FolhaAlimentos, compras: FolhaCompras };

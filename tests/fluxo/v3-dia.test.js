@@ -33,10 +33,10 @@ test('Desfazer o descanso recupera o motivo e o campo que vieram de um build pos
   const d = dataLocal(ONTEM), falta = { m: ONTEM, motivo: 'plantão', detalhe: { turno: 'noite' } };
   const a = await app({ agora: agoraEstavel(10), estado: { plano: 13, logs: {}, done: [], falta: { [d]: falta } } });
   try {
-    await abreODia(a, ONTEM);
+    a.aba('dias');
     const toca = async seletor => { a.clicar(seletor); await a.esperar(); };
-    await toca('[data-a="dia-poe"]');
-    await toca('[data-a="poe-descanso"]');
+    await toca('[data-a="dia-' + d + '"]');
+    await toca('[data-a="frequencia-descanso"]');
     assert.ok(a.gravado().descanso[d]);
     await toca('[data-a="aviso-acao"]');
     const { m, ...voltou } = a.gravado().falta[d];
@@ -66,12 +66,14 @@ test('o dia vazio: "Foi descanso" marca, e o cardio esquecido entra sem hora', a
   const a = await comTreinoPassado();
   await abreODia(a, ONTEM);
   assert.ok(a.$('.v3-vazio'), 'nenhum treino, nenhum descanso');
-  // "Pôr o dia em dia" → "Foi descanso"
-  a.clicar('[data-a="dia-poe"]');
+  a.v('ctx.fechaDia');
+  a.aba('dias');
+  a.clicar('[data-a="dia-' + dataLocal(ONTEM) + '"]');
   await a.esperar();
-  a.clicar('[data-a="poe-descanso"]');
+  a.clicar('[data-a="frequencia-descanso"]');
   await a.esperar(60);
   assert.ok(a.E(`!!S.descanso[${JSON.stringify(dataLocal(ONTEM))}]`), 'descanso marcado');
+  await abreODia(a, ONTEM);
   assert.ok(a.$('[data-a="dia-tira-descanso"]'));
   a.clicar('[data-a="dia-poe"]');
   await a.esperar();
@@ -113,6 +115,7 @@ test('a sessão passada: tocar na série abre a folha, e guardar corrige pela po
   a.v('ctx.guardaSeriePassadaV3', 20, 12, null);
   await a.esperar(80);
   assert.deepStrictEqual(a.J(`(S.logs[${JSON.stringify(ex1)}] || [])[0].sets[0]`), [20, 12]);
+  assert.equal(a.E(`(S.logs[${JSON.stringify(ex1)}] || [])[0].dp`), undefined, 'corrigir uma série não torna o treino "registrado depois": só o cartão marca');
   a.fechar();
 });
 
@@ -127,25 +130,6 @@ test('o histórico de um exercício abre a sessão por cima, e voltar devolve o 
   a.v('ctx.fechaSessao');
   await a.esperar(40);
   assert.ok(a.$('[data-a="ex-sessao"]'), 'e volta ao histórico');
-  a.fechar();
-});
-
-test('já treinei e não anotei: um toque grava a presença, e depois vem a hora', async () => {
-  const a = await comTreinoPassado();
-  a.v('ctx.lancaTreinoDeHoje');
-  await a.esperar(40);
-  assert.ok(a.$('.v3-pergunta-t'), 'a pergunta: que treino foi');
-  const antes = a.E('S.done.length');
-  a.clicar('[data-a="lanca-previsto"]');
-  await a.esperar(60);
-  assert.strictEqual(a.E('S.done.length'), antes + 1, 'gravou');
-  assert.ok(a.$('.v3-gravado'));
-  a.clicar('[data-a="lanca-por-hora"]');
-  await a.esperar();
-  assert.ok(a.$('#ahora'), 'a hora, se quiser');
-  a.clicar('[data-a="lanca-pronto"]');
-  await a.esperar(40);
-  assert.ok(!a.$('.v3-gravado'), 'pronto fecha');
   a.fechar();
 });
 

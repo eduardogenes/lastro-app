@@ -33,12 +33,12 @@ tela({ id: 'hoje', n: 'Hoje', g: 'hoje', c: 'lugar', lugar: 'hoje',
   vai: ['serie', 'aula', 'f-registrar', 'f-refeicao', 'f-aparece', 'f-tipo-dia', 'f-cardio', 'registrar-passado', 'sessao-passada', 'fotos'],
   gruda: e => ({ treino: ['Treino B<small>22 séries</small>', 'Começar', 'serie'], andamento: ['Treino B<small>8 de 22</small>', 'Voltar', 'serie'], refeicao: ['Almoço<small>12h30 · 719 kcal</small>', 'Comi', ''], noite: ['A comida de hoje<small>foi como o plano?</small>', 'Foi, sim', ''], aula: ['Aula do box<small>hoje, 07h00</small>', 'Fiz a aula', 'aula'] }[e] || null) ? (x => `<span>${x[0]}</span><button ${x[2] ? `data-ir="${x[2]}"` : ''}>${x[1]}</button>`)({ treino: ['Treino B<small>22 séries</small>', 'Começar', 'serie'], andamento: ['Treino B<small>8 de 22</small>', 'Voltar', 'serie'], refeicao: ['Almoço<small>12h30 · 719 kcal</small>', 'Comi', ''], noite: ['A comida de hoje<small>foi como o plano?</small>', 'Foi, sim', ''], aula: ['Aula do box<small>hoje, 07h00</small>', 'Fiz a aula', 'aula'] }[e]) : '',
   r: e => {
-    if (e === 'vazio') return H.momento({ cor: 'assunto-treino', linha0: `<span>segunda, 16 nov · <span class="n">09h12</span></span><button data-folha="f-aparece" aria-label="Escolher o que aparece">${ic.ajuste}</button>`, quando: 'ainda sem treino', titulo: 'Nada para agora.', grande: 1, apoio: 'Quando houver um treino no app, o próximo aparece aqui, com um botão só.', acoes: H.vai('Pôr o meu treino ' + ic.seta, { ir: 'revisao' }), saidas: H.saida('Registrar um treino livre', { ir: 'registrar-passado--fora' }) })
+    if (e === 'vazio') return H.momento({ cor: 'assunto-treino', linha0: `<span>segunda, 16 nov · <span class="n">09h12</span></span><button data-folha="f-aparece" aria-label="Escolher o que aparece">${ic.ajuste}</button>`, quando: 'ainda sem treino', titulo: 'Nada para agora.', grande: 1, apoio: 'Quando houver um treino no app, o próximo aparece aqui, com um botão só.', acoes: H.vai('Pôr o meu treino ' + ic.seta, { ir: 'revisao' }), saidas: H.saida('Registrar um treino livre', { folha: 'registrar-passado--fora' }) })
       + H.secao('Enquanto isso', '', `<div class="lista">${H.lin({ t: 'Colar o texto do treinador', a: 'o app organiza em treinos e séries', ir: 'revisao' })}${H.lin({ t: 'Escolher o que acompanhar', a: 'peso, água, cardio, fotos', folha: 'f-aparece' })}</div>`);
     const cor = { treino: 'assunto-treino', aula: 'assunto-corpo', andamento: 'assunto-treino', parado: 'assunto-treino', confirmar: 'assunto-corpo', refeicao: 'assunto-refeicao', noite: 'assunto-corpo', livre: 'assunto-feito', 'sem-comida': 'assunto-treino' }[e];
     const hora = { treino: '06h05', aula: '06h40', andamento: '06h38', parado: '07h52', confirmar: '09h20', refeicao: '12h40', noite: '21h00', livre: '15h00', 'sem-comida': '06h05' }[e];
     let m;
-    if (e === 'treino' || e === 'sem-comida') m = H.momento({ cor, linha0: L0(hora), quando: 'daqui a 10 min', vivo: 1, titulo: 'Treino B', apoio: 'Pernas completas e panturrilhas. 22 séries, perto de uma hora.', acoes: H.vai('Começar ' + ic.seta, { ir: 'serie' }), saidas: H.saida('Hoje não vou treinar', { folha: 'f-tipo-dia' }) + H.saida('Já treinei e não anotei', { ir: 'registrar-passado' }) });
+    if (e === 'treino' || e === 'sem-comida') m = H.momento({ cor, linha0: L0(hora), quando: 'daqui a 10 min', vivo: 1, titulo: 'Treino B', apoio: 'Pernas completas e panturrilhas. 22 séries, perto de uma hora.', acoes: H.vai('Começar ' + ic.seta, { ir: 'serie' }), saidas: H.saida('Hoje não vou treinar', { folha: 'f-tipo-dia' }) + H.saida('Já treinei e não anotei', { folha: 'registrar-passado' }) });
     if (e === 'aula') m = H.momento({ cor, linha0: L0(hora, 'aula'), quando: 'hoje, 07h00', vivo: 1, titulo: 'Aula do box', apoio: 'Anote no fim, um número por movimento. Ou repita a última aula.', acoes: H.vai('Fiz a aula ' + ic.seta, { ir: 'aula' }), saidas: H.saida('Hoje não vou', { folha: 'f-tipo-dia' }) });
     if (e === 'andamento') m = H.momento({ cor, linha0: L0(hora), quando: 'em andamento · 23 min', vivo: 1, titulo: 'Treino B', apoio: '8 de 22 séries guardadas. A próxima é terra romeno no Smith.', acoes: H.vai('Voltar ao treino ' + ic.seta, { ir: 'serie' }) });
     if (e === 'parado') m = H.momento({ cor, linha0: L0(hora), quando: 'parado há 1 h 10 min', titulo: 'Treino B', apoio: 'A última série foi às 06h42. Ainda está treinando?', acoes: H.vai('Continuo treinando', { ir: 'serie' }) + H.alt('Já parei', { ir: 'fim-treino' }), saidas: H.saida('Fiz mais do que anotei', { ir: 'por-em-dia' }) });
@@ -58,7 +58,7 @@ tela({ id: 'hoje', n: 'Hoje', g: 'hoje', c: 'lugar', lugar: 'hoje',
 tela({ id: 'f-registrar', n: 'Registrar (o "+")', g: 'hoje', c: 'folha', base: 'hoje',
   d: 'O "+" da doca. O mais provável agora vem primeiro, em lima; o resto em areia. O texto livre entende frases simples e diz o que guardou, ou que não entendeu.',
   es: [['normal', 'sugestões'], ['entendeu', 'texto: entendeu'], ['naoentendeu', 'texto: não entendeu']],
-  vai: ['serie', 'f-cardio', 'f-comi-outra', 'corpo'],
+  vai: ['serie', 'f-cardio', 'f-comi-outra', 'corpo', 'registrar-passado'],
   r: e => H.folha('Registrar', 'O mais provável agora vem primeiro. Ou escreva do seu jeito.', `
     <form class="diga" onsubmit="return false"><input placeholder="almocei e tomei 2 copos" aria-label="Escreva o que quer registrar" value="${e === 'entendeu' ? 'almocei e tomei 2 copos' : e === 'naoentendeu' ? 'fiz abdominal' : ''}" enterkeyhint="send"><button aria-label="Guardar">${ic.seta}</button></form>
     <p class="eco" aria-live="polite">${e === 'entendeu' ? ic.ok + '<span>Guardado: almoço como o plano, 2 copos de água.</span>' : e === 'naoentendeu' ? ic.duvida + '<span>Não entendi "fiz abdominal". Tente "almocei", "2 copos" ou "pesei 77,6", ou use os botões abaixo.</span>' : ''}</p>
@@ -66,7 +66,8 @@ tela({ id: 'f-registrar', n: 'Registrar (o "+")', g: 'hoje', c: 'folha', base: '
       <button data-desfazer="Copo somado: 7 de 14."><b>+1 copo de água</b><span>6 de 14 hoje</span></button>
       <button data-lugar="corpo"><b>Peso de hoje</b><span>última: 77,6 kg</span></button>
       <button data-folha="f-cardio"><b>Cardio</b><span>bike, 25 min</span></button>
-      <button data-folha="f-comi-outra"><b>Comi outra coisa</b><span>fora do plano</span></button></div>`) });
+      <button data-folha="f-comi-outra"><b>Comi outra coisa</b><span>fora do plano</span></button>
+      <button data-folha="registrar-passado"><b>Registrar um treino</b><span>já treinei e não anotei</span></button></div>`) });
 
 tela({ id: 'f-refeicao', n: 'Uma refeição do dia', g: 'hoje', c: 'folha', base: 'hoje',
   d: 'O que tem na refeição e marcar. "Não foi assim" abre as três respostas da exceção, em vez de "Pulei esta": o app separa quem comeu outra coisa de quem não comeu.',
@@ -90,18 +91,15 @@ tela({ id: 'f-aparece', n: 'O que aparece', g: 'hoje', c: 'folha', base: 'hoje',
     <div class="lista" style="margin-top:10px">${H.lin({ t: 'Ajustes', a: 'conta, cópia de segurança, lembretes', ir: 'ajustes' })}</div>`) });
 
 tela({ id: 'f-cardio', n: 'Cardio', g: 'hoje', c: 'folha', base: 'hoje',
-  d: 'Lacuna do protótipo. Escolha do aparelho em fichas, minutos pela régua, intensidade em seletor. Um "Guardar".',
-  r: () => H.folha('Cardio', 'Hoje: 20 a 25 min, leve. 1 de 2 nesta semana.', `<div class="corpo">${H.fichas(['Bike', 'Esteira', 'Elíptico', 'Escada', 'Outro'], 0, 'Aparelho').replace('class="fita-f"', 'class="fita-f" style="padding:4px 0 2px;margin:0"')}</div>
-    <div class="gigante p n" style="margin-top:16px"><span id="cd-v">25</span><small>min</small></div>${regua({ mn: 5, mx: 90, st: 1, v: 25, cada: 5, px: 22, nome: 'Minutos', un: 'min', alvo: '#cd-v' })}
-    <div style="margin-top:10px">${H.seg(['Leve', 'Moderado', 'Forte'], 'Leve', 'Intensidade')}</div>
-    <div class="acoes">${H.vai(ic.ok + ' Guardar', { desfazer: 'Cardio guardado: bike, 25 min, leve.' })}</div>`) });
+  d: 'Modalidade, minutos e intensidade. Outro ajusta o tempo de cinco em cinco.',
+  r: () => H.folha('Cardio', '1 de 2 nesta semana.', cardioReg(atual().form ||= novoCardioDemo())) });
 
 tela({ id: 'f-tipo-dia', n: 'O tipo do dia', g: 'hoje', c: 'folha', base: 'hoje',
   d: 'Tocar na data do bloco, ou "Hoje não vou treinar". Treino ou descanso (o efeito na comida dito antes do toque), o turno (muda os horários das refeições), "demanda alta" (dia de mais esforço, a regra do nutricionista sobe a comida) e, no app, "Como foi o dia" (a aderência que a régua da comida lê).',
   r: () => H.folha('Segunda, 16 de novembro', 'Isto muda só hoje. A semana de treino continua a mesma.', `
     <div class="corpo">${H.seg(['Treino', 'Descanso'], 'Treino', 'Tipo do dia')}</div>
     <h3 class="h" style="margin-top:18px">Turno <small>muda os horários das refeições</small></h3><div class="corpo">${H.seg(['Manhã', 'Tarde', 'Noite'], 'Manhã', 'Turno')}</div>
-    <div class="lista" style="margin-top:10px">${H.chave('Demanda alta', 'dia de trabalho físico ou de mais esforço: o plano sobe a comida', 0)}${H.lin({ t: 'Já treinei hoje', a: 'registrar o treino que não anotou', ir: 'registrar-passado' })}</div>
+    <div class="lista" style="margin-top:10px">${H.chave('Demanda alta', 'dia de trabalho físico ou de mais esforço: o plano sobe a comida', 0)}${H.lin({ t: 'Já treinei hoje', a: 'registrar o treino que não anotou', folha: 'registrar-passado' })}</div>
     <div class="acoes">${H.vai('Pronto', { fecha: 1 })}</div>`) });
 
 /* ======================= TREINO ======================= */
@@ -255,7 +253,7 @@ function arcoDoMes(turno) {
 }
 
 tela({ id: 'dias', n: 'Dias', g: 'dias', c: 'lugar', lugar: 'dias',
-  d: 'O mês em sete colunas. O fundo mostra a comida, a bola o treino e o arco o turno. No dia escolhido dá para corrigir comida, descanso e falta.',
+  d: 'O mês em sete colunas. O fundo mostra a comida, a bola o treino e o arco o turno. No cartão do dia entram o treino, o cardio, a resposta de frequência e a comida.',
   es: [['hoje', 'hoje'], ['treino', 'dia com treino'], ['branco', 'dia em branco'], ['falta', 'falta com motivo'], ['corpo', 'fotos e medidas']], vai: ['dia-aberto', 'responder'],
   r: e => {
     const deslocamento = topo().mes || 0;
@@ -269,26 +267,39 @@ tela({ id: 'dias', n: 'Dias', g: 'dias', c: 'lugar', lugar: 'dias',
     let treinos = 0, respondidos = 0, escolhido;
     for (let d = 1; d <= fim; d++) {
       const edicao = topo().respostasDias?.[[deslocamento, d]] || {};
-      const [registro, turno] = (m.dias[d] || '').split(' ');
-      const letra = registro === 'desc' || registro.startsWith('falta') ? '' : registro;
-      const frequencia = edicao.frequencia ?? (registro === 'desc' ? 'desc' : registro.startsWith('falta') ? 'falta' : '');
-      const motivo = edicao.motivo ?? registro.split(':')[1];
-      const comida = edicao.comida || m.comida[d], cardio = m.cardio.includes(d);
+      const [registro, turnoBase] = (m.dias[d] || '').split(' ');
+      const chave = [deslocamento, d].join('/');
+      const salvo = diasRegistroDemo.get(chave);
+      const letraBase = registro === 'desc' || registro.startsWith('falta') ? '' : registro;
+      const letra = salvo?.sessoes[0]?.k || letraBase, segunda = salvo?.sessoes[1]?.k;
+      const turno = salvo?.sessoes[0]?.turno || turnoBase;
+      const frequencia = letra ? '' : salvo?.freq ?? (registro === 'desc' ? 'desc' : registro.startsWith('falta') ? 'falta' : '');
+      const motivo = salvo?.motivo ?? registro.split(':')[1];
+      const comida = edicao.comida || m.comida[d], cardio = salvo ? !!salvo.cardio : m.cardio.includes(d);
       const fotos = m.corpo[d]?.includes('fotos'), medidas = m.corpo[d]?.includes('medidas');
       const tipo = letra === 'HX' ? 'hx' : letra ? 'treino' : frequencia || 'aberto';
       const centro = letra || frequencia || '?', futuro = d > vividos;
       const extras = [cardio && 'cardio', fotos && 'fotos', medidas && 'medidas'].filter(Boolean);
       if (letra) treinos++;
       if (comida && d <= fechados) respondidos++;
-      if (d === sel) escolhido = { letra, frequencia, motivo, comida, extras };
+      if (d === sel) escolhido = { chave, letra, frequencia, motivo, comida, extras, cardio, turno };
       const descricao = [d + ' de ' + mes, letra || frequencia, { m: 'manhã', t: 'tarde', n: 'noite' }[turno], COMIDA_DO_MES[comida], ...extras].filter(Boolean).join(', ');
-      celulas.push(`<button class="v3-dia ${d === m.hoje ? 'hoje' : ''}" data-comida="${comida || ''}" data-dia="${d}" aria-label="${descricao}" aria-pressed="${d === sel}" ${futuro ? 'disabled' : ''}><small>${d}</small>${futuro ? '' : arcoDoMes(turno) + `<span class="v3-cal-bola ${tipo} ${cardio ? 'cardio' : ''}">${centro}</span><span class="v3-cal-corpo">${fotos ? ic.camera : ''}${medidas ? ic.medida : ''}</span>`}</button>`);
+      const bola = l => '<span class="v3-cal-bola ' + (l === 'HX' ? 'hx' : 'treino') + '">' + (l === 'livre' ? 'fora' : l) + '</span>';
+      const bolas = segunda ? '<span class="v3-cal-dupla">' + bola(letra) + bola(segunda).replace('v3-cal-bola ', cardio ? 'v3-cal-bola cardio ' : 'v3-cal-bola ') + '</span>'
+        : `<span class="v3-cal-bola ${tipo} ${cardio ? 'cardio' : ''}">${centro === 'livre' ? 'fora' : centro}</span>`;
+      celulas.push(`<button class="v3-dia ${d === m.hoje ? 'hoje' : ''}" data-comida="${comida || ''}" data-dia="${d}" aria-label="${descricao}" aria-pressed="${d === sel}" ${futuro ? 'disabled' : ''}><small>${d}</small>${futuro ? '' : arcoDoMes(turno) + bolas + `<span class="v3-cal-corpo">${fotos ? ic.camera : ''}${medidas ? ic.medida : ''}</span>`}</button>`);
     }
     const { letra, frequencia, motivo, comida, extras } = escolhido;
     const titulo = new Date(2026, 10 + deslocamento, sel).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).replace('-feira', '');
     const fichas = (grupo, ops, k, rotulo) => `<div data-resposta-dia="${grupo}" data-escolhido="${sel}">${H.fichas(ops, k, rotulo)}</div>`;
-    const retirar = frequencia ? `<button class="saida" data-tirar-resposta data-resposta-dia="frequencia" data-escolhido="${sel}">Tirar a resposta</button>` : '';
-    const pergunta = !letra && sel !== m.hoje ? `<div class="v3-cal-freq"><p>${frequencia ? 'Descanso ou falta?' : 'Sem treino neste dia. Foi descanso ou falta?'}</p>${fichas('frequencia', ['Descanso', 'Falta'], ['desc', 'falta'].indexOf(frequencia), 'Descanso ou falta')}${frequencia === 'falta' ? '<p class="txt">O motivo, se quiser dizer. Continua sendo falta.</p>' + fichas('motivo', MOTIVOS_DO_MES, MOTIVOS_DO_MES.indexOf(motivo), 'Motivo da falta') : ''}${retirar}</div>` : '';
+    const anterior = Object.entries(m.dias).filter(([d, v]) => Number(d) < sel && /^[A-E] /.test(v)).pop();
+    const letras = D.TR.map(x => x[0]);
+    const ultimo = diasRegistroDemo.get(escolhido.chave)?.sessoes.filter(x => letras.includes(x.k)).at(-1)?.k || letra || anterior?.[1][0];
+    const proximo = letras[(letras.indexOf(ultimo) + 1) % letras.length];
+    if (!diasRegistroDemo.has(escolhido.chave)) diasRegistroDemo.set(escolhido.chave, {
+      sessoes: letra ? [{ k:letra, turno:escolhido.turno }] : [], freq:frequencia, motivo, cardio:escolhido.cardio && novoCardioDemo()
+    });
+    const pergunta = regDemo(escolhido.chave, null, false, titulo, sel === m.hoje, proximo);
     const alimento = comida === 'com' ? '<p class="txt">Comida marcada refeição por refeição.</p>' :
       `<div data-resposta-dia="comida" data-escolhido="${sel}">${H.pergunta(comida ? 'Comida: ' + ({ sim: 'foi como o plano', quase: 'quase como o plano', naosei: 'não lembro' }[comida]) : 'A comida deste dia foi como o plano?', comida === 'naosei' ? 'Fica fora da conta, não vira zero. Toque para corrigir.' : comida ? 'Conta para os 14 dias da regra. Toque para corrigir.' : 'Sem resposta, o dia fica fora da conta. Não vira zero.', ['Foi, sim', 'Quase', 'Não lembro'], COMIDA_DO_MES[comida])}</div>`;
     const nav = `<div class="v3-mes-nav"><button data-mes="-1" aria-label="Mês anterior">${ic.volta}</button><b>${mes}</b><button data-mes="1" aria-label="Próximo mês" ${m.hoje ? 'disabled' : ''}>${ic.dir}</button></div>`;
@@ -304,7 +315,7 @@ tela({ id: 'dias', n: 'Dias', g: 'dias', c: 'lugar', lugar: 'dias',
       <div class="v3-cal-resumo"><div><b>${treinos}</b><span>treinos em ${vividos} dias</span></div><div><b>${respondidos}<small> de ${fechados}</small></b><span>dias com a comida respondida</span></div><div><b>${m.horario || '—'}</b><span>horário mais comum</span></div>${m.hoje ? '<small>até ontem, 19/11</small>' : ''}</div>
       <div class="v3-cal v3-cal-h" aria-hidden="true">${'DSTQQSS'.split('').map(x => '<span>' + x + '</span>').join('')}</div>
       <div class="v3-cal" role="group" aria-label="${mes}">${celulas.join('')}</div><div class="v3-cal-leg" role="group" aria-label="Legenda do mês">${legenda.map(([i, l]) => '<span>' + i + l + '</span>').join('')}</div>
-      <section class="secao v3-cal-det"><h2 class="h">${titulo}${sel === m.hoje ? ' · hoje' : ''}</h2><div class="corpo">${quadros}${extras.length ? '<p class="txt">Também: ' + extras.join(' · ') + '</p>' : ''}${pergunta}${alimento}<div class="acoes">${H.alt('Abrir o dia ' + ic.seta, { cheio: 1, ir: 'dia-aberto' })}</div></div></section>
+      <section class="secao v3-cal-det"><h2 class="h">${titulo}${sel === m.hoje ? ' · hoje' : ''}</h2><div class="corpo">${letra || frequencia || m.peso[sel] || comida ? quadros : ''}${extras.filter(v => v !== 'cardio').length ? '<p class="txt">Também: ' + extras.filter(v => v !== 'cardio').join(' · ') + '</p>' : ''}${pergunta}${alimento}<div class="acoes">${H.alt('Abrir o dia ' + ic.seta, { cheio: 1, ir: 'dia-aberto' })}</div></div></section>
       ${H.secao('', '', H.vai('Responder os dias em branco ' + ic.seta, { ir: 'responder' }) + '<p class="txt">' + n14 + ' de 14 dias fechados respondidos. A regra do nutricionista precisa de 11.</p>')}</div>`;
   } });
 
@@ -322,7 +333,7 @@ tela({ id: 'responder', n: 'Responder os dias', g: 'dias', c: 'acao', lugar: 'di
 
 tela({ id: 'dia-aberto', n: 'O dia aberto', g: 'dias', c: 'destino', lugar: 'dias',
   d: 'Tudo o que aconteceu num dia, para conferir e corrigir: o treino (que abre a sessão), o cardio, o peso, a comida refeição por refeição.',
-  es: [['treino', 'dia de treino'], ['vazio', 'nenhum registro']], vai: ['sessao-passada', 'f-poe-dia', 'registrar-passado', 'f-cardio'],
+  es: [['treino', 'dia de treino'], ['vazio', 'nenhum registro']], vai: ['sessao-passada', 'f-poe-dia', 'f-cardio'],
   r: e => H.cab('sexta, 13 de novembro', 'registrado no dia') + (e === 'vazio'
     ? `<section class="secao" style="padding-top:4px">${H.vazio('Nenhum treino, nenhum descanso', 'Este dia ficou em branco. Ele fica fora das contas até você dizer o que foi.', H.vai('Pôr o dia em dia', { folha: 'f-poe-dia' }))}</section>`
     : H.secao('Treino', '', `<div class="lista">${H.lin({ o: 'A', oc: 'f', t: 'Treino A', a: '06h02 às 07h00 · 20 séries · 58 min', ir: 'sessao-passada' })}${H.lin({ o: ic.bike, t: 'Cardio: bike', a: '25 min, leve · 18h10', folha: 'f-cardio' })}</div>`)
@@ -331,8 +342,8 @@ tela({ id: 'dia-aberto', n: 'O dia aberto', g: 'dias', c: 'destino', lugar: 'dia
     + H.secao('', '', `<div class="acoes" style="margin-top:0">${H.alt('Pôr o dia em dia', { cheio: 1, folha: 'f-poe-dia' })}</div>`)) });
 
 tela({ id: 'f-poe-dia', n: 'Pôr o dia em dia', g: 'dias', c: 'folha', base: 'dia-aberto',
-  d: 'Para o dia que ficou em branco: o que foi, de uma vez.', vai: ['registrar-passado', 'f-cardio'],
-  r: () => H.folha('Pôr o dia em dia', 'Segunda, 9 de novembro. O que entrar aqui fica marcado como registrado depois.', `<div class="lista" style="margin-top:10px">${H.op(ic.halter, 'Treinei neste dia', 'marca os exercícios feitos, como da última vez', { ir: 'registrar-passado', dir: 1 })}${H.op(ic.ok, 'Foi descanso', 'marca o dia como descanso', { desfazer: '09/11 marcado como descanso.' })}${H.op(ic.bike, 'Fiz cardio', 'bike, esteira, outro', { folha: 'f-cardio', dir: 1 })}</div>
+  d: 'A comida e o cardio que ficaram sem anotar.', vai: ['f-refeicao', 'f-cardio'],
+  r: () => H.folha('Pôr o dia em dia', 'Segunda, 9 de novembro. O que entrar aqui fica marcado como registrado depois.', `<div class="lista" style="margin-top:10px">${H.op(ic.prato, 'Corrigir refeição por refeição', 'a comida deste dia', { folha: 'f-refeicao', dir: 1 })}${H.op(ic.bike, 'Fiz cardio', 'bike, esteira, outro', { folha: 'f-cardio', dir: 1 })}</div>
     <h3 class="h" style="margin-top:16px">A comida</h3>${H.resp(['Foi, sim', 'Quase', 'Não lembro'], null, { fundo: 1, nome: 'A comida' })}`) });
 
 tela({ id: 'sessao-passada', n: 'Sessão passada', g: 'dias', c: 'destino', lugar: 'dias',
@@ -360,13 +371,24 @@ tela({ id: 'f-hora', n: 'Corrigir a hora', g: 'dias', c: 'folha', base: 'sessao-
   d: 'O seletor de hora é uma régua de cinco em cinco minutos. "Agora" é um atalho.',
   r: () => H.folha('Fim do treino', 'sexta, 13/11. Começou às 06h02.', `<div class="gigante p n" style="margin-top:16px"><span id="hr-v">07h00</span></div>${regua({ mn: 6, mx: 9, st: 1 / 12, v: 7, cada: 1, px: 14, nome: 'Hora', un: '', passos: true })}<p class="ref">duração: 58 min</p><div class="acoes">${H.vai(ic.ok + ' Guardar', { desfazer: 'Fim do treino: 07h00.' })}</div>`) });
 
-tela({ id: 'registrar-passado', n: 'Registrar treino passado', g: 'dias', c: 'destino', lugar: 'hoje',
-  d: '"Já treinei e não anotei". Primeiro qual treino foi e quando (régua de dias), depois "Pôr em dia" com os exercícios. "Fora da prescrição" registra um treino livre.',
-  es: [['qual', 'qual treino'], ['fora', 'fora da prescrição']], vai: ['por-em-dia--depois'],
-  r: e => H.cab('Treino que não anotei', '') + `<section class="secao" style="padding-top:4px"><h2 class="h">Quando</h2><div class="corpo"><div class="dias-f" role="radiogroup" aria-label="Dia">${[['ter', 10], ['qua', 11], ['qui', 12], ['sex', 13], ['sáb', 14], ['dom', 15], ['seg', 16]].map((d, i) => `<button role="radio" data-radio aria-checked="${i === 6}">${d[0]}<b>${d[1]}</b></button>`).join('')}</div></div></section>
-    ${e === 'fora' ? H.secao('O que foi', '', `${H.campo('Nome', 'text', 'Corrida na praia')}<div class="corpo" style="margin-top:12px">${H.seg(['Força', 'Cardio', 'Outro'], 'Cardio', 'Tipo')}</div><div class="acoes">${H.vai('Guardar', { desfazer: 'Treino livre guardado.' })}</div>`)
-      : H.secao('Que treino foi', 'pela rotação, hoje era o B', `<div role="radiogroup" aria-label="Treino">${D.TR.map(t => H.esc('', `<b class="n" style="font:800 20px var(--f-titulo)">${t[0]}</b>`, 'Treino ' + t[0], t[1] + ' · ' + t[2] + ' séries', t[0] === 'B')).join('')}${H.esc('', ic.mais, 'Fora da prescrição', 'um treino livre, que não é do programa', false).replace('data-radio', 'data-radio data-est="fora"')}</div>
-        <div class="acoes">${H.vai('Marcar os exercícios ' + ic.seta, { ir: 'por-em-dia--depois' })}</div>`)}` });
+tela({ id: 'registrar-passado', n: 'Registrar um treino', g: 'dias', c: 'folha', base: 'hoje',
+  d: 'O mesmo cartão que abre no calendário. Escolha o treino, o turno e como foi. Quem treinou fora do plano registra os grupos e a duração.',
+  es: [['qual','qual treino'], ['fora','treino livre']], vai: ['f-ajustar-registro'],
+  r: e => {
+    const chave = 'folha-' + e;
+    if (cartaoDemo?.chave !== chave) { cartaoDemo = { chave, k:e === 'fora' ? 'livre' : '', grupos:[] }; }
+    const cartao = regDemo(chave, null, false, 'segunda, 16', true, 'B');
+    const sessoes = cartaoDemo.d.sessoes;
+    return H.folha('Registrar um treino', 'segunda, 16', (sessoes.length ? '<p>' + sessoes.map(x => x.k === 'livre' ? 'Treino livre' : 'Treino ' + x.k).join(' · ') + '</p>' : '') +
+      cartao + H.saida('Fechar', { fecha:1 }));
+  } });
+
+tela({ id: 'f-ajustar-registro', n: 'Ajustar o treino', g: 'dias', c: 'folha', base: 'dias',
+  d: 'Um exercício por linha. A carga e as repetições escolhidas valem para todas as séries daquele exercício.',
+  r: () => {
+    if (!cartaoDemo.ajustes) Object.assign(cartaoDemo, { k:'B', turno:'m', ajustes:EX_REG.B.map(l=>l.slice()) });
+    return ajustesReg();
+  } });
 
 tela({ id: 'f-confirma', n: 'Confirmação', g: 'geral', c: 'folha', base: 'sessao-passada',
   d: 'Só para o que não tem volta. O caminho seguro é o principal; o destrutivo é o contorno, com o verbo. Voltar, Esc e o véu respondem o seguro.',

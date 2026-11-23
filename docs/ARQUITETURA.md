@@ -178,7 +178,7 @@ S = {
   done: [{                              // presença: uma entrada por sessão
     day: 'A', t: 0, sid: 0, dur: 0,
     ini: 'manual', fim: 'auto',         // como começou e terminou
-    pausado: 0, pulados: [], hora: 1,
+    pausado: 0, pulados: [], hora: 1,   // 1 = hora exata; 'turno' = só o turno (t é o horário representativo: 8h, 15h, 20h, e hoje nunca depois de agora); ausente = sem hora
     dl: 1, retro: 1,
     mods: ['Pendulum squat → Agachamento hack'],
     livre: 1, grupos: ['peito'], nome: ''   // sessão avulsa, fora do plano
@@ -247,7 +247,7 @@ ontem. Uma marca de refeição conta uma resposta e aparece como **Por refeiçã
 sobre papel. **Não lembro** também conta uma resposta no mês e fica fora da
 conta nutricional. Só **Foi, sim** e **Quase** pintam o fundo. A câmera indica
 uma sessão do protocolo com foto. A régua indica uma fita ou dobra registrada.
-O peso tem seu próprio quadro. O arco usa a primeira sessão com hora conhecida.
+O peso tem seu próprio quadro. O arco é o da primeira sessão do dia, pela ordem do instante: com hora exata ou só com o turno, ele aparece; se a primeira sessão não tem hora nenhuma (registro antigo), o dia fica sem arco, e o app não procura a segunda.
 
 ### Primeiro acesso e prescrição embutida
 
@@ -957,6 +957,45 @@ parte do código que mais merece cuidado.
 
 ---
 
+### Registro de um treino depois
+
+O cartão de Dias e a folha do Hoje montam um rascunho em memória. No último
+toque, `lancaTreino` grava a presença e as entradas de histórico juntas. A
+sessão ao vivo, seus exercícios temporários e seu rascunho têm vida própria.
+
+O campo existente `Sessao.hora` distingue a precisão. Uma sessão retroativa
+antiga sem esse campo continua sem hora conhecida. Com `hora: 'turno'`, o
+instante local em `t` representa manhã (08h), tarde (15h) ou noite (20h).
+Esses valores ordenam o dia. O cartão e o histórico do espelho mostram apenas
+o turno. Com hora exata declarada, `hora: 1` conserva o minuto escolhido e
+o treino do programa entra na mediana do mês. O treino livre continua fora
+dessa mediana. A cópia e a fusão levam o valor junto com a sessão. Nenhuma
+conversão dos registros existentes é necessária.
+
+A identidade `sid` do novo lançamento nasce no instante de gravar. Dois
+aparelhos podem assim declarar treinos distintos para a mesma hora de ontem.
+A grade mostra as primeiras duas sessões por ordem de início e o arco da
+primeira, quando conhecido. Dentro do mesmo minuto, lançamentos locais ocupam
+milissegundos distintos. No empate entre aparelhos a fusão ordena pelo
+`sid`. Duas letras no mesmo dia contam um dia de frequência. O próximo treino
+segue a última letra em ordem cronológica. O livre e a aula aberta seguem a
+regra de `proximoTreino`. Descanso ou falta continuam guardados sob as sessões.
+
+“Como da última vez” copia os pares de carga e resultado da sessão anterior
+encerrada daquela letra até o instante escolhido, inclusive séries em branco,
+substituições e unidades. Dor, observação e RIR pertencem à sessão de origem.
+Sem séries nessa sessão, a opção aparece desabilitada. “Como o prescrito”
+usa o número de séries do programa, o início da faixa de repetições (ou o
+alvo declarado em segundos/repetições) e zero de carga adicionada. Um
+percurso em metros ou calorias só recebe resultado se houver tempo declarado.
+Em “Ajustar”, a primeira série feita do exercício fornece o ponto de partida.
+O par escolhido vale para todas as séries prescritas. Os três modos marcam
+as entradas com `Log.dp`. “Só que treinei” grava só a presença.
+
+O Desfazer retira a sessão pelo `sid` e grava as lápides dela e de seus logs.
+Cardio pertence à data e tem sua própria chave. Acrescentar ou tirar cardio
+conserva o treino e a resposta de frequência.
+
 ## Ciclo da sessão
 
 A sessão nasce na primeira série completa e se encerra sozinha por inatividade
@@ -1421,3 +1460,7 @@ treinador apontou.
 - Os marcadores de período no calendário (☀️ 🌤️ 🌙) são a **única** exceção
   autorizada à regra de não usar emoji. Estão isolados em `PERIODOS` e o teste
   de regressão verifica que não escaparam de lá.
+
+### O fluxo antigo de lançar treino passado
+
+`abrirAdicionar`, `view.add`, `corrigeLancamento`, `horaDoLancamento` e a tela `RegistrarPassadoV3` não têm mais entrada na interface desde o "Registrar um treino" (23/11/2026): Dias, Hoje e + usam o cartão (`registrotreino.jsx`). O código fica por enquanto porque cerca de 30 testes de fluxo (retro, horário, sincronia, dados) o usam para criar sessões retroativas; a gravação continua passando pela mesma porta, `lancaTreino`. Tirar esse código exige reescrever esses testes pelo cartão, numa peça própria.

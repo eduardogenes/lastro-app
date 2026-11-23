@@ -913,7 +913,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
 
   // ---- sessões ----
   const d = uneLista<Sessao>(local.done || [], remoto.done || [], chaveDeSessao, carimboM, mortos);
-  d.itens.sort(porTempo);
+  d.itens.sort((a, b) => porTempo(a, b) || a.sid - b.sid);
   base.done = d.itens.slice(-TETO.done);
   resumo.sessoes = d.vindos;
   resumo.apagados += d.apagados;

@@ -962,6 +962,8 @@ function abreSessao(dia) {
   const marca = { day: dia, t: agora, sid: agora, ini: 'auto' };
   if (S.deload) marca.dl = 1;
   S.done.push(marca);
+  // em ordem: um treino registrado depois pode ter instante igual ou posterior ao começo desta
+  S.done.sort(function (x, y) { return x.t - y.t || x.sid - y.sid; });
   if (S.done.length > TETO.done) S.done = S.done.slice(-TETO.done);
   return S.sessao;
 }
@@ -2129,6 +2131,10 @@ function fmtLast(l, seg) {
 // Sessão retroativa sem hora informada não tem horário de verdade: o app
 // guarda um valor neutro só para ordenar, e não finge que mediu.
 function temHora(m) { return !!m && (!m.retro || m.hora === 1) && !m.livre; }
+function turnoDaSessao(m) {
+  return m && (temHora(m) || m.hora === 'turno' || m.hora === 1) ? periodoDe(m.t) : null;
+}
+function siglaDoTreino(k) { return /^hyrox$/i.test(S.prog?.[k]?.name) ? 'HX' : k; }
 function horaDaSessao(m) { return temHora(m) ? fmtHora(m.t) : null; }
 function fimDaSessao(m) { return temHora(m) && m.dur ? fmtHora(m.t + m.dur + (m.pausado||0)) : null; }
 
@@ -3086,7 +3092,7 @@ const CTX = {
   jaFizHoje: function (k) {
     pilha().pop();
     if (k === 'cardio') { CTX.abreFolha({ k: 'cardio' }); return; }
-    abrirAdicionar(Date.now());
+    CTX.lancaTreinoDeHoje();
   },
   /**
    * Como o dia foi. Ajuste de hoje, como a escala e o turno: zera com a data,
@@ -4333,13 +4339,23 @@ function pernaHoje() {
   return S.done.filter(x => DIAS_PERNA.indexOf(x.day) >= 0 && sameDay(x.t, Date.now())).map(x => x.day);
 }
 
+const MINUTOS_CARDIO = [15, 20, 30, 45, 60];
+const CARDIO_INICIAL = { m: 'bike', min: 30, i: 'moderado' };
+function camposDoCardio(f) {
+  const opcoes = (valores, atual, unidade = '') => valores.map(k => ({ k, t: k + unidade, on: k === atual }));
+  return { modais: opcoes(MODAIS, f.m), minutos: opcoes(MINUTOS_CARDIO, f.min, ' min'), min: f.min,
+           intensidades: opcoes(['leve', 'moderado'], f.i) };
+}
+CTX.camposDoCardio = camposDoCardio;
+CTX.cardioInicial = CARDIO_INICIAL;
+
 function cardioSet(k, v) {
-  view.cardioForm = Object.assign({ m:'bike', min:25, i:'moderado' }, view.cardioForm);
+  view.cardioForm = Object.assign({}, CARDIO_INICIAL, view.cardioForm);
   view.cardioForm[k] = v;
   render();
 }
 async function addCardio() {
-  const f = Object.assign({ m:'bike', min:25, i:'moderado' }, view.cardioForm);
+  const f = Object.assign({}, CARDIO_INICIAL, view.cardioForm);
   // `alt` e não `m`: em cardio o `m` já é o modal
   S.cardio.push({ t: Date.now(), m: f.m, min: f.min, i: f.i, alt: Date.now() });
   if (S.cardio.length > TETO.cardio) S.cardio = S.cardio.slice(-TETO.cardio);
@@ -4371,14 +4387,16 @@ async function corrigeCardio(t, campo, valor) {
 function horaDoCardio(c) { return c && !c.semHora ? fmtHoraDita(c.t) : null; }
 
 /**
- * O CARDIO ESQUECIDO, lançado num dia passado pelo dia aberto em Dias (decisão
- * do dono, 14/10). O instante é o meio-dia daquele dia — a semana e o mês o
- * contam onde ele aconteceu — e a hora não foi medida, então fica marcada como
- * tal e a tela não a inventa. Um segundo cardio no mesmo dia anda um
- * milissegundo: o instante é a chave dele na sincronia.
+ * O CARDIO ESQUECIDO, lançado num dia passado pelo dia aberto em Dias, pelo cartão
+ * do dia ou pela folha do Hoje (decisão do dono, 14/10). O instante cai dentro da
+ * hora das 12h daquele dia, com um deslocamento tirado do instante do toque, para
+ * dois aparelhos que lançam o mesmo dia não caírem na mesma chave (`cardio:<t>`);
+ * hoje, nunca depois de agora. A semana e o mês o contam no dia em que aconteceu,
+ * e a hora não foi medida: fica marcada (`semHora`) e a tela não a inventa. Um
+ * instante já ocupado ou com lápide anda um milissegundo.
  */
 CTX.abreCardioNoDia = function () {
-  view.cardioNoDia = view.cardioNoDia ? null : { m: 'bike', min: 25, i: 'moderado' };
+  view.cardioNoDia = view.cardioNoDia ? null : { ...CARDIO_INICIAL };
   view.cardioNoDiaFalhou = null;
   render();
 };
@@ -4387,27 +4405,33 @@ CTX.cardioNoDiaSet = function (campo, v) {
   view.cardioNoDia = Object.assign({}, view.cardioNoDia, { [campo]: campo === 'min' ? Number(v) : v });
   render();
 };
-CTX.gravaCardioNoDia = async function () {
-  const f = view.cardioNoDia, dia = view.diaAberto;
+CTX.gravaCardioNoDia = async function (dia = view.diaAberto, f = view.cardioNoDia) {
   if (!f || !dia) return;
   const d = new Date(dia);
-  if (sameDay(d.getTime(), Date.now()) || d.getTime() > Date.now()) return;   // hoje é pelo Agora
-  let t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0).getTime();
-  while (S.cardio.some(function (x) { return x.t === t; })) t++;
+  if (!Number.isFinite(d.getTime()) || hojeISO(dia) > hojeISO()) return;
+  // Meio-dia e mais um deslocamento tirado do instante do toque, dentro da mesma hora: dois
+  // aparelhos que lançam o mesmo dia não caem na mesma chave (`cardio:<t>`). Hoje, nunca no futuro.
+  let t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0).getTime() + (Date.now() % 3600000);
+  if (hojeISO(dia) === hojeISO()) t = Math.min(t, Date.now());
+  while (S.cardio.some(x => x.t === t) || S.apagados[chaveDeCardio({ t })]) t++;
   const novo = { t: t, m: f.m, min: f.min, i: f.i, alt: Date.now(), semHora: 1 };
   S.cardio.push(novo);
   S.cardio.sort(function (a, b) { return a.t - b.t; });
-  if (S.cardio.length > TETO.cardio) S.cardio = S.cardio.slice(-TETO.cardio);
+  const excedentes = S.cardio.splice(0, Math.max(0, S.cardio.length - TETO.cardio));
   const ok = await save();
   if (ok === false) {
-    S.cardio = S.cardio.filter(function (x) { return x !== novo; });
+    S.cardio = excedentes.concat(S.cardio).filter(x => x !== novo);
     view.cardioNoDiaFalhou = 'O cardio não foi gravado: o armazenamento deste aparelho recusou. O dia continua como estava.';
     render();
     return;
   }
-  view.cardioNoDia = null; view.cardioNoDiaFalhou = null;
+  if (f === view.cardioNoDia) {
+    view.cardioNoDia = null;
+    toast(f.min + ' min de ' + f.m + ' registrados em ' + fmtDate(t) + '.');
+  }
+  view.cardioNoDiaFalhou = null;
   render();
-  toast(f.min + ' min de ' + f.m + ' registrados em ' + fmtDate(t) + '.');
+  return novo;
 };
 
 async function delCardio(t) {
@@ -4433,11 +4457,43 @@ async function delCardio(t) {
   if (!(await pare({ texto: 'Apagar o cardio de ' + DIAS_CURTOS[d0.getDay()] + ' ' + fmtDate(t) + ' tira 1 sessão de cardio: ' +
                              c.min + ' min de ' + c.m + ', ' + c.i + '.' + fica + treinoFica + efeito + ' Isso não tem volta.',
                      sim: 'Apagar o cardio' }))) return;
-  lapide(chaveDeCardio({ t: t }));
-  S.cardio = S.cardio.filter(c => c.t !== t);
-  await save();
+  if (await tiraCardio(t)) toast('Sessão removida.');
+}
+async function tiraCardio(t) {
+  const c = S.cardio.find(x => x.t === t);
+  if (!c) return;
+  const chave = chaveDeCardio(c), ant = S.apagados[chave];
+  const morte = lapide(chave, Math.max(Date.now(), c.alt || 0));
+  S.cardio = S.cardio.filter(x => x.t !== t);
+  const ok = await save();
+  if (ok === false) {
+    if (ant == null) delete S.apagados[chave]; else S.apagados[chave] = ant;
+    S.cardio.push(c); S.cardio.sort((a, b) => a.t - b.t);
+    render(); return false;
+  }
   render();
-  toast('Sessão removida.');
+  // O "tirar" do cartão tem Desfazer: o mesmo registro volta, com a lápide de antes e um
+  // carimbo depois da que foi posta agora, para a volta vencer o "tirar" no outro aparelho.
+  return {
+    texto: diaComMaiuscula(t) + ': cardio tirado.',
+    desfaz: async () => {
+      if (S.cardio.some(x => x.t === c.t)) return true;
+      const volta = { ...c, alt: depoisDe(morte) };
+      if (ant == null) delete S.apagados[chave]; else S.apagados[chave] = ant;
+      S.cardio.push(volta); S.cardio.sort((a, b) => a.t - b.t);
+      if (await save() === false) {
+        S.cardio = S.cardio.filter(x => x !== volta);
+        S.apagados[chave] = morte;
+        render(); return false;
+      }
+      render(); return true;
+    }
+  };
+}
+/** "Segunda, 9": o dia do registro, para começar o aviso com maiúscula. */
+function diaComMaiuscula(t) {
+  const d = new Date(t), x = DIAS_LONGOS[d.getDay()] + ', ' + d.getDate();
+  return x.charAt(0).toUpperCase() + x.slice(1);
 }
 
 // ---------- acompanhamento ----------
@@ -4506,12 +4562,12 @@ function horaNeutra(t) { const d = new Date(t); d.setHours(7, 0, 0, 0); return d
  *
  * Dois treinos sem hora no mesmo dia cairiam no mesmo instante — e o instante é
  * o `sid` de um registro novo, que é a chave dele na sincronia (`done:<sid>`) e
- * o que apagar e abrir procuram. Um minuto adiante, até ficar livre, e a hora
+ * o que apagar e abrir procuram. Um milissegundo adiante, até ficar livre, e a hora
  * neutra continua sem ser mostrada.
  */
 function instanteLivre(t, fora) {
   let x = t;
-  while (S.done.some(function (m) { return m !== fora && (m.t === x || m.sid === x); })) x += 60000;
+  while (S.done.some(m => m !== fora && (m.t === x || m.sid === x)) || S.apagados[chaveDeSessao({ sid: x })]) x++;
   return x;
 }
 
@@ -4546,22 +4602,141 @@ function diasNasQuatroSemanas() { return _diasComTreino(S.done, _inicioDoDia(Dat
  * O toque que grava: `k` é a letra do treino, ou `'livre'` para fora da
  * prescrição (presença, sem séries, sem mexer na sequência — F155).
  */
-async function lancaTreino(k) {
-  const a = view.add;
+async function lancaTreino(k, a = view.add, linhas = []) {
   if (!a || a.sid != null) return;
   if (k !== 'livre' && rot().indexOf(k) < 0) return;
   a.antes = diasNasQuatroSemanas();
   const t = instanteLivre(a.t);
-  const marca = { t: t, sid: t, retro: 1, m: Date.now() };
-  if (k === 'livre') { marca.livre = 1; marca.grupos = []; }
+  // Dois aparelhos podem lançar o mesmo turno. A identidade nasce no toque, sem depender das 8h/15h/20h.
+  const sid = a.precisao ? instanteLivre(Date.now()) : t;
+  const marca = { t, sid, retro: 1, m: Date.now() };
+  if (a.precisao) marca.hora = a.precisao;
+  if (k === 'livre') {
+    marca.livre = 1; marca.grupos = a.grupos || [];
+    if (a.dur) { marca.dur = a.dur * 60000; marca.fim = 'manual'; }
+  }
   else { marca.day = k; if (S.deload) marca.dl = 1; }
   S.done.push(marca);
   S.done.sort(function (x, y) { return x.t - y.t; });
   a.sid = marca.sid;
   a.gravadoEm = Date.now();
-  await save();
-  render();
+  for (const linha of linhas) escreveSeriesPassadas(marca, linha.id, linha.sets, { ...linha, dp: 1 });
+  if (await save() === false) {
+    retiraSessao(marca, false);
+    a.sid = null;
+    render(); return null;
+  }
+  render(); return marca;
 }
+
+// O cartão prepara as escolhas em memória. Só o último toque chega a lancaTreino.
+const HORAS_DO_TURNO = { manha: '08:00', tarde: '15:00', noite: '20:00' };
+const TURNO_DITO = { manha: 'de manhã', tarde: 'à tarde', noite: 'à noite' };
+CTX.turnoDito = TURNO_DITO;
+CTX.diaComMaiuscula = diaComMaiuscula;
+const MODOS_DO_REGISTRO = { ultima: 'como da última vez', prescrito: 'como o prescrito', ajustar: 'ajustado', presenca: 'só a presença' };
+function instanteDoRegistro(data, turno, hora) {
+  if (!HORAS_DO_TURNO[turno] || data > hojeISO()) return null;
+  let t = aplicaHora(instanteDaData(data), hora || HORAS_DO_TURNO[turno]);
+  if (t == null || hojeISO(t) !== data) return null;
+  // Hoje, nada no futuro: a hora exata depois de agora é recusada, e o turno vale até agora.
+  if (t > Date.now()) {
+    if (hora) return null;
+    t = Date.now();
+  }
+  return instanteLivre(t);
+}
+/** Os turnos que já começaram naquele dia: hoje de manhã, a noite ainda não existe. */
+CTX.turnosDoDia = function (data) {
+  if (data !== hojeISO()) return ['manha', 'tarde', 'noite'];
+  const h = new Date(Date.now()).getHours();
+  return PERIODOS.filter(p => p.k === 'noite' ? h >= p.de || h < p.ate : h >= p.de).map(p => p.k);
+};
+
+CTX.turnoDaHora = function (data, hora) {
+  const t = aplicaHora(instanteDaData(data), hora);
+  return t == null ? null : periodoDe(t).k;
+};
+CTX.diaDoRegistro = function (data) {
+  const t = instanteDaData(data), d = new Date(t);
+  const sessoes = sessoesDoDia(t).sort((a, b) => a.t - b.t);
+  const proximo = sessoes.length ? proximoTreino({ ...S, done: S.done.filter(m => hojeISO(m.t) <= data) }, ROT_BASE) : previstoNoDia(t);
+  return {
+    dia: DIAS_LONGOS[d.getDay()] + ', ' + d.getDate(), t, hoje: data === hojeISO(),
+    treinos: rot().map(k => ({ k, sigla: siglaDoTreino(k), proximo: k === proximo })),
+    grupos: regioesDoCorpo(), sessoes: sessoes.length, cardios: cardioDoDia(t),
+    frequencia: !sessoes.length && (S.descanso[data] ? 'descanso' : S.falta[data] ? 'falta' : null),
+    motivo: S.falta[data]?.motivo
+  };
+};
+
+CTX.seriesDoRegistro = function (data, dia, turno, hora) {
+  const t = instanteDoRegistro(data, turno, hora);
+  const anterior = S.done.filter(m => m.day === dia && !m.livre && m.t < t && m.sid !== S.sessao?.sid).at(-1);
+  const ultima = [];
+  if (anterior) for (const [id, lista] of Object.entries(S.logs)) {
+    for (const l of lista) if (l.sid === anterior.sid && l.sets.some(Boolean)) {
+      ultima.push({ id, sl: l.sl, u: l.u, q: l.q, sets: l.sets.map(par => par && par.slice(0, 2)) });
+    }
+  }
+  // A prescrição é a do programa. As trocas temporárias de uma sessão ao vivo pertencem a ela.
+  const prescrito = (S.prog?.[dia]?.ex || []).map(slot => {
+    const ex = exDe(slot.id), u = slot.u || ex.u, q = slot.q || ex.q;
+    const alvo = cronometrado(u) ? null : (u && q) || faixaDoTexto(slot.r)?.[0];
+    const anteriorDoEx = ultima.find(l => l.id === slot.id && !l.sl && l.u === u && (!cronometrado(u) || l.q === q));
+    const par = anteriorDoEx?.sets.find(Boolean);
+    const tipo = cargaTipo(slot.id, ex);
+    return { id: slot.id, nome: ex.n, u, q: u && q, n: setsFor(slot), alvo,
+      carga: par?.[0] ?? 0, reps: par?.[1] ?? alvo ?? 0, passo: passoDaCarga(tipo), unidadeCarga: u ? 'kg' : CARGAS[tipo].rot };
+  });
+  const series = ultima.reduce((n, l) => n + l.sets.filter(Boolean).length, 0);
+  const da = anterior && new Date(anterior.t);
+  return { ultima, prescrito, series,
+    dataAnterior: da ? DIAS_LONGOS[da.getDay()] + ', ' + da.getDate() + '/' + (da.getMonth() + 1) : null };
+};
+
+CTX.guardaRegistro = async function (data, r, modo, ajustes) {
+  const t = instanteDoRegistro(data, r.turno, r.hora);
+  if (t == null && r.hora && data === hojeISO() && aplicaHora(instanteDaData(data), r.hora) > Date.now()) {
+    return { erro: 'Essa hora ainda não chegou.' };
+  }
+  if (t == null || !Object.hasOwn(MODOS_DO_REGISTRO, modo)) return;
+  let linhas = [];
+  if (r.k !== 'livre' && modo !== 'presenca') {
+    const { ultima, prescrito } = CTX.seriesDoRegistro(data, r.k, r.turno, r.hora);
+    if (modo === 'ultima') {
+      if (!ultima.length) return;
+      linhas = ultima;
+    } else {
+      const exercicios = modo === 'ajustar' ? ajustes : prescrito;
+      for (const ex of exercicios) {
+        const reps = modo === 'ajustar' ? ex.reps : ex.alvo;
+        if (ex.nao || !(reps > 0)) continue;
+        const carga = modo === 'ajustar' ? ex.carga : 0;
+        linhas.push({ id: ex.id, u: ex.u, q: ex.q, sets: Array.from({ length: ex.n }, () => [carga, reps]) });
+      }
+    }
+  }
+  const sessao = await lancaTreino(r.k, { t, precisao: r.hora ? 1 : 'turno', grupos: r.grupos, dur: r.dur }, linhas);
+  if (!sessao) return;
+  const sigla = siglaDoTreino(r.k);
+  const treino = r.k === 'livre' ? 'Treino livre' : sigla === 'HX' ? 'HYROX' : 'Treino ' + sigla;
+  const quando = r.hora ? fmtHoraDita(t) : TURNO_DITO[r.turno];
+  return { texto: [treino, CTX.diaDoRegistro(data).dia, quando, r.k !== 'livre' && MODOS_DO_REGISTRO[modo]].filter(Boolean).join(' · ') + '.',
+    desfaz: async () => {
+      const m = S.done.find(x => x.sid === sessao.sid);
+      if (!m || S.sessao?.sid === m.sid) return;
+      const antes = JSON.stringify({ done: S.done, logs: S.logs, apagados: S.apagados });
+      retiraSessao(m);
+      if (await save() === false) {
+        // o armazenamento recusou: o treino continua como estava, como nas outras gravações
+        const v = JSON.parse(antes);
+        S.done = v.done; S.logs = v.logs; S.apagados = v.apagados;
+        render(); return false;
+      }
+      render(); return true;
+    } };
+};
 
 /** Toda correção depois do toque passa por aqui: carimba e grava. */
 async function corrigeLancamento(muda) {
@@ -6721,7 +6896,7 @@ function resumoDaSessao(marca) {
  * aparelho.
  */
 async function apagaRegistroDeTreino(t) {
-  const m = S.done.filter(function (x) { return x.t === t; })[0];
+  const m = sessaoNoInstante(t, view.sessao?.t === t ? view.sessao.sid : null);
   if (!m) return;
   if (S.sessao && S.sessao.sid === m.sid) {
     toast('Este treino está em andamento. Encerre ou descarte pelo ··· do treino.');
@@ -6777,18 +6952,23 @@ async function apagaRegistroDeTreino(t) {
                            sim: 'Apagar ' + nomeDe(m) });
   if (!sim) return;
 
-  lapide(chaveDeSessao(m));
-  linhas.forEach(function (x) { lapide(chaveDeLog(x.idEx, x.l)); });
-
-  S.done = S.done.filter(function (x) { return x.t !== t; });
-  Object.keys(S.logs).forEach(function (idEx) {
-    S.logs[idEx] = S.logs[idEx].filter(function (l) { return l.sid !== m.sid; });
-    if (!S.logs[idEx].length) delete S.logs[idEx];   // exercício sem histórico sai do mapa
-  });
-
+  retiraSessao(m);
   view.sessao = null;
   await save(); render(); rola(0);
   toast(series ? 'Treino e séries apagados.' : 'Registro apagado.');
+}
+
+// A presença e os logs têm chaves próprias na fusão. O Desfazer tira só este sid.
+function retiraSessao(m, comLapide = true) {
+  if (comLapide) lapide(chaveDeSessao(m), Math.max(Date.now(), m.m || 0));
+  S.done = S.done.filter(x => x !== m && (m.sid == null || x.sid !== m.sid));
+  for (const [idEx, lista] of Object.entries(S.logs)) {
+    const dela = lista.filter(l => l.sid === m.sid);
+    if (!dela.length) continue;
+    if (comLapide) for (const l of dela) lapide(chaveDeLog(idEx, l), Math.max(Date.now(), l.m || 0));
+    S.logs[idEx] = lista.filter(l => l.sid !== m.sid);
+    if (!S.logs[idEx].length) delete S.logs[idEx];
+  }
 }
 
 /**
@@ -6800,7 +6980,7 @@ async function apagaRegistroDeTreino(t) {
  * que a tela vinha mostrando, porque agora ele não é mais estimativa.
  */
 async function corrigeDuracao(t, minutos) {
-  const m = S.done.filter(function (x) { return x.t === t; })[0];
+  const m = sessaoNoInstante(t, view.sessao?.t === t ? view.sessao.sid : null);
   if (!m) return;
   m.dur = Math.max(1, Math.min(600, Math.round(minutos))) * 60000;
   m.fim = 'manual';
@@ -6819,7 +6999,7 @@ async function corrigeDuracao(t, minutos) {
  * futuro não grava; o treino em andamento não se corrige (o relógio dele corre).
  */
 async function corrigeComeco(t, txt) {
-  const m = S.done.filter(function (x) { return x.t === t; })[0];
+  const m = sessaoNoInstante(t, view.sessao?.t === t ? view.sessao.sid : null);
   if (!m || (S.sessao && S.sessao.sid === m.sid)) return;
   const novo = aplicaHora(m.t, txt);
   if (novo == null || novo > Date.now()) return;
@@ -6847,8 +7027,8 @@ async function corrigeComeco(t, txt) {
  * mudado". É ele que tira o "aproximado" da tela e que faz a pergunta sair do
  * cartão de cima, sem precisar de uma marca de "já respondi".
  */
-async function confirmaDuracao(t) {
-  const m = S.done.filter(function (x) { return x.t === t; })[0];
+async function confirmaDuracao(t, sid) {
+  const m = sessaoNoInstante(t, sid);
   if (!m || m.fim === 'manual') return;
   m.fim = 'manual';
   m.m = Date.now();                    // carimbo: é ele que a fusão compara
@@ -6924,6 +7104,25 @@ function referenciaDaSerie(idEx, e, k, m) {
   return null;
 }
 
+// A correção de uma série e o registro do cartão entram no mesmo histórico ordenado.
+function escreveSeriesPassadas(m, idEx, sets, metadados = {}, existente = null) {
+  const e = existente || { t: m.t, sid: m.sid };
+  if (!existente) {
+    if (m.dl) e.dl = 1;
+    if (metadados.u) e.u = metadados.u;
+    if (metadados.q) e.q = metadados.q;
+    if (metadados.sl) e.sl = metadados.sl;
+    // "registrado depois" só pelo cartão: corrigir uma série de um treino anotado ao vivo não o torna declarado
+    if (metadados.dp) e.dp = 1;
+    const lista = S.logs[idEx] = (S.logs[idEx] || []).slice();
+    const pos = lista.findIndex(l => l.t > e.t);
+    lista.splice(pos < 0 ? lista.length : pos, 0, e);
+  }
+  e.sets = sets;
+  e.m = Date.now();
+  return e;
+}
+
 /**
  * Lança a série que faltou, com `reps` repetições e a carga proposta.
  *
@@ -6937,18 +7136,11 @@ async function lancaSerieDaPassada(reps) {
   if (!p || !p.novo || !m) return;
   let e = p.chave ? registroPorChave(p.idEx, p.chave) : null;
   const nasceu = !e;
-  if (nasceu) {
-    e = { t: m.t, sid: m.sid, sets: [] };
-    if (m.dl) e.dl = 1;
-    const lista = S.logs[p.idEx] = (S.logs[p.idEx] || []).slice();
-    let i = lista.length;
-    while (i > 0 && lista[i - 1].t > e.t) i--;
-    lista.splice(i, 0, e);
-  }
-  const antes = e.sets.slice(), mAntes = e.m;
-  while (e.sets.length < p.k) e.sets.push(null);
-  e.sets[p.k] = [p.carga != null ? p.carga : 0, reps];
-  e.m = Date.now();
+  const antes = e?.sets || [], mAntes = e?.m;
+  const sets = antes.slice();
+  while (sets.length < p.k) sets.push(null);
+  sets[p.k] = [p.carga != null ? p.carga : 0, reps];
+  e = escreveSeriesPassadas(m, p.idEx, sets, {}, e);
   const ok = await save();
   if (ok === false) {
     if (nasceu) {
@@ -7067,7 +7259,10 @@ function editorDoNovo(idEx, ex) {
 
 function abreCorrecaoDoTempo(t) { view.corrigeTempo = view.corrigeTempo === t ? null : t; render(); }
 
-function abrirSessao(t){ view.sessao = S.done.filter(function (x) { return x.t === t; })[0]; if (view.sessao) { entraNoDestino('sessao'); render(); } }
+function sessaoNoInstante(t, sid) {
+  return S.done.find(m => sid != null ? m.sid === sid : m.t === t);
+}
+function abrirSessao(t, sid){ view.sessao = sessaoNoInstante(t, sid); if (view.sessao) { entraNoDestino('sessao'); render(); } }
 function fecharSessao(){ view.sessao = null; view.passada = null; view.corrigeTempo = null; if (view.teclado && view.teclado.alvo.tipo === 'passada') view.teclado = null; render(); saiDoDestino('sessao'); }
 
 // ---------- retrospectiva de bloco ----------
@@ -9896,6 +10091,7 @@ CTX.camposDaBioV3 = function () {
 };
 
 CTX.apagaMedida = function (k, t) { delBody(k, t); };
+CTX.tiraCardio = tiraCardio;
 CTX.apagaCardio = function (t) { delCardio(t); };
 CTX.corrigeCardio = function (t, campo, valor) { return corrigeCardio(t, campo, valor); };
 // No visual novo o cardio rápido é uma folha; no antigo, o painel do Agora.
@@ -10349,7 +10545,7 @@ CTX.cromoDoTreino = function () {
       desde: s.pausadoEm ? 'pausado' : 'desde ' + fmtHora(s.inicio)
     } : null,
     cardio: (function () {
-      const f = Object.assign({ m: 'bike', min: 25, i: 'moderado' }, view.cardioForm);
+      const f = Object.assign({}, CARDIO_INICIAL, view.cardioForm);
       const perna = pernaHoje();
       return {
         feito: hojeCardio.length > 0,
@@ -10357,9 +10553,7 @@ CTX.cromoDoTreino = function () {
           ? hojeCardio.map(function (c) { return c.min + ' min de ' + c.m; }).join(' · ')
           : cardioSemana().length + ' de ' + CARDIO_ALVO + ' nesta semana',
         aberto: !!view.cardioRapido,
-        modais: MODAIS.map(function (m) { return { k: m, t: m, on: f.m === m }; }),
-        minutos: [20, 25, 30, 40].map(function (v) { return { k: v, t: v + ' min', on: f.min === v }; }),
-        intensidades: ['leve', 'moderado'].map(function (v) { return { k: v, t: v, on: f.i === v }; }),
+        ...camposDoCardio(f),
         // O aviso não bloqueia: sinaliza. A regra é do treinador, e quem decide
         // se hoje ainda dá é ele, não o app.
         aviso: perna.length
@@ -10373,8 +10567,8 @@ CTX.cromoDoTreino = function () {
 
 CTX.abreSessaoDoDia = function (a) {
   if (!a) return;
-  if (a.k === 'sessao') { abrirSessao(a.t); return; }
-  abrirAdicionar(a.t);
+  if (a.k === 'sessao') { abrirSessao(a.t, a.sid); return; }
+  CTX.abreFolha({ k: 'registroTreino', data: hojeISO(a.t) });
 };
 
 CTX.cardioSet = function (k, v) { cardioSet(k, v); };
@@ -10419,19 +10613,15 @@ CTX.mes = function () {
     const futuro = !hoje && dia > agora;
     const marcas = futuro ? [] : sessoesDoDia(dia).slice().sort(function (a, b) { return a.t - b.t; });
     const iso = hojeISO(dia);
-    const letras = marcas.filter(m => !m.livre).map(m =>
-      /^hyrox$/i.test(S.prog?.[m.day]?.name) ? 'HX' : m.day);
-    const fora = marcas.some(function (m) { return m.livre; });
+    const letras = marcas.map(m => m.livre ? 'fora' : siglaDoTreino(m.day));
     const desc = !marcas.length && !futuro && ehDescanso(dia);
     const cardio = futuro ? 0 : cardioDoDia(dia).length;
     const falta = !marcas.length && !futuro ? S.falta[iso] : null;
     const fotos = !futuro && datasFotos.has(iso), medidas = !futuro && datasMedidas.has(iso);
-    const comHora = marcas.find(temHora);
-    const per = comHora ? periodoDe(comHora.t) : null;
+    const per = turnoDaSessao(marcas[0]);
     const h = hoje && S.dia?.data === iso ? S.dia : porData[iso];
     const resposta = futuro ? null : respostaDoDia(h) || (h && diaInterpretavel(h) ? 'com' : null);
-    const partes = letras.map(l => l === 'HX' ? 'HYROX' : 'treino ' + l);
-    if (fora) partes.push('treino fora da prescrição');
+    const partes = letras.map(l => l === 'fora' ? 'treino fora da prescrição' : l === 'HX' ? 'HYROX' : 'treino ' + l);
     const desc0 = partes.length > 1 ? [partes.slice(0, -1).join(', ') + ' e ' + partes[partes.length - 1]] : partes;
     const ditos = desc0.slice();
     if (per) ditos.push('de ' + per.nome);
@@ -10448,7 +10638,7 @@ CTX.mes = function () {
     const d = new Date(dia);
     celulas.push({
       n: i, iso, hoje, futuro,
-      principal: letras.includes('HX') ? 'HX' : letras[0] || (fora ? 'fora' : ''),
+      principal: letras[0] || '', segunda: letras[1] || '',
       outrosTreinos: marcas.length > 1 ? partes.join(' · ') : null,
       descanso: desc, falta, cardio, resposta, fotos, medidas,
       periodo: per ? { k: per.k, rot: per.rot } : null,
@@ -10524,9 +10714,25 @@ CTX.abreDia = function (t) {
 CTX.fechaDia = function () { view.diaAberto = null; view.cardioAberto = null; view.cardioNoDia = null; render(); saiDoDestino('dia'); };
 CTX.abreCardioDoDia = function (t) { view.cardioAberto = view.cardioAberto === t ? null : t; render(); };
 CTX.motivosFalta = MOTIVOS_FALTA;
-CTX.respondeFrequencia = async function (data, escolha, motivo) {
-  if (data >= hojeISO() || !respondeFrequencia(S, data, escolha, motivo, Date.now())) return;
-  await save(); render();
+CTX.respondeFrequencia = async function (data, escolha, motivo, restaura) {
+  const falta = S.falta[data], descanso = S.descanso[data];
+  const chaves = ['falta:' + data, 'descanso:' + data];
+  const anteriores = chaves.map(k => S.apagados[k]);
+  if (!respondeFrequencia(S, data, escolha, motivo, Date.now())) return;
+  if (restaura) S.falta[data] = { ...restaura, m: S.falta[data].m };
+  const em = S.falta[data]?.m || S.descanso[data];
+  if (await save() === false) {
+    if (falta) S.falta[data] = falta; else delete S.falta[data];
+    if (descanso) S.descanso[data] = descanso; else delete S.descanso[data];
+    chaves.forEach((k, i) => { if (anteriores[i] == null) delete S.apagados[k]; else S.apagados[k] = anteriores[i]; });
+    render(); return;
+  }
+  render();
+  return { texto: diaComMaiuscula(instanteDaData(data)) + ': ' + escolha + (motivo ? ', ' + motivo : '') + '.',
+    desfaz: () => {
+      if ((S.falta[data]?.m || S.descanso[data]) !== em) return;
+      return CTX.respondeFrequencia(data, falta ? 'falta' : descanso ? 'descanso' : null, undefined, falta);
+    } };
 };
 CTX.alternaDescansoDoDia = alternaDescanso;
 
@@ -10548,16 +10754,17 @@ CTX.diaAberto = function () {
     const P = !m.livre && treino(m.day);
     const prescritas = P ? P.ex.reduce(function (n, ex) { return n + ex.s; }, 0) : 0;
     const hh = function (x) { return horaHHMM(x).replace(':', 'h'); };
-    const hora = temHora(m) ? hh(m.t) : null;
+    const hora = temHora(m) || m.hora === 1 ? hh(m.t) : null;
+    const turno = m.hora === 'turno' ? 'de ' + periodoDe(m.t).nome : null;
     const fim = hora && m.dur ? hh(m.t + m.dur + (m.pausado || 0)) : null;
     const detalhe = m.livre
-      ? [(m.grupos || []).join(', ') || null, m.dur ? fmtDur(m.dur) : null].filter(Boolean)
-      : [hora ? hora + (fim ? ' às ' + fim : '') : 'sem hora',
+      ? [hora || turno, (m.grupos || []).join(', ') || null, m.dur ? fmtDur(m.dur) : null].filter(Boolean)
+      : [hora ? hora + (fim ? ' às ' + fim : '') : turno || 'sem hora',
          feitas ? feitas + (prescritas && feitas < prescritas ? ' de ' + prescritas : '') + ' séries' : (prescritas ? 'nenhuma série' : null),
          m.dur ? fmtDur(m.dur) : null,
          m.dur && m.fim !== 'manual' ? 'fechou sem você' : null].filter(Boolean);
     return {
-      k: 'sessao', t: m.t, letra: letraDoRegistro(m),
+      k: 'sessao', t: m.t, sid: m.sid, letra: letraDoRegistro(m),
       titulo: m.livre ? (m.nome || 'Treino fora da prescrição') : diaAberto(m.day) ? 'Aula' : 'Treino ' + m.day,
       detalhe: detalhe.join(' · ')
     };
@@ -10574,12 +10781,7 @@ CTX.diaAberto = function () {
       igual: !!igual,
       aberto: view.cardioAberto === c.t,
       // aberto, o registro inteiro: cada campo corrigível no toque
-      campos: view.cardioAberto === c.t ? {
-        modais: MODAIS.map(function (x) { return { k: x, t: x, on: c.m === x }; }),
-        minutos: [20, 25, 30, 40].concat([20, 25, 30, 40].indexOf(c.min) < 0 ? [c.min] : [])
-          .sort(function (a, b) { return a - b; }).map(function (v) { return { k: v, t: v + ' min', on: c.min === v }; }),
-        intensidades: ['leve', 'moderado'].map(function (v) { return { k: v, t: v, on: c.i === v }; })
-      } : null
+      campos: view.cardioAberto === c.t ? camposDoCardio(c) : null
     };
   });
 
@@ -10623,9 +10825,7 @@ CTX.diaAberto = function () {
     // o cardio esquecido entra pelo dia passado (decisão do dono, 14/10)
     podeCardio: passado,
     cardioNovo: passado && view.cardioNoDia ? {
-      modais: MODAIS.map(function (x) { return { k: x, t: x, on: view.cardioNoDia.m === x }; }),
-      minutos: [20, 25, 30, 40].map(function (v) { return { k: v, t: v + ' min', on: view.cardioNoDia.min === v }; }),
-      intensidades: ['leve', 'moderado'].map(function (v) { return { k: v, t: v, on: view.cardioNoDia.i === v }; }),
+      ...camposDoCardio(view.cardioNoDia),
       falhou: view.cardioNoDiaFalhou || null
     } : null,
     data: iso,
@@ -10769,7 +10969,7 @@ CTX.detalheDaSessao = function () {
   };
   const comeco = hIni
     ? { hora: fmtHoraDita(m.t), nota: m.ini === 'manual' ? 'marcado antes do aquecimento' : null }
-    : { hora: 'sem hora', nota: 'registrado depois, sem a hora de início' };
+    : { hora: m.hora === 'turno' ? 'de ' + periodoDe(m.t).nome : 'sem hora', nota: 'registrado depois, sem a hora de início' };
   const fim = aberta ? null : fimT
     ? { hora: fmtHoraDita(fimT), aprox: !exato,
         nota: (exato ? 'declarado por você' : 'aproximado: fechou sem você, na última série') + ' · ' + fmtDur(dur) }
@@ -10864,7 +11064,7 @@ CTX.comecoNoCampo = function (t, el) {
    duas metades da mesma resposta. Pôr esta também na tabela de verbos nus daria
    dois caminhos para o mesmo verbo, que é o que a superfície existe para não
    ter. */
-CTX.confirmaDuracao = function (t) { confirmaDuracao(t); };
+CTX.confirmaDuracao = function (t, sid) { confirmaDuracao(t, sid); };
 
 // ---------- tela cheia: histórico do exercício ----------
 CTX.renomeiaExercicio = function (idEx, nome) { renomeiaExercicio(idEx, nome); };
@@ -11323,8 +11523,9 @@ CTX.retroativo = function () {
   });
 };
 CTX.fechaAdicionar = function () { fecharAdicionar(); };
-CTX.lancaTreino = function (k) { return lancaTreino(k); };
 CTX.abreHoraDoLancamento = function () { abreHoraDoLancamento(); };
+// o fluxo antigo de lançar treino passado, sem entrada na interface: fica para os testes que criam sessões retroativas (docs/ARQUITETURA.md)
+CTX.lancaTreino = function (k) { return lancaTreino(k); };
 CTX.semHoraNoLancamento = function () { return horaDoLancamento(''); };
 CTX.horaDoLancamento = function (el) { horaDoLancamentoNoCampo(el); };
 CTX.grupoDoLancamento = function (g) { return grupoDoLancamento(g); };
@@ -13094,7 +13295,7 @@ CTX.fatosDoDia = function () {
     const m = S.done[i];
     if (!m || m.livre) continue;
     if (m.fim === 'auto' && !sameDay(m.t, agora) && m.dur) {
-      confirmar = { dia: m.day, inicio: m.t - m.dur, fim: m.t };
+      confirmar = { dia: m.day, inicio: m.t - m.dur, fim: m.t, sid: m.sid };
     }
     break;                               // só a MAIS RECENTE responde
   }
@@ -13635,7 +13836,7 @@ CTX.hojeV3 = function () {
     const hh = function (t) { return horaHHMM(t).replace(':', 'h'); };
     bloco = { k: 'confirmar', cor: 'corpo', quando: sameDay(cartao.fim, agora) ? 'o treino de hoje cedo' : 'o treino de ontem', titulo: 'Treino ' + cartao.dia,
               apoio: 'Fechou sozinho na última série: das ' + hh(cartao.inicio) + ' às ' + hh(cartao.fim) + ', ' + fmtDur(cartao.fim - cartao.inicio) + '. Está certo?',
-              fim: cartao.fim };
+              fim: cartao.fim, sid: cartao.sid };
   } else if (cartao && (cartao.k === 'treino' || cartao.k === 'aula')) {
     const l = linha.filter(function (x) { return x.treino; })[0];
     const falta = l ? minutosDe(l.t) - agoraMin : null;
@@ -13804,7 +14005,7 @@ CTX.tiraDoTreinoV3 = function () {
 
 /** O tempo da sessão aberta, sem as pausas: o relógio do topo do treino. */
 CTX.relogioDoTreinoV3 = function () { return S.sessao ? duracaoAtual(S.sessao) : 0; };
-CTX.verSeriesDoFimV3 = function () { const f = view.fimV3; if (f && f.t != null) abrirSessao(f.t); };
+CTX.verSeriesDoFimV3 = function () { const f = view.fimV3; if (f && f.t != null) abrirSessao(f.t, f.sid); };
 
 CTX.voltaAoTreino = function () {
   const s = S.sessao;
@@ -14000,13 +14201,13 @@ CTX.respondidosV3 = function () {
 /** No dia escolhido, o treino e a última pesagem da data. */
 CTX.resumoDoDiaV3 = function (iso) {
   const t = instanteDaData(iso);
-  const m = sessoesDoDia(t).find(m => !m.livre);
+  const m = sessoesDoDia(t).sort((a, b) => a.t - b.t)[0];
   let series = 0;
   if (m) Object.keys(S.logs).forEach(function (k) { (S.logs[k] || []).forEach(function (l) { if (l.sid === m.sid) series += l.sets.filter(Boolean).length; }); });
   const peso = (S.body.peso || []).filter(function (x) { return sameDay(x.t, t); }).slice(-1)[0];
   return {
-    treino: m ? { titulo: m.day === 'HX' ? 'HYROX' : 'Treino ' + m.day,
-                  apoio: (series ? series + (series === 1 ? ' série' : ' séries') : 'sem série') + (m.dur ? ' · ' + fmtDur(m.dur) : '') } : null,
+    treino: m ? { titulo: m.livre ? 'Treino fora' : siglaDoTreino(m.day) === 'HX' ? 'HYROX' : 'Treino ' + m.day,
+                  apoio: (turnoDaSessao(m) ? 'de ' + turnoDaSessao(m).nome + ' · ' : '') + (series ? series + (series === 1 ? ' série' : ' séries') : 'sem série') + (m.dur ? ' · ' + fmtDur(m.dur) : '') } : null,
     peso: peso ? fmtDec(peso.v) : null
   };
 };
@@ -14170,7 +14371,7 @@ CTX.abreTreinoDeHoje = function () {
  * o modo ao vivo e carimbar as séries com a hora de agora. Dele, "Detalhar
  * exercícios e séries" abre o modo na data e na hora do registro.
  */
-CTX.lancaTreinoDeHoje = function () { abrirAdicionar(Date.now()); };
+CTX.lancaTreinoDeHoje = function () { CTX.abreFolha({ k: 'registroTreino', data: hojeISO() }); };
 
 // ---------- enquanto descansa (a D, momento 1, estado 2) ----------
 //
@@ -14356,7 +14557,7 @@ CTX.exercicioV3 = function () {
       // que `detalheDaSessao` o mostra
       const m = l.sid != null ? sessaoPorSid[l.sid]
         : S.done.find(function (x) { return x.sid == null && !x.livre && sameDay(x.t, l.t); });
-      return { t: l.t, data: fmtDate(l.t), carga: fmtNum(maxLoad(l)).replace('.', ','), dp: !!l.dp, sessao: m ? m.t : null,
+      return { t: l.t, data: fmtDate(l.t), carga: fmtNum(maxLoad(l)).replace('.', ','), dp: !!l.dp, sessao: m ? m.t : null, sid: m ? m.sid : null,
                reps: l.sets.map(function (s) { return s ? { r: s[1], topo: isFinite(topo) && s[1] >= topo } : null; }).filter(Boolean) };
     }),
     temFoto: !!S.fotos[ex.id],
@@ -14418,7 +14619,7 @@ CTX.aulaV3 = function () {
  * A sessão inteira, aberta do histórico de um exercício (visual novo): é ela
  * que sabe corrigir cada série. Fica por cima do histórico (`camadasAbertas`).
  */
-CTX.abreSessaoDoHistorico = function (t) { if (t != null) abrirSessao(t); };
+CTX.abreSessaoDoHistorico = function (t, sid) { if (t != null) abrirSessao(t, sid); };
 
 /**
  * A foto do aparelho (visual novo): a mesma folha `foto` da pilha, aberta pelo

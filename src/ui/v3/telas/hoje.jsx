@@ -31,8 +31,8 @@ function Momento({ ctx, h }) {
           <Saida data-a="hoje-fiz-mais" onClick={ctx.poeEmDiaDaSessao}>Fiz mais do que anotei</Saida></>
       : <Acoes><Botao data-a="hoje-volta" onClick={ctx.voltaAoTreino}>Voltar ao treino {ic.seta}</Botao></Acoes>;
   } else if (b.k === 'confirmar') {
-    acoes = <Acoes><Botao data-a="hoje-fim-ok" onClick={() => ctx.confirmaDuracao(b.fim)}>Está certo</Botao>
-      <Botao tipo="contorno" data-a="hoje-fim-corrige" onClick={() => ctx.abreSessaoDoDia({ k: 'sessao', t: b.fim })}>Corrigir</Botao></Acoes>;
+    acoes = <Acoes><Botao data-a="hoje-fim-ok" onClick={() => ctx.confirmaDuracao(b.fim, b.sid)}>Está certo</Botao>
+      <Botao tipo="contorno" data-a="hoje-fim-corrige" onClick={() => ctx.abreSessaoDoDia({ k: 'sessao', t: b.fim, sid: b.sid })}>Corrigir</Botao></Acoes>;
   } else if (b.k === 'treino' || b.k === 'aula') {
     // "hoje não vou" abre o tipo do dia: diz o efeito antes do toque (a comida de descanso)
     acoes = <><Acoes><Botao data-a="hoje-comeca" onClick={ctx.abreTreinoDeHoje}>{b.k === 'aula' ? 'Fiz a aula' : 'Começar'} {ic.seta}</Botao></Acoes>
@@ -414,7 +414,7 @@ export function FolhaRegistrar({ ctx }) {
         {h.seQuiser.peso && <button class="v3-reg-b" data-a="reg-peso" onClick={faz(() => ctx.vaiPara('corpo'))}><b>Peso de hoje</b><span>{h.seQuiser.peso.hoje ? h.seQuiser.peso.hoje + ' kg · mudar' : 'pela régua do Corpo'}</span></button>}
         {h.seQuiser.cardio && <button class="v3-reg-b" data-a="reg-cardio" onClick={faz(ctx.abreCardio)}><b>Cardio</b><span>{h.seQuiser.cardio.n} de {h.seQuiser.cardio.meta} na semana</span></button>}
         {b.k === 'refeicao' && <button class="v3-reg-b" data-a="reg-outra" onClick={() => ctx.trocaFolha({ k: 'comiOutra', id: b.id }, true)}><b>Comi outra coisa</b><span>fora do plano</span></button>}
-        <button class="v3-reg-b" data-a="reg-ja-treinei" onClick={faz(ctx.lancaTreinoDeHoje)}><b>Já treinei e não anotei</b><span>o treino de hoje, depois</span></button>
+        <button class="v3-reg-b" data-a="reg-ja-treinei" onClick={faz(ctx.lancaTreinoDeHoje)}><b>Registrar um treino</b><span>já treinei e não anotei</span></button>
       </div>
     </Folha>
   );
