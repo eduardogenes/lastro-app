@@ -607,3 +607,28 @@ test('o toque fora preserva o aviso nos primeiros 500 ms e o dispensa depois', a
   assert.ok(!a.$('[data-a="aviso-acao"]'));
   a.fechar();
 });
+
+test('a revisão traz um treino novo com série de tempo, tipo de carga e bi-set, e o app os guarda', async () => {
+  const texto = `Revisão 23/11
+Treino IA · Glúteo + posterior
+- Hip thrust com barra · 4 x 8-12 · RIR 1-2 · 2:30 · glúteo · carga: barra · dica: pausa de 1 s no topo; costelas para baixo
+- Pallof press · 3 x 10/lado · RIR 2 · 60 s · core · dica: bi-set com o de baixo; comece pela esquerda
+- Prancha lateral com giro · 2 x 30 s/lado · RIR 2 · 60 s · core`;
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  await revisaoLida(a, texto);
+  const r = a.vJ('ctx.revisao');
+  assert.deepStrictEqual(r.problemas || [], [], 'o texto inteiro foi entendido');
+  a.clicar('[data-a="revisao-aplica"]');
+  await a.esperar(120);
+  const hip = a.E('Object.keys(S.ex).filter(k => S.ex[k].n === "Hip thrust com barra").map(k => S.ex[k])')[0];
+  assert.ok(hip, 'o hip thrust com barra entrou no catálogo');
+  assert.strictEqual(hip.car, 'barra', 'com o tipo de carga que a linha disse');
+  assert.strictEqual(hip.cue, 'pausa de 1 s no topo; costelas para baixo', 'e a dica inteira, com o ";"');
+  const pr = a.E('Object.keys(S.ex).filter(k => S.ex[k].n === "Prancha lateral com giro").map(k => S.ex[k])')[0];
+  assert.deepStrictEqual([pr.car, pr.u, pr.q].join(' '), 'corpo seg 30', 'a prancha nasce sem carga e em segundos');
+  const IA = JSON.parse(a.E('JSON.stringify((S.prog.IA || S.progTreinador.dias.IA).ex.map(x => [x.s, x.r, x.u || "", x.q || 0, x.bi || 0]))'));
+  assert.deepStrictEqual(IA, [[4, '8–12', '', 0, 0], [3, '10', '', 0, 1], [2, '', 'seg', 30, 0]],
+    'no programa: a faixa, o bi-set do pallof com a prancha e a série de tempo');
+  a.fechar();
+});

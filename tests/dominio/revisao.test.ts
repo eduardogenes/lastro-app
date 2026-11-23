@@ -340,3 +340,56 @@ test('uma palavra em comum não faz candidato: "Rosca direta" não é a Rosca ma
     { 'rosca-martelo': { n: 'Rosca martelo', g: 'bíceps' } }, {});
   assert.deepStrictEqual(c['Rosca direta'], { k: 'novo' });
 });
+
+test('a dica vai até o fim da linha, com ";" dentro, e o bi-set dela vira marca', () => {
+  const r = lerRevisao(`Treino SA · Peito
+- Crucifixo na polia · 3 x 10-15 · RIR 1 · 90 s · peito superior · dica: bi-set com o de baixo; mãos até o queixo; última série RIR 0
+- Elevação lateral na polia · 4 x 12-20 · RIR 1 · 90 s · deltoide lateral · dica: cabo por trás do corpo`);
+  assert.deepStrictEqual(r.problemas, []);
+  const [cr, el] = r.dias[0].ex;
+  assert.strictEqual(cr.bi, 1);
+  assert.strictEqual(cr.cue, 'mãos até o queixo; última série RIR 0');
+  assert.strictEqual(cr.g, 'peito superior');
+  assert.strictEqual(el.bi, undefined);
+});
+
+test('série de tempo vira segundos; "/lado" e "/perna" vão para a dica; "90 s" sozinho continua descanso', () => {
+  const r = lerRevisao(`Treino IA · Glúteo
+- Prancha lateral · 2 x 30 s/lado · RIR 2 · 60 s · core · dica: comece pela esquerda
+- Afundo reverso com halteres · 3 x 8-12/perna · RIR 2 · 90 s · glúteo
+- Alongamento do flexor · 2 x 40 seg · mobilidade`);
+  assert.deepStrictEqual(r.problemas, []);
+  const [pr, af, al] = r.dias[0].ex;
+  assert.deepStrictEqual([pr.s, pr.r, pr.u, pr.q, pr.d, pr.cue], [2, '', 'seg', 30, 60, 'por lado; comece pela esquerda']);
+  assert.deepStrictEqual([af.s, af.r, af.u, af.d, af.cue], [3, '8–12', undefined, 90, 'por perna']);
+  assert.deepStrictEqual([al.u, al.q, al.d], ['seg', 40, undefined]);
+});
+
+test('"carga:" dá o tipo de carga; o que não se entende nela vira problema', () => {
+  const r = lerRevisao(`Treino IB · Pernas
+- Leg press 45 · 4 x 8-12 · carga: por lado
+- Goblet · 4 x 8-12 · carga: halteres
+- Hip thrust com barra · 4 x 8-12 · carga: barra
+- Supino estranho · 3 x 8-12 · carga: elástico`);
+  assert.deepStrictEqual(r.dias[0].ex.map(x => x.car), ['lado', 'halter', 'barra', undefined]);
+  assert.ok(r.problemas.some(p => /carga: elástico/.test(p.motivo)), r.problemas.map(p => p.motivo).join(' | '));
+});
+
+test('a revisão leva tempo e bi-set para o programa, e a mudança deles aparece e se aplica', () => {
+  const lida = lerRevisao(`Treino IA · Glúteo
+- Prancha lateral · 2 x 45 s · RIR 2 · 60 s · core · dica: bi-set com o de baixo
+- Dead bug · 3 x 8 · RIR 2 · 45 s · core`);
+  const ids = { 'Prancha lateral': 'prancha-lateral', 'Dead bug': 'dead-bug' };
+  const velho: TreinoDoPrograma = { name: 'Glúteo', ex: [
+    { id: 'prancha-lateral', s: 2, r: '', u: 'seg', q: 30, d: 60, rir: '2', desde: 0 },
+    { id: 'dead-bug', s: 3, r: '8', d: 45, rir: '2', desde: 0 }
+  ] };
+  const novo = treinoDaRevisao(lida.dias[0], ids, velho, () => 90, 1000);
+  assert.deepStrictEqual([novo.ex[0].u, novo.ex[0].q, novo.ex[0].bi], ['seg', 45, 1]);
+  const mud = mudancasDoTreino('IA', velho, novo, velho, id => id);
+  const pr = mud.find(m => m.id === 'prancha-lateral')!;
+  assert.ok(pr, 'a prancha muda');
+  assert.deepStrictEqual(pr.campos, ['q', 'bi']);
+  const depois = aplicaMudancas(velho, velho, novo, mud, 2000)!;
+  assert.deepStrictEqual([depois.ex[0].q, depois.ex[0].bi], [45, 1]);
+});

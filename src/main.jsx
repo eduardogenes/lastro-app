@@ -4003,7 +4003,10 @@ CTX.incorporaRevisao = async function (evento) {
         return;
       }
       if (CAT[id] || S.ex[id]) return;
-      S.ex[id] = { n: x.n, car: 'pino', g: x.g || '', c: 0, cue: x.cue || '', m: Date.now() };
+      // série de tempo ("2 x 40 s"): sem carga, e o campo nasce em segundos, como a prancha
+      S.ex[id] = x.u === 'seg'
+        ? { n: x.n, car: x.car || 'corpo', g: x.g || '', c: 0, cue: x.cue || '', u: 'seg', q: x.q, m: Date.now() }
+        : { n: x.n, car: x.car || 'pino', g: x.g || '', c: 0, cue: x.cue || '', m: Date.now() };
       criados.push(id);
     });
   });
