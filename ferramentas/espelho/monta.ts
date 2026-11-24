@@ -40,6 +40,7 @@ import {
   ajusteNoItem, quantidadePrescrita, totalDaRefeicao, totalDoDia, totalRegistrado
 } from '../../src/dominio/nutricao/calculo';
 import { CADENCIA_PADRAO, cadenciaPrevista } from '../../src/dominio/dia';
+import { programasDe, conteudoDe, treinosDe, diasAbertos, periodoDe as periodoDoPrograma, programaDaSessao } from '../../src/dominio/programas';
 import { DIAS_CURTOS, DIAS_LONGOS, MESES, fmtDesc, fmtDur, fmtHora, periodoDe } from '../../src/dominio/formato';
 import { BUCKET_APARELHOS, BUCKET_CORPO } from '../../src/infra/supabase';
 import { APOIADO, NIVEL_FRENTE, NIVEL_LADO, TREMOR, noNivel } from '../../src/infra/nivel';
@@ -251,8 +252,21 @@ function tipoCarga(b: Base, id: IdEx): keyof typeof CARGAS {
   const k = (obj<string>(b.S.carga)[id] || exDe(b, id).car) as keyof typeof CARGAS;
   return CARGAS[k] ? k : 'pino';
 }
-function nomeDoTreino(b: Base, day: Dia): string {
-  const t = b.prog[day] || b.treinador.dias[day];
+/**
+ * O treino de uma sessão: o do programa em que ela foi feita (L2 da revisão de
+ * dado). A mesma letra em dois programas é treino diferente.
+ */
+function treinoDaMarca(b: Base, day: Dia, m?: { t: number; day: Dia; prog?: string }): Treino | null {
+  const S = b.S as Estado;
+  if (m && programasDe(S)) {
+    const id = programaDaSessao(S, m);
+    const c = id ? conteudoDe(S, id) : null;
+    if (c && c.prog[day]) return c.prog[day];
+  }
+  return b.prog[day] || b.treinador.dias[day] || null;
+}
+function nomeDoTreino(b: Base, day: Dia, m?: { t: number; day: Dia; prog?: string }): string {
+  const t = treinoDaMarca(b, day, m);
   return t && t.name ? t.name : '';
 }
 function dor(k: string): string {
@@ -357,6 +371,8 @@ function programaAtual(b: Base, ctx: Contexto): string {
     'O programa que o app executa hoje. Começou como cópia do programa do treinador',
     '(`programa-do-treinador.md`) e muda conforme as decisões registradas em `mudancas.md`.'
   ]);
+  const P = programasDe(S as Estado);
+  if (P) L.push('- **Programa:** ' + P.lista[P.ativo].nome + ' (os outros, guardados, em `programas.md`)');
   if (b.rot.length) L.push('- **Rotação:** ' + b.rot.join(' → ') + ' (avança conforme os treinos são registrados, não pelo dia da semana)');
   L.push('- **Semana típica:** ' + cad.map(function (c, i) { return DIAS_CURTOS[i] + ' ' + c; }).join(' · '));
   L.push('- **Deload:** ' + (S.deload ? 'ligado agora' : 'desligado'));
@@ -368,6 +384,50 @@ function programaAtual(b: Base, ctx: Contexto): string {
     L.push('## ' + d + ' — ' + (t.name || '') + (t.tag ? ' (' + t.tag + ')' : ''), '');
     L.push(...tabelaDoTreino(b, t, true));
   });
+  return L.join('\n');
+}
+
+/**
+ * Os programas (etapa 1 de docs/catalogo): o ativo, os de "Próximo" e os
+ * guardados, com o período, os treinos e quantas sessões cada um teve. O
+ * ativo detalhado continua em `programa.md`.
+ */
+function programas(b: Base, ctx: Contexto): string | null {
+  const S = b.S as Estado;
+  const P = programasDe(S);
+  if (!P) return null;
+  const L = cabeca('Programas', [
+    'Cada programa de treino que a pessoa teve. Um é o ativo (o de `programa.md`); os outros ficam guardados, e nada se apaga.',
+    'Uma sessão pertence ao programa em que foi feita: a mesma letra em dois programas é treino diferente.'
+  ]);
+  const ordem = Object.values(P.lista).sort(function (x, y) {
+    const peso = (p: { estado: string }) => p.estado === 'ativo' ? 0 : p.estado === 'proximo' || p.estado === 'rascunho' ? 1 : 2;
+    return peso(x) - peso(y) || (y.m || 0) - (x.m || 0);
+  });
+  ordem.forEach(function (p) {
+    const c = conteudoDe(S, p.id);
+    if (!c) return;
+    const per = periodoDoPrograma(S, p.id, ctx.agora);
+    const letras = treinosDe(c.prog, c.rot);
+    const sess = lista<Sessao>(S.done).filter(function (x) { return x && !x.livre && x.day && programaDaSessao(S, x) === p.id; }).length;
+    const estado = { ativo: 'ativo', guardado: 'guardado', proximo: 'próximo' + (p.comeca ? ', começa em ' + p.comeca : ''), rascunho: 'rascunho' }[p.estado];
+    L.push('## ' + p.nome + ' (' + estado + ')', '');
+    L.push('- **Origem:** ' + (p.origem === 'treinador' ? 'do treinador' : 'da pessoa'));
+    if (per && (p.estado === 'ativo' || p.estado === 'guardado')) L.push('- **Período:** ' + (per.de ? dataBR(per.de) : 'desde o começo') + ' a ' + (p.estado === 'ativo' ? 'hoje' : dataBR(per.ate)));
+    L.push('- **Treinos:** ' + (letras.length ? letras.map(function (d) { return d + ' (' + (c.prog[d].name || '') + ')'; }).join(', ') : 'nenhum'));
+    if (p.estado !== 'proximo' && p.estado !== 'rascunho') L.push('- **Sessões feitas nele:** ' + sess);
+    if (p.objetivo) L.push('- **Objetivo:** ' + cel(p.objetivo));
+    L.push('');
+    // o ativo detalhado está em `programa.md`; os outros, aqui
+    if (p.id !== P.ativo) letras.forEach(function (d) {
+      const t = c.prog[d];
+      if (!t) return;
+      L.push('### ' + d + ' — ' + (t.name || '') + (t.tag ? ' (' + t.tag + ')' : ''), '');
+      L.push(...tabelaDoTreino(b, t, false));
+    });
+  });
+  const ab = diasAbertos(S.prog);
+  if (ab.length) L.push('## Fora de programa', '', ab.map(function (d) { return d + ' (' + (S.prog![d].name || '') + ')'; }).join(', ') + ': valem com qualquer programa.', '');
   return L.join('\n');
 }
 
@@ -428,8 +488,8 @@ function serieTexto(s: Exclude<Serie, null>, u: Unidade | undefined, q: number |
 }
 
 /** Os registros de uma sessão, na ordem das posições do treino daquele dia. */
-function registrosEmOrdem(b: Base, day: Dia, regs: Array<{ key: IdEx; l: Log }>): Array<{ key: IdEx; l: Log }> {
-  const pos = lista<Slot>((b.prog[day] || { ex: [] }).ex).map(function (s) { return s.id; });
+function registrosEmOrdem(b: Base, day: Dia, regs: Array<{ key: IdEx; l: Log }>, m?: Sessao): Array<{ key: IdEx; l: Log }> {
+  const pos = lista<Slot>((treinoDaMarca(b, day, m) || { ex: [] }).ex).map(function (s) { return s.id; });
   return regs.slice().sort(function (x, y) {
     const px = pos.indexOf(x.l.sl || x.key), py = pos.indexOf(y.l.sl || y.key);
     return (px < 0 ? 999 : px) - (py < 0 ? 999 : py);
@@ -447,7 +507,7 @@ function sessoesMontadas(b: Base): SessaoMontada[] {
   const usados = new Set<number>();
   const r: SessaoMontada[] = b.sessoes.map(function (m) {
     usados.add(m.sid);
-    return { m: m, orfa: false, regs: registrosEmOrdem(b, m.day, b.porSid.get(m.sid) || []) };
+    return { m: m, orfa: false, regs: registrosEmOrdem(b, m.day, b.porSid.get(m.sid) || [], m) };
   });
   b.porSid.forEach(function (regs, sid) {
     if (usados.has(sid)) return;
@@ -459,7 +519,7 @@ function sessoesMontadas(b: Base): SessaoMontada[] {
 
 function linhasDaSessao(b: Base, x: SessaoMontada): string[] {
   const m = x.m, S = b.S;
-  const titulo = m.livre ? (m.nome || 'Sessão avulsa') : (m.day ? m.day + (nomeDoTreino(b, m.day) ? ' · ' + nomeDoTreino(b, m.day) : '') : 'Sem treino identificado');
+  const titulo = m.livre ? (m.nome || 'Sessão avulsa') : (m.day ? m.day + (nomeDoTreino(b, m.day, m) ? ' · ' + nomeDoTreino(b, m.day, m) : '') : 'Sem treino identificado');
   const L = ['## ' + dataComDia(m.t) + ' — ' + titulo, ''];
 
   const fatos: string[] = [];
@@ -476,7 +536,7 @@ function linhasDaSessao(b: Base, x: SessaoMontada): string[] {
 
   if (lista<string>(m.grupos).length) L.push('- Grupos: ' + lista<string>(m.grupos).join(', '));
   const pulados = lista<number>(m.pulados).map(function (i) {
-    const s = lista<Slot>((b.prog[m.day] || { ex: [] }).ex)[i];
+    const s = lista<Slot>((treinoDaMarca(b, m.day, m) || { ex: [] }).ex)[i];
     return s ? nomeEx(b, s.id) : 'posição ' + (i + 1);
   });
   if (pulados.length) L.push('- Pulou: ' + pulados.join(', '));
@@ -568,7 +628,7 @@ function seriesCsv(b: Base): string {
       lista<Serie>(l.sets).forEach(function (s, i) {
         if (!s) return;
         linhas.push([
-          dataLocal(m.t), temHora(m) ? fmtHora(m.t) : '', m.sid, m.day || '', m.livre ? (m.nome || 'avulsa') : nomeDoTreino(b, m.day),
+          dataLocal(m.t), temHora(m) ? fmtHora(m.t) : '', m.sid, m.day || '', m.livre ? (m.nome || 'avulsa') : nomeDoTreino(b, m.day, m),
           rg.key, ex.n, ex.g || '', i + 1,
           s[0], l.u ? 'kg' : CARGAS[tipoCarga(b, rg.key)].rot,
           s[1], l.u === 'm' || l.u === 'cal' || l.u === 'seg' ? 'segundos' : 'reps',
@@ -987,7 +1047,7 @@ function resumo(b: Base): string[] {
   if (sess.length) {
     const u = sess[sess.length - 1];
     L.push('- **Treino:** ' + qtd(sess.length, 'sessão registrada', 'sessões registradas') + ', de ' + dataBR(sess[0].t) + ' a ' + dataBR(u.t) +
-      '. Última: ' + dataComDia(u.t) + ', ' + (u.livre ? (u.nome || 'avulsa') : u.day + (nomeDoTreino(b, u.day) ? ' (' + nomeDoTreino(b, u.day) + ')' : '')) + '.');
+      '. Última: ' + dataComDia(u.t) + ', ' + (u.livre ? (u.nome || 'avulsa') : u.day + (nomeDoTreino(b, u.day, u) ? ' (' + nomeDoTreino(b, u.day, u) + ')' : '')) + '.');
   } else L.push('- **Treino:** nenhuma sessão registrada.');
   const hist = lista<DiaComidaHist>(S.comidaHist).filter(function (h) { return h && DATA_ISO.test(h.d); }).map(function (h) { return h.d; }).sort();
   L.push('- **Comida:** ' + (hist.length ? hist.length + ' dias fechados, de ' + dataIsoBR(hist[0]) + ' a ' + dataIsoBR(hist[hist.length - 1]) + '.' : 'nenhum dia fechado ainda.') +
@@ -1008,6 +1068,7 @@ function resumo(b: Base): string[] {
 const MAPA: Array<[string, string]> = [
   ['treino/programa.md', 'O programa que o app executa hoje: rotação, exercícios, séries, repetições, RIR e descanso.'],
   ['treino/programa-do-treinador.md', 'O programa como o treinador prescreveu. O atual pode ter divergido dele.'],
+  ['treino/programas.md', 'Todos os programas: o ativo, os de "Próximo" e os guardados, com período, treinos e sessões feitas em cada um.'],
   ['treino/mudancas.md', 'Decisões registradas sobre o programa, e as mudanças que esperam decisão.'],
   ['treino/historico/AAAA-MM.md', 'Um arquivo por mês: cada sessão, exercício por exercício, série por série, com notas, dor, cardio, descanso e faltas.'],
   ['treino/series.csv', 'Todas as séries numa tabela só, para calcular tendência, volume e carga.'],
@@ -1104,6 +1165,8 @@ export function montaArquivos(estado: unknown, ctx: Contexto): Arquivos {
   };
   const a = aulas(b, ctx);
   if (a) corpo['treino/aulas-de-box.md'] = a;
+  const pr = programas(b, ctx);
+  if (pr) corpo['treino/programas.md'] = pr;
   Object.assign(corpo, {
     'nutricao/plano.md': planoAlimentar(b, ctx),
     'nutricao/dias.csv': diasCsv(b),

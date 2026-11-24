@@ -64,6 +64,12 @@ export interface LeituraDaRevisao {
   data: string | null;
   /** linhas que o app não entendeu, com o motivo */
   problemas: { linha: string; motivo: string }[];
+  /**
+   * O cabeçalho opcional de um programa inteiro (etapa 1 de docs/catalogo):
+   * `Programa · nome · começa dd/mm` e `Objetivo: …`, antes do primeiro treino.
+   */
+  programa?: { nome: string | null; comeca: string | null };
+  objetivo?: string | null;
 }
 
 const TRACO = '–';
@@ -132,6 +138,21 @@ export function lerRevisao(texto: string): LeituraDaRevisao {
     if (!linha) return;
     const data = linha.match(/^revis[aã]o\b.*?(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/i);
     if (data) { out.data = data[1]; return; }
+    // o cabeçalho de programa só vale antes do primeiro treino: depois, a linha seria um exercício mal escrito
+    const prog = !out.dias.length && linha.match(/^programa\s*(?:[·:|—–-]\s*)(.*)$/i);
+    if (prog) {
+      const partes = prog[1].split(/\s*[·|]\s*/).map(limpa).filter(Boolean);
+      let nome: string | null = null, comeca: string | null = null;
+      partes.forEach(function (c) {
+        const m = c.match(/^come[cç]a(?:\s+(?:em|no dia|dia))?\s+(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)$/i);
+        if (m) comeca = m[1];
+        else if (!nome) nome = c;
+      });
+      out.programa = { nome: nome, comeca: comeca };
+      return;
+    }
+    const obj = !out.dias.length && linha.match(/^objetivo\s*:\s*(.+)$/i);
+    if (obj) { out.objetivo = limpa(obj[1]); return; }
     const cab = linha.match(/^treino\s+([A-Za-z0-9]{1,3})\b\s*(?:[·:|—–-]\s*)?(.*)$/i);
     if (cab) {
       const dia = cab[1].toUpperCase();

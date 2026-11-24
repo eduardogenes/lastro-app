@@ -76,6 +76,10 @@ export function camadasAbertas(view, passoInicial) {
   if (view.sessao && !sessaoDoHistorico) c.push('sessao');
   if (view.add) c.push('add');
   if (view.retro) c.push('retro');
+  // Os PROGRAMAS (a linha do tempo) e um programa aberto, abaixo do editor do
+  // programa e da revisão, que abrem deles.
+  if (view.programas) c.push('programas');
+  if (view.programas && view.programas.aberto) c.push('programa');
   if (view.prog) c.push('prog');
   // A progressão (visual novo), abaixo do histórico de um exercício, que abre dela.
   if (view.progressao) c.push('progressao');

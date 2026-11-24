@@ -37,6 +37,9 @@ import { ligado, fitaLigada, comModulo, comFita, normalizaModulos } from './domi
 import { DIAS_NA_LIXEIRA, chaveDaLixeira, diasRestantes, nomeNaLixeira, ordemDaLixeira, pastaDaLixeira, vencidos as vencidosDaLixeira } from './dominio/lixeira';
 import { LugarNaPilha, FolhaDaPilha } from './ui/v3/camada.js';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino, rotacao } from './dominio/dia';
+import { programasDe, garanteProgramas, programaDaSessao, programaEm, conteudoDe, estadoDoPrograma, ativaPrograma, criaPrograma,
+         duplicaPrograma, renomeiaPrograma, nomeReserva, nomeLivre, programaComNome, treinosDe, diasAbertos, semanaDoAtivo,
+         periodoDe as periodoDoPrograma, balancoDoPrograma, revisoesDoPrograma, inicioDoAtivo, sessoesDoAtivo } from './dominio/programas';
 import { diasComTreino as _diasComTreino, inicioDoDia as _inicioDoDia, iniciosDoPeriodo as _iniciosDoPeriodo, medianaDosInicios as _medianaDosInicios, leituraDosDias as _leituraDosDias,
          serieDaMediaMovel as _serieDaMediaMovel } from './dominio/mes';
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
@@ -136,6 +139,56 @@ function lapide(chave, quando) {
 }
 function depoisDe(morte) { return Math.max(Date.now(), (morte || 0) + 1); }
 function rot() { return rotacao(S, ROT_BASE); }
+
+// ---------- os programas (dominio/programas.ts) ----------
+/** O programa que valia num instante, para uma letra (a letra de antes da troca leva ao programa de antes). */
+/**
+ * O instante que decide o programa de um DIA (L1 da revisão de dado): o fim
+ * daquele dia, e hoje, agora. O cartão, a gravação e a prescrição usam o mesmo,
+ * para o dia da troca não mostrar um programa e gravar em outro.
+ */
+function instanteDoDia(t) {
+  const fim = new Date(t); fim.setHours(23, 59, 59, 999);
+  return Math.min(fim.getTime(), Date.now());
+}
+/** O programa de um dia; `escolhido` é o "Foi de outro programa" do cartão. */
+function programaDoDia(t, escolhido) {
+  const P = programasDe(S);
+  if (!P) return null;
+  if (escolhido && P.lista[escolhido] && P.lista[escolhido].estado !== 'proximo' && P.lista[escolhido].estado !== 'rascunho') return escolhido;
+  return programaEm(S, instanteDoDia(t));
+}
+/** A sessão nova leva o programa em que foi feita: a letra deixa de ser a chave. */
+function marcaPrograma(marca, id) {
+  const P = programasDe(S);
+  if (!P) return marca;
+  marca.prog = id || P.ativo;
+  return marca;
+}
+/** A rotação de um programa, com os abertos (o HYROX), que valem com qualquer um. */
+function rotDoPrograma(id) {
+  const P = programasDe(S);
+  if (!P || !id || id === P.ativo) return rot();
+  const c = conteudoDe(S, id);
+  return c ? c.rot.filter(function (d) { return c.prog[d]; }).concat(diasAbertos(S.prog).filter(function (d) { return c.rot.indexOf(d) < 0; })) : rot();
+}
+/** Os treinos de um programa, com os abertos de hoje. */
+function progDoPrograma(id) {
+  const P = programasDe(S);
+  if (!P || !id || id === P.ativo) return S.prog || {};
+  const c = conteudoDe(S, id);
+  return c ? Object.assign({}, c.prog, Object.fromEntries(diasAbertos(S.prog).map(function (d) { return [d, S.prog[d]]; }))) : (S.prog || {});
+}
+/** Um treino que não está no ativo, mas num programa guardado (a sessão de antes da troca). */
+function treinoGuardado(d) {
+  const P = programasDe(S);
+  if (!P) return null;
+  // só os que já foram o ativo: o de "Próximo" e o rascunho nunca tiveram sessão
+  const ids = Object.keys(P.lista).filter(function (id) { return id !== P.ativo && P.lista[id].estado === 'guardado'; })
+    .sort(function (a, b) { return (P.lista[b].m || 0) - (P.lista[a].m || 0); });
+  for (const id of ids) { const c = conteudoDe(S, id); if (c && c.prog[d]) return c.prog[d]; }
+  return null;
+}
 
 // Sessões de cardio por semana que o treinador pede: segunda depois do A e
 // quinta depois do D, que é o treino curto.
@@ -355,9 +408,29 @@ async function renomeiaExercicio(idEx, bruto) {
 // mods da sessão de hoje aplicados por cima. Mesma forma dos exercícios de
 // antes, para o resto do app não precisar saber de nada disso.
 function treino(d) {
-  const p = S.prog && S.prog[d];
+  const p = (S.prog && S.prog[d]) || treinoGuardado(d);
   if (!p) return null;
-  return { name: p.name, tag: p.tag, aberto: p.aberto, ex: aplicaMods(d, p.ex).map(function (sl) {
+  return treinoResolvido(d, p, !!(S.prog && S.prog[d]));
+}
+/**
+ * O treino de uma sessão JÁ FEITA: o do programa em que ela foi feita (L3 da
+ * revisão de dado). A mesma letra em dois programas é treino diferente.
+ */
+function treinoDaSessao(m) {
+  if (!m || !m.day) return null;
+  const P = programasDe(S);
+  if (P) {
+    const id = programaDaSessao(S, m);
+    if (id && id !== P.ativo) {
+      const c = conteudoDe(S, id);
+      const p = c && c.prog[m.day];
+      if (p) return treinoResolvido(m.day, p, false);
+    }
+  }
+  return treino(m.day);
+}
+function treinoResolvido(d, p, comMods) {
+  return { name: p.name, tag: p.tag, aberto: p.aberto, ex: (comMods ? aplicaMods(d, p.ex) : p.ex).map(function (sl) {
     const e = exDe(sl.id);
     // A grandeza do SLOT vence a do catálogo: o mesmo remo é 500 m num sábado
     // e 15 cal no outro, e quem decide é a lousa do box. O catálogo só diz com
@@ -565,7 +638,30 @@ function migraEstado() {
   // não é plano: roda sempre, e é idempotente (dominio/migracoes.ts)
   reduzReferencias(S);
   garanteProgramaERotacao();
+  // não é plano: cria `S.programas` uma vez, de forma determinística (dominio/programas.ts)
+  if (garanteProgramas(S)) programasNovos = S.programas && S.programas.separados ? 'separou' : 'criou';
   return { arquivados, m3, m7 };
+}
+
+// A migração dos programas mexe no dado depois de a abertura (ou a fusão) já
+// ter dito "o que está aqui não é mudança" (`lembraDocumentos`). O carimbo dela
+// sai do DADO, nunca do relógio (P1–P3 da revisão de dado): dois aparelhos que
+// migram o mesmo estado carimbam igual, e uma migração atrasada não vence o que
+// outro aparelho já decidiu.
+// - "criou" (um programa só, nada muda nos treinos): carimbo mínimo, 1.
+// - "separou": um acima do maior carimbo de prog, rot e progTreinador, para o
+//   aparelho no build 13 adotar a separação em vez de devolver o programa somado.
+let programasNovos = null;
+function carimbaProgramasNovos() {
+  if (!programasNovos) return false;
+  const tipo = programasNovos;
+  programasNovos = null;
+  if (!S.carimbos || typeof S.carimbos !== 'object') S.carimbos = {};
+  if (tipo === 'separou') {
+    const c = 1 + Math.max(0, S.carimbos.prog || 0, S.carimbos.rot || 0, S.carimbos.progTreinador || 0);
+    ['prog', 'rot', 'progTreinador', 'programas'].forEach(function (d) { S.carimbos[d] = Math.max(S.carimbos[d] || 0, c); });
+  } else if (!S.carimbos.programas) S.carimbos.programas = 1;
+  return true;
 }
 
 async function load() {
@@ -602,6 +698,7 @@ async function load() {
   limpaFila();
   // O que está no disco não é mudança: daqui em diante, só o que mudar ganha carimbo.
   lembraDocumentos();
+  if (carimbaProgramasNovos()) { sujou(); await grava(); }
 
   // A chave velha só sai depois de a nova estar gravada E a gravação ter dado
   // certo. Se a escrita falhar, ela fica onde está e a migração tenta de novo
@@ -728,6 +825,7 @@ async function iniciarSessao() {
   S.sessao = { day: view.day, inicio: agora, ultima: agora, sid: agora, manual: 1, pausas: [], pulados: [] };
   const marca = { day: view.day, t: agora, sid: agora, ini: 'manual' };
   if (S.deload) marca.dl = 1;
+  marcaPrograma(marca);
   S.done.push(marca);
   S.done.sort(function (x, y) { return x.t - y.t; });
   segurarTela();
@@ -1015,6 +1113,7 @@ function abreSessao(dia) {
   S.sessao = { day: dia, inicio: agora, ultima: agora, sid: agora, pausas: [], pulados: [] };
   const marca = { day: dia, t: agora, sid: agora, ini: 'auto' };
   if (S.deload) marca.dl = 1;
+  marcaPrograma(marca);
   S.done.push(marca);
   // em ordem: um treino registrado depois pode ter instante igual ou posterior ao começo desta
   S.done.sort(function (x, y) { return x.t - y.t || x.sid - y.sid; });
@@ -1239,6 +1338,7 @@ function abreSessaoVazia() {
   S.sessao = { day: view.day, inicio: agora, ultima: agora, sid: agora, pausas: [], pulados: [] };
   const marca = { day: view.day, t: agora, sid: agora, ini: 'auto' };
   if (S.deload) marca.dl = 1;
+  marcaPrograma(marca);
   S.done.push(marca);
   S.done.sort(function (x, y) { return x.t - y.t; });
   return S.sessao;
@@ -1471,8 +1571,10 @@ async function sincroniza(opcoes) {
           montaCatalogo();
           limpaFila();                       // a resposta dada lá vale aqui
           lembraDocumentos();                // o que veio de lá não é mudança daqui
-          const gravou = await grava();      // grava a fusão SEM recarimbar
-          if (trazDados) sync.sujo = true;
+          // a migração dos programas, se rodou agora, é mudança daqui (carimbo novo)
+          const migrou = carimbaProgramasNovos();
+          const gravou = await grava();      // grava a fusão SEM recarimbar (a migração já se carimbou pelo dado)
+          if (trazDados || migrou) sync.sujo = true;
           if (gravou && !sync.jaSincronizou) {
             sync.jaSincronizou = true;       // a fusão já dura, mesmo se o envio falhar
             await gravaSync();
@@ -2900,7 +3002,7 @@ const CTX = {
   emTelaCheia: function () {
     return !!(passoInicial() || view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.galeria || view.diaAberto || view.ajuste || view.camera ||
-              view.ajustes || view.modoSessao || view.porEmDia || view.revisao || view.fotos || view.noTempo || view.naMesmaData || view.progressao || view.responderDias);
+              view.ajustes || view.modoSessao || view.porEmDia || view.revisao || view.programas || view.fotos || view.noTempo || view.naMesmaData || view.progressao || view.responderDias);
   },
 
 
@@ -3888,6 +3990,7 @@ CTX.abreRevisao = function (texto) {
 CTX.fechaRevisao = function () { view.revisao = null; render(); saiDoDestino('revisao'); };
 /** O texto colado: guardado sem redesenhar, para não roubar o foco do campo. */
 CTX.textoDaRevisao = function (el) { if (view.revisao) view.revisao.texto = el.value; };
+CTX.revisaoTexto = function () { return view.revisao ? view.revisao.texto : ''; };
 CTX.leRevisao = function () {
   if (!view.revisao) return;
   const lida = lerRevisao(view.revisao.texto);
@@ -3897,8 +4000,37 @@ CTX.leRevisao = function () {
   // as mudanças começam marcadas; desmarcar é o que fica de fora. O treino que
   // ele deixou de fora numa revisão anterior começa desmarcado, como ele escolheu
   view.revisao.fora = {};
+  // programa novo ou revisão (etapa 1 de docs/catalogo): a sugestão vem das
+  // letras — nenhum treino do texto bate com os de agora, é programa novo
+  const s = sugestaoDaRevisao(lida);
+  view.revisao.modo = s.modo;
+  view.revisao.nome = (lida.programa && lida.programa.nome) || nomeReserva(lida.data, Date.now());
+  view.revisao.quando = lida.programa && lida.programa.comeca ? 'data' : 'agora';
   render();
 };
+
+/** As letras do texto e as de agora, e a sugestão: programa novo quando nenhuma bate. */
+function sugestaoDaRevisao(lida) {
+  const doTexto = lida.dias.filter(function (d) { return !d.aberto; }).map(function (d) { return d.dia; });
+  const deAgora = treinosDe(S.prog, rot());
+  const batem = doTexto.filter(function (d) { return deAgora.indexOf(d) >= 0; });
+  // sem programa de agora (a primeira vez), não há o que guardar: é revisão do vazio
+  const escolha = deAgora.length > 0 && doTexto.length > 0;
+  return { modo: escolha && !batem.length ? 'novo' : 'revisao', sugestao: escolha && !batem.length ? 'novo' : 'revisao',
+           escolha: escolha, doTexto: doTexto, deAgora: deAgora, batem: batem };
+}
+CTX.escolheModoDaRevisao = function (k) {
+  const r = view.revisao;
+  if (!r || !r.lida || (k !== 'novo' && k !== 'revisao') || !sugestaoDaRevisao(r.lida).escolha) return;
+  r.modo = k; render();
+};
+/** O nome do programa novo: guardado sem redesenhar, para não roubar o foco. O aviso de repetido vem no blur. */
+CTX.nomeDoProgramaNovo = function (el, redesenha) {
+  if (!view.revisao) return;
+  view.revisao.nome = String(el.value || '');
+  if (redesenha) render();
+};
+CTX.quandoComecaONovo = function (k) { if (view.revisao && (k === 'data' || k === 'agora')) { view.revisao.quando = k; render(); } };
 /** "Editar o texto": volta ao campo, com o texto como estava. */
 CTX.editaTextoDaRevisao = function () { if (view.revisao) { view.revisao.lida = null; view.revisao.falhou = false; render(); } };
 /** A chave de uma mudança: marcada entra no programa dele; desmarcada fica como diferença. */
@@ -3911,9 +4043,18 @@ CTX.alternaMudanca = function (k) {
   render();
 };
 CTX.respondeRevisao = function (nome, r) {
+  if (view.revisao && r === null) {
+    // "mudar": a resposta volta a ser pergunta. As mudanças de antes ficam
+    // lembradas, para a resposta nova poder dividir uma troca recusada (abaixo).
+    const rev = view.revisao;
+    if (rev.respostas[nome]) rev.gruposAntes = Object.assign({}, rev.gruposAntes, { [nome]: CTX.revisao().grupos });
+    const resp = Object.assign({}, rev.respostas); delete resp[nome];
+    rev.respostas = resp; render(); return;
+  }
   if (!view.revisao || (r !== 'mesma' && r !== 'outro')) return;
   const rev = view.revisao;
-  const anteriores = rev.respostas[nome] && CTX.revisao().grupos;
+  const anteriores = rev.respostas[nome] ? CTX.revisao().grupos : rev.gruposAntes && rev.gruposAntes[nome];
+  if (rev.gruposAntes) delete rev.gruposAntes[nome];
   rev.respostas = Object.assign({}, rev.respostas, { [nome]: r });
   // Ao corrigir uma resposta, uma troca recusada pode se dividir em entrada e saída.
   if (anteriores) {
@@ -3925,6 +4066,20 @@ CTX.respondeRevisao = function (nome, r) {
   }
   render();
 };
+
+/** "o Supino", "a Cadeira flexora": o artigo pelo fim da primeira palavra (a pergunta da revisão). */
+function artigoDe(nome) {
+  const w = String(nome || '').split(' ')[0].toLowerCase();
+  return /(a|ção|são|gem|dade|ade)$/.test(w) ? 'a' : 'o';
+}
+/** "3 séries no treino A": onde o exercício está no programa de agora, para a pergunta. */
+function ondeNoPrograma(id) {
+  for (const d of rot()) {
+    const sl = ((S.prog && S.prog[d] && S.prog[d].ex) || []).find(function (x) { return x.id === id; });
+    if (sl) return sl.s + (sl.s === 1 ? ' série' : ' séries') + ' no treino ' + siglaDoTreino(d);
+  }
+  return null;
+}
 
 function catalogoParaRevisao() {
   const c = {};
@@ -3999,8 +4154,9 @@ CTX.revisao = function () {
     d.ex.forEach(function (x) {
       const c = r.casa[x.n];
       if (c.k === 'pergunta' && !perguntas.some(function (p) { return p.nome === x.n; })) {
-        perguntas.push({ nome: x.n, candidato: exDe(c.id).n, series: seriesDoExercicio(c.id),
+        perguntas.push({ nome: x.n, candidato: exDe(c.id).n, artigo: artigoDe(exDe(c.id).n), series: seriesDoExercicio(c.id),
                          lugar: c.por === 'lugar' ? ' e ocupa este lugar no treino ' + d.dia : '',
+                         noPrograma: ondeNoPrograma(c.id),
                          resposta: r.respostas[x.n] || null });
       }
       if (!CAT[ids[x.n]]) novos[x.n] = 1;
@@ -4016,12 +4172,53 @@ CTX.revisao = function () {
   // as séries de hoje (o rascunho é por posição): aplicar espera o fim do treino,
   // ou que ele desmarque as mudanças daquele treino
   const naSessao = S.sessao && S.sessao.day;
-  const bloqueio = naSessao && grupos.some(function (g) {
+  const sug = sugestaoDaRevisao(L);
+  const modo = sug.escolha ? (r.modo || sug.modo) : 'revisao';
+  const comeca = L.programa && L.programa.comeca;
+  const depois = modo === 'novo' && comeca && r.quando === 'data';
+  // trocar de programa no meio de um treino misturaria as séries de hoje
+  const bloqueio = modo === 'novo' ? (naSessao && !depois ? naSessao : null) : naSessao && grupos.some(function (g) {
     return g.dia === naSessao && g.mudancas.some(function (m) { return m.on && !m.jaEsta; });
   }) ? naSessao : null;
+  // os exercícios do texto: os que já têm histórico (as cargas continuam) e os que começam do zero
+  const idsTexto = [], emQue = {};
+  L.dias.forEach(function (d) {
+    if (d.aberto) return;
+    d.ex.forEach(function (x) {
+      const id = ids[x.n];
+      if (idsTexto.indexOf(id) < 0) { idsTexto.push(id); emQue[id] = { n: CAT[id] ? CAT[id].n : x.n, dias: [] }; }
+      if (emQue[id].dias.indexOf(d.dia) < 0) emQue[id].dias.push(d.dia);
+    });
+  });
+  const temHistorico = function (id) { return (S.logs[id] || []).some(function (l) { return (l.sets || []).some(Boolean); }); };
+  const doZero = idsTexto.filter(function (id) { return !temHistorico(id); }).map(function (id) {
+    return { id: id, n: emQue[id].n, em: emQue[id].dias.join(' e ') };
+  });
+  const P = programasDe(S);
+  const ativo = P && P.lista[P.ativo];
+  const perA = ativo && periodoDoPrograma(S, P.ativo, Date.now());
+  const feitosA = P ? sessoesDoAtivo(S).filter(function (x) { return !x.livre && x.day; }).length : S.done.filter(function (x) { return !x.livre && x.day; }).length;
+  const nome = String(r.nome || '').trim() || nomeReserva(L.data, Date.now());
+  const igualA = programaComNome(S, nome);
+  const abertosDoTexto = L.dias.filter(function (d) { return d.aberto; }).map(function (d) { return d.dia; });
+  const abertosHoje = diasAbertos(S.prog);
+  const novosNaRevisao = sug.doTexto.filter(function (d) { return sug.deAgora.indexOf(d) < 0; });
   return {
     lida: true, data: L.data,
     bloqueio: bloqueio,
+    modo: modo, escolha: sug.escolha, sugestao: sug.sugestao, doTexto: sug.doTexto, deAgora: sug.deAgora,
+    lido: { treinos: L.dias.length, exercicios: L.dias.reduce(function (n, d) { return n + d.ex.length; }, 0) },
+    exercicios: { total: idsTexto.length, comHistorico: idsTexto.length - doZero.length, doZero: doZero },
+    novo: modo !== 'novo' ? null : {
+      nome: r.nome, nomeFinal: nomeLivre(S, nome), temTitulo: !!(L.programa && L.programa.nome),
+      reserva: nomeReserva(L.data, Date.now()), dataDoTexto: !!L.data, desde: L.data ? String(L.data).split('/').slice(0, 2).join('/') : ddmmDe(Date.now()),
+      repetido: igualA ? { nome: igualA.nome, de: fmtDate(igualA.criado || igualA.m || Date.now()) } : null,
+      objetivo: L.objetivo || null,
+      comeca: comeca || null, quando: depois ? 'data' : 'agora',
+      rotacao: sug.doTexto, fora: abertosDoTexto.concat(abertosHoje.filter(function (d) { return abertosDoTexto.indexOf(d) < 0; })),
+      agora: ativo ? { nome: ativo.nome, de: perA ? MESES[new Date(perA.de || Date.now()).getMonth()].slice(0, 3) + '.' : '', ate: ddmmDe(Date.now()), feitos: feitosA } : null
+    },
+    somados: modo === 'revisao' && sug.escolha && novosNaRevisao.length ? { total: sug.deAgora.length + novosNaRevisao.length, deAgora: sug.deAgora, novos: novosNaRevisao, fora: abertosHoje } : null,
     falhou: !!r.falhou,
     // dois nomes do mesmo treino no mesmo exercício: aviso, junto dos problemas do texto
     problemas: L.problemas.concat(nomesNoMesmoId(L, r.casa).map(function (x) {
@@ -4035,8 +4232,8 @@ CTX.revisao = function () {
     total: todas.length,
     marcadas: todas.filter(function (m) { return m.on; }).length,
     // a revisão lida é igual ao programa do treinador de agora: nada a escolher
-    igual: !falta && L.dias.length > 0 && !todas.length,
-    pode: !falta && !bloqueio && L.dias.length > 0 && todas.length > 0
+    igual: modo === 'revisao' && !falta && L.dias.length > 0 && !todas.length,
+    pode: !falta && !bloqueio && L.dias.length > 0 && (modo === 'novo' || todas.length > 0)
   };
 };
 
@@ -4056,18 +4253,12 @@ CTX.revisao = function () {
  * e a sequência voltam ao que eram, e o exercício que a revisão criou e nada
  * usa fica arquivado, preservando o histórico do outro aparelho.
  */
-CTX.incorporaRevisao = async function (evento) {
-  const r = view.revisao;
-  const vm = CTX.revisao();
-  if (!r || !vm || !vm.pode || r.aplicando) return;
-  r.aplicando = true;
-  const botaoTocado = evento && evento.detail > 0 && evento.currentTarget ? evento.currentTarget.getBoundingClientRect() : null;
-  const { ids } = idsDaRevisao(r);
-  // Ao recusar a revisão, o programa volta com a mesma prioridade na fusão.
-  const marcas = { mtime: S.mtime, carimbosEm: S.carimbosEm, carimbos: S.carimbos && { ...S.carimbos } };
-  const impressoesAntes = { ...impressoes };
-  const antes = JSON.stringify({ ex: S.ex, apelidos: S.apelidos, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog });
-
+/**
+ * O que a revisão cria antes de mexer no programa: os exercícios novos no
+ * catálogo e os apelidos ("é o mesmo"). Igual para a revisão e para o
+ * programa novo.
+ */
+function criaDaRevisao(r, ids) {
   S.ex = Object.assign({}, S.ex);
   const catAntes = CAT;          // o catálogo de antes: o que a revisão cria não está aqui
   const criados = [];
@@ -4110,6 +4301,23 @@ CTX.incorporaRevisao = async function (evento) {
     apelidosDaRevisao.push({ k: k, antes: S.apelidos[k] || null });
     S.apelidos[k] = { id: id, m: Date.now(), n: nome };
   });
+  return { criados: criados, apelidosDaRevisao: apelidosDaRevisao, catAntes: catAntes };
+}
+
+CTX.incorporaRevisao = async function (evento) {
+  const r = view.revisao;
+  const vm = CTX.revisao();
+  if (!r || !vm || !vm.pode || r.aplicando) return;
+  if (vm.modo === 'novo') return comecaProgramaNovo(evento, r, vm);
+  r.aplicando = true;
+  const botaoTocado = evento && evento.detail > 0 && evento.currentTarget ? evento.currentTarget.getBoundingClientRect() : null;
+  const { ids } = idsDaRevisao(r);
+  // Ao recusar a revisão, o programa volta com a mesma prioridade na fusão.
+  const marcas = { mtime: S.mtime, carimbosEm: S.carimbosEm, carimbos: S.carimbos && { ...S.carimbos } };
+  const impressoesAntes = { ...impressoes };
+  const antes = JSON.stringify({ ex: S.ex, apelidos: S.apelidos, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog });
+
+  const { criados, apelidosDaRevisao } = criaDaRevisao(r, ids);
 
   // a conta de novo, agora com o catálogo completo (o descanso padrão do novo),
   // com os MESMOS ids da tela
@@ -4199,10 +4407,91 @@ CTX.incorporaRevisao = async function (evento) {
     : 'Revisão guardada. O seu programa não mudou.', desfaz));
 };
 
-function logProg(d, txt, motivo, textoRevisao) {
+/**
+ * O PROGRAMA NOVO (etapa 1 de docs/catalogo): o texto inteiro vira um
+ * programa, o de agora vai para a linha do tempo, guardado, e nada se apaga.
+ * Com "começa dd/mm", ele fica em "Próximo" e o de agora segue. O aviso desfaz.
+ */
+async function comecaProgramaNovo(evento, r, vm) {
+  r.aplicando = true;
+  const botaoTocado = evento && evento.detail > 0 && evento.currentTarget ? evento.currentTarget.getBoundingClientRect() : null;
+  const { ids } = idsDaRevisao(r);
+  const marcas = { mtime: S.mtime, carimbosEm: S.carimbosEm, carimbos: S.carimbos && { ...S.carimbos } };
+  const impressoesAntes = { ...impressoes };
+  const antes = JSON.stringify({ ex: S.ex, apelidos: S.apelidos, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog, programas: S.programas });
+  const doAntes = programasDe(S) ? S.programas.lista[S.programas.ativo].nome : null;
+  const { criados, apelidosDaRevisao } = criaDaRevisao(r, ids);
+  const agora = Date.now();
+  const prog = {}, rotN = [], abertos = [];
+  r.lida.dias.forEach(function (d) {
+    prog[d.dia] = treinoDaRevisao(d, ids, d.aberto ? S.prog && S.prog[d.dia] : undefined, function (id) { return descansoPadrao(exDe(id)); }, agora);
+    (d.aberto ? abertos : rotN).push(d.dia);
+  });
+  const rotFinal = rotN.concat(abertos);
+  const nEx = vm.exercicios.total;
+  const resumo = rotN.length + (rotN.length === 1 ? ' treino, ' : ' treinos, ') + nEx + (nEx === 1 ? ' exercício' : ' exercícios');
+  const nome = vm.novo.nomeFinal;
+  const comeca = vm.novo.quando === 'data' ? vm.novo.comeca : null;
+  const id = criaPrograma(S, { nome: nome, origem: 'treinador', objetivo: vm.novo.objetivo, prog: prog, rot: rotFinal,
+    progTreinador: { em: agora, data: r.lida.data, rot: rotFinal.slice(), dias: JSON.parse(JSON.stringify(prog)) },
+    resumo: resumo, comeca: comeca, texto: r.texto }, agora);
+  logProg('-', 'Programa novo: ' + resumo + (comeca ? ', começa em ' + comeca : ''), null,
+    S.primeiraVez && !sync.jaSincronizou ? r.texto : undefined, id);
+  if (!comeca) view.day = nextDay();
+  if ((await save()) === false) {
+    r.aplicando = false;
+    Object.assign(S, marcas);
+    impressoes = impressoesAntes;
+    const v = JSON.parse(antes);
+    S.ex = v.ex; S.apelidos = v.apelidos; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog; S.programas = v.programas;
+    montaCatalogo();
+    view.day = nextDay();
+    r.falhou = true;
+    render();
+    return;
+  }
+  view.revisao = null;
+  render(); saiDoDestino('revisao');
+  if (botaoTocado) noDesenho(protegeSegundoToque(botaoTocado));
+  const gravado = JSON.stringify({ prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, programas: S.programas });
+  const desfaz = async function () {
+    if (S.sessao) { toast('Há um treino aberto. Encerre o treino antes de desfazer a troca de programa.'); return; }
+    // só desfaz se nada mudou depois (uma sincronia pode ter trazido outra edição)
+    if (JSON.stringify({ prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, programas: S.programas }) !== gravado) {
+      toast('O programa mudou depois; desfazer agora passaria por cima disso. Reative o de antes pela linha do tempo.');
+      return;
+    }
+    const v = JSON.parse(antes);
+    S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.programas = v.programas;
+    const usado = function (x) {
+      if ((S.logs[x] || []).length) return true;
+      const em = function (dias) { return Object.keys(dias || {}).some(function (k) { return ((dias[k] && dias[k].ex) || []).some(function (sl) { return sl.id === x; }); }); };
+      return em(S.prog) || em(S.progTreinador && S.progTreinador.dias);
+    };
+    S.ex = Object.assign({}, S.ex);
+    criados.forEach(function (x) { if (S.ex[x] && !usado(x)) S.ex[x] = Object.assign({}, S.ex[x], { arq: 1, m: Date.now() }); });
+    S.apelidos = Object.assign({}, S.apelidos || {});
+    apelidosDaRevisao.forEach(function (a) {
+      if (a.antes) S.apelidos[a.k] = { id: a.antes.id, m: depoisDe(S.apagados && S.apagados[chaveDeApelido(a.k)]) };
+      else { delete S.apelidos[a.k]; lapide(chaveDeApelido(a.k)); }
+    });
+    montaCatalogo();
+    logProg('-', 'Programa novo desfeito: ' + nome + ' saiu.', null, undefined, id);
+    view.day = nextDay();
+    const ok = await save();
+    render();
+    if (ok) toast(comeca ? 'O ' + nome + ' saiu de Próximo.' : 'Voltou o ' + (doAntes || 'programa de antes') + '.');
+  };
+  noDesenho(() => CTX.avisaComDesfazer(comeca
+    ? 'O ' + nome + ' fica em Próximo até ' + comeca + '. Até lá, segue o de agora.'
+    : 'Começou o ' + nome + '.' + (doAntes ? ' O ' + doAntes + ' está guardado na linha do tempo.' : ''), desfaz));
+}
+
+function logProg(d, txt, motivo, textoRevisao, p) {
   if (!Array.isArray(S.progLog)) S.progLog = [];
   const entrada = { t: Date.now(), day: d, txt: txt, motivo: motivo || null, m: Date.now() };
   if (textoRevisao) entrada.textoRevisao = textoRevisao;
+  if (p) entrada.p = p;
   S.progLog.push(entrada);
   if (S.progLog.length > TETO.progLog) S.progLog = S.progLog.slice(-TETO.progLog);
 }
@@ -4690,9 +4979,12 @@ function registroDoLancamento() {
 }
 
 /** O próximo da sequência NAQUELE dia: o que vinha depois do último antes dele. */
-function previstoNoDia(t) {
+function previstoNoDia(t, escolhido) {
   const ini = new Date(t); ini.setHours(0, 0, 0, 0);
-  return proximoTreino(Object.assign({}, S, { done: S.done.filter(function (x) { return x.t < ini.getTime(); }) }), ROT_BASE);
+  // no programa que valia naquele dia: antes da troca, o seguinte era o do programa de antes
+  const id = programaDoDia(t, escolhido);
+  const base = id && programasDe(S) && id !== S.programas.ativo ? estadoDoPrograma(S, id) : S;
+  return proximoTreino(Object.assign({}, base, { done: base.done.filter(function (x) { return x.t < ini.getTime(); }) }), ROT_BASE);
 }
 
 /** Dias com treino nas últimas quatro semanas, até ontem — a conta da leitura de Dias. */
@@ -4704,7 +4996,9 @@ function diasNasQuatroSemanas() { return _diasComTreino(S.done, _inicioDoDia(Dat
  */
 async function lancaTreino(k, a = view.add, linhas = []) {
   if (!a || a.sid != null) return;
-  if (k !== 'livre' && rot().indexOf(k) < 0) return;
+  // a letra vale no programa daquele dia (registrar um dia de antes da troca oferece os treinos de antes)
+  const idP = programaDoDia(a.t, a.prog);
+  if (k !== 'livre' && rotDoPrograma(idP).indexOf(k) < 0) return;
   a.antes = diasNasQuatroSemanas();
   const t = instanteLivre(a.t);
   // Dois aparelhos podem lançar o mesmo turno. A identidade nasce no toque, sem depender das 8h/15h/20h.
@@ -4715,7 +5009,7 @@ async function lancaTreino(k, a = view.add, linhas = []) {
     marca.livre = 1; marca.grupos = a.grupos || [];
     if (a.dur) { marca.dur = a.dur * 60000; marca.fim = 'manual'; }
   }
-  else { marca.day = k; if (S.deload) marca.dl = 1; }
+  else { marca.day = k; if (S.deload) marca.dl = 1; marcaPrograma(marca, idP); }
   S.done.push(marca);
   S.done.sort(function (x, y) { return x.t - y.t; });
   a.sid = marca.sid;
@@ -4757,30 +5051,44 @@ CTX.turnoDaHora = function (data, hora) {
   const t = aplicaHora(instanteDaData(data), hora);
   return t == null ? null : periodoDe(t).k;
 };
-CTX.diaDoRegistro = function (data) {
+CTX.diaDoRegistro = function (data, escolhido) {
   const t = instanteDaData(data), d = new Date(t);
   const sessoes = sessoesDoDia(t).sort((a, b) => a.t - b.t);
-  const proximo = sessoes.length ? proximoTreino({ ...S, done: S.done.filter(m => hojeISO(m.t) <= data) }, ROT_BASE) : previstoNoDia(t);
+  const P = programasDe(S);
+  const doDia = programaDoDia(t);
+  const idP = programaDoDia(t, escolhido);
+  const outroPrograma = !!(P && idP && idP !== P.ativo);
+  const base = outroPrograma ? estadoDoPrograma(S, idP) : S;
+  const proximo = sessoes.length ? proximoTreino({ ...base, done: base.done.filter(m => hojeISO(m.t) <= data) }, ROT_BASE) : previstoNoDia(t, escolhido);
+  // "Foi de outro programa": os outros que já foram o ativo, o mais recente primeiro
+  const outros = P ? Object.values(P.lista).filter(x => x.id !== idP && (x.estado === 'ativo' || x.estado === 'guardado'))
+    .sort((a, b) => (b.periodos.at(-1)?.[0] ?? 0) - (a.periodos.at(-1)?.[0] ?? 0)).map(x => ({ id: x.id, nome: x.nome })) : [];
   return {
     dia: DIAS_LONGOS[d.getDay()] + ', ' + d.getDate(), t, hoje: data === hojeISO(),
-    treinos: rot().map(k => ({ k, sigla: siglaDoTreino(k), proximo: k === proximo })),
+    treinos: rotDoPrograma(idP).map(k => ({ k, sigla: siglaDoTreino(k), proximo: k === proximo })),
+    // o dia de antes da troca: os treinos são os do programa que valia nele
+    programa: outroPrograma || (escolhido && idP !== doDia) ? { id: idP, nome: P.lista[idP].nome, escolhido: !!escolhido && idP !== doDia } : null,
+    outros,
     grupos: regioesDoCorpo(), sessoes: sessoes.length, cardios: cardioDoDia(t),
     frequencia: !sessoes.length && (S.descanso[data] ? 'descanso' : S.falta[data] ? 'falta' : null),
     motivo: S.falta[data]?.motivo
   };
 };
 
-CTX.seriesDoRegistro = function (data, dia, turno, hora) {
+CTX.seriesDoRegistro = function (data, dia, turno, hora, escolhido) {
   const t = instanteDoRegistro(data, turno, hora);
-  const anterior = S.done.filter(m => m.day === dia && !m.livre && m.t < t && m.sid !== S.sessao?.sid).at(-1);
+  // a última vez DAQUELE treino, no mesmo programa: o A de outro programa é outro treino
+  const idP = programasDe(S) ? programaDoDia(instanteDaData(data), escolhido) : null;
+  const anterior = S.done.filter(m => m.day === dia && !m.livre && m.t < t && m.sid !== S.sessao?.sid &&
+    (!idP || programaDaSessao(S, m) === idP)).at(-1);
   const ultima = [];
   if (anterior) for (const [id, lista] of Object.entries(S.logs)) {
     for (const l of lista) if (l.sid === anterior.sid && l.sets.some(Boolean)) {
       ultima.push({ id, sl: l.sl, u: l.u, q: l.q, sets: l.sets.map(par => par && par.slice(0, 2)) });
     }
   }
-  // A prescrição é a do programa. As trocas temporárias de uma sessão ao vivo pertencem a ela.
-  const prescrito = (S.prog?.[dia]?.ex || []).map(slot => {
+  // A prescrição é a do programa (o daquele dia). As trocas temporárias de uma sessão ao vivo pertencem a ela.
+  const prescrito = (progDoPrograma(idP)?.[dia]?.ex || []).map(slot => {
     const ex = exDe(slot.id), u = slot.u || ex.u, q = slot.q || ex.q;
     const alvo = cronometrado(u) ? null : (u && q) || faixaDoTexto(slot.r)?.[0];
     const anteriorDoEx = ultima.find(l => l.id === slot.id && !l.sl && l.u === u && (!cronometrado(u) || l.q === q));
@@ -4803,7 +5111,7 @@ CTX.guardaRegistro = async function (data, r, modo, ajustes) {
   if (t == null || !Object.hasOwn(MODOS_DO_REGISTRO, modo)) return;
   let linhas = [];
   if (r.k !== 'livre' && modo !== 'presenca') {
-    const { ultima, prescrito } = CTX.seriesDoRegistro(data, r.k, r.turno, r.hora);
+    const { ultima, prescrito } = CTX.seriesDoRegistro(data, r.k, r.turno, r.hora, r.prog);
     if (modo === 'ultima') {
       if (!ultima.length) return;
       linhas = ultima;
@@ -4817,7 +5125,7 @@ CTX.guardaRegistro = async function (data, r, modo, ajustes) {
       }
     }
   }
-  const sessao = await lancaTreino(r.k, { t, precisao: r.hora ? 1 : 'turno', grupos: r.grupos, dur: r.dur }, linhas);
+  const sessao = await lancaTreino(r.k, { t, precisao: r.hora ? 1 : 'turno', grupos: r.grupos, dur: r.dur, prog: r.prog }, linhas);
   if (!sessao) return;
   const sigla = siglaDoTreino(r.k);
   const treino = r.k === 'livre' ? 'Treino livre' : sigla === 'HX' ? 'HYROX' : 'Treino ' + sigla;
@@ -5649,7 +5957,9 @@ async function importText(txt) {
         lixeira: Array.isArray(d.lixeira) ? d.lixeira : [],
         quadro: (d.quadro && typeof d.quadro === 'object') ? d.quadro : null,
         lousa: (d.lousa && typeof d.lousa === 'object') ? d.lousa : null,
-        progTreinador: (d.progTreinador && typeof d.progTreinador === 'object') ? d.progTreinador : null };
+        progTreinador: (d.progTreinador && typeof d.progTreinador === 'object') ? d.progTreinador : null,
+        // os programas (etapa 1 do catálogo): sem ele, a migração recriaria um programa só
+        programas: (d.programas && typeof d.programas === 'object' && !Array.isArray(d.programas)) ? d.programas : null };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();
@@ -5663,6 +5973,7 @@ async function importText(txt) {
   delete view.escolhasIniciais;
   delete view.repeteInicio;
   if (S.primeiraVez) lembraDocumentos();
+  carimbaProgramasNovos();
   montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;
@@ -6924,7 +7235,7 @@ async function setDeload(on) {
 // saíram do programa e os que vieram do plano antigo.
 function itensDaSessao(marca) {
   const doDia = {};
-  const t = marca.day ? treino(marca.day) : null;
+  const t = marca.day ? treinoDaSessao(marca) : null;
   if (t) t.ex.forEach(function (ex) { doDia[ex.id] = 1; });
 
   const out = [];
@@ -7185,7 +7496,7 @@ function abreSerieDaPassada(idEx, chave, k) {
 
 /** A unidade própria do exercício prescrito (segundos, metros…), que a régua de repetições não atende. */
 function unidadeDoPrescrito(m, idEx) {
-  const P = m.day ? treino(m.day) : null;
+  const P = m.day ? treinoDaSessao(m) : null;
   const ex = P ? P.ex.filter(function (x) { return x.id === idEx; })[0] : null;
   return !!(ex && ex.u);
 }
@@ -7332,7 +7643,7 @@ async function apagaSerieDaPassada() {
 /** O exercício da prescrição daquele registro, para a faixa e o RIR prescritos. */
 function exDoRegistro(idEx, e) {
   const m = S.done.filter(function (x) { return x.sid === e.sid; })[0];
-  const P = m && m.day ? treino(m.day) : null;
+  const P = m && m.day ? treinoDaSessao(m) : null;
   return P ? P.ex.filter(function (ex) { return ex.id === idEx || ex.id === e.sl || ex.orig === idEx; })[0] || null : null;
 }
 
@@ -7465,7 +7776,7 @@ async function wipe() {
   S = { primeiraVez:S.primeiraVez, logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
         body:corpoVazio(), carga:{}, export:0,
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, apelidos:S.apelidos || {}, mods:null, progLog:S.progLog || [],
-        progTreinador:S.progTreinador || null,
+        progTreinador:S.progTreinador || null, programas:S.programas || null,
         // Os carimbos dos documentos ficam: o programa e o plano que sobrevivem
         // continuam sendo a versão de quando foram editados, e zerar o carimbo
         // faria a cópia velha do outro aparelho vencer.
@@ -8488,6 +8799,8 @@ const FECHA_CAMADA = {
   lixeira:   function () { CTX.fechaLixeira(); },
   dia:       function () { CTX.fechaDia(); },
   prog:      function () { fecharPrograma(); },
+  programas: function () { CTX.fechaProgramas(); },
+  programa:  function () { CTX.fechaProgramaAberto(); },
   retro:     function () { fecharRetro(); },
   add:       function () { fecharAdicionar(); },
   sessao:    function () { fecharSessao(); },
@@ -8644,15 +8957,292 @@ CTX.avancaInicio = function (pular, passoNaTela = passoInicial()) {
  * do nutricionista e o que espera decisão ("vira regra?"). Lê o que o Plano
  * antigo lê.
  */
+// ---------- os PROGRAMAS (etapa 1 de docs/catalogo; protótipo em ~/lastro-rascunho/programas) ----------
+const MES_CURTO = function (t) { return MESES[new Date(t).getMonth()].slice(0, 3) + '.'; };
+/** "57,5", "60": a carga sem o ",0" que não diz nada. */
+const kg = function (v) { return String(Math.round(v * 100) / 100).replace('.', ','); };
+const ddmmDe = function (t) { const d = new Date(t); return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0'); };
+/** Quantos treinos a semana prevê: os dias de treino da cadência, sem os abertos (o HYROX conta como feito, não como previsto). */
+function previstosPorSemana() {
+  const cad = cadenciaDaSemana();
+  const n = cad.filter(function (c) { return c === 'treino'; }).length;
+  return Math.max(1, Math.min(n, treinosDe(S.prog, rot()).length || n));
+}
+/** A carga da última vez, para "com histórico": "57,5 kg/lado". */
+function ultimaCargaDe(id) {
+  const h = (S.logs[id] || []).filter(function (l) { return (l.sets || []).some(Boolean); });
+  const l = h[h.length - 1];
+  if (!l) return null;
+  const c = Math.max.apply(null, l.sets.filter(Boolean).map(function (p) { return +p[0] || 0; }));
+  const tipo = cargaTipo(id, exDe(id));
+  if (!c) return (l.u && l.q ? l.q + ' ' + l.u : 'feito em ' + fmtDate(l.t));
+  return kg(c) + ' ' + CARGAS[tipo].rot;
+}
+CTX.abreProgramas = function () {
+  if (!programasDe(S)) { abrirPrograma(null); return; }
+  view.programas = { aberto: null };
+  entraNoDestino('programas'); render(); rola(0);
+};
+CTX.fechaProgramas = function () { view.programas = null; render(); saiDoDestino('programas'); };
+CTX.abreProgramaAberto = function (id) {
+  if (!view.programas) view.programas = { aberto: null };
+  if (!programasDe(S) || !S.programas.lista[id]) return;
+  entraNoDestino('programa');
+  view.programas.aberto = id; view.programas.treino = null; render(); rola(0);
+};
+CTX.fechaProgramaAberto = function () { if (view.programas) { view.programas.aberto = null; render(); saiDoDestino('programa'); } };
+CTX.abreTreinoDoPrograma = function (k) { if (view.programas) { view.programas.treino = view.programas.treino === k ? null : k; render(); } };
+
+/** A linha do tempo: o próximo, o de agora e os de antes, com a aderência de cada um. */
+CTX.programasV3 = function () {
+  const P = programasDe(S);
+  if (!P) return null;
+  const agora = Date.now();
+  const x = P.lista[P.ativo];
+  const sem = semanaDoAtivo(S, agora);
+  const letras = treinosDe(S.prog, rot());
+  const prox = nextDay();
+  const feitos = sem ? sem.feitos : [];
+  const ini = inicioDoAtivo(S);
+  const quem = function (p) { return p.origem === 'treinador' ? 'do treinador' : 'seu'; };
+  const prev = previstosPorSemana();
+  const antes = Object.values(P.lista).filter(function (p) { return p.estado === 'guardado'; })
+    .sort(function (a, b) { return fimDe(b) - fimDe(a); }).map(function (p) {
+      const b = balancoDoPrograma(S, p.id, agora, prev);
+      const per = periodoDoPrograma(S, p.id, agora);
+      const max = b ? Math.max(1, Math.max.apply(null, b.porSemana)) : 1;
+      return { id: p.id, nome: p.nome,
+        per: (per && per.de ? MES_CURTO(per.de) + ' a ' : 'até ') + (per ? ddmmDe(per.ate) : '') + (b ? ' · ' + b.semanas + (b.semanas === 1 ? ' semana · ' : ' semanas · ') + b.feitos + (b.feitos === 1 ? ' treino' : ' treinos') : ''),
+        ader: b ? b.porSemana.map(function (v) { return { v: v, h: Math.round(v / max * 100), baixa: v < Math.min(prev, max) * 0.8 }; }) : [],
+        pct: b ? b.pct : null };
+    });
+  const proximos = Object.values(P.lista).filter(function (p) { return p.estado === 'proximo' || p.estado === 'rascunho'; })
+    .sort(function (a, b) { return (b.m || 0) - (a.m || 0); }).map(function (p) {
+      return { id: p.id, nome: p.nome, sub: p.estado === 'proximo' ? quem(p) + ' · começa em ' + p.comeca : 'rascunho · ainda não começou' };
+    });
+  return {
+    agora: { id: x.id, nome: x.nome,
+      per: quem(x) + ' · desde ' + (ini > 0 ? DIAS_CURTOS[new Date(ini).getDay()] + '., ' + ddmmDe(ini) : MESES[new Date(x.criado || agora).getMonth()]),
+      letras: letras.map(function (k) { return { k: k, sigla: siglaDoTreino(k), feito: feitos.indexOf(k) >= 0, prox: k === prox }; }),
+      semana: sem ? sem.semana : null, feitos: letras.filter(function (k) { return feitos.indexOf(k) >= 0; }).length, total: letras.length,
+      proximo: prox && !diaAberto(prox) ? siglaDoTreino(prox) : null },
+    proximos: proximos, antes: antes,
+    fora: diasAbertos(S.prog).map(function (d) { return { k: d, sigla: siglaDoTreino(d), nome: S.prog[d].name }; })
+  };
+};
+function fimDe(p) { const per = p.periodos || []; return per.length ? (per[per.length - 1][1] || Infinity) : (p.m || 0); }
+
+/** Um programa aberto: o ativo (com a continuidade de cada exercício e as revisões) ou um guardado (com o balanço). */
+CTX.programaAbertoV3 = function () {
+  const P = programasDe(S);
+  const id = view.programas && view.programas.aberto;
+  if (!P || !id || !P.lista[id]) return null;
+  const agora = Date.now();
+  const x = P.lista[id], c = conteudoDe(S, id);
+  const ativo = id === P.ativo;
+  const letras = treinosDe(c.prog, c.rot);
+  const revisoes = revisoesDoPrograma(S, id);
+  const suas = revisoes.filter(function (r) { return r.quem === 'voce'; }).length;
+  const prev = previstosPorSemana();
+  const b = balancoDoPrograma(S, id, agora, prev);
+  const per = periodoDoPrograma(S, id, agora);
+  const sem = ativo ? semanaDoAtivo(S, agora) : null;
+  const prox = ativo ? nextDay() : null;
+  const feitos = sem ? sem.feitos : [];
+  const ini = ativo ? inicioDoAtivo(S) : null;
+  const tem = function (exId) { return (S.logs[exId] || []).some(function (l) { return (l.sets || []).some(Boolean); }); };
+  let com = 0, todos = 0;
+  const treinos = letras.map(function (k) {
+    const t = c.prog[k];
+    const ex = (t.ex || []).map(function (sl) {
+      const h = tem(sl.id);
+      todos++; if (h) com++;
+      return { id: sl.id, n: nomeEx(sl.id), hist: h, apoio: h ? (ultimaCargaDe(sl.id) || 'com histórico') : 'começa do zero',
+               prescricao: sl.s + ' × ' + (sl.u && sl.q ? sl.q + ' ' + sl.u : sl.r || '') + (sl.rir ? ' · RIR ' + sl.rir : '') };
+    });
+    const vezes = (S.done || []).filter(function (s) { return s && s.day === k && !s.livre && programaDaSessao(S, s) === id; }).length;
+    return { k: k, sigla: siglaDoTreino(k), nome: t.name, n: ex.length, novos: ex.filter(function (e) { return !e.hist; }).length,
+             feito: feitos.indexOf(k) >= 0, prox: k === prox, vezes: vezes, ex: ex, aberto: view.programas.treino === k };
+  });
+  const rotulo = (ativo ? 'Agora' : x.estado === 'guardado' ? 'Antes' : 'Próximo') + ' · ' + (x.origem === 'treinador' ? 'do treinador' : 'seu') +
+    (x.estado === 'guardado' ? ' · guardado' : x.estado === 'rascunho' ? ' · rascunho' : '');
+  const nRev = revisoes.length;
+  const sub = ativo
+    ? 'Desde ' + (ini > 0 ? DIAS_CURTOS[new Date(ini).getDay()] + '., ' + ddmmDe(ini) : MESES[new Date(x.criado || agora).getMonth()]) + (suas ? ' · ' + suas + (suas === 1 ? ' revisão sua' : ' revisões suas') : '')
+    : x.estado === 'guardado'
+      ? (per && per.de ? MES_CURTO(per.de) + ' a ' : 'até ') + (per ? ddmmDe(per.ate) : '') + (b ? ' · ' + b.semanas + (b.semanas === 1 ? ' semana' : ' semanas') : '') + (nRev ? ' · ' + nRev + (nRev === 1 ? ' revisão' : ' revisões') : '')
+      : (x.estado === 'proximo' ? 'Começa em ' + x.comeca : 'Ainda não começou') + (x.resumo ? ' · ' + x.resumo : '');
+  const top = b && b.progressoes[0];
+  const kgTxt = function (v) { return (v > 0 ? '+' : '') + kg(v); };
+  return {
+    id: id, ativo: ativo, estado: x.estado, nome: x.nome, rotulo: rotulo, sub: sub, objetivo: x.objetivo || null,
+    origem: x.origem,
+    nums: ativo
+      ? [{ v: sem ? String(sem.semana) : '1', u: '', t: 'semana' }, { v: String(letras.filter(function (k) { return feitos.indexOf(k) >= 0; }).length), u: ' de ' + letras.length, t: 'treinos nesta semana' },
+         { v: prox && !diaAberto(prox) ? siglaDoTreino(prox) : '—', u: '', t: 'o próximo' }]
+      : x.estado === 'guardado' && b
+        ? [{ v: String(b.feitos), u: '', t: 'treinos feitos' }, { v: b.pct == null ? '—' : b.pct + '%', u: '', t: 'dos previstos' }].concat(top ? [{ v: kgTxt(top.delta), u: ' kg', t: 'no ' + nomeEx(top.id).toLowerCase().split(' ').slice(0, 2).join(' ') }] : [])
+        : null,
+    treinos: treinos, comHistorico: com, todos: todos,
+    revisoes: revisoes.map(function (r, i) { return { i: i, t: r.t, dia: ddmmDe(r.t), semana: DIAS_CURTOS[new Date(r.t).getDay()] + '.', quem: r.quem, titulo: r.titulo, detalhe: r.detalhe, texto: !!r.textoRevisao }; }),
+    balanco: x.estado === 'guardado' && b ? {
+      ader: b.porSemana.map(function (v) { const mx = Math.max(1, Math.max.apply(null, b.porSemana)); return { v: v, h: Math.round(v / mx * 100), baixa: v < Math.min(prev, mx) * 0.8 }; }),
+      meses: (function () { const out = []; const base = per ? per.de : agora; for (let i = 0; i < b.porSemana.length; i++) { const m = MES_CURTO(base + i * 7 * 86400000); if (!out.length || out[out.length - 1] !== m) out.push(m); } return out; })(),
+      progressoes: b.progressoes.slice(0, 3).map(function (p) { const u = CARGAS[cargaTipo(p.id, exDe(p.id))].rot; return { id: p.id, n: nomeEx(p.id), de: kg(p.de) + ' → ' + kg(p.para) + ' ' + u, d: kgTxt(p.delta) + ' kg', em: 'em ' + p.semanas + (p.semanas === 1 ? ' semana' : ' semanas') }; }),
+      parados: b.parados.slice(0, 1).map(function (p) { return { id: p.id, n: nomeEx(p.id), de: 'parada em ' + kg(p.carga) + ' kg desde ' + ddmmDe(p.desde), em: p.semanas + (p.semanas === 1 ? ' semana' : ' semanas') }; }),
+      seguiram: b.seguiram.map(nomeEx), total: b.total, ativo: P.lista[P.ativo].nome,
+      notaProgressao: 'primeira → última',
+      fraca: (function () {
+        if (b.porSemana.length < 3) return null;
+        const base = per ? per.de : agora;
+        let i = -1;
+        b.porSemana.forEach(function (v, k) { if (v < prev && (i < 0 || v < b.porSemana[i])) i = k; });
+        if (i < 0) return null;
+        const ini = base + i * 7 * 86400000, v = b.porSemana[i];
+        return 'A semana mais fraca foi a de ' + ddmmDe(ini) + ' (' + MESES[new Date(ini).getMonth()] + '), com ' + v + (v === 1 ? ' treino' : ' treinos') + ' dos ' + prev + ' previstos.';
+      })()
+    } : null,
+    dif: ativo ? difTotal() : 0,
+    bloqueio: S.sessao && !ativo ? (diaAberto(S.sessao.day) ? 'A aula' : 'O treino ' + S.sessao.day) : null,
+    reativa: !ativo ? { ativo: P.lista[P.ativo].nome, feitos: sessoesDoAtivo(S).filter(function (s) { return !s.livre && s.day; }).length, primeiro: letras.length ? siglaDoTreino(letras[0]) : null } : null
+  };
+};
+CTX.revisaoDoProgramaV3 = function (i) {
+  const id = view.programas && view.programas.aberto;
+  if (!id) return null;
+  const r = revisoesDoPrograma(S, id)[i];
+  if (!r) return null;
+  const mudancas = [], fora = [];
+  r.itens.forEach(function (e) {
+    const dia = e.day && e.day !== '-' ? e.day : null;
+    // "revisão do treinador de 23/11: X; Y. Ficou de fora: Z." vira uma linha por mudança
+    const corpo = String(e.txt || '').replace(/^revis[aã]o do treinador( de [\d/]+)?:\s*/i, '').replace(/\.$/, '');
+    const [feito, deFora] = corpo.split(/\.\s*Ficou de fora:\s*/);
+    const parte = function (txt, lista) {
+      txt.split(/;\s*/).filter(Boolean).forEach(function (t) {
+        const sinal = /\bentra\b|criado|^Programa novo/i.test(t) ? '+' : /\bsai\b|apagado|desfeit/i.test(t) ? '−' : '~';
+        lista.push({ txt: t.charAt(0).toUpperCase() + t.slice(1), sinal: sinal, dia: dia, motivo: e.motivo || null });
+      });
+    };
+    parte(feito || '', mudancas);
+    if (deFora) parte(deFora, fora);
+  });
+  return { titulo: r.titulo, quem: r.quem, quando: DIAS_LONGOS[new Date(r.t).getDay()] + ', ' + ddmmDe(r.t) + ', às ' + fmtHoraDita(r.t),
+           itens: mudancas, fora: fora, texto: r.textoRevisao || (r.itens[0] && r.itens[0].p && programasDe(S) && S.programas.lista[r.itens[0].p] ? S.programas.lista[r.itens[0].p].texto || null : null) };
+};
+
+/** Trocar de programa: reativar um guardado, ou começar o de "Próximo". O aviso desfaz. */
+CTX.ativaPrograma = async function (id) {
+  const P = programasDe(S);
+  if (!P || !P.lista[id] || id === P.ativo || S.sessao) return;
+  const antes = JSON.stringify({ prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, programas: S.programas });
+  const doAntes = P.lista[P.ativo].nome, nome = P.lista[id].nome, eraGuardado = P.lista[id].estado === 'guardado';
+  ativaPrograma(S, id, Date.now());
+  logProg('-', (eraGuardado ? 'Programa reativado: ' : 'Programa começou: ') + nome + '. O ' + doAntes + ' foi para a linha do tempo.', null, undefined, id);
+  view.day = nextDay();
+  if (view.programas) view.programas.aberto = null;
+  pilha().length = 0;
+  const marcas = { mtime: S.mtime, carimbosEm: S.carimbosEm, carimbos: S.carimbos && { ...S.carimbos } };
+  const impressoesAntes = { ...impressoes };
+  const ok = await save();
+  if (ok === false) {
+    // a gravação recusou: tudo volta, inclusive os carimbos (senão o de antes sairia com carimbo novo)
+    const v = JSON.parse(antes);
+    S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.programas = v.programas;
+    S.progLog = S.progLog.slice(0, -1);
+    Object.assign(S, marcas); impressoes = impressoesAntes;
+    view.day = nextDay();
+    render();
+    return;
+  }
+  render();
+  const gravado = JSON.stringify({ prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, programas: S.programas });
+  CTX.avisaComDesfazer((eraGuardado ? 'O ' + nome + ' voltou' : 'Começou o ' + nome) + '. O ' + doAntes + ' está na linha do tempo.', async function () {
+    if (S.sessao) { toast('Há um treino aberto. Encerre o treino antes de desfazer a troca de programa.'); return; }
+    if (JSON.stringify({ prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, programas: S.programas }) !== gravado) {
+      toast('O programa mudou depois; troque pela linha do tempo.'); return;
+    }
+    const v = JSON.parse(antes);
+    S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.programas = v.programas;
+    logProg('-', 'Troca de programa desfeita: voltou o ' + doAntes + '.');
+    view.day = nextDay();
+    await save(); render();
+  });
+};
+CTX.duplicaPrograma = async function (id) {
+  if (!duplicaPrograma(S, id, Date.now())) return;
+  if (view.programas) view.programas.aberto = null;
+  await save(); render(); rola(0);
+  toast('A cópia está em “Próximo”, como rascunho.');
+};
+CTX.renomeiaPrograma = async function (id, nome) {
+  if (!renomeiaPrograma(S, id, nome, Date.now())) { toast('O nome precisa de duas letras ou mais.'); return; }
+  await save(); render();
+};
+/** O aviso único da separação: "Entendi" o tira, nos dois aparelhos. */
+CTX.dispensaSeparados = async function () {
+  if (!programasDe(S) || !S.programas.separados) return;
+  S.programas = Object.assign({}, S.programas, { separados: Object.assign({}, S.programas.separados, { visto: 1 }) });
+  await save(); render();
+};
+/**
+ * O dia de "começa dd/mm": no ano de quando o texto foi colado, ou no seguinte,
+ * se a data já tinha passado (um "começa 05/01" colado em dezembro é janeiro que vem).
+ */
+function diaDoComeca(txt, criado) {
+  const [d, m, a] = String(txt).split('/').map(Number);
+  const c = new Date(criado); c.setHours(0, 0, 0, 0);
+  let ano = a ? (a < 100 ? 2000 + a : a) : c.getFullYear();
+  let dia = new Date(ano, (m || 1) - 1, d || 1).getTime();
+  if (!a && dia < c.getTime() - 31 * 86400000) dia = new Date(ano + 1, (m || 1) - 1, d || 1).getTime();
+  return dia;
+}
+/** O programa de "Próximo" cujo dia chegou: o Hoje pergunta se começa (nunca troca sozinho). */
+function proximoQueComecaHoje(agora) {
+  const P = programasDe(S);
+  if (!P) return null;
+  const hoje = new Date(agora); hoje.setHours(0, 0, 0, 0);
+  const x = Object.values(P.lista).filter(function (p) {
+    if (p.estado !== 'proximo' || !p.comeca) return false;
+    const dia = diaDoComeca(p.comeca, p.criado || p.m || Date.now());
+    return dia <= hoje.getTime() && !(p.adiado && p.adiado >= hoje.getTime());
+  })[0];
+  return x ? { id: x.id, nome: x.nome } : null;
+}
+CTX.adiaProximo = async function (id) {
+  const P = programasDe(S);
+  if (!P || !P.lista[id]) return;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  S.programas = JSON.parse(JSON.stringify(P));
+  S.programas.lista[id].adiado = hoje.getTime();
+  S.programas.lista[id].m = Date.now();
+  await save(); render();
+};
+
 CTX.planoV3 = function () {
   const hoje = diaResolvido().treino;
   const cad = cadenciaDaSemana();
+  const Pg = programasDe(S);
+  const sem = Pg ? semanaDoAtivo(S, Date.now()) : null;
+  const feitos = sem ? sem.feitos : [];
+  const prox = nextDay();
+  const lista = rot().filter(function (d) { return !!(S.prog && S.prog[d]); }).map(function (d) {
+    const P = treino(d);
+    return { d: d, sigla: siglaDoTreino(d), nome: P.name, hoje: d === hoje, aberto: diaAberto(d),
+             feito: feitos.indexOf(d) >= 0, prox: !!Pg && d === prox,
+             series: P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0), n: P.ex.length };
+  });
+  const letras = treinosDe(S.prog, rot());
+  const sep = Pg && Pg.separados && !Pg.separados.visto && Pg.lista[Pg.separados.de] && Pg.lista[Pg.separados.para] ? Pg.separados : null;
   return {
-    treinos: rot().filter(function (d) { return !!treino(d); }).map(function (d) {
-      const P = treino(d);
-      return { d: d, nome: P.name, hoje: d === hoje, aberto: diaAberto(d),
-               series: P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0), n: P.ex.length };
-    }),
+    // com programas, os treinos do programa e, à parte, os que ficam fora de programa (os abertos)
+    programa: Pg ? { nome: Pg.lista[Pg.ativo].nome,
+      sub: [sem ? 'semana ' + sem.semana : null, sem ? letras.filter(function (k) { return feitos.indexOf(k) >= 0; }).length + ' de ' + letras.length + ' feitos' : null,
+            prox && !diaAberto(prox) ? 'o próximo é o ' + siglaDoTreino(prox) : null].filter(Boolean).join(' · ') } : null,
+    separados: sep ? { de: Pg.lista[sep.de].nome, letrasDe: treinosDe(Pg.lista[sep.de].prog, Pg.lista[sep.de].rot),
+                       para: Pg.lista[sep.para].nome, letrasPara: letras } : null,
+    treinos: Pg ? lista.filter(function (t) { return !t.aberto; }) : lista,
+    fora: Pg ? lista.filter(function (t) { return t.aberto; }) : [],
     cadencia: DIAS_CURTOS.map(function (rotulo, i) { return { i: i, rotulo: rotulo, nome: DIAS_LONGOS[i], treino: cad[i] === 'treino' }; }),
     refeicoes: CTX.planoCompleto(),
     resumo: CTX.resumoDoPlano(),
@@ -10853,7 +11443,7 @@ CTX.diaAberto = function () {
       return n + (S.logs[k] || []).filter(function (e) { return e.sid === m.sid; })
         .reduce(function (x, e) { return x + e.sets.filter(Boolean).length; }, 0);
     }, 0);
-    const P = !m.livre && treino(m.day);
+    const P = !m.livre && treinoDaSessao(m);
     const prescritas = P ? P.ex.reduce(function (n, ex) { return n + ex.s; }, 0) : 0;
     const hh = function (x) { return horaHHMM(x).replace(':', 'h'); };
     const hora = temHora(m) || m.hora === 1 ? hh(m.t) : null;
@@ -10985,7 +11575,7 @@ CTX.detalheDaSessao = function () {
   // correndo, e escrever por cima seria discutir com o relógio.
   const corrigivel = !aberta;
   // ---- a sessão como foi (a D, `dias.html`, estado 3) ----
-  const P = treino(m.day);
+  const P = treinoDaSessao(m);
   const naSessao = function (k, e) {
     return m.sid != null ? e.sid === m.sid
       : (sameDay(e.t, m.t) && e.sid == null && P && P.ex.some(function (ex) { return ex.id === k || ex.id === e.sl; }));
@@ -13940,13 +14530,24 @@ CTX.hojeV3 = function () {
     bloco = { k: 'confirmar', cor: 'corpo', quando: sameDay(cartao.fim, agora) ? 'o treino de hoje cedo' : 'o treino de ontem', titulo: 'Treino ' + cartao.dia,
               apoio: 'Fechou sozinho na última série: das ' + hh(cartao.inicio) + ' às ' + hh(cartao.fim) + ', ' + fmtDur(cartao.fim - cartao.inicio) + '. Está certo?',
               fim: cartao.fim, sid: cartao.sid };
+  } else if (cartao && cartao.k === 'treino' && proximoQueComecaHoje(agora)) {
+    // um programa de "Próximo" cujo dia chegou: o Hoje pergunta ANTES de oferecer
+    // o treino do programa de agora, e nunca troca sozinho
+    const px = proximoQueComecaHoje(agora), Pg = programasDe(S);
+    bloco = { k: 'programa', id: px.id, cor: 'treino', quando: 'começa hoje',
+              titulo: px.nome, apoio: 'Ele estava em “Próximo”. Até você dizer, segue o ' + (Pg ? Pg.lista[Pg.ativo].nome : 'de agora') + '.' };
   } else if (cartao && (cartao.k === 'treino' || cartao.k === 'aula')) {
     const l = linha.filter(function (x) { return x.treino; })[0];
     const falta = l ? minutosDe(l.t) - agoraMin : null;
     const minutos = duracaoDoTreino();
     const estimativa = minutos < 50 ? '45 min' : minutos <= 70 ? 'uma hora' : '1h15';
+    // o primeiro dia de um programa ganha um marco, uma vez (protótipo de Programas, "Hoje, 1º dia")
+    const Pg = programasDe(S), iniP = Pg ? inicioDoAtivo(S) : 0;
+    const primeiroDia = cartao.k === 'treino' && !!Pg && iniP > 0 && sameDay(iniP, agora) &&
+      !sessoesDoAtivo(S).some(function (x) { return !x.livre && x.day; });
     bloco = { k: cartao.k, cor: cartao.k === 'aula' ? 'corpo' : 'treino', vivo: true,
-              quando: falta == null ? 'hoje' : falta > 0 ? 'daqui a ' + falta + ' min' : 'agora',
+              marco: primeiroDia ? 'Começa o ' + Pg.lista[Pg.ativo].nome + ' · semana 1' : null,
+              quando: primeiroDia ? 'o primeiro' : falta == null ? 'hoje' : falta > 0 ? 'daqui a ' + falta + ' min' : 'agora',
               titulo: cartao.k === 'aula' ? 'Aula do box' : 'Treino ' + cartao.dia,
               apoio: cartao.k === 'aula' ? 'Anote no fim, um número por movimento. Ou repita a última aula.'
                 : (H.sessao.nome ? H.sessao.nome + '. ' : '') +
@@ -14767,7 +15368,7 @@ CTX.seriePassadaV3 = function () {
   const x = p.novo ? null : serieDaPassada();
   if (!p.novo && !(x && x.s)) return null;
   const e = x ? x.e : (p.chave ? registroPorChave(p.idEx, p.chave) : null);
-  const P = m.day ? treino(m.day) : null;
+  const P = m.day ? treinoDaSessao(m) : null;
   const ex = e ? exDoRegistro(p.idEx, e)
     : P ? P.ex.filter(function (q) { return q.id === p.idEx || q.orig === p.idEx; })[0] || null : null;
   const tipo = cargaTipo(p.idEx, ex || exDe(p.idEx));

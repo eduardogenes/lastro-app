@@ -70,7 +70,7 @@ function vigiaACorDoTopo() {
   agenda();
 }
 
-export function Bloco({ cor = 'treino', linha0, quando, vivo, titulo, medio, apoio, fino, chave, children }) {
+export function Bloco({ cor = 'treino', linha0, marco, quando, vivo, titulo, medio, apoio, fino, chave, children }) {
   // o título passa a 36 com mais de 12 letras, em todo lugar (02-componentes.md, §1)
   if (medio == null) medio = String(titulo == null ? '' : titulo).length > 12;
   const anima = Bloco.ultima !== chave && chave != null;
@@ -80,6 +80,7 @@ export function Bloco({ cor = 'treino', linha0, quando, vivo, titulo, medio, apo
     <section class={cls('v3-bloco', fino && 'fino')} style={`--v3-cor:${corDe(cor)}`}>
       {linha0 && <div class="v3-bloco-l0">{linha0}</div>}
       <div class={anima ? 'anima' : undefined} key={chave}>
+        {marco && <span class="v3-marco" data-a="hoje-marco"><i>{ic.ok}</i>{marco}</span>}
         {quando && <p class="v3-bloco-q">{vivo && <i />}{quando}</p>}
         <h1 class={cls('v3-bloco-t', medio && 'm')} tabindex="-1">{titulo}</h1>
         {apoio && <p class="v3-bloco-a">{apoio}</p>}
@@ -95,7 +96,7 @@ export function Cabecalho({ titulo, nota, aoVoltar, reservaVoltar, acao, raiz })
     <header class={cls('v3-cab', raiz && 'raiz')}>
       {aoVoltar ? <button onClick={aoVoltar} aria-label="Voltar">{ic.volta}</button>
         : reservaVoltar && <span class="v3-cab-vao" aria-hidden="true" />}
-      <h1 tabindex="-1">{titulo}</h1>
+      {titulo ? <h1 tabindex="-1">{titulo}</h1> : <span class="v3-cab-vazio" />}
       {nota && <span class="v3-cab-n">{nota}</span>}
       {acao}
     </header>

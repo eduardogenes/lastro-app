@@ -33,12 +33,18 @@ function Momento({ ctx, h }) {
   } else if (b.k === 'confirmar') {
     acoes = <Acoes><Botao data-a="hoje-fim-ok" onClick={() => ctx.confirmaDuracao(b.fim, b.sid)}>Está certo</Botao>
       <Botao tipo="contorno" data-a="hoje-fim-corrige" onClick={() => ctx.abreSessaoDoDia({ k: 'sessao', t: b.fim, sid: b.sid })}>Corrigir</Botao></Acoes>;
+  } else if (b.k === 'programa') {
+    // o programa de "Próximo" cujo dia chegou: a pergunta é o momento, antes de qualquer treino
+    acoes = <><Acoes><Botao data-a="comeca-programa-sim" onClick={() => ctx.ativaPrograma(b.id)}>Começar hoje {ic.seta}</Botao></Acoes>
+      <div class="v3-saidas"><Saida data-a="comeca-programa-depois" onClick={() => ctx.adiaProximo(b.id)}>Depois</Saida>
+        <Saida data-a="comeca-programa-ver" onClick={ctx.abreProgramas}>Ver o programa</Saida></div></>;
   } else if (b.k === 'treino' || b.k === 'aula') {
     // "hoje não vou" abre o tipo do dia: diz o efeito antes do toque (a comida de descanso)
     acoes = <><Acoes><Botao data-a="hoje-comeca" onClick={ctx.abreTreinoDeHoje}>{b.k === 'aula' ? 'Fiz a aula' : 'Começar'} {ic.seta}</Botao></Acoes>
       <div class="v3-saidas">
+        {b.marco && <Saida data-a="hoje-ver-programa" onClick={ctx.abreProgramas}>Ver o programa</Saida>}
         <Saida data-a="hoje-nao-treino" onClick={() => ctx.abreFolha({ k: 'dia' })}>{b.k === 'aula' ? 'Hoje não vou' : 'Hoje não vou treinar'}</Saida>
-        {b.k === 'treino' && <Saida data-a="hoje-ja-treinei" onClick={ctx.lancaTreinoDeHoje}>Já treinei e não anotei</Saida>}
+        {b.k === 'treino' && !b.marco && <Saida data-a="hoje-ja-treinei" onClick={ctx.lancaTreinoDeHoje}>Já treinei e não anotei</Saida>}
       </div></>;
   } else if (b.k === 'refeicao') {
     acoes = <><Acoes><Botao data-a="hoje-comi" onClick={() => comi(ctx, b)}>{ic.ok} Comi</Botao>
@@ -51,7 +57,7 @@ function Momento({ ctx, h }) {
   }
   return (
     <Bloco cor={b.cor} medio={b.k === 'semTreino' ? false : undefined} chave={b.k + (b.id || '')} fino={b.fino} vivo={b.vivo} linha0={linha0}
-           quando={b.quando} titulo={b.titulo} apoio={b.apoio}>
+           marco={b.marco} quando={b.quando} titulo={b.titulo} apoio={b.apoio}>
       {acoes}
     </Bloco>
   );
@@ -150,6 +156,7 @@ export function HojeV3({ ctx }) {
     <div class="v3" style={'--cor-agora:var(--assunto-' + h.bloco.cor + ')'}>
       <Momento ctx={ctx} h={h} />
       <Gruda ctx={ctx} b={h.bloco} />
+
       {h.bloco.k === 'semTreino' ? <Secao titulo="Enquanto isso">
         <Linha titulo="Colar o texto do treinador" apoio="o app organiza em treinos e séries" aoTocar={ctx.abreRevisao} />
         <Linha titulo="Escolher o que acompanhar" apoio="peso, água, cardio, fotos" aoTocar={() => ctx.abreFolha({ k: 'oQueAparece' })} />

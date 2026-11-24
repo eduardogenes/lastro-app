@@ -7,7 +7,7 @@ import { ic } from '../icones.jsx';
 const TURNOS = { manha: 'Manhã', tarde: 'Tarde', noite: 'Noite' };
 const DURACOES = [[30, '30 min'], [45, '45 min'], [60, '1h'], [90, '1h30']];
 const MODOS = { ultima: 'Como da última vez', prescrito: 'Como o prescrito', ajustar: 'Ajustar', presenca: 'Só que treinei' };
-const INICIO = { k: '', grupos: [], dur: null, turno: '', hora: '' };
+const INICIO = { k: '', grupos: [], dur: null, turno: '', hora: '', prog: null };
 
 export function FolhaRegistroTreino({ ctx, f }) {
   const resumo = ctx.resumoDoDiaV3(f.data).treino;
@@ -45,8 +45,8 @@ export function FolhaAjustarRegistro({ ctx, f }) {
 }
 
 export function CartaoRegistro({ ctx, data }) {
-  const d = ctx.diaDoRegistro(data);
   const [r, setR] = useState(INICIO);
+  const d = ctx.diaDoRegistro(data, r.prog);
   const [outro, setOutro] = useState(false);
   const [cardio, setCardio] = useState(null);
   const [dispensou, setDispensou] = useState(false);
@@ -57,7 +57,7 @@ export function CartaoRegistro({ ctx, data }) {
   const freq = d.frequencia;
   const soCardio = !d.sessoes && !freq && !!d.cardios.length;
   const perguntaInicial = outro || (!d.sessoes && !freq && !soCardio);
-  const dados = r.turno && r.k !== 'livre' ? ctx.seriesDoRegistro(data, r.k, r.turno, r.hora) : null;
+  const dados = r.turno && r.k !== 'livre' ? ctx.seriesDoRegistro(data, r.k, r.turno, r.hora, r.prog) : null;
   const sigla = d.treinos.find(x => x.k === r.k)?.sigla;
   const nome = sigla === 'HX' ? 'HYROX' : sigla ? 'Treino ' + sigla : { livre: 'Treino livre', falta: 'Falta', cardio: 'Só cardio' }[r.k];
   const mudar = v => setR(atual => ({ ...atual, ...v }));
@@ -162,6 +162,13 @@ export function CartaoRegistro({ ctx, data }) {
           onClick={() => mudar({ k: x.k })}>{x.sigla}</button>{x.proximo && <small aria-hidden="true">próximo</small>}</span>)}
         <button class="livre" data-a="registro-livre" onClick={() => mudar({ k: 'livre' })}>livre</button>
       </div>
+      {d.programa && <p class="v3-reg-dele" data-a="registro-programa">{ic.plano}<span>Do <b>{d.programa.nome}</b>{d.programa.escolhido ? '.' : ', que valia nesse dia.'}</span></p>}
+      {d.outros.length > 0 && <div class="v3-saidas">
+        {d.programa && d.programa.escolhido
+          ? <Saida data-a="registro-programa-volta" onClick={() => mudar({ prog: null })}>Voltar ao programa do dia</Saida>
+          : <Saida data-a="registro-outro-programa" onClick={() => mudar({ prog: d.outros[0].id })}>Foi de outro programa{d.outros.length === 1 ? ': ' + d.outros[0].nome : ''}</Saida>}
+      </div>}
+      {d.programa && !d.programa.escolhido && d.treinos.some(x => x.proximo) && <Apoio>O {d.treinos.find(x => x.proximo).sigla} vem marcado porque era o seguinte na rotação daquele programa. Registrar este dia não mexe na rotação do programa de agora.</Apoio>}
       {!outro && <div class="v3-reg-frequencias">{fichasFreq}<button class="v3-ficha" data-a="registro-so-cardio" onClick={() => abreCardio(true)}>Só cardio</button></div>}
     </div>}
     {r.k === 'falta' && <div class="v3-cal-freq">{motivos}

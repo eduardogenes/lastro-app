@@ -88,7 +88,10 @@ test('exportar carrega todos os campos do estado', async () => {
      'protocolo',
      // os apelidos (etapa 0 do catálogo): o nome que ele já disse ser tal exercício; sem
      // ele, a revisão seguinte voltaria a perguntar o que ele já respondeu
-     'apelidos'].sort()
+     'apelidos',
+     // os programas (etapa 1 do catálogo): o nome, os períodos e a cópia dos
+     // guardados; sem ele, importar perderia os programas de antes
+     'programas'].sort()
   );
   a.fechar();
 });

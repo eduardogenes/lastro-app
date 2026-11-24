@@ -1,4 +1,6 @@
-import { test } from 'vitest';
+import { test, vi } from 'vitest';
+// cada teste sobe o app inteiro (~1 s sozinho); com a suíte em paralelo, 5 s estourava
+vi.setConfig({ testTimeout: 20000 });
 import assert from 'node:assert/strict';
 import { app, agoraEstavel, DIA } from './harness.js';
 import { dataLocal } from '../../src/dominio/protocolo';

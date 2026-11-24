@@ -163,7 +163,7 @@ O balanço é o que o treinador lê, pelo MCP, para montar o próximo.
 - **Programa.** `S.prog`, `S.rot`, `S.progTreinador` e `S.progLog` viram o primeiro programa da pessoa, ativo.
 - **Presença.** `S.done[].day` ganha o programa da sessão; a letra continua como rótulo.
 - **O caso do dono.** A migração separa o que a v2.2 somou: A–E vão para um programa guardado ("até 23/11"), e SA, IA, SB, IB, SC e HX formam o ativo. Precisa de teste com a cópia real do estado.
-- **Formato.** Sobe `plano`, com migração testada, como manda a regra do projeto.
+- **Formato.** O `plano` NÃO sobe (lição da etapa 0: o build em produção funde pelo estado inteiro um plano que não conhece). Os campos novos são opcionais e as migrações são idempotentes, testadas contra o `funde` congelado do build anterior.
 
 ## O que o MCP ganha
 
@@ -223,6 +223,36 @@ No estado de quem colou a v2.2, estes nomes viraram exercícios pessoais (id do 
 | Panturrilha sentado (`panturrilha-sentado`) | Panturrilha sentada (`panturrilha-sentada`) |
 | Rosca bayesiana na polia (`rosca-bayesiana-na-polia`) | Rosca bayesian no cabo (`rosca-bayesian-no-cabo`) |
 | Crucifixo inverso no peck deck (`crucifixo-inverso-no-peck-deck`) | Reverse pec deck (`reverse-pec-deck`) |
+
+## Etapa 1: decidido na implementação (24/11/2026)
+
+Protótipo aprovado pelo dono em 24/11/2026 (rodada 2, `~/lastro-rascunho/programas/`). As três perguntas dele ficaram com a recomendação, decididas pelo Opus:
+
+1. **"começa dd/mm"** guarda o programa em "Próximo"; no dia, o Hoje pergunta se começa ("Começar hoje" ou "Depois"), sem troca automática.
+2. **Reativar** recomeça a rotação pelo primeiro treino.
+3. **O texto do treinador** pode trazer, antes do primeiro treino, `Programa · nome · começa dd/mm` e `Objetivo: …`. Sem a primeira, o nome é "Programa de dd/mm".
+
+Na implementação:
+
+- **O ativo continua em `prog`, `rot` e `progTreinador`**, e o documento novo `programas` guarda os outros (detalhe em [ARQUITETURA.md](../ARQUITETURA.md), "Os programas"). O plano não sobe.
+- **A migração separa o caso do dono pela revisão que somou**: os treinos que ela criou (o registro "Treino X entra na rotação" no instante dela) formam o ativo; os outros, o guardado. O guardado se chama "Programa de <mês da primeira sessão>"; o ativo, "Programa de 23/11" (o texto não tinha título). O dono pode renomear.
+- **Sem duração prevista.** O texto não diz quantas semanas o programa dura, então o número "semana 1 / 4" do protótipo ficou só "semana 1". Fica para a etapa 4 (fases).
+- **A revisão aberta** mostra o que mudou, com o motivo, e o texto colado quando houver. O impacto em séries por músculo e em minutos, do protótipo, fica para depois.
+- **"Foi de outro programa"**, no registro de um dia, não entrou: o dia oferece o programa que valia nele.
+- **"Montar um do zero"** virou "Duplicar o de agora" (o rascunho em "Próximo"); montar do zero continua pelo editor do programa.
+- **Aderência**: os treinos feitos sobre os previstos pelos dias de treino da cadência, limitados ao número de treinos do programa; cada semana conta no máximo os previstos dela (a semana de seis não cobre a de dois); o aberto conta como feito e não como previsto.
+
+Depois das revisões de dado e de design (24/11/2026):
+
+- **A fusão é por programa** e o ativo nunca se mistura; a migração se carimba pelo dado. Detalhe em [ARQUITETURA.md](../ARQUITETURA.md), "Os programas".
+- **A separação só vale para revisões coladas antes de 28/11/2026** (`SEPARA_ATE`), espera um treino de antes aberto terminar, e guarda também as letras fora da rotação.
+- **O texto colado fica guardado junto do programa novo**, e a revisão aberta mostra "Ver o texto colado".
+- **"Montar um programa à mão"** (texto sem treinos) virou "Editar o programa de agora à mão": o editor só edita o programa ativo, e um programa vazio em "Próximo" não teria onde ser montado. **"Montar um do zero"** na linha do tempo ficou fora pelo mesmo motivo; no lugar, "Duplicar o de agora". Os dois voltam quando o editor puder editar um programa que não é o ativo.
+- **O "começa hoje?"** é o próprio bloco do Hoje, antes de qualquer treino, com "Começar hoje", "Depois" e "Ver o programa".
+- **"Foi de outro programa"** entrou no registro de um dia: troca para o outro programa que já foi o ativo, e "Voltar ao programa do dia" desfaz.
+- **Na revisão, o botão continua "Aplicar N mudanças"** (e não "Aplicar como revisão" do protótipo): ele diz quantas mudanças entram, que é o que a pessoa escolhe nas chaves.
+- **A revisão aberta** mostra uma linha por mudança, com o sinal, o que ficou de fora e o texto colado. O impacto em séries por músculo e em minutos, do protótipo, fica para a etapa 4 (balanço).
+- **Os treinos de um programa guardado** abrem uma folha só de leitura com a prescrição, em vez de se abrirem na lista.
 
 ## Em aberto
 

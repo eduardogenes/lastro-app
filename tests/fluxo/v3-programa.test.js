@@ -127,13 +127,15 @@ Treino B · Pernas completas + panturrilhas
   const todas = r.grupos.flatMap(g => g.mudancas);
   assert.deepStrictEqual(todas.map(m => m.titulo).sort(),
     ['Cadeira extensora sai', 'Cadeira flexora sentada: 4 → 3 séries', 'Máquina de sissy squat entra'].sort());
-  assert.strictEqual(a.texto('.v3-cab h1'), '3 mudanças');
+  // a tela de decisão (Programas, etapa 1): os treinos batem, então é revisão, e o botão conta as mudanças
+  assert.strictEqual(a.texto('.v3-dec-topo h1'), 'O que é este texto?');
+  assert.strictEqual(a.$('[data-a="revisao-modo-revisao"]').getAttribute('aria-checked'), 'true');
+  assert.strictEqual(a.texto('[data-a="revisao-aplica"]'), 'Aplicar 3 mudanças');
   assert.ok(a.$$('[role="switch"][aria-checked="true"]').length === 3, 'todas começam marcadas');
   // a extensora fica
   a.clicar('[data-a="mud-B:sai:cadeira-extensora"]');
   await a.esperar();
   assert.strictEqual(a.$('[data-a="mud-B:sai:cadeira-extensora"]').getAttribute('aria-checked'), 'false');
-  assert.ok(/2 marcadas/.test(a.texto('.v3-cab')), a.texto('.v3-cab'));
   assert.strictEqual(a.texto('[data-a="revisao-aplica"]'), 'Aplicar 2 mudanças');
   a.clicar('[data-a="revisao-aplica"]');
   await a.esperar(120);
@@ -221,7 +223,7 @@ test('com o treino daquele dia aberto, aplicar espera: mudar o programa no meio 
   a.E(`S.sessao = { day: 'B', inicio: Date.now(), ultima: Date.now(), sid: Date.now() }; render();`);
   await revisaoLida(a);
   assert.ok(a.$('[data-a="revisao-bloqueio"]'), 'a tela diz por quê');
-  assert.ok(/Treino B está aberto agora/.test(a.texto('[data-a="revisao-bloqueio"]')));
+  assert.ok(/O treino B está aberto agora/.test(a.texto('[data-a="revisao-bloqueio"]')));
   assert.strictEqual(a.$('[data-a="revisao-aplica"]').disabled, true, 'e não aplica');
   const antes = a.E('JSON.stringify(S.prog.B)');
   await a.v('ctx.incorporaRevisao');
@@ -328,11 +330,11 @@ test('a revisão do treinador: lê o texto, pergunta o que não reconhece, e mos
   const principal = a.$('[data-a="revisao-aplica"]');
   assert.strictEqual(principal.disabled, false, 'alcançável pelo Tab');
   assert.strictEqual(principal.getAttribute('aria-disabled'), 'true');
-  assert.strictEqual(a.texto('#' + principal.getAttribute('aria-describedby')), 'Responda a pergunta acima para aplicar.');
+  assert.strictEqual(a.texto('#' + principal.getAttribute('aria-describedby')), 'Responda a pergunta no topo.');
   assert.doesNotMatch(a.texto('.v3-revisao-confirmar'), /O programa do treinador passa a ser este/);
   a.clicar(principal);
-  assert.ok(a.$('.v3-perg'), 'o botão em espera não aplica');
-  a.clicar(a.$$('.v3-perg')[0].querySelector('button'));
+  assert.ok(a.$('.v3-q1'), 'o botão em espera não aplica');
+  a.clicar(a.$$('.v3-q1')[0].querySelector('button'));
   await a.esperar();
   assert.ok(a.$$('.v3-sec-h').some(e => /Treino B/.test(e.textContent)), 'o que muda no B');
   assert.ok(!a.$('[data-a="revisao-aplica"]').hasAttribute('aria-disabled'), 'respondido, aplica');
@@ -344,13 +346,15 @@ test('a escolha só aparece depois de identificar o exercício', async () => {
   a.v('ctx.abreRevisao');
   a.digitar('revisao-texto', TEXTO_NOVO.replace('Máquina de sissy squat', 'Hack machine'));
   a.clicar('[data-a="revisao-le"]');
-  assert.strictEqual(a.texto('.v3-perg p'), '“Hack machine” é Cadeira extensora?');
-  assert.strictEqual(a.texto('.v3-perg small'), 'Cadeira extensora não tem série registrada e ocupa este lugar no treino B.');
+  assert.strictEqual(a.texto('.v3-q1 p'), '“Hack machine” é a Cadeira extensora?');
+  assert.match(a.texto('.v3-q1 small'), /^A de agora: \d+ séries? no treino B\. Se for o mesmo, as cargas continuam\.$/);
   assert.strictEqual(a.$$('[role="switch"]').length, 0, 'nenhuma escolha provisória');
-  a.clicar(a.$$('[role="radio"]')[0]);
+  a.clicar(a.$$('.v3-q1 [role="radio"]')[0]);
   a.clicar('[data-a="mud-B:muda:cadeira-extensora"]');
-  a.clicar(a.$$('[role="radio"]')[1]);
-  assert.strictEqual(a.texto('.v3-perg p'), '“Hack machine” é outro exercício.');
+  // corrigir a resposta: "mudar" devolve a pergunta
+  a.clicar(a.$('.v3-q1.feita button'));
+  a.clicar(a.$$('.v3-q1 [role="radio"]')[1]);
+  assert.strictEqual(a.texto('.v3-q1 p'), '“Hack machine” é outro exercício');
   assert.strictEqual(a.$('[data-a="mud-B:sai:cadeira-extensora"]').getAttribute('aria-checked'), 'false');
   assert.strictEqual(a.$('[data-a="mud-B:entra:hack-machine"]').getAttribute('aria-checked'), 'false');
   a.clicar('[data-a="mud-B:entra:hack-machine"]');

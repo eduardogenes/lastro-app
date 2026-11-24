@@ -181,7 +181,8 @@ S = {
     pausado: 0, pulados: [], hora: 1,   // 1 = hora exata; 'turno' = só o turno (t é o horário representativo: 8h, 15h, 20h, e hoje nunca depois de agora); ausente = sem hora
     dl: 1, retro: 1,
     mods: ['Pendulum squat → Agachamento hack'],
-    livre: 1, grupos: ['peito'], nome: ''   // sessão avulsa, fora do plano
+    livre: 1, grupos: ['peito'], nome: '',  // sessão avulsa, fora do plano
+    prog: 'p1795438800000'              // o programa em que foi feita (opcional; ausente = o ativo naquele instante)
   }],
 
   prog: { A: { name, tag, ex: [ { id, s, r, d, u, q, desde } ] } },  // o programa dele
@@ -190,7 +191,13 @@ S = {
          'pushdown': { n: 'Tríceps no pulley', m } },           // do sistema: só o que ele mudou
   apelidos: { 'hip-thrust-maquina': { id: 'elevacao-pelvica-na-maquina', m, n: 'Hip thrust máquina' } },  // opcional; nome → exercício
   mods: { day: 'C', t: 0, list: [] },                           // mudanças de hoje
-  progLog: [{ t, day, txt, motivo }],                           // decisões do programa
+  progLog: [{ t, day, txt, motivo, p }],                        // decisões do programa (p: o programa, opcional)
+  programas: {                                                   // opcional (etapa 1 do catálogo); ver "Os programas"
+    ativo: 'p1795438800000',
+    lista: { 'p1795438800000': { id, nome, origem, objetivo, estado: 'ativo', criado, periodos: [[ini, null]], m },
+             'p1786000000000': { ..., estado: 'guardado', periodos: [[0, fim]], prog, rot, progTreinador } },
+    separados: { t, de, para, visto }                            // o aviso único da separação
+  },
   aulas: [{ id, nome, t, m, mov: [] }],                         // modelos de aula de box
 
   sessao: { day, inicio, ultima, sid, manual, pausadoEm, pausas: [], pulados: [] },
@@ -400,6 +407,89 @@ e mostra cada mudança com a chave (`mudancasDoTreino`, `src/dominio/revisao.ts`
 
 A forma do estado não muda (sem migração): `S.prog`, `S.progTreinador` e
 `S.progLog` têm os mesmos campos de antes, e a fusão deles é a de sempre.
+
+### Os programas
+
+Etapa 1 de [docs/catalogo/00-desenho.md](catalogo/00-desenho.md), código em
+`src/dominio/programas.ts`. Um programa é uma coisa própria (nome, origem,
+objetivo, períodos em que foi o ativo, versões); um é o ATIVO, os outros ficam
+guardados ou em "Próximo", e nada se apaga.
+
+- **O ativo continua em `S.prog`, `S.rot` e `S.progTreinador`.** O build 13,
+  nos aparelhos, lê e edita o programa de sempre. `S.programas` é um documento
+  novo e opcional: guarda o nome e os períodos de todos e a CÓPIA dos que não
+  são o ativo. Trocar de programa é guardar a cópia do ativo, pôr o outro no
+  lugar dos três documentos e abrir um período novo. Os dias abertos (o HYROX)
+  vão junto: ficam fora de programa.
+- **A letra deixa de ser a chave.** A sessão nova grava `prog`. Sem ele (as
+  antigas, e as que o build 13 grava), vale o programa ativo naquele instante,
+  pelos períodos; se a letra não existe nele, o programa que tem a letra
+  (`programaDaSessao`). A rotação (`proximoTreino`) só conta as sessões do
+  ativo, no período atual: reativar recomeça pelo primeiro treino.
+- **Registrar depois** um dia de antes da troca oferece os treinos do programa
+  que valia naquele dia, e a sessão grava o `prog` dele; a rotação do ativo não
+  anda.
+- **Revisão ou programa novo.** Ao colar, a tela pergunta, com a sugestão (nenhum
+  treino do texto bate com os de agora: programa novo). O programa novo é o
+  texto inteiro; com `Programa · nome · começa dd/mm`, fica em "Próximo" e o Hoje
+  pergunta no dia (nunca troca sozinho). A revisão é a de sempre.
+- **Fusão POR PROGRAMA** (`fundeProgramas`, P1–P4 da revisão de dado da etapa
+  1). `programas` nunca vem inteiro de um lado só: a lista é a união pelos ids;
+  num id dos dois lados, os campos simples (nome, objetivo, "começa", "Depois")
+  vêm do lado de `m` maior, os períodos se unem (o fim conhecido vence o aberto)
+  e a CÓPIA nunca se perde. O ativo é o programa cujo período começou por
+  último; renomear, adiar, "Entendi" e duplicar não decidem o ativo. O ativo de
+  um lado que perdeu vira guardado, com a cópia do programa vivo daquele lado
+  (ou a edição feita lá depois da cópia, se é o mesmo programa). Num empate de
+  `m`, o conteúdo decide, igual nos dois sentidos. Na
+  primeira fusão com a conta, `programas` vem do mesmo lado que o programa
+  (`PRESCRICAO`), sem união.
+- **A identidade de um programa vivo é o id, ou os exercícios; nunca as
+  letras.** Dois programas têm as mesmas letras o tempo todo (o "Duplicar", e
+  todo treinador escreve A, B, C). Os dois lados são programas diferentes
+  quando têm ativos diferentes, ou quando o `prog` de um e o do outro não têm,
+  na maioria das letras em comum, o mesmo treino (`mesmoPrograma`: algum
+  exercício em comum por letra). É assim que se reconhece o lado do build 13,
+  que não tem `programas`.
+- **Programas diferentes: os três documentos do ativo vêm juntos** do lado que
+  é o ativo da fusão (o que diz ser o ativo; se os dois dizem, o que não é de um
+  programa guardado), com um carimbo só, um acima de todos os dos dois lados,
+  para o build 13 adotar o conjunto inteiro. O vivo do outro lado vai para a
+  cópia do programa a que ele pertence (`guardaVivoNaCopia`): pelo id, quando
+  aquele lado tem `programas`; sem ele (build 13), letra a letra, para a cópia
+  guardada que tem a mesma letra com o mesmo treino. Próximo e rascunho nunca
+  recebem.
+- **Mesmo programa: a fusão por documento de sempre, completada letra a
+  letra.** Uma revisão de um aparelho e uma edição do outro convivem: as letras
+  da rotação que só o outro lado tem entram. As letras fora da rotação e do
+  treinador que são de um programa guardado (o programa somado que o build 13
+  editou offline) vão para a cópia dele, se a edição é mais nova que ela, e
+  saem do ativo. Uma rotação com treino que não existe (o lado misturado pelo
+  13) dá lugar à do lado coerente.
+- **Enquanto houver um aparelho no build 13**, ele pode mandar na nuvem o
+  estado dele inteiro, sem `programas` (o 13 não conhece o campo). Nada se
+  perde: cada aparelho novo guarda os seus programas, e a fusão é a união. Mas
+  um programa criado num aparelho pode não chegar aos outros até o 13
+  atualizar; aí tudo converge. Provado pelo fuzz de
+  `tests/dominio/programas-fusao.test.ts` (três aparelhos, um no 13, contra o
+  `funde` congelado), com os cenários da revisão em `programas.test.ts` e
+  `programas-fusao.test.ts`.
+- **Migração (não é plano).** `garanteProgramas` roda em `migraEstado` (abertura,
+  importação, depois de cada fusão), uma vez: cria `S.programas` a partir do
+  programa de sempre, de forma DETERMINÍSTICA (ids e instantes saem do dado,
+  nunca do relógio), para dois aparelhos chegarem ao mesmo documento. Separa o
+  caso da revisão que somou um programa inteiro (a v2.2 do dono): ela criou dois
+  treinos ou mais, não tocou em nenhum dos de antes, e sobram dois ou mais
+  destes (`separacaoPendente`). Os de antes vão para um programa guardado, os
+  criados formam o ativo. Separa só revisões coladas antes da etapa 1
+  (`SEPARA_ATE`), e guarda também as letras de `prog` fora da rotação e as que
+  só o treinador tem. Com um treino de antes aberto, ESPERA: não cria nada, e
+  separa na abertura seguinte. Os programas da separação levam `m` do dado (um
+  acima do maior carimbo do programa), e duas separações concorrentes
+  convergem para a edição mais nova. O carimbo sai do DADO, nunca do relógio: "criou"
+  carimba `programas` com 1; "separou" carimba os quatro com um acima do maior
+  carimbo de `prog`, `rot` e `progTreinador` (o aparelho no 13 adota a
+  separação, e uma migração atrasada não vence o que outro aparelho decidiu).
 
 ---
 

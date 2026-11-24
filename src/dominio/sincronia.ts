@@ -37,6 +37,8 @@ import { MARCAS_DO_CORPO } from './corpo';
 import { ALIMENTOS_BASE } from './nutricao/alimentos';
 import { tamanhosDaMarca } from './nutricao/calculo';
 import { chaveDaLixeira, vivaDesde } from './lixeira';
+import { fundeProgramas, guardaVivoNaCopia, diasAbertos, mesmoPrograma, guardadoQueCasa, levaLetrasParaCopias } from './programas';
+import type { Programas } from './programas';
 import type { LeituraDeGordura } from './corpo';
 
 /**
@@ -701,11 +703,18 @@ export const DOCUMENTOS = [
   // O tipo de carga corrigido por exercício: um mapa pequeno, editado à mão e
   // raramente. Unido chave a chave, voltar ao padrão (que apaga a chave) era
   // desfeito pelo outro aparelho, que ainda a tinha.
-  'carga'
+  'carga',
+  // Os programas (dominio/programas.ts): nome, períodos e a cópia dos que não
+  // são o ativo. O build 13 não o conhece: ele o carrega junto do estado do
+  // lado que vence, sem carimbo, e por isso a fusão daqui decide pelo carimbo
+  // deste lado (o do 13 chega sem carimbo para ele).
+  'programas'
 ] as const;
 export type Documento = typeof DOCUMENTOS[number];
 const TREINO = ['prog', 'progTreinador', 'rot'] as const;
-const PRESCRICAO = new Set<Documento>([...TREINO, 'comida', 'cadencia']);
+// Os programas acompanham o programa ativo na primeira fusão com a conta: os
+// dois vêm do mesmo lado (`criterioTreino`).
+const PRESCRICAO = new Set<Documento>([...TREINO, 'programas', 'comida', 'cadencia']);
 
 /** O valor de um documento dentro do estado. */
 export function valorDoDocumento(S: Partial<Estado> | null | undefined, d: Documento): unknown {
@@ -881,6 +890,76 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
     const v = la ? vr : vl;
     (base as unknown as Record<string, unknown>)[d] = v === undefined ? null : JSON.parse(JSON.stringify(v));
   });
+  // ---- os programas: fundidos POR PROGRAMA, e o ativo inteiro de um lado só ----
+  // (P1–P4 da revisão de dado da etapa 1; dominio/programas.ts, `fundeProgramas`)
+  type ComP = Estado & { programas?: Programas | null };
+  const progL = (local as ComP).programas, progR = (remoto as ComP).programas;
+  const vivoDe = function (lado: 'L' | 'R') {
+    const s = lado === 'L' ? local : remoto, c = lado === 'L' ? cl : cr;
+    return { prog: s.prog, rot: s.rot, progTreinador: s.progTreinador || null, carimbo: typeof c.prog === 'number' ? c.prog : 0 };
+  };
+  if (!primeiraConta) {
+    (base as ComP).programas = fundeProgramas(progL, progR, vivoDe);
+    const PM = (base as ComP).programas;
+    const vL = progL && progL.lista && progL.ativo && progL.lista[progL.ativo] ? progL : null;
+    const vR = progR && progR.lista && progR.ativo && progR.lista[progR.ativo] ? progR : null;
+    // um carimbo só, acima de todos os dos dois lados: o build 13 do outro
+    // aparelho adota o conjunto inteiro, e ele não se mistura de novo
+    const acima = 1 + Math.max(0, ...TREINO.map(d => Math.max(typeof cl[d] === 'number' ? cl[d] : 0, typeof cr[d] === 'number' ? cr[d] : 0)));
+    const temLetras = (p: Estado['prog']) => !!p && Object.keys(p).some(d => diasAbertos(p).indexOf(d) < 0);
+    // Os dois lados são PROGRAMAS DIFERENTES? Pelo id do ativo quando os dois
+    // têm `programas`; pelos exercícios sempre (nunca pelo conjunto de letras).
+    const diferentes = !!PM && ((!!vL && !!vR && vL.ativo !== vR.ativo) ||
+      (temLetras(local.prog) && temLetras(remoto.prog) && !mesmoPrograma(local.prog, remoto.prog)));
+    if (diferentes) {
+      // os três documentos do ativo vêm juntos do lado que é o ativo da fusão
+      const cand = (['L', 'R'] as const).filter(l => { const v = l === 'L' ? vL : vR; return !!v && v.ativo === PM!.ativo; });
+      let forca: 'L' | 'R';
+      if (cand.length === 1) forca = cand[0];
+      else {
+        // os dois (ou nenhum) dizem ser o ativo: o que é de um programa guardado não é
+        const velhoL = !!guardadoQueCasa(PM!, local.prog), velhoR = !!guardadoQueCasa(PM!, remoto.prog);
+        forca = velhoL && !velhoR ? 'R' : velhoR && !velhoL ? 'L' : remotoVence.prog ? 'R' : 'L';
+      }
+      const lado = forca === 'R' ? remoto : local;
+      TREINO.forEach(function (d) {
+        remotoVence[d] = forca === 'R';
+        const v = valorDoDocumento(lado, d);
+        (base as unknown as Record<string, unknown>)[d] = v === undefined ? null : JSON.parse(JSON.stringify(v));
+        carimbos[d] = acima;
+      });
+      // o que o outro lado editou num programa que agora é guardado vai para a cópia dele
+      guardaVivoNaCopia(PM!, vivoDe(forca === 'R' ? 'L' : 'R'), forca === 'R' ? progL : progR);
+    } else if (PM && base.prog) {
+      // MESMO programa: a fusão por documento de sempre, completada letra a letra
+      // (itens 3 e 4 da conferência). Uma revisão de um lado e uma edição do
+      // outro convivem, e o programa que o build 13 somou se reparte:
+      const outroProg = remotoVence.prog ? local : remoto;
+      const carProg = typeof (remotoVence.prog ? cr : cl).prog === 'number' ? (remotoVence.prog ? cr : cl).prog as number : 0;
+      const P: Record<string, import("./tipos").Treino> = base.prog = JSON.parse(JSON.stringify(base.prog));
+      const rot = base.rot || [], dt = (base.progTreinador && base.progTreinador.dias) || {};
+      const abertos = diasAbertos(P);
+      let mudou = false;
+      // - as letras fora da rotação e do treinador que são de um programa guardado vão para a cópia dele
+      const soltas = Object.keys(P).filter(d => abertos.indexOf(d) < 0 && rot.indexOf(d) < 0 && !dt[d]);
+      levaLetrasParaCopias(PM, P, carProg, soltas).forEach(d => { delete P[d]; mudou = true; });
+      // - as letras do ativo que só o outro lado tem (a revisão que somou treinos) entram
+      rot.forEach(d => { if (!P[d] && outroProg.prog && outroProg.prog[d]) { P[d] = JSON.parse(JSON.stringify(outroProg.prog[d])); mudou = true; } });
+      // - as edições do outro lado nas letras de um guardado (o 13 que editou o somado) vão para a cópia
+      if (outroProg.prog) {
+        const carOutro = typeof (remotoVence.prog ? cl : cr).prog === 'number' ? (remotoVence.prog ? cl : cr).prog as number : 0;
+        const delas = Object.keys(outroProg.prog).filter(d => !P[d] && rot.indexOf(d) < 0 && !dt[d]);
+        levaLetrasParaCopias(PM, outroProg.prog, carOutro, delas);
+      }
+      if (mudou) carimbos.prog = acima;
+      // - uma rotação com treino que não existe (o lado misturado pelo build 13
+      //   não serve de modelo): vale a rotação do lado que é coerente com o programa
+      if (rot.some(d => !P[d])) {
+        const coerente = [local, remoto].filter(x => x.rot && x.rot.length && x.rot.every(d => !!P[d]));
+        if (coerente.length) { base.rot = JSON.parse(JSON.stringify(coerente[0].rot)); carimbos.rot = acima; }
+      }
+    }
+  }
   // Redundância: quando o aparelho vence, o carimbo já passa o da conta (acima).
   const sr0 = typeof cr.comida === 'number' ? cr.comida : 0;
   if (primeiraConta && base.comida) {

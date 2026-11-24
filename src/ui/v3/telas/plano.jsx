@@ -10,6 +10,13 @@ import { ic } from '../icones.jsx';
 import { Acoes, Apoio, Botao, Caixa, Cabecalho, Folha, Linha, Saida, Secao, Seletor, Vazio } from '../base.jsx';
 import { Regua } from '../regua.jsx';
 
+/** "A a E" quando são letras seguidas do alfabeto; senão "SA, IA, SB, IB e SC". */
+function faixaDeLetras(l) {
+  const seguidas = l.length >= 3 && l.every(x => x.length === 1) && l.every((x, i) => !i || x.charCodeAt(0) === l[i - 1].charCodeAt(0) + 1);
+  if (seguidas) return l[0] + ' a ' + l[l.length - 1];
+  return l.length > 1 ? l.slice(0, -1).join(', ') + ' e ' + l[l.length - 1] : (l[0] || '');
+}
+
 export function PlanoV3({ ctx }) {
   const p = ctx.planoV3();
   const [tipo, setTipo] = useState('treino');
@@ -37,6 +44,41 @@ export function PlanoV3({ ctx }) {
           </Fragment>)}
         </Secao>
       )}
+      {p.separados && (
+        <div class="v3-pad">
+          <div class="v3-caixa feito v3-caixa-ic" role="note" data-a="plano-separados">
+            {ic.ok}
+            <div>
+              <p>Separamos os seus programas.<small>{faixaDeLetras(p.separados.letrasDe)} foram para o “{p.separados.de}”, guardado na linha do tempo. O ativo é o {p.separados.para}: {faixaDeLetras(p.separados.letrasPara)}.</small></p>
+              <div class="v3-saidas">
+                <Saida data-a="separados-ver" onClick={() => ctx.abreProgramas()}>Ver a linha do tempo</Saida>
+                <Saida data-a="separados-ok" onClick={ctx.dispensaSeparados}>Entendi</Saida>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {p.programa ? (
+        <Secao>
+          <button class="v3-porta" data-a="plano-programas" onClick={() => ctx.abreProgramas()}>
+            <span class="v3-lin-t"><b>{p.programa.nome}</b>{p.programa.sub && <span>{p.programa.sub}</span>}</span>{ic.dir}
+          </button>
+          <div class="v3-tiles">
+            {p.treinos.map(t => (
+              <div key={t.d} class="v3-tile">
+                <button class="v3-tile-b" data-a={'plano-treino-' + t.d} onClick={() => ctx.acoesPrograma.abreDia(t.d)}>
+                  <span class={'v3-tile-l ' + (t.feito ? 'feito' : t.prox ? 'prox' : 'q')}>{t.sigla}</span>
+                  <span class="v3-lin-t"><b>{t.nome}</b><span>{t.n} exercícios{t.prox ? ' · o próximo' : t.feito ? ' · feito esta semana' : ''}</span></span>
+                </button>
+              </div>
+            ))}
+          </div>
+          <div>
+            <Linha titulo="Progressão" apoio="prontos para subir, ganhando repetição, parados" data-a="plano-progressao" aoTocar={() => ctx.abreProgressao()} />
+            <Linha titulo="Texto do treinador" apoio="colar uma revisão ou um programa novo" data-a="plano-revisao" aoTocar={() => ctx.abreRevisao()} />
+          </div>
+        </Secao>
+      ) : (
       <Secao titulo="Treinos" nota="toque para editar">
         <div class="v3-tiles">
           {p.treinos.map(t => (
@@ -54,6 +96,22 @@ export function PlanoV3({ ctx }) {
           <Linha titulo="Revisão do treinador" apoio="colar o texto novo" data-a="plano-revisao" aoTocar={ctx.abreRevisao} />
         </div>
       </Secao>
+      )}
+      {p.fora.length > 0 && (
+        <Secao titulo="Fora de programa" nota="valem sempre">
+          <div class="v3-tiles">
+            {p.fora.map(t => (
+              <div key={t.d} class="v3-tile">
+                <button class="v3-tile-b" data-a={'plano-treino-' + t.d} onClick={() => ctx.acoesPrograma.abreDia(t.d)}>
+                  <span class="v3-tile-l fora">{t.sigla}</span>
+                  <span class="v3-lin-t"><b>{t.sigla === 'HX' ? 'HYROX' : t.nome}</b><span>aberto · o que o box programar</span></span>
+                </button>
+              </div>
+            ))}
+          </div>
+          <Apoio>Treino livre e aula também ficam fora: entram com qualquer programa.</Apoio>
+        </Secao>
+      )}
       <Secao titulo="Dias de treino" nota="toque para trocar">
         <div class="v3-semana-c">
           {p.cadencia.map(d => (

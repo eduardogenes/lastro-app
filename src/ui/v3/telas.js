@@ -12,6 +12,7 @@ import { FolhaBioV3, FolhaCorrigeMarca, MedidaV3, NaMesmaData, PesoV3 } from './
 import { FolhaAulaTexto, FolhaDorEx, FolhaListaTreino, FolhaMenuSessaoV3, FolhaMudarEx, PorEmDiaV3, TreinoEmFoco } from './telas/treino.jsx';
 import { ExercicioV3, FolhaFotoV3, FolhaRenomeiaEx, Progressao } from './telas/progressao.jsx';
 import { ProgramaV3, RevisaoV3 } from './telas/programa.jsx';
+import { ProgramasV3, ProgramaAbertoV3, FolhaReativaPrograma, FolhaRenomeiaPrograma, FolhaRevisaoDoPrograma, FolhaTreinoDoPrograma } from './telas/programas.jsx';
 import { FolhaCardioV3, FolhaComiOutra, FolhaOQueAparece, FolhaRefeicaoV3, FolhaRegistrar, FolhaTipoDoDia, HojeV3, PrimeiraVez } from './telas/hoje.jsx';
 import { FolhaRegistroTreino, FolhaAjustarRegistro } from './telas/registrotreino.jsx';
 import { DiasV3, ResponderDias } from './telas/dias.jsx';
@@ -66,6 +67,8 @@ export const DESTINOS_V3 = {
   progressao: Progressao,
   hist: ExercicioV3,
   prog: ProgramaV3,
+  programas: ProgramasV3,
+  programa: ProgramaAbertoV3,
   revisao: RevisaoV3,
   responderDias: ResponderDias,
   ajustes: AjustesV3,
@@ -81,4 +84,6 @@ export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoCompara
   renomeiaEx: FolhaRenomeiaEx,
   registroTreino: FolhaRegistroTreino, ajustarRegistro: FolhaAjustarRegistro, registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, poeODia: FolhaPoeODiaV3, poeODiaGeral: FolhaPoeODiaGeralV3, seriePassada: FolhaSeriePassada,
   editaRefeicao: FolhaEditaRefeicaoV3, seletor: FolhaSeletorV3, editaAlimento: FolhaEditaAlimentoV3, catalogo: FolhaCatalogo, foto: FolhaFotoV3, refeicao: FolhaRefeicaoV3, comiOutra: FolhaComiOutra, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos, aplicar: FolhaAplicar, colarCopia: FolhaColarCopia,
-  refeicaoDoPlano: FolhaRefeicaoDoPlano, alimentos: FolhaAlimentos, compras: FolhaCompras };
+  refeicaoDoPlano: FolhaRefeicaoDoPlano, alimentos: FolhaAlimentos, compras: FolhaCompras,
+  reativaPrograma: FolhaReativaPrograma, renomeiaPrograma: FolhaRenomeiaPrograma, revisaoDoPrograma: FolhaRevisaoDoPrograma,
+  treinoDoPrograma: FolhaTreinoDoPrograma };

@@ -23,6 +23,7 @@
 
 import { sameDay } from './formato';
 import type { Dia, Estado, Sessao } from './tipos';
+import { sessoesDoAtivo } from './programas';
 
 /** O que um dia da semana é, na cadência dele. */
 export type Cadencia = 'treino' | 'descanso';
@@ -80,7 +81,10 @@ export function proximoTreino(S: Estado, padrao: Dia[]): Dia | null {
   const rot = rotacao(S, padrao);
   if (!rot.length) return null;
   const aberto = (d: Dia) => diaAbertoDe(S, d);
-  const conta = S.done.filter(x => x && x.day && !x.livre && !aberto(x.day));
+  // só as sessões do programa ativo: a letra de outro programa (o A de antes,
+  // num programa que também tem A) não move esta rotação
+  const doAtivo = sessoesDoAtivo(S);
+  const conta = doAtivo.filter(x => x && x.day && !x.livre && !aberto(x.day));
   const u = conta.length ? conta[conta.length - 1] : null;
   const i = u ? rot.indexOf(u.day) : -1;
   const primeiro = rot.filter(d => !aberto(d))[0];
@@ -89,7 +93,7 @@ export function proximoTreino(S: Estado, padrao: Dia[]): Dia | null {
   for (let k = 1; k <= rot.length; k++) {
     const d = rot[(i + k + rot.length) % rot.length];
     if (!aberto(d)) return d;
-    if (!S.done.some(x => x && x.day === d && !x.livre && x.t > inicio)) return d;
+    if (!doAtivo.some(x => x && x.day === d && !x.livre && x.t > inicio)) return d;
   }
   return rot[0];
 }

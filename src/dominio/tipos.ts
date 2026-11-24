@@ -247,6 +247,12 @@ export interface Sessao {
   obs?: string;
   /** a foto da lousa da aula, que vira a nota dela (os bytes ficam no cache) */
   lousa?: { d: string; v: number; ext: string };
+  /**
+   * O programa em que ela foi feita (`S.programas`). Ausente nas antigas e nas
+   * que o build 13 grava: aí vale o programa ativo naquele instante
+   * (`dominio/programas.ts`, `programaDaSessao`).
+   */
+  prog?: string;
   /** quando foi alterada pela última vez */
   m?: number;
 }
@@ -292,6 +298,8 @@ export interface EntradaProgLog {
   motivo?: string;
   /** Texto colado neste aparelho antes da primeira fusão com uma conta. */
   textoRevisao?: string;
+  /** o programa a que a decisão pertence; ausente = o ativo naquele instante */
+  p?: string;
   /** quando foi alterada pela última vez */
   m?: number;
 }
@@ -823,6 +831,14 @@ export interface Estado {
    * lado que gravou por último, como `prog`.
    */
   progTreinador?: { em: number; data: string | null; rot: Dia[]; dias: Record<Dia, Treino> } | null;
+
+  /**
+   * Os programas (etapa 1 de docs/catalogo): o ativo continua em `prog`, `rot`
+   * e `progTreinador`; aqui ficam o nome, os períodos e a cópia dos que não
+   * são o ativo. Documento novo, opcional: o build 13 não o conhece e o
+   * carrega junto sem mexer (`dominio/programas.ts`).
+   */
+  programas?: import('./programas').Programas | null;
 
   // ---- o que a fusão com a nutrição trouxe ----
 
