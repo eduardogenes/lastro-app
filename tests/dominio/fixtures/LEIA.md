@@ -97,3 +97,41 @@ um treino no dia 15. O arquivo é o `JSON.stringify(a.gravado())` dessa sessão.
 
 O plano 12 guardava os dois descansos, inclusive o do dia com treino. O campo
 `falta` ainda não existia e `apagados` estava vazio.
+
+## `estado-plano-13.json`
+
+Gerada pelo **build do plano 13** em produção quando a etapa 0 do catálogo foi
+feita: o commit `b0efd72`, numa *worktree* separada (em disco, fora do `/tmp`),
+com `vite build` e o harness daquela árvore. `app({ agora })` abriu o perfil já
+usado em 23/11/2026 às 10h locais. `ctx.marcaRefeicao('almoco')` marcou o
+almoço, `ctx.respondeFrequencia` marcou falta (trabalho) no dia anterior,
+`ctx.renomeiaExercicio('pushdown', 'Tríceps no pulley')` renomeou um exercício
+do código, e a revisão v2.2 do treinador (`revisao-v22.txt`) foi colada com
+todas as perguntas respondidas "é o mesmo" e aplicada. O arquivo é o
+`JSON.stringify(a.gravado())` dessa sessão.
+
+O que ela prova:
+
+- `plano` é **13** e não há `apelidos`: o campo é opcional, e quem cria o padrão
+  é `normalizaEstado`;
+- o renome do 13 grava só `{ n, m }` em `S.ex.pushdown` — não uma cópia inteira;
+- a v2.2 criou dezessete exercícios com o id do próprio nome, entre eles os
+  cinco que no catálogo do sistema são nomes alternativos de exercícios que já
+  existiam (`panturrilha-sentado`, `abducao-de-quadril-na-maquina`…): no estado
+  de quem colou, eles são pessoais;
+- `progTreinador` tem os onze treinos (A–E e HX, mais SA, IA, SB, IB, SC): a
+  revisão soma, não substitui.
+
+## `sincronia-build13.ts`
+
+O `src/dominio/sincronia.ts` do mesmo commit `b0efd72`, congelado (só os
+imports reapontados para `src/`). É o `funde` que roda nos aparelhos que ainda
+não atualizaram. Prova, contra o código de hoje, que uma edição de documento
+feita no build novo atravessa uma fusão no 13 e volta intacta, e que a lápide de
+um apelido atravessa o 13 (`tests/dominio/catalogo.test.ts`).
+
+## `catalogo-ids-v1.json`
+
+Os 194 ids da semente do catálogo do sistema na versão 1, congelados. Um id
+nunca sai do catálogo (o histórico dele ficaria sem nome); o teste confere que
+todos continuam na semente.

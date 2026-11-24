@@ -260,9 +260,19 @@ export type Correspondencia =
 export interface ExDoCatalogo { n: string; g?: string; arq?: 1 }
 
 /**
+ * Os nomes que levam a um id sem passar pela parecença (chave `slugEx`):
+ * os apelidos da pessoa e os nomes alternativos do catálogo do sistema.
+ */
+export interface NomesConhecidos {
+  apelidos?: Record<string, string>;
+  alt?: Record<string, string>;
+}
+
+/**
  * Para cada nome da revisão, o que o app propõe:
  *
- * - **igual**: o nome é o de um exercício do catálogo (mesmo id). Não pergunta.
+ * - **igual**: o nome é um apelido dele, o de um exercício do catálogo (mesmo
+ *   id) ou um nome alternativo do catálogo do sistema. Não pergunta.
  * - **pergunta**: há um candidato, por nome parecido ou por LUGAR — o
  *   exercício do mesmo treino que a revisão deixa de fora, na mesma posição ou
  *   do mesmo grupo. "Hip thrust máquina" não tem palavra em comum com
@@ -274,19 +284,47 @@ export interface ExDoCatalogo { n: string; g?: string; arq?: 1 }
 export function casaNomes(
   rev: LeituraDaRevisao,
   catalogo: Record<string, ExDoCatalogo>,
-  atual: Record<string, { ex: { id: string }[] }>
+  atual: Record<string, { ex: { id: string }[] }>,
+  nomes?: NomesConhecidos
 ): Record<string, Correspondencia> {
   const out: Record<string, Correspondencia> = {};
+  // `usados` tira um id SÓ da parecença e do lugar (2 e 3), que são palpites:
+  // um palpite não propõe um exercício que outro nome já levou. Os passos de
+  // certeza (0, 1, 1a, 1b) não olham para ele — dois nomes que com certeza são
+  // o mesmo exercício (o apelido e o nome exato, em treinos diferentes) vão os
+  // dois para ele. Tirar um deles do jogo mandava o histórico para um
+  // exercício novo, `-2`. Dois nomes no MESMO treino virando o mesmo id é dado
+  // estranho do texto, e vira aviso (`nomesNoMesmoId`).
   const usados: Record<string, 1> = {};
+  const apelidos = (nomes && nomes.apelidos) || {};
+  const alt = (nomes && nomes.alt) || {};
+  const certo = function (n: string, id: string | undefined, vivo: boolean) {
+    if (out[n] || !id || !catalogo[id] || (vivo && catalogo[id].arq)) return;
+    out[n] = { k: 'igual', id: id }; usados[id] = 1;
+  };
+  const passo = function (f: (x: ExDaRevisao) => void) { rev.dias.forEach(function (d) { d.ex.forEach(f); }); };
 
-  // 1) os iguais, primeiro e em toda a revisão: tiram os ids do jogo
-  rev.dias.forEach(function (d) {
-    d.ex.forEach(function (x) {
-      const id = slugEx(x.n);
-      if (out[x.n]) return;
-      if (catalogo[id]) { out[x.n] = { k: 'igual', id: id }; usados[id] = 1; }
-    });
+  // 0) o apelido dele: um nome que ele já disse ser tal exercício. Vem antes do
+  //    id do nome porque é decisão dele, e a semente pode ter ganhado um
+  //    exercício com o id daquele nome depois que ele decidiu.
+  passo(function (x) { certo(x.n, apelidos[slugEx(x.n)], false); });
+
+  // 1) o id do próprio nome
+  passo(function (x) { certo(x.n, slugEx(x.n), false); });
+
+  // 1a) o nome ATUAL de um exercício dele que foi renomeado ("Voador"): o id
+  //     guarda o nome antigo, e o nome que ele vê é este. Vem antes do nome
+  //     alternativo do sistema, que pode levar o mesmo nome a outro exercício.
+  const atuais: Record<string, string> = {};
+  Object.keys(catalogo).forEach(function (id) {
+    const k = slugEx(catalogo[id].n);
+    if (k && k !== id && !catalogo[id].arq && !atuais[k]) atuais[k] = id;
   });
+  passo(function (x) { certo(x.n, atuais[slugEx(x.n)], true); });
+
+  // 1b) o nome alternativo do catálogo do sistema: curado, é o mesmo exercício
+  //     com certeza, e por isso não pergunta
+  passo(function (x) { certo(x.n, alt[slugEx(x.n)], true); });
 
   // 2) por nome parecido, no catálogo inteiro (fora os arquivados)
   rev.dias.forEach(function (d) {
@@ -314,6 +352,28 @@ export function casaNomes(
       if (mesmo) { out[x.n] = { k: 'pergunta', id: mesmo.id, por: 'lugar' }; usados[mesmo.id] = 1; }
       else out[x.n] = { k: 'novo' };
     });
+  });
+  return out;
+}
+
+/**
+ * Dois nomes do MESMO treino que caíram no mesmo exercício pelos passos de
+ * certeza. O app não junta nem escolhe: avisa, e a pessoa corrige o texto ou
+ * o programa.
+ */
+export function nomesNoMesmoId(
+  rev: LeituraDaRevisao, casa: Record<string, Correspondencia>
+): { dia: string; id: string; nomes: string[] }[] {
+  const out: { dia: string; id: string; nomes: string[] }[] = [];
+  rev.dias.forEach(function (d) {
+    const por: Record<string, string[]> = {};
+    d.ex.forEach(function (x) {
+      const c = casa[x.n];
+      if (!c || c.k !== 'igual') return;
+      (por[c.id] = por[c.id] || []);
+      if (por[c.id].indexOf(x.n) < 0) por[c.id].push(x.n);
+    });
+    Object.keys(por).forEach(function (id) { if (por[id].length > 1) out.push({ dia: d.dia, id: id, nomes: por[id] }); });
   });
   return out;
 }

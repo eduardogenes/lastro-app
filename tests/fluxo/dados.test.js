@@ -85,7 +85,10 @@ test('exportar carrega todos os campos do estado', async () => {
      // o protocolo de fotos: a ORDEM de poses e as sessões. Só as referências
      // entram — os bytes moram no Cache Storage e replicam pelo bucket, e é
      // por isso que um backup em JSON continua cabendo num e-mail
-     'protocolo'].sort()
+     'protocolo',
+     // os apelidos (etapa 0 do catálogo): o nome que ele já disse ser tal exercício; sem
+     // ele, a revisão seguinte voltaria a perguntar o que ele já respondeu
+     'apelidos'].sort()
   );
   a.fechar();
 });
@@ -325,6 +328,8 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   // o que aparece (direção 3): preferência da pessoa, campo de topo novo
   a.E(`S.modulos = { agua: 0, fita: { coxa: 1 } }`);
   a.E(`S.paraAvaliar = [{ pose: 'todas', de: '2026-09-14', ate: '2026-09-28', t: 1790000000000 }]`);
+  // os apelidos (etapa 0 do catálogo): campo de topo novo, com conteúdo para a perda não ser muda
+  a.E(`S.apelidos = { 'hip-thrust-maquina': { id: 'elevacao-pelvica-na-maquina', m: 1790000000000, n: 'Hip thrust máquina' } }`);
 
   // As cinco chaves da bioimpedância, que a migração 9→10 abriu. Entram aqui
   // com conteúdo porque sem conteúdo a perda seria MUDA: `normalizaEstado()`

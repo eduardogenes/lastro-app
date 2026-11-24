@@ -27,6 +27,7 @@ import {
   CARGAS, DORES, ROT_BASE, exercicioFantasma, montaCatalogo, semeiaProg
 } from '../../src/dominio/programa';
 import { uneFrequencia } from '../../src/dominio/frequencia';
+import { SEMENTE, exerciciosDoSistema } from '../../src/dominio/catalogo';
 import { ARQUIVO } from '../../src/dominio/migracoes';
 import { MEDIDAS_DO_CORPO } from '../../src/dominio/corpo';
 import {
@@ -198,7 +199,7 @@ interface Base {
 }
 
 function base(S: Partial<Estado>): Base {
-  const cat = montaCatalogo(obj<Partial<Exercicio>>(S.ex));
+  const cat = montaCatalogo(obj<Partial<Exercicio>>(S.ex), exerciciosDoSistema(SEMENTE));
   const progS = obj<Treino>(S.prog);
   const prog = S.primeiraVez || Object.keys(progS).length ? progS : semeiaProg();
   const rot = S.primeiraVez || lista<Dia>(S.rot).length ? lista<Dia>(S.rot) : ROT_BASE.filter(function (d) { return prog[d]; });
@@ -595,6 +596,15 @@ function exercicios(b: Base, ctx: Contexto): string {
   const logs = obj<Log[]>(b.S.logs);
   const fotos = obj<FotoRef>(b.S.fotos);
   const todos = new Set<IdEx>([...noPrograma, ...doTreinador, ...Object.keys(logs), ...Object.keys(fotos)]);
+  // os apelidos: o nome que o treinador usou e que a pessoa disse ser este exercício
+  const apelidos: Record<IdEx, string[]> = {};
+  const ap = obj<{ id?: unknown; n?: unknown }>(b.S.apelidos);
+  Object.keys(ap).forEach(function (k) {
+    const a = ap[k];
+    if (!a || typeof a.id !== 'string') return;
+    (apelidos[a.id] = apelidos[a.id] || []).push(typeof a.n === 'string' && a.n ? a.n : k);
+    todos.add(a.id);
+  });
 
   const linha = function (id: IdEx): string {
     const ex = exDe(b, id);
@@ -605,17 +615,20 @@ function exercicios(b: Base, ctx: Contexto): string {
     const sit = arquivo ? situacaoDaFoto('treino/' + arquivo, ctx) : null;
     const foto = !arquivo ? '' : sit ? cel(sit) : '[foto](' + arquivo + ')';
     const medida = ex.u ? ({ m: 'distância', cal: 'calorias', rep: 'repetições', seg: 'tempo' } as Record<Unidade, string>)[ex.u] : 'carga × reps';
+    const outros = (apelidos[id] || []).sort(function (a, c) { return a.localeCompare(c, 'pt-BR'); });
     return '| ' + [cel(ex.n), '`' + id + '`', cel(ex.g || ''), cel(CARGAS[tipoCarga(b, id)].nome), medida,
-      h.length ? h.length + (ultima ? ' (última ' + dataBR(ultima) + ')' : '') : '—', foto].join(' | ') + ' |';
+      h.length ? h.length + (ultima ? ' (última ' + dataBR(ultima) + ')' : '') : '—', foto,
+      outros.length ? cel(outros.map(function (n) { return '“' + n + '”'; }).join(', ')) : ''].join(' | ') + ' |';
   };
   const ordem = function (ids: IdEx[]) {
     return ids.sort(function (a, c) { return nomeEx(b, a).localeCompare(nomeEx(b, c), 'pt-BR'); });
   };
-  const cab = ['| Exercício | id | Grupo | Carregamento | Mede | Sessões registradas | Aparelho |', '|---|---|---|---|---|---|---|'];
+  const cab = ['| Exercício | id | Grupo | Carregamento | Mede | Sessões registradas | Aparelho | Também chamado de |', '|---|---|---|---|---|---|---|---|'];
 
   const L = cabeca('Exercícios', [
     'Os exercícios do programa e todos os que têm histórico. O `id` é a chave usada em `series.csv`.',
-    'Carregamento diz como a carga é digitada: "anilha por lado" e "barra livre" são o peso de UM lado; "halter em cada mão" é o de UMA mão. O app nunca converte.'
+    'Carregamento diz como a carga é digitada: "anilha por lado" e "barra livre" são o peso de UM lado; "halter em cada mão" é o de UMA mão. O app nunca converte.',
+    '"Também chamado de" são os apelidos: o nome que o treinador escreveu numa revisão e que a pessoa disse ser este exercício. O app lê esse nome como este id.'
   ]);
   L.push('## No programa atual', '', ...cab, ...ordem([...noPrograma]).map(linha), '');
   const fora = ordem([...todos].filter(function (id) { return !noPrograma.has(id); }));

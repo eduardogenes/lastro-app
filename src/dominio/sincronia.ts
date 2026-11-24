@@ -640,9 +640,13 @@ export function uneDiasDeComida(
 /** A lápide de uma entrada do catálogo dele. */
 export function chaveDeCatalogo(idEx: IdEx): string { return 'ex:' + idEx; }
 
+/** A lápide de um apelido (chave do nome, `slugEx`). */
+export function chaveDeApelido(nome: string): string { return 'apelido:' + nome; }
+
 function uneCatalogo<T>(
   local: Record<string, T>, remoto: Record<string, T>,
-  remotoManda: boolean, mortos: Record<string, number>, primeiraConta: boolean
+  remotoManda: boolean, mortos: Record<string, number>, primeiraConta: boolean,
+  chave: (k: string) => string = chaveDeCatalogo
 ): Record<string, T> {
   const saida: Record<string, T> = {};
   const carimbo = function (x: T | undefined) {
@@ -656,7 +660,7 @@ function uneCatalogo<T>(
     const a = (local || {})[k], b = (remoto || {})[k];
     let x = b || a;
     if (a && b && !primeiraConta) x = carimbo(b) > carimbo(a) ? b : carimbo(a) > carimbo(b) ? a : (remotoManda ? b : a);
-    const morto = mortos[chaveDeCatalogo(k)];
+    const morto = mortos[chave(k)];
     if (morto != null && carimbo(x) <= morto) return;
     saida[k] = x as T;
   });
@@ -797,13 +801,19 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
 
   // clone do lado que manda nos documentos: tudo que não é coleção vem dele
   // inteiro, e as coleções são sobrescritas logo abaixo
-  // A versão 13 acrescentou só a coleção de faltas. Os documentos do 12 têm o mesmo formato.
-  const mesmoFormato = local.plano === remoto.plano ||
-    (local.plano === 12 && remoto.plano === 13) || (local.plano === 13 && remoto.plano === 12);
+  // A versão 13 acrescentou só a coleção de faltas. Os apelidos e a redução de
+  // `ex` a referência (catálogo do sistema) entraram SEM subir o plano —
+  // coleções, sem mudar documento —, porque o build 13 funde pelo estado
+  // inteiro um plano que não conhece. O 14 já fica aceito aqui para quando um
+  // plano novo vier, desde que mantenha os documentos do 12.
+  const compativel = (p: number) => p >= 12 && p <= 14;
+  const mesmoFormato = local.plano === remoto.plano || (compativel(local.plano) && compativel(remoto.plano));
   if (primeiraConta && !mesmoFormato) remotoManda = true;
   const base: Estado = JSON.parse(JSON.stringify(remotoManda ? remoto : local));
 
-  if (mesmoFormato && local.plano !== remoto.plano) base.plano = 13;
+  // o maior dos dois: a migração do menor já foi feita do lado maior, e o que o
+  // menor trouxe de coleção não precisa dela (é dado igual ao do catálogo)
+  if (mesmoFormato && local.plano !== remoto.plano) base.plano = Math.max(local.plano, remoto.plano);
 
   if (local.primeiraVez && remoto.primeiraVez) {
     base.primeiraVez = local.primeiraVez >= remoto.primeiraVez ? local.primeiraVez : remoto.primeiraVez;
@@ -1138,6 +1148,10 @@ export function funde(local: Estado, remoto: Estado, agora?: number, primeiraCon
   // entrada nos dois lados vem do lado que a mudou por último; e voltar ao nome
   // do treinador (que tira a entrada) não é desfeito pelo outro aparelho.
   base.ex = uneCatalogo(local.ex || {}, remoto.ex || {}, remotoManda, mortos, primeiraConta);
+  // os apelidos, pela mesma regra: um nome decidido num aparelho vale no outro
+  if (local.apelidos || remoto.apelidos) {
+    base.apelidos = uneCatalogo(local.apelidos || {}, remoto.apelidos || {}, remotoManda, mortos, primeiraConta, chaveDeApelido);
+  }
 
   // o último backup é o mais recente dos dois: é fato sobre o passado, e o
   // maior dos dois é o verdadeiro em ambos

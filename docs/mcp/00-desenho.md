@@ -187,3 +187,9 @@ Só depois que a tela `/autorizar` existir, para ninguém cair numa página vazi
 - Pasta `api/` simples ou Nitro: decidir no primeiro passo da etapa 1, testando o pacote com o `monta.ts`.
 - A versão de protocolo que o Claude negocia: medir no primeiro teste, pelo cabeçalho.
 - O formato da proposta de plano alimentar, para a etapa 3.
+
+## Decidido pelo dono em 23/11/2026, depois do protótipo
+
+- **O rastro de leitura fica para sempre.** A tabela `acessos` não apaga nada; a tela "Agentes" mostra os últimos 7 dias e o resto sob demanda.
+- **O Hoje não avisa quando um agente lê.** O rastro fica só em Ajustes › Agentes.
+- **A página de autorizar sai geral na etapa 1.** A versão que diz o papel (intermediário nosso antes do Supabase) fica para depois.

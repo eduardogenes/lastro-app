@@ -27,7 +27,7 @@ import { corpoVazio, estadoInicial, passoValido } from './dominio/primeira-vez';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
-import { lerRevisao, casaNomes, MODELO_DA_REVISAO, treinoDaRevisao, mudancasDoTreino, aplicaMudancas } from './dominio/revisao';
+import { lerRevisao, casaNomes, nomesNoMesmoId, MODELO_DA_REVISAO, treinoDaRevisao, mudancasDoTreino, aplicaMudancas } from './dominio/revisao';
 import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
 import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
@@ -56,13 +56,14 @@ import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor, proximaCarga, estadoDaProgressao } from './dominio/progressao';
 import { MOTIVOS_FALTA, respondeFrequencia, uneFrequencia } from './dominio/frequencia';
-import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12, migraPlano13 } from './dominio/migracoes';
+import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12, migraPlano13, reduzReferencias } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
+import { SEMENTE, exerciciosDoSistema, indiceDeNomes, comDiferenca, diferencaDaSemente, catalogoDasLinhas, chaveDoNome, maisNova } from './dominio/catalogo';
 import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
   chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde, soTemAbertura,
-  lapidesDoApagamento, uneLapides, uneDiasDeComida, DOCUMENTOS, valorDoDocumento, TETO, TETO_PEDIDOS, chaveDeCatalogo
+  lapidesDoApagamento, uneLapides, uneDiasDeComida, DOCUMENTOS, valorDoDocumento, TETO, TETO_PEDIDOS, chaveDeCatalogo, chaveDeApelido
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -248,12 +249,60 @@ function slotDe(d, i) {
 // Catálogo efetivo: o do código mais o que ele cadastrou e o que foi arquivado.
 // Catálogo efetivo, remontado sempre que o catálogo dele muda.
 let CAT = {};
-function montaCatalogo() { CAT = _montaCatalogo(S.ex); }
+// O catálogo do SISTEMA (docs/catalogo/00-desenho.md): a semente embutida, ou a
+// cópia mais nova que veio do banco. `CAT` é ele com o `S.ex` da pessoa por cima.
+let SISTEMA = SEMENTE;
+let EX_SISTEMA = exerciciosDoSistema(SEMENTE);
+let NOMES_ALT = indiceDeNomes(SEMENTE);
+function montaCatalogo() { CAT = _montaCatalogo(S.ex, EX_SISTEMA); }
+function usaSistema(c) {
+  SISTEMA = c; EX_SISTEMA = exerciciosDoSistema(c); NOMES_ALT = indiceDeNomes(c);
+  montaCatalogo();
+}
+
+/** Os nomes alternativos de um exercício do sistema (para a busca). */
+function nomesAltDe(id) { return (SISTEMA.ex[id] && SISTEMA.ex[id].alt) || []; }
+
+/** Apelidos dele como mapa nome → id (o formato que `casaNomes` lê). */
+function mapaDeApelidos() {
+  const m = {};
+  Object.keys(S.apelidos || {}).forEach(function (k) { const a = S.apelidos[k]; if (a && a.id) m[k] = a.id; });
+  return m;
+}
+
+// A cópia do catálogo no aparelho guarda só a diferença para a semente
+// (`diferencaDaSemente`). Sem cópia, ou cópia recusada, vale a semente.
+const CHAVE_CATALOGO = 'lastro-catalogo-v1';
+async function carregaCatalogo() {
+  try {
+    const r = await DB.get(CHAVE_CATALOGO);
+    const c = r && r.value ? comDiferenca(SEMENTE, JSON.parse(r.value)) : null;
+    if (c) usaSistema(c);
+  } catch (e) { /* cópia ilegível: segue a semente */ }
+}
+let catalogoPedidoEm = 0;
+async function atualizaCatalogo() {
+  // uma vez por hora no máximo: o catálogo muda pela mão do moderador, raramente
+  if (Date.now() - catalogoPedidoEm < 3600000) return;
+  catalogoPedidoEm = Date.now();
+  try {
+    const r = await NUVEM.catalogo(SISTEMA.v);
+    if (!r.ok || !r.v) return;
+    // duas perguntas: a cópia serve (todos os ids desta semente, nenhuma troca
+    // de carga) e é mais nova que a que o aparelho já usa
+    const c = catalogoDasLinhas(r.v, SEMENTE);
+    if (!c) { console.warn('catálogo do banco recusado: falta id da semente, troca de carga ou linha inválida'); return; }
+    if (!maisNova(c, SISTEMA)) return;
+    usaSistema(c);
+    await DB.set(CHAVE_CATALOGO, JSON.stringify(diferencaDaSemente(c, SEMENTE)));
+    render();
+  } catch (e) { console.warn('catálogo do banco não atualizou', e); }
+}
 function exDe(x) { return CAT[x] || exercicioFantasma(x); }
 function nomeEx(x) { return exDe(x).n; }
 
 /** O nome que o exercício tem no CÓDIGO, quando ele vem de lá. */
-function nomeDoCodigo(idEx) { return (EX_BASE[idEx] && EX_BASE[idEx].n) || null; }
+function nomeDoCodigo(idEx) { return (EX_SISTEMA[idEx] && EX_SISTEMA[idEx].n) || null; }
 
 /**
  * Troca o nome de um exercício sem mexer na identidade dele.
@@ -378,6 +427,7 @@ function normalizaEstado() {
   if (S.perfManual !== true && S.perfManual !== false) S.perfManual = null;
   // o que aparece (dominio/modulos.ts): só chaves conhecidas; ausente = padrão
   S.modulos = normalizaModulos(S.modulos);
+  if (!S.apelidos || typeof S.apelidos !== 'object' || Array.isArray(S.apelidos)) S.apelidos = {};
   // os pedidos de avaliação (visual novo): só os bem formados; sem nenhum, some
   if (S.paraAvaliar !== undefined) {
     const ok = Array.isArray(S.paraAvaliar) ? S.paraAvaliar.filter(function (p) {
@@ -512,11 +562,15 @@ function migraEstado() {
   migraPlano11(S);
   migraPlano12(S);
   migraPlano13(S);
+  // não é plano: roda sempre, e é idempotente (dominio/migracoes.ts)
+  reduzReferencias(S);
   garanteProgramaERotacao();
   return { arquivados, m3, m7 };
 }
 
 async function load() {
+  // o catálogo do sistema antes do estado: `montaCatalogo` monta por cima dele
+  await carregaCatalogo();
   const legado = await leBruto(KEY_LEGADO);
   const bruto = await leBruto(KEY);
   const atual = interpreta(bruto);
@@ -1397,6 +1451,7 @@ async function sincroniza(opcoes) {
           sync.em = Date.now(); gravaSync();
           reconciliaFotos();                  // pode faltar byte mesmo sem estado novo
           reconciliaCorpo();
+          atualizaCatalogo();
           return;
         }
         if (!jaVisto) {
@@ -1444,6 +1499,7 @@ async function sincroniza(opcoes) {
         if (manual && !avisouPrescricao) toast('Sincronizado.');
         reconciliaFotos();                     // sem await: os bytes vão por fora
         reconciliaCorpo();
+        atualizaCatalogo();                    // sem await: o catálogo do sistema, se mudou
         return;
       }
       if (escrita.erro === 'conflito') continue;   // outro gravou: relê e refaz
@@ -3537,6 +3593,9 @@ async function criarExercicioCom(c) {
   if (nome.trim().length < 3) { toast('Dê um nome ao exercício.'); return; }
   const k = slugEx(nome);
   if (CAT[k] && !CAT[k].arq) { toast('Já existe um exercício com esse nome.'); return; }
+  // nome alternativo de um exercício do sistema: é ele, com outro nome
+  const jaE = NOMES_ALT[k] && CAT[NOMES_ALT[k]] && !CAT[NOMES_ALT[k]].arq ? NOMES_ALT[k] : null;
+  if (jaE) { toast('Esse é o ' + CAT[jaE].n + ', que já está no catálogo.'); return; }
   S.ex[k] = { n: nome.trim(), g: un ? '' : g, car: car, c: comp ? 1 : 0, cue: '', meu: 1, m: Date.now() };
   // Movimento com grandeza não recebe grupo muscular, pela mesma razão que as
   // estações: atribuí-lo a um músculo faria o painel de volume contar burpee
@@ -3833,7 +3892,7 @@ CTX.leRevisao = function () {
   if (!view.revisao) return;
   const lida = lerRevisao(view.revisao.texto);
   view.revisao.lida = lida;
-  view.revisao.casa = casaNomes(lida, catalogoParaRevisao(), baseTreinador());
+  view.revisao.casa = casaNomes(lida, catalogoParaRevisao(), baseTreinador(), { apelidos: mapaDeApelidos(), alt: NOMES_ALT });
   view.revisao.respostas = {};
   // as mudanças começam marcadas; desmarcar é o que fica de fora. O treino que
   // ele deixou de fora numa revisão anterior começa desmarcado, como ele escolheu
@@ -3964,7 +4023,10 @@ CTX.revisao = function () {
     lida: true, data: L.data,
     bloqueio: bloqueio,
     falhou: !!r.falhou,
-    problemas: L.problemas,
+    // dois nomes do mesmo treino no mesmo exercício: aviso, junto dos problemas do texto
+    problemas: L.problemas.concat(nomesNoMesmoId(L, r.casa).map(function (x) {
+      return { linha: x.nomes.join('” e “'), motivo: 'os dois são ' + exDe(x.id).n + ' no treino ' + x.dia + '; confira o texto' };
+    })),
     vazia: !L.dias.length,
     perguntas: perguntas,
     falta: falta,
@@ -4004,9 +4066,10 @@ CTX.incorporaRevisao = async function (evento) {
   // Ao recusar a revisão, o programa volta com a mesma prioridade na fusão.
   const marcas = { mtime: S.mtime, carimbosEm: S.carimbosEm, carimbos: S.carimbos && { ...S.carimbos } };
   const impressoesAntes = { ...impressoes };
-  const antes = JSON.stringify({ ex: S.ex, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog });
+  const antes = JSON.stringify({ ex: S.ex, apelidos: S.apelidos, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog });
 
   S.ex = Object.assign({}, S.ex);
+  const catAntes = CAT;          // o catálogo de antes: o que a revisão cria não está aqui
   const criados = [];
   r.lida.dias.forEach(function (d) {
     d.ex.forEach(function (x) {
@@ -4026,6 +4089,27 @@ CTX.incorporaRevisao = async function (evento) {
     });
   });
   montaCatalogo();
+
+  // A resposta "é o mesmo" vira apelido: a próxima leitura do mesmo nome não
+  // pergunta de novo. Só quando o nome leva a um exercício que JÁ existia e
+  // que o nome não dá sozinho. Não vira apelido:
+  // - o nome que já é o id de um exercício vivo (o apelido passaria por cima
+  //   dele na leitura seguinte, e o histórico iria para o outro);
+  // - o id criado ou desarquivado por esta revisão ("é outro" virou `-2`): o
+  //   Desfazer o arquiva, e o apelido apontaria para um exercício arquivado;
+  // - o que o nome alternativo do sistema já resolve.
+  // O Desfazer tira os que esta revisão gravou (`apelidosDaRevisao`).
+  S.apelidos = Object.assign({}, S.apelidos || {});
+  const apelidosDaRevisao = [];
+  Object.keys(ids).forEach(function (nome) {
+    const k = chaveDoNome(nome), id = ids[nome];
+    if (!k || k === id || NOMES_ALT[k] === id) return;
+    if (!catAntes[id] || criados.indexOf(id) >= 0) return;
+    if (catAntes[k] && !catAntes[k].arq) return;
+    if (S.apelidos[k] && S.apelidos[k].id === id) return;
+    apelidosDaRevisao.push({ k: k, antes: S.apelidos[k] || null });
+    S.apelidos[k] = { id: id, m: Date.now(), n: nome };
+  });
 
   // a conta de novo, agora com o catálogo completo (o descanso padrão do novo),
   // com os MESMOS ids da tela
@@ -4067,7 +4151,7 @@ CTX.incorporaRevisao = async function (evento) {
     Object.assign(S, marcas);
     impressoes = impressoesAntes;
     const v = JSON.parse(antes);
-    S.ex = v.ex; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog;
+    S.ex = v.ex; S.apelidos = v.apelidos; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog;
     montaCatalogo();
     r.falhou = true;
     render();
@@ -4097,6 +4181,13 @@ CTX.incorporaRevisao = async function (evento) {
     };
     S.ex = Object.assign({}, S.ex);
     criados.forEach(function (id) { if (S.ex[id] && !usado(id)) S.ex[id] = Object.assign({}, S.ex[id], { arq: 1, m: Date.now() }); });
+    // os apelidos que ela gravou saem, com lápide (senão o outro aparelho os
+    // devolve); o que ela sobrescreveu volta ao que era
+    S.apelidos = Object.assign({}, S.apelidos || {});
+    apelidosDaRevisao.forEach(function (a) {
+      if (a.antes) S.apelidos[a.k] = { id: a.antes.id, m: depoisDe(S.apagados && S.apagados[chaveDeApelido(a.k)]) };
+      else { delete S.apelidos[a.k]; lapide(chaveDeApelido(a.k)); }
+    });
     montaCatalogo();
     tocados.forEach(function (d) { logProg(d, 'revisão do treinador' + de + ' desfeita: o treino voltou ao que era.'); });
     const ok = await save();
@@ -5500,6 +5591,7 @@ async function importText(txt) {
         plano: typeof d.plano === 'number' ? d.plano : 1,
         prog: d.prog || null, rot: d.rot || null,
         ex: (d.ex && typeof d.ex === 'object') ? d.ex : {},
+        apelidos: (d.apelidos && typeof d.apelidos === 'object' && !Array.isArray(d.apelidos)) ? d.apelidos : {},
         mods: d.mods || null, progLog: Array.isArray(d.progLog) ? d.progLog : [],
         // A metade de comida entra pelo mesmo caminho. Whitelist e não spread
         // de propósito: um backup adulterado não pode injetar campo que o app
@@ -5565,6 +5657,7 @@ async function importText(txt) {
   if (comConta) {
     S = funde(atual, S, Date.now()).estado;
     normalizaEstado();
+    reduzReferencias(S);
   }
   garanteProgramaERotacao();
   delete view.escolhasIniciais;
@@ -7371,7 +7464,7 @@ async function wipe() {
   // e as mudanças que promoveu ao oficial sobrevivem
   S = { primeiraVez:S.primeiraVez, logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
         body:corpoVazio(), carga:{}, export:0,
-        plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
+        plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, apelidos:S.apelidos || {}, mods:null, progLog:S.progLog || [],
         progTreinador:S.progTreinador || null,
         // Os carimbos dos documentos ficam: o programa e o plano que sobrevivem
         // continuam sendo a versão de quando foram editados, e zerar o carimbo
@@ -11670,8 +11763,9 @@ function catalogoDeAdicao(d, trocaDe) {
       // em algum dos dois, e a ordem não importa. É o que faz `sled push`,
       // `push sled` e `remo` chegarem onde ele espera — e `triceps` achar o
       // grupo `tríceps`, que antes exigia o acento.
+      // e os nomes alternativos do catálogo do sistema: "pulldown" acha a puxada
       .filter(function (k) {
-        return casaBusca(CAT[k].n + ' ' + (CAT[k].g || ''), q);
+        return casaBusca(CAT[k].n + ' ' + (CAT[k].g || '') + ' ' + nomesAltDe(k).join(' '), q);
       })
       .sort(function (a, b) {
         const pa = posicao(a), pb = posicao(b);

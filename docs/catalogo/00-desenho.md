@@ -191,10 +191,45 @@ O balanço é o que o treinador lê, pelo MCP, para montar o próximo.
 
 Cada etapa passa por protótipo antes de código quando muda tela, e pelos revisores no fim.
 
+## Etapa 0: decidido na implementação (23/11/2026)
+
+- **Os ids são os de sempre.** O catálogo do sistema usa o `slugEx` que o histórico já usa. Para todo id do código, o exercício que o sistema devolve é igual ao do `EX_BASE` (teste em `tests/dominio/catalogo.test.ts`).
+- **A semente é gerada, não digitada.** `src/dominio/catalogo.ts` monta a semente a partir do `EX_BASE`: movimento, equipamento e músculos secundários saem do nome por regra (meia série para o sinergista), e os substitutos indicados pelo treinador viram os equivalentes de partida. Os dados à mão ficam em `catalogo-semente.ts`: movimentos, tipos de equipamento, nomes alternativos e os exercícios novos da v2.2. O SQL da semente é gerado dela (`npm run catalogo:sql`).
+- **Da v2.2, dezessete nomes não tinham candidato** no catálogo (nem nome parecido, nem lugar: os treinos tinham letras novas). Doze entram no sistema como exercícios novos, com o id do próprio nome — o mesmo id que a revisão já tinha criado na pessoa. Os outros cinco são, com certeza, exercícios que já existiam, e entram como **nomes alternativos** deles. Mas no estado de quem colou a v2.2 (no build 13) esses cinco **já nasceram como exercícios pessoais**, com o id do próprio nome e histórico próprio; o id do nome vem antes do alternativo na leitura, então lá eles continuam pessoais. São candidatos a união na etapa 3 (lista para o moderador abaixo).
+- **Os que tinham nome parecido ficam fora** (oito, por exemplo "Supino inclinado no Smith 30°", "Remada apoiada no peito"): a pessoa respondeu "é o mesmo" ou "é outro", o app não guardou a resposta, e pôr o nome deles no catálogo mudaria a próxima leitura do mesmo texto. Ficam para o moderador.
+- **Nome alternativo é só o que é, com certeza, o mesmo exercício.** Leva ao id sem perguntar. Variação que muda a carga (outro ângulo, outra máquina) é outro exercício, ou um equivalente.
+- **Ordem da leitura de um nome:** apelido da pessoa, id do próprio nome, nome atual de um exercício dela que foi renomeado ("Voador"), nome alternativo do sistema e, só então, parecença e lugar. O apelido vem primeiro porque é decisão dela; o id do nome e o nome renomeado vêm antes do alternativo para que um "é outro" já respondido, ou o nome que ela deu, continuem valendo.
+- **Certeza não disputa id.** Os passos de certeza (apelido, id, renomeado, alternativo) podem levar dois nomes ao mesmo exercício — por exemplo o apelido "Supino inclinado no Smith 30°" num treino e "Supino inclinado no Smith" noutro. Só a parecença e o lugar, que são palpites, deixam de propor um id já levado. Dois nomes do MESMO treino no mesmo exercício viram aviso na revisão.
+- **Os apelidos nascem da revisão:** a resposta "é o mesmo" vira apelido, com o nome como o treinador escreveu. Não vira apelido o nome que já é o id de um exercício vivo, nem o id criado ou desarquivado pela própria revisão, nem o que o nome alternativo já resolve. O Desfazer da revisão tira os apelidos que ela gravou, com lápide `apelido:<chave>`, e devolve o que ela tinha sobrescrito.
+- **Sem plano novo.** Os apelidos (campo opcional) e a redução de `S.ex` a referência entram sem subir o plano: o build 13, nos outros aparelhos, funde pelo estado inteiro um plano que não conhece, e uma edição de programa feita aqui se perderia lá. A redução é idempotente e roda em toda abertura, importação e fusão.
+- **Exercício pessoal é derivado**, não marcado: é o id que não está no sistema.
+- **Moderador:** tabela `moderadores` sem política nenhuma (só o SQL Editor a mexe) e a função `eh_moderador()`. O uid do dono não está no repositório: incluí-lo é um passo manual.
+- **Ninguém apaga pelo app.** Não há política de DELETE no catálogo nem nos redirecionamentos.
+- **A cópia no aparelho guarda só a diferença para a semente**, para não tirar espaço do estado no armazenamento do Safari.
+- **Servir e ser mais nova são duas perguntas.** A cópia do banco SERVE quando tem todos os ids da semente (direto ou por união) e não trocou carga nem grandeza de nenhum. É MAIS NOVA quando a versão do banco passa a que o aparelho já tem (0 = só a semente). A versão do conteúdo da semente é outro contador e não se compara com a do banco.
+- **Versão:** o banco sobe `catalogo_versao` a cada LINHA gravada no catálogo (um comando que não muda nada não sobe). O app lê o catálogo paginado, em ordem de id, conferindo o total.
+- **A semente só insere** (`on conflict do nothing`). Exercício que já existe no banco se corrige no banco, pelo moderador; mudar a semente não sobrescreve a curadoria.
+- **Regra de curadoria: a carga e a grandeza de um exercício não mudam.** `car` e `u` dizem como ler a série guardada (40 em "anilha por lado" não é 40 na placa). Mudou a carga, é outro exercício: id novo, e o antigo como equivalente. O banco recusa a troca (gatilho) e o app recusa uma cópia que a traga (`validaCatalogo`).
+- **União materializada.** O id antigo de uma união aparece com o exercício que ficou (nome, carga, grupo), mesmo que a linha antiga saia da tabela. E um id sem base nenhuma aparece como fantasma nomeado, nunca como exercício sem nome.
+
+### Para o moderador: os cinco da v2.2 que nasceram pessoais
+
+No estado de quem colou a v2.2, estes nomes viraram exercícios pessoais (id do próprio nome). No sistema, cada um é nome alternativo de um exercício que já existia. Candidatos a união na etapa 3:
+
+| Nome da v2.2 (id pessoal) | Exercício do sistema |
+|---|---|
+| Crucifixo na polia baixa para alta (`crucifixo-na-polia-baixa-para-alta`) | Crossover de baixo para cima (`crossover-de-baixo-para-cima`) |
+| Abdução de quadril na máquina (`abducao-de-quadril-na-maquina`) | Abdutora (`abdutora`) |
+| Panturrilha sentado (`panturrilha-sentado`) | Panturrilha sentada (`panturrilha-sentada`) |
+| Rosca bayesiana na polia (`rosca-bayesiana-na-polia`) | Rosca bayesian no cabo (`rosca-bayesian-no-cabo`) |
+| Crucifixo inverso no peck deck (`crucifixo-inverso-no-peck-deck`) | Reverse pec deck (`reverse-pec-deck`) |
+
 ## Em aberto
 
 - O formato da fase e do programa no texto do treinador: combinar com ele.
 - Localização da academia: ponto no mapa ou só bairro e cidade.
 - Quantas confirmações tiram a marca de novo, e quantas marcas de "não vi mais" tiram uma máquina.
 - Base pública para completar o catálogo inicial: conferir licença antes de usar.
+- Os doze exercícios da v2.2 e os secundários por regra estão marcados `cur` (curadoria). O moderador confere, e os oito da v2.2 com nome parecido esperam decisão (entrar no sistema, virar nome alternativo, ou ficar pessoais).
+- Os novos da v2.2 que a pessoa já tem em `S.ex` ficam inteiros lá até não haver aparelho num build anterior a esta etapa; depois, a redução passa a incluí-los.
 - Fotos de máquina: onde guardar (o mesmo armazenamento das fotos do exercício, ou um público).

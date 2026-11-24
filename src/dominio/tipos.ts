@@ -76,6 +76,14 @@ export interface Exercicio {
   arq?: 1;
 }
 
+/** Um apelido: o exercício a que um nome leva, e quando isso foi decidido. */
+export interface Apelido {
+  id: IdEx;
+  m: number;
+  /** o nome como o treinador escreveu (a chave é o `slugEx` dele) */
+  n?: string;
+}
+
 /** Como um exercício está PRESCRITO hoje, naquela posição do treino. */
 export interface Slot {
   id: IdEx;
@@ -761,8 +769,18 @@ export interface Estado {
   /** programa editável; começa vazio no perfil pessoal */
   prog: Record<Dia, Treino> | null;
   rot: Dia[] | null;
-  /** o catálogo dele */
+  /**
+   * O catálogo dele, por cima do catálogo do sistema (`dominio/catalogo.ts`).
+   * Entrada com id do sistema é REFERÊNCIA: guarda só o que ele mudou. Entrada
+   * com id fora do sistema é exercício PESSOAL, completo.
+   */
   ex: Record<IdEx, Partial<Exercicio>>;
+  /**
+   * Os apelidos dele: nome (chave `slugEx`) → exercício. Nasce da resposta "é
+   * o mesmo" numa revisão; a próxima leitura do mesmo nome não pergunta de
+   * novo. Coleção com carimbo e lápide (`apelido:<chave>`), como `ex`.
+   */
+  apelidos?: Record<string, Apelido>;
   /** as mudanças de hoje */
   mods: Mods | null;
   progLog: EntradaProgLog[];

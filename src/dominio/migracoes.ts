@@ -13,6 +13,7 @@ import { CADENCIA_PADRAO } from './dia';
 import { PLANO_BASE } from './nutricao/alimentos';
 import { EX_BASE, SIMULACAO_HYROX, slugEx } from './programa';
 import { chaveDeLog } from './sincronia';
+import { SEMENTE, exerciciosDoSistema } from './catalogo';
 import type { DiaComidaHist } from './nutricao/tipos';
 import type { Estado, IdEx, Log, Marca, PromoPendente, Treino } from './tipos';
 import type { Item, Refeicao } from './nutricao/tipos';
@@ -853,4 +854,53 @@ export function migraPlano13(s: Estado): void {
   if (s.plano >= 13) return;
   s.falta ??= {};
   s.plano = 13;
+}
+
+// ---------- o catálogo do sistema: a entrada de `S.ex` como referência ----------
+// (docs/catalogo/00-desenho.md, etapa 0)
+//
+// NÃO é uma migração de plano, de propósito: subir o plano faz o build 13 (em
+// produção, nos outros aparelhos) deixar de reconhecer o formato e fundir pelo
+// estado inteiro, e a edição de programa feita aqui some na fusão de lá
+// (provado contra o `funde` do build 13, congelado em
+// `tests/dominio/fixtures/sincronia-build13.ts`). O formato dos documentos não
+// muda, então o plano não precisa mudar.
+//
+// A entrada de `S.ex` cujo id é do catálogo do código (`EX_BASE`) vira
+// REFERÊNCIA: sai dela todo campo igual ao do catálogo, e fica só o que a
+// pessoa mudou. O catálogo que a tela monta não muda em nada, nem num build 13
+// lendo o mesmo estado (o `EX_BASE` dele tem os mesmos valores). É idempotente
+// e roda SEMPRE (`migraEstado`: no boot, na importação e depois de cada
+// fusão): uma cópia completa que volte de um aparelho no 13 — no empate de
+// carimbo, a fusão pode escolher a dela — é reduzida de novo na abertura.
+//
+// Só os ids do `EX_BASE`, e não os da semente inteira: o build 13 monta o
+// catálogo com o `EX_BASE` dele, que não conhece os novos da v2.2. Se a cópia
+// deles na pessoa fosse esvaziada, aquele aparelho mostraria o exercício sem
+// nome. Eles ficam como estão até não haver build anterior a este.
+//
+// O que não é do sistema é exercício PESSOAL. Isso é derivado (`ehDoSistema`),
+// não gravado: uma marca a mais no dado só serviria para divergir da regra.
+
+/** Os campos de um exercício que a referência pode deixar de repetir. */
+const CAMPOS_DO_EXERCICIO = ['n', 'car', 'g', 'c', 'cue', 'u', 'q', 'peg', 'pegPe', 'sub'] as const;
+
+/** Reduz as cópias de exercício do código a referência. Devolve quantas mudou. */
+export function reduzReferencias(S: Estado): number {
+  let n = 0;
+  const sistema = exerciciosDoSistema(SEMENTE);
+  const ex = (S.ex || {}) as Record<IdEx, Record<string, unknown>>;
+  Object.keys(ex).forEach(function (id) {
+    if (!EX_BASE[id] || !sistema[id] || !ex[id] || typeof ex[id] !== 'object') return;
+    const base = sistema[id] as unknown as Record<string, unknown>;
+    let tirou = false;
+    CAMPOS_DO_EXERCICIO.forEach(function (k) {
+      if (!(k in ex[id])) return;
+      const a = ex[id][k], b = base[k];
+      // ausente no catálogo e ausente/indefinido aqui é o mesmo valor
+      if (a === b || (a === undefined && b === undefined)) { delete ex[id][k]; tirou = true; }
+    });
+    if (tirou) n++;
+  });
+  return n;
 }

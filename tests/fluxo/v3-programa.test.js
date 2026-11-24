@@ -6,6 +6,7 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { app, DIA } from './harness.js';
 import { montaArquivos } from '../../ferramentas/espelho/monta';
+import { funde } from '../../src/dominio/sincronia';
 
 const TEXTO = `Revisão 21/09
 Treino B · Pernas completas + panturrilhas
@@ -321,17 +322,17 @@ test('a revisão do treinador: lê o texto, pergunta o que não reconhece, e mos
   a.clicar('[data-a="revisao-le"]');
   await a.esperar();
   const r = a.vJ('ctx.revisao');
-  assert.strictEqual(r.perguntas.length, 2);
+  // "Flexora sentada" é nome alternativo da cadeira flexora sentada no catálogo
+  // do sistema (etapa 0 do catálogo): casa sem perguntar. Sobra o hip thrust.
+  assert.strictEqual(r.perguntas.length, 1);
   const principal = a.$('[data-a="revisao-aplica"]');
   assert.strictEqual(principal.disabled, false, 'alcançável pelo Tab');
   assert.strictEqual(principal.getAttribute('aria-disabled'), 'true');
-  assert.strictEqual(a.texto('#' + principal.getAttribute('aria-describedby')), 'Responda as perguntas acima para aplicar.');
+  assert.strictEqual(a.texto('#' + principal.getAttribute('aria-describedby')), 'Responda a pergunta acima para aplicar.');
   assert.doesNotMatch(a.texto('.v3-revisao-confirmar'), /O programa do treinador passa a ser este/);
   a.clicar(principal);
   assert.ok(a.$('.v3-perg'), 'o botão em espera não aplica');
   a.clicar(a.$$('.v3-perg')[0].querySelector('button'));
-  assert.strictEqual(a.texto('#revisao-motivo'), 'Responda a pergunta acima para aplicar.');
-  a.clicar(a.$$('.v3-perg')[1].querySelector('button'));
   await a.esperar();
   assert.ok(a.$$('.v3-sec-h').some(e => /Treino B/.test(e.textContent)), 'o que muda no B');
   assert.ok(!a.$('[data-a="revisao-aplica"]').hasAttribute('aria-disabled'), 'respondido, aplica');
@@ -612,7 +613,7 @@ test('o toque fora preserva o aviso nos primeiros 500 ms e o dispensa depois', a
 test('a revisão traz um treino novo com série de tempo, tipo de carga e bi-set, e o app os guarda', async () => {
   const texto = `Revisão 23/11
 Treino IA · Glúteo + posterior
-- Hip thrust com barra · 4 x 8-12 · RIR 1-2 · 2:30 · glúteo · carga: barra · dica: pausa de 1 s no topo; costelas para baixo
+- Ponte de glúteo com barra · 4 x 8-12 · RIR 1-2 · 2:30 · glúteo · carga: barra · dica: pausa de 1 s no topo; costelas para baixo
 - Pallof press · 3 x 10/lado · RIR 2 · 60 s · core · dica: bi-set com o de baixo; comece pela esquerda
 - Prancha lateral com giro · 2 x 30 s/lado · RIR 2 · 60 s · core`;
   const a = await app({ aba: 'agora' });
@@ -622,8 +623,10 @@ Treino IA · Glúteo + posterior
   assert.deepStrictEqual(r.problemas || [], [], 'o texto inteiro foi entendido');
   a.clicar('[data-a="revisao-aplica"]');
   await a.esperar(120);
-  const hip = a.E('Object.keys(S.ex).filter(k => S.ex[k].n === "Hip thrust com barra").map(k => S.ex[k])')[0];
-  assert.ok(hip, 'o hip thrust com barra entrou no catálogo');
+  // (não o "Hip thrust com barra": esse é nome alternativo da elevação pélvica
+  // com barra no catálogo do sistema, e casa com ela em vez de criar um novo)
+  const hip = a.E('Object.keys(S.ex).filter(k => S.ex[k].n === "Ponte de glúteo com barra").map(k => S.ex[k])')[0];
+  assert.ok(hip, 'a ponte com barra entrou no catálogo');
   assert.strictEqual(hip.car, 'barra', 'com o tipo de carga que a linha disse');
   assert.strictEqual(hip.cue, 'pausa de 1 s no topo; costelas para baixo', 'e a dica inteira, com o ";"');
   const pr = a.E('Object.keys(S.ex).filter(k => S.ex[k].n === "Prancha lateral com giro").map(k => S.ex[k])')[0];
@@ -678,5 +681,101 @@ Treino IB · Pernas
   assert.match(dif, /Afundo reverso com halteres: 8–12 repetições, não 8–12 repetições por perna/);
   const doTreinador = montaArquivos(a.S(), { agora: Date.now() })['treino/programa-do-treinador.md'];
   assert.match(doTreinador.split('\n').filter(l => /Afundo reverso/.test(l)).join(' '), /8[–-]12 por perna/);
+  a.fechar();
+});
+
+test('a resposta "é o mesmo" vira apelido: o mesmo texto, colado de novo, não pergunta mais', async () => {
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  a.v('ctx.abreRevisao');
+  await a.esperar();
+  a.v('ctx.textoDaRevisao', { value: TEXTO });
+  a.clicar('[data-a="revisao-le"]');
+  await a.esperar();
+  const perguntas = a.vJ('ctx.revisao').perguntas;
+  assert.deepStrictEqual(perguntas.map(q => q.nome), ['Hip thrust máquina']);
+  a.v('ctx.respondeRevisao', 'Hip thrust máquina', 'mesma');
+  await a.esperar();
+  await a.v('ctx.incorporaRevisao');
+  await a.esperar(120);
+  assert.deepStrictEqual(a.E('S.apelidos["hip-thrust-maquina"].id'), 'elevacao-pelvica-na-maquina');
+  assert.ok(a.gravado().apelidos['hip-thrust-maquina'], 'e foi gravado');
+  a.v('ctx.abreRevisao');
+  await a.esperar();
+  a.v('ctx.textoDaRevisao', { value: TEXTO });
+  a.clicar('[data-a="revisao-le"]');
+  await a.esperar();
+  assert.deepStrictEqual(a.vJ('ctx.revisao').perguntas, [], 'ele já respondeu');
+  a.fechar();
+});
+
+test('o Desfazer da revisão tira o apelido que ela gravou, com lápide que chega ao outro aparelho', async () => {
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  a.v('ctx.abreRevisao');
+  await a.esperar();
+  a.v('ctx.textoDaRevisao', { value: TEXTO });
+  a.clicar('[data-a="revisao-le"]');
+  await a.esperar();
+  a.v('ctx.respondeRevisao', 'Hip thrust máquina', 'mesma');
+  await a.esperar();
+  a.clicar('[data-a="revisao-aplica"]');
+  await a.esperar(120);
+  // o outro aparelho já recebeu o apelido antes do desfazer
+  const outro = JSON.parse(JSON.stringify(a.gravado()));
+  assert.ok(outro.apelidos['hip-thrust-maquina']);
+  assert.strictEqual(outro.apelidos['hip-thrust-maquina'].n, 'Hip thrust máquina', 'guarda o nome como o treinador escreveu');
+  a.clicar('[data-a="aviso-acao"]');
+  await a.esperar(80);
+  assert.ok(/Revisão desfeita/.test(a.toast()), a.toast());
+  const aqui = a.gravado();
+  assert.strictEqual(aqui.apelidos['hip-thrust-maquina'], undefined, 'saiu');
+  assert.ok(aqui.apagados['apelido:hip-thrust-maquina'], 'com lápide');
+  // ler de novo: a pergunta volta
+  a.v('ctx.abreRevisao');
+  await a.esperar();
+  a.v('ctx.textoDaRevisao', { value: TEXTO });
+  a.clicar('[data-a="revisao-le"]');
+  await a.esperar();
+  assert.deepStrictEqual(a.vJ('ctx.revisao').perguntas.map(q => q.nome), ['Hip thrust máquina']);
+  // e a lápide mata o apelido que o outro aparelho ainda tem
+  const fundido = funde(outro, JSON.parse(JSON.stringify(aqui)), Date.now() + 1000).estado;
+  assert.strictEqual((fundido.apelidos || {})['hip-thrust-maquina'], undefined);
+  a.fechar();
+});
+
+test('"é outro" não grava apelido: o exercício novo é criado pela própria revisão', async () => {
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  a.v('ctx.abreRevisao');
+  await a.esperar();
+  a.v('ctx.textoDaRevisao', { value: TEXTO });
+  a.clicar('[data-a="revisao-le"]');
+  await a.esperar();
+  a.v('ctx.respondeRevisao', 'Hip thrust máquina', 'outro');
+  await a.esperar();
+  a.clicar('[data-a="revisao-aplica"]');
+  await a.esperar(120);
+  assert.strictEqual(JSON.stringify(a.E('S.apelidos')), '{}');
+  a.fechar();
+});
+
+test('a cópia completa de um exercício do código é reduzida a referência na abertura', async () => {
+  const a = await app({ aba: 'agora', estado: { plano: 13, logs: {}, done: [],
+    ex: { pushdown: { n: 'Tríceps no pulley', car: 'pino', g: 'tríceps', c: 0,
+      cue: 'Tríceps não é prioridade: já recebe bastante dos presses. Duas séries bem feitas bastam.',
+      peg: 'corda em neutra se o punho incomodar', m: 5 } } } });
+  await a.pronto();
+  assert.strictEqual(JSON.stringify(a.E('S.ex.pushdown')), JSON.stringify({ n: 'Tríceps no pulley', m: 5 }));
+  assert.strictEqual(a.E('CAT.pushdown.g'), 'tríceps', 'a tela continua igual');
+  assert.strictEqual(a.E('S.plano'), 13, 'sem plano novo');
+  a.fechar();
+});
+
+test('a busca do catálogo acha pelo nome alternativo do sistema', async () => {
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  const achados = JSON.stringify(a.E('(view.addQ = "voador", catalogoDeAdicao("A").achados)'));
+  assert.ok(/pec-deck|Pec deck/.test(achados), achados.slice(0, 300));
   a.fechar();
 });

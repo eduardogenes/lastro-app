@@ -837,14 +837,26 @@ export function semeiaProg(): Record<string, Treino> {
  * Catálogo efetivo: o que vem do código mais o que ele cadastrou e o que a
  * migração arquivou. Remontado sempre que o catálogo dele muda.
  */
-export function montaCatalogo(exDoUsuario: Record<IdEx, Partial<Exercicio>>): Record<IdEx, Exercicio> {
+export function montaCatalogo(
+  exDoUsuario: Record<IdEx, Partial<Exercicio>>,
+  // o catálogo do sistema (`catalogo.ts`, `exerciciosDoSistema`). O padrão é o
+  // do código porque este módulo não pode importar aquele (o inverso já existe)
+  base: Record<IdEx, Exercicio> = EX_BASE
+): Record<IdEx, Exercicio> {
   const cat: Record<IdEx, Exercicio> = {};
-  Object.keys(EX_BASE).forEach(function (k) { cat[k] = EX_BASE[k]; });
+  Object.keys(base).forEach(function (k) { cat[k] = base[k]; });
   Object.keys(exDoUsuario || {}).forEach(function (k) {
     // `m` é o carimbo da entrada para a fusão, não um atributo do exercício
     const proprio = Object.assign({}, exDoUsuario[k]) as Partial<Exercicio> & { m?: number };
     delete proprio.m;
-    cat[k] = Object.assign({}, EX_BASE[k] || {}, proprio) as Exercicio;
+    // Sem base (id que saiu do sistema sem união, cópia velha): o fantasma por
+    // baixo garante nome, carga e grupo — uma referência reduzida (`{ m }`) não
+    // pode virar exercício sem nome nem derrubar quem lê `n`. Quem tem nome
+    // próprio (exercício pessoal) não é fantasma.
+    const fundo = base[k] || exercicioFantasma(k);
+    const x = Object.assign({}, fundo, proprio) as Exercicio;
+    if (!base[k] && proprio.n) delete x.sumido;
+    cat[k] = x;
   });
   return cat;
 }

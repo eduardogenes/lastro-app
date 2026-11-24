@@ -15,7 +15,8 @@
     "treino": "vite-node tests/gerar-treino.js",
     "volume": "vite-node tests/gerar-volume.js",
     "espelho": "vite-node ferramentas/espelho/espelho.ts",
-    "sonda": "vite-node ferramentas/sonda/le.ts"
+    "sonda": "vite-node ferramentas/sonda/le.ts",
+    "catalogo:sql": "vite-node ferramentas/catalogo/gera-sql.ts"
   },
   "devDependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

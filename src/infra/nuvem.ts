@@ -13,6 +13,7 @@
 
 import { DB } from './db';
 import { ANON, BUCKET_APARELHOS, BUCKET_CORPO, URL_BASE } from './supabase';
+import type { CatalogoBruto } from '../dominio/catalogo';
 
 /**
  * A sessão é DO APARELHO: não entra no estado sincronizado, e por isso tem
@@ -116,6 +117,25 @@ async function token(): Promise<Resultado<SessaoNuvem>> {
   const novo = deTokens(await r.json(), s.email);
   await gravaSessao(novo);
   return { ok: true, v: novo };
+}
+
+/** Lê uma tabela inteira, de 1000 em 1000, conferindo o total. Falhou → null. */
+const PAGINA = 1000;
+async function todasAsLinhas(caminho: string, h: Record<string, string>): Promise<Record<string, unknown>[] | null> {
+  const out: Record<string, unknown>[] = [];
+  for (let de = 0; ; de += PAGINA) {
+    const r = await chama(caminho + '&limit=' + PAGINA + '&offset=' + de, {
+      method: 'GET', headers: Object.assign({ Prefer: 'count=exact' }, h)
+    });
+    if (!r.ok && r.status !== 206) return null;
+    const pagina = await r.json() as Record<string, unknown>[];
+    if (!Array.isArray(pagina)) return null;
+    out.push(...pagina);
+    // "0-999/1234": o total depois da barra
+    const total = Number(String(r.headers.get('Content-Range') || '').split('/')[1]);
+    if (isFinite(total) && out.length >= total) return out.length === total ? out : null;
+    if (pagina.length < PAGINA) return isFinite(total) ? null : out;
+  }
 }
 
 export interface LinhaDoEstado {
@@ -244,6 +264,32 @@ export const NUVEM = {
   },
 
   async sair(): Promise<void> { await gravaSessao(null); },
+
+  /**
+   * O catálogo do sistema (docs/catalogo/00-desenho.md), só se a versão do
+   * banco passar `vLocal`. `null` = nada mais novo. A tabela ainda não existir
+   * (404) é falha de servidor, e quem chama ignora: o app segue com a semente.
+   *
+   * Paginado e em ordem de id: o PostgREST corta em 1000 linhas sem avisar, e
+   * um catálogo cortado perderia ids (que a validação recusaria, mas o app
+   * ficaria preso na semente). Cada página confere o total do Content-Range.
+   */
+  async catalogo(vLocal: number): Promise<Resultado<CatalogoBruto | null>> {
+    const t = await token();
+    if (!t.ok) return t;
+    const h = { Authorization: 'Bearer ' + t.v.token };
+    try {
+      const rv = await chama('/rest/v1/catalogo_versao?select=v&id=eq.1', { method: 'GET', headers: h });
+      if (!rv.ok) return falha('servidor', 'catálogo indisponível (' + rv.status + ')');
+      const lv = await rv.json() as { v?: unknown }[];
+      const v = lv && lv[0] ? Number(lv[0].v) : NaN;
+      if (!isFinite(v) || v <= vLocal) return { ok: true, v: null };
+      const ex = await todasAsLinhas('/rest/v1/catalogo_exercicio?select=*&order=id', h);
+      const redir = await todasAsLinhas('/rest/v1/catalogo_redirecionamento?select=de,para&order=de', h);
+      if (!ex || !redir) return falha('servidor', 'catálogo indisponível');
+      return { ok: true, v: { v: v, ex: ex, redir: redir as { de: string; para: string }[] } };
+    } catch (e) { return falha('rede', 'sem conexão'); }
+  },
 
   /**
    * Lê a linha do usuário. `null` no lugar da linha quer dizer que ela ainda

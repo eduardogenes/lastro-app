@@ -186,7 +186,9 @@ S = {
 
   prog: { A: { name, tag, ex: [ { id, s, r, d, u, q, desde } ] } },  // o programa dele
   rot: ['A','B','C','E','D','F'],
-  ex:  { 'meu-aparelho': { n, g, car, c, cue, meu: 1 } },       // catálogo dele
+  ex:  { 'meu-aparelho': { n, g, car, c, cue, meu: 1 },        // pessoal: completo
+         'pushdown': { n: 'Tríceps no pulley', m } },           // do sistema: só o que ele mudou
+  apelidos: { 'hip-thrust-maquina': { id: 'elevacao-pelvica-na-maquina', m, n: 'Hip thrust máquina' } },  // opcional; nome → exercício
   mods: { day: 'C', t: 0, list: [] },                           // mudanças de hoje
   progLog: [{ t, day, txt, motivo }],                           // decisões do programa
   aulas: [{ id, nome, t, m, mov: [] }],                         // modelos de aula de box
@@ -577,6 +579,61 @@ também descarta essa coleção. Um aparelho atualizado que ainda guarda as falt
 as reenvia na próxima sincronia. Uma cópia que as contenha pode ser restaurada
 no build 13 e sincronizada. Se a conta foi sobrescrita e nenhum aparelho ou
 cópia conservou as faltas, perde-se o registro, inclusive os motivos.
+
+**A referência ao catálogo do sistema não é plano** (`reduzReferencias`, etapa 0
+de [docs/catalogo/00-desenho.md](catalogo/00-desenho.md)). Os apelidos
+(`S.apelidos`, opcional, padrão em `normalizaEstado`) e a redução de `S.ex`
+entraram sem subir o plano. O motivo é a fusão: o build 13, nos aparelhos que
+ainda não atualizaram, reconhece como "mesmo formato" só os planos 12 e 13; um
+estado no 14 o faria fundir pelo estado inteiro, e uma edição de programa feita
+no aparelho novo, com carimbo de documento mais recente, perderia para o lado de
+`mtime` maior (provado contra o `funde` do build 13, congelado em
+`tests/dominio/fixtures/sincronia-build13.ts`). O código de hoje já aceita o 14
+como compatível com o 12 e o 13, para quando um plano novo vier sem mudar os
+documentos.
+
+A redução transforma em REFERÊNCIA a entrada de `S.ex` cujo id é do catálogo do
+código (`EX_BASE`): sai dela todo campo igual ao do catálogo. O catálogo que a
+tela monta não muda, nem num build 13 lendo o mesmo estado, e nenhuma chave de
+`S.logs` se move. É idempotente e roda em `migraEstado` — no boot, na
+importação e depois de cada fusão —, porque uma cópia completa pode voltar de
+um aparelho no 13 (no empate de carimbo, a fusão de coleção escolhe por
+`mtime`). Só os ids do `EX_BASE`: os novos da v2.2 que entraram na semente
+ficam inteiros na pessoa, porque o build 13 não os conhece e mostraria o
+exercício sem nome.
+
+### O catálogo do sistema
+
+`src/dominio/catalogo.ts`. Os exercícios são iguais para todos e curados pelo
+moderador: id estável (o `slugEx` de sempre), movimento, equipamento, músculos
+com fração, nomes alternativos, equivalentes. A semente vem no bundle
+(`catalogo-semente.ts`, versão em `VERSAO_DA_SEMENTE`) e o banco
+(`supabase/migrations/2026112312*`) guarda a cópia editável. O app baixa a
+cópia do banco depois de uma sincronia, no máximo uma vez por hora, paginada e
+em ordem de id, e só a usa se ela servir (`validaCatalogo`) e for mais nova
+(`maisNova`). No
+aparelho fica só a diferença para a semente (`lastro-catalogo-v1`). Sem rede,
+sem conta ou sem as tabelas, vale a semente.
+
+`CAT` é o catálogo do sistema com o `S.ex` da pessoa por cima
+(`montaCatalogo(S.ex, EX_SISTEMA)`). Um id fora do sistema é exercício pessoal;
+isso é derivado (`ehDoSistema`), não gravado.
+
+Um nome leva a um exercício nesta ordem (`casaNomes`): apelido da pessoa, id do
+próprio nome, nome atual de um exercício renomeado, nome alternativo do sistema
+e, só então, parecença e lugar, que continuam perguntando. Os passos de certeza
+podem levar dois nomes ao mesmo id; só os palpites deixam de propor um id já
+levado, e dois nomes do mesmo treino no mesmo id viram aviso. A resposta "é o
+mesmo" vira apelido, e o mesmo nome não é perguntado de novo; o Desfazer da
+revisão tira o apelido com lápide. Apelidos se fundem como `ex`: por chave, com
+carimbo e lápide (`apelido:<chave>`).
+
+As uniões (redirecionamentos) são materializadas em `exerciciosDoSistema`: o id
+antigo aparece com o exercício que ficou. Um id sem base aparece como fantasma
+nomeado (`montaCatalogo` põe `exercicioFantasma` por baixo da entrada da
+pessoa). A cópia do banco SERVE (todos os ids da semente, nenhuma troca de
+carga ou grandeza) e é MAIS NOVA (a versão do banco passa a do aparelho, 0 = só
+a semente) são duas perguntas separadas.
 
 ---
 
