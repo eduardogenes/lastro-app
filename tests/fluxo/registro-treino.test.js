@@ -71,7 +71,7 @@ test('prescrito e ajustar usam a prescrição e preservam o treino ao vivo e a f
     await a.pintar(); const antes = a.S();
     await toca(a,'registro-outro'); await escolhe(a,'B','manha'); await toca(a,'registro-prescrito');
     let s = a.gravado(), m = s.done.find(x => dataLocal(x.t) === data);
-    assert.deepEqual(novas(s,m.sid).find(l => l.id===id).sets, [[0,6],[0,6],[0,6]]);
+    assert.deepEqual(novas(s,m.sid).find(l => l.id===id).sets, [[12,9],[12,9],[12,9]], 'como o prescrito: a carga da última vez no topo da faixa (conta para subir)');
     assert.deepEqual(s.sessao, antes.sessao); assert.deepEqual(s.draft, antes.draft); assert.deepEqual(s.mods, antes.mods);
     assert.deepEqual(s.falta[data], antes.falta[data]); assert.equal(a.$(sel('frequencia-tirar')),null);
     await toca(a,'aviso-acao'); assert.ok(a.$(sel('frequencia-tirar')));

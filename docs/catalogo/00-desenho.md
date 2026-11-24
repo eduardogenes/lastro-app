@@ -263,3 +263,11 @@ Depois das revisões de dado e de design (24/11/2026):
 - Os doze exercícios da v2.2 e os secundários por regra estão marcados `cur` (curadoria). O moderador confere, e os oito da v2.2 com nome parecido esperam decisão (entrar no sistema, virar nome alternativo, ou ficar pessoais).
 - Os novos da v2.2 que a pessoa já tem em `S.ex` ficam inteiros lá até não haver aparelho num build anterior a esta etapa; depois, a redução passa a incluí-los.
 - Fotos de máquina: onde guardar (o mesmo armazenamento das fotos do exercício, ou um público).
+
+## Fase A: acertos depois da etapa 1 (24/11/2026)
+
+- **A revisão muda o exercício que já existe.** `carga:` e `dica:` de um exercício que já existe viram mudanças marcáveis, num grupo "Os exercícios" (`mudancasDosExercicios`). A carga vira correção pessoal (`S.carga`), nunca o catálogo; a dica vai para a entrada dele (`S.ex[id].cue`). Só a dica escrita conta: as notas "por lado/perna" sozinhas não são dica. Entram no histórico do programa e no Desfazer. Antes, as duas eram lidas e ignoradas em silêncio — inclusive a dica do goblet de 24/11.
+- **A entrada do registro vai para o programa da letra** (`donoDaEntrada`): a mudança no treino A feita logo depois da troca é do programa que tem o A, e não do ativo naquela hora.
+- **"Como o prescrito" conta para a sugestão de carga** (decisão do dono, 23/11): cada série vale a carga da última vez no topo da faixa. Antes, gravava carga 0 na faixa de baixo, o que nunca contava e zerava a referência.
+- **Lombar** entrou na lista de dores.
+- Fica para depois: no modo "programa novo", a carga e a dica de exercícios que já existem não são oferecidas (a tela não mostra mudanças nesse modo).

@@ -783,3 +783,57 @@ test('a busca do catálogo acha pelo nome alternativo do sistema', async () => {
   assert.ok(/pec-deck|Pec deck/.test(achados), achados.slice(0, 300));
   a.fechar();
 });
+
+test('Fase A: a revisão muda a carga e a dica de um exercício que já existe, e o Desfazer volta as duas', async () => {
+  // antes desta peça, `carga:` e `dica:` de um exercício existente eram lidos e ignorados
+  const { funde: funde13 } = await import('../dominio/fixtures/sincronia-build13');
+  const texto = `Revisão 24/11
+Treino B · Pernas completas + panturrilhas
+- Agachamento no Smith · 2 x 6-10 · RIR 1-2 · 3 min · quadríceps
+- Cadeira flexora sentada · 4 x 8-12 · RIR 1 · posterior
+- Terra romeno no Smith · 3 x 6-10 · RIR 1-2
+- Leg press · 2 x 10-15
+- Cadeira extensora · 1 x 10-15
+- Elevação pélvica na máquina · 3 x 8-12 · RIR 1 · glúteo · carga: placa · dica: pausa de 1 s no topo
+- Adutora · 2 x 10-15
+- Panturrilha em pé · 3 x 6-10
+- Panturrilha sentada · 2 x 10-15`;
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  const prog = a.E('JSON.stringify(S.prog)');
+  await a.esperar(20);
+  const antesDaRevisao = a.gravado();
+  assert.strictEqual(a.E('cargaTipo("elevacao-pelvica-na-maquina", CAT["elevacao-pelvica-na-maquina"])'), 'lado');
+  a.v('ctx.abreRevisao'); await a.esperar();
+  a.v('ctx.textoDaRevisao', { value: texto });
+  a.clicar('[data-a="revisao-le"]'); await a.esperar();
+  const r = a.vJ('ctx.revisao');
+  const ex = r.grupos.find(g => g.dia === '*');
+  assert.ok(ex, 'o grupo dos exercícios: ' + JSON.stringify(r.grupos.map(g => g.dia)));
+  assert.deepStrictEqual(ex.mudancas.map(m => m.k), ['*:carga:elevacao-pelvica-na-maquina', '*:dica:elevacao-pelvica-na-maquina']);
+  assert.match(ex.mudancas[0].titulo, /carga anilha por lado → placa$/);
+  a.clicar('[data-a="revisao-aplica"]'); await a.esperar(120);
+  assert.strictEqual(a.E('S.carga["elevacao-pelvica-na-maquina"]'), 'pino', 'correção pessoal');
+  assert.strictEqual(a.E('CAT["elevacao-pelvica-na-maquina"].car'), 'lado', 'o catálogo não muda');
+  assert.strictEqual(a.E('CAT["elevacao-pelvica-na-maquina"].cue'), 'pausa de 1 s no topo');
+  assert.strictEqual(a.E('JSON.stringify(S.prog)'), prog, 'o treino não mudou');
+  assert.match(a.E('S.progLog[S.progLog.length - 1].txt'), /carga anilha por lado → placa; dica de Elevação pélvica na máquina/);
+  // atravessa uma fusão com o build anterior (o do aparelho que ainda não atualizou), nos dois sentidos
+  const gravado = a.gravado();
+  // o aparelho velho não viu a revisão e gravou outra coisa depois (mtime maior)
+  // (com carimbos, como os aparelhos dele: os da carga e do catálogo dele são de antes da revisão)
+  const velho = JSON.parse(JSON.stringify(antesDaRevisao)); velho.mtime = gravado.mtime + 5;
+  velho.carimbos = Object.assign({}, gravado.carimbos, { carga: gravado.carimbos.carga - 1000, ex: (gravado.carimbos.ex || gravado.mtime) - 1000 });
+  velho.carimbosEm = velho.mtime;
+  const f13 = funde13(velho, gravado, Date.now()).estado;
+  assert.strictEqual(f13.carga['elevacao-pelvica-na-maquina'], 'pino', 'o build anterior mantém a carga');
+  assert.strictEqual(f13.ex['elevacao-pelvica-na-maquina'].cue, 'pausa de 1 s no topo', 'e a dica');
+  const f13b = funde13(gravado, velho, Date.now()).estado;
+  assert.strictEqual(f13b.carga['elevacao-pelvica-na-maquina'], 'pino', 'no outro sentido também');
+  assert.strictEqual(f13b.ex['elevacao-pelvica-na-maquina'].cue, 'pausa de 1 s no topo');
+  // o Desfazer
+  a.clicar('[data-a="aviso-acao"]'); await a.esperar(120);
+  assert.strictEqual(a.E('S.carga["elevacao-pelvica-na-maquina"]'), undefined);
+  assert.notStrictEqual(a.E('CAT["elevacao-pelvica-na-maquina"].cue'), 'pausa de 1 s no topo');
+  a.fechar();
+});

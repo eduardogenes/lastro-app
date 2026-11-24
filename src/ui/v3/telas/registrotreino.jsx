@@ -146,7 +146,7 @@ export function CartaoRegistro({ ctx, data }) {
   const turnos = ctx.turnosDoDia(data);
   const apoios = dados && {
     ultima: dados.ultima.length ? dados.series + (dados.series === 1 ? ' série' : ' séries') + ', as cargas de ' + dados.dataAnterior : 'Sem séries na sessão anterior',
-    prescrito: 'As séries e repetições do treino, sem acrescentar carga',
+    prescrito: 'As séries do treino no topo da faixa, com a carga da última vez',
     ajustar: 'A lista já preenchida para mudar o que foi diferente',
     presenca: 'Sem séries. Conta como dia treinado'
   };

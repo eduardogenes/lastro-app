@@ -444,3 +444,21 @@ test('fundir: a entrada com cópia nunca é trocada por uma sem cópia, mesmo ma
   assert.ok(r.lista[de].prog && r.lista[de].prog.A, 'a cópia ficou');
   assert.strictEqual(r.lista[de].nome, 'Renomeado', 'e o nome mais novo também');
 });
+
+// ---------- Fase A (24/11): a entrada do registro vai para o programa da letra ----------
+
+test('uma mudança no treino A feita logo depois da troca é do programa que tem o A, não do ativo', () => {
+  const S = doisProgramas();
+  const idVelho = S.programas!.ativo;
+  const idNovo = criaPrograma(S, { nome: 'Novo', origem: 'treinador', prog: { SA: tr('Sup', ['remada']) }, rot: ['SA'], progTreinador: null }, 1100 * DIA);
+  S.progLog = [
+    { t: 1100 * DIA + 1000, day: 'SA', txt: 'revisão do treinador de 23/11: Treino SA entra na rotação.', m: 0 },
+    { t: 1100 * DIA + 120000, day: 'A', txt: 'Supino: mais cedo no treino', m: 0 },
+    { t: 1100 * DIA + 240000, day: '-', txt: 'Programa: renomeado', m: 0 }
+  ] as unknown as ComP['progLog'];
+  const doNovo = revisoesDoPrograma(S, idNovo).map(r => r.titulo);
+  const doVelho = revisoesDoPrograma(S, idVelho).map(r => r.titulo);
+  assert.ok(!doNovo.some(t => /Supino/.test(t)), 'a do A não aparece no novo: ' + doNovo.join(' | '));
+  assert.ok(doVelho.some(t => /Supino/.test(t)), 'a do A aparece no de antes');
+  assert.ok(doNovo.some(t => /renomeado/.test(t)), 'sem letra, vale a hora');
+});

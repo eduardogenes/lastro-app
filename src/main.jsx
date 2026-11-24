@@ -27,7 +27,7 @@ import { corpoVazio, estadoInicial, passoValido } from './dominio/primeira-vez';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
-import { lerRevisao, casaNomes, nomesNoMesmoId, MODELO_DA_REVISAO, treinoDaRevisao, mudancasDoTreino, aplicaMudancas } from './dominio/revisao';
+import { lerRevisao, casaNomes, nomesNoMesmoId, MODELO_DA_REVISAO, treinoDaRevisao, mudancasDoTreino, mudancasDosExercicios, aplicaMudancas } from './dominio/revisao';
 import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
 import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
@@ -4139,7 +4139,15 @@ function planoDaRevisao(r, idsJa) {
     const meu = S.prog[d.dia];
     return { dia: d.dia, velho: velho, novo: novo, meu: meu, mudancas: mudancasDoTreino(d.dia, velho, novo, meu, nome) };
   });
-  return { ids: ids, falta: falta, dias: dias };
+  const exercicios = mudancasDosExercicios(r.lida, ids, exercicioDeAgora, nome, function (t) { return (CARGAS[t] || CARGAS.pino).nome; });
+  return { ids: ids, falta: falta, dias: dias, exercicios: exercicios };
+}
+
+/** O exercício como é hoje para ele (o tipo de carga efetivo e a dica); null = ainda não existe. */
+function exercicioDeAgora(id) {
+  const e = CAT[id];
+  if (!e || e.arq) return null;
+  return { car: cargaTipo(id, e), cue: e.cue || '' };
 }
 
 CTX.revisao = function () {
@@ -4162,11 +4170,15 @@ CTX.revisao = function () {
       if (!CAT[ids[x.n]]) novos[x.n] = 1;
     });
   });
-  const dias = falta ? [] : planoDaRevisao(r, ids).dias;
+  const plano = falta ? null : planoDaRevisao(r, ids);
+  const dias = plano ? plano.dias : [];
   const grupos = dias.filter(function (d) { return d.mudancas.length; }).map(function (d) {
     return { dia: d.dia, titulo: 'Treino ' + d.dia,
              mudancas: d.mudancas.map(function (m) { return Object.assign({}, m, { on: !(r.fora[m.k] ?? m.desmarcada) }); }) };
   });
+  // a carga e a dica são do exercício, não de um treino: um grupo próprio
+  if (plano && plano.exercicios.length) grupos.push({ dia: '*', titulo: 'Os exercícios',
+    mudancas: plano.exercicios.map(function (m) { return Object.assign({}, m, { on: !(r.fora[m.k] ?? m.desmarcada) }); }) });
   const todas = grupos.reduce(function (a, g) { return a.concat(g.mudancas); }, []);
   // com a sessão daquele treino aberta, mudar o programa dele no meio misturaria
   // as séries de hoje (o rascunho é por posição): aplicar espera o fim do treino,
@@ -4315,7 +4327,7 @@ CTX.incorporaRevisao = async function (evento) {
   // Ao recusar a revisão, o programa volta com a mesma prioridade na fusão.
   const marcas = { mtime: S.mtime, carimbosEm: S.carimbosEm, carimbos: S.carimbos && { ...S.carimbos } };
   const impressoesAntes = { ...impressoes };
-  const antes = JSON.stringify({ ex: S.ex, apelidos: S.apelidos, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog });
+  const antes = JSON.stringify({ ex: S.ex, apelidos: S.apelidos, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog, carga: S.carga });
 
   const { criados, apelidosDaRevisao } = criaDaRevisao(r, ids);
 
@@ -4350,6 +4362,27 @@ CTX.incorporaRevisao = async function (evento) {
     tocados.push(d.dia);
   });
   S.progTreinador = { em: agora, data: r.lida.data, rot: rotBase, dias: base };
+  // a carga e a dica do exercício: o que ele marcou vira dele (a carga como
+  // correção pessoal, nunca no catálogo; a dica na entrada dele); o que era
+  // antes fica guardado para o Desfazer
+  const doExercicio = p.exercicios.filter(function (m) { return marcadas.has(m.k); });
+  const exAntes = [];
+  doExercicio.forEach(function (m) {
+    if (m.tipo === 'carga') {
+      exAntes.push({ tipo: 'carga', id: m.id, antes: S.carga && S.carga[m.id] !== undefined ? S.carga[m.id] : null });
+      S.carga = Object.assign({}, S.carga || {});
+      if (((CAT[m.id] && CAT[m.id].car) || 'pino') === m.valor) delete S.carga[m.id]; else S.carga[m.id] = m.valor;
+    } else {
+      exAntes.push({ tipo: 'dica', id: m.id, antes: S.ex[m.id] ? Object.assign({}, S.ex[m.id]) : null });
+      S.ex = Object.assign({}, S.ex);
+      S.ex[m.id] = Object.assign({}, S.ex[m.id] || {}, { cue: m.valor, m: Date.now() });
+    }
+  });
+  if (doExercicio.length) {
+    montaCatalogo();
+    aplicadas += doExercicio.length;
+    logProg('-', 'revisão do treinador' + de + ': ' + doExercicio.map(function (m) { return m.texto; }).join('; ') + '.');
+  }
   const primeiroTreino = passoInicial() === 1;
   if (primeiroTreino) S.primeiraVez = 2;
 
@@ -4359,7 +4392,7 @@ CTX.incorporaRevisao = async function (evento) {
     Object.assign(S, marcas);
     impressoes = impressoesAntes;
     const v = JSON.parse(antes);
-    S.ex = v.ex; S.apelidos = v.apelidos; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog;
+    S.ex = v.ex; S.apelidos = v.apelidos; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog; S.carga = v.carga;
     montaCatalogo();
     r.falhou = true;
     render();
@@ -4369,6 +4402,7 @@ CTX.incorporaRevisao = async function (evento) {
   render(); saiDoDestino('revisao');
   if (botaoTocado) noDesenho(protegeSegundoToque(botaoTocado));
   const gravado = JSON.stringify({ prog: S.prog, rot: S.rot, progTreinador: S.progTreinador });
+  const exGravado = JSON.stringify(exAntes.map(function (a) { return a.tipo === 'carga' ? (S.carga || {})[a.id] : (S.ex[a.id] || {}).cue; }));
   const desfaz = async function () {
     // só desfaz se o programa ainda é o que a revisão gravou: uma sincronia no
     // meio pode ter trazido uma edição do outro aparelho, e restaurar por cima
@@ -4377,8 +4411,24 @@ CTX.incorporaRevisao = async function (evento) {
       toast('O programa mudou depois da revisão; desfazer agora passaria por cima disso. Corrija pelo programa.');
       return;
     }
+    if (JSON.stringify(exAntes.map(function (a) { return a.tipo === 'carga' ? (S.carga || {})[a.id] : (S.ex[a.id] || {}).cue; })) !== exGravado) {
+      toast('A carga ou a dica mudou depois da revisão; desfazer agora passaria por cima disso.');
+      return;
+    }
     const v = JSON.parse(antes);
     S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador;
+    // a carga e a dica voltam ao que eram, exercício por exercício (o resto do
+    // catálogo dele pode ter mudado por sincronia: não se restaura o S.ex inteiro)
+    exAntes.forEach(function (a) {
+      if (a.tipo === 'carga') {
+        S.carga = Object.assign({}, S.carga || {});
+        if (a.antes == null) delete S.carga[a.id]; else S.carga[a.id] = a.antes;
+      } else {
+        S.ex = Object.assign({}, S.ex);
+        if (a.antes) S.ex[a.id] = Object.assign({}, a.antes, { m: Date.now() });
+        else S.ex[a.id] = Object.assign({}, S.ex[a.id], { cue: (EX_SISTEMA[a.id] && EX_SISTEMA[a.id].cue) || "", m: Date.now() });
+      }
+    });
     // o que a revisão criou e nada mais usa é ARQUIVADO, e não apagado: se o
     // outro aparelho criou o mesmo exercício e já treinou com ele, a série dele
     // continua com nome e grupo (uma lápide mataria a entrada de catálogo de lá)
@@ -4398,6 +4448,7 @@ CTX.incorporaRevisao = async function (evento) {
     });
     montaCatalogo();
     tocados.forEach(function (d) { logProg(d, 'revisão do treinador' + de + ' desfeita: o treino voltou ao que era.'); });
+    if (exAntes.length) logProg('-', 'revisão do treinador' + de + ' desfeita: a carga e a dica voltaram ao que eram.');
     const ok = await save();
     render();
     if (ok) toast('Revisão desfeita.');
@@ -5091,10 +5142,15 @@ CTX.seriesDoRegistro = function (data, dia, turno, hora, escolhido) {
   const prescrito = (progDoPrograma(idP)?.[dia]?.ex || []).map(slot => {
     const ex = exDe(slot.id), u = slot.u || ex.u, q = slot.q || ex.q;
     const alvo = cronometrado(u) ? null : (u && q) || faixaDoTexto(slot.r)?.[0];
+    // "como o prescrito" CONTA para a sugestão de carga (decisão do dono, 23/11):
+    // cada série vale a carga da última vez no TOPO da faixa — feito como
+    // prescrito, a progressão anda (`shouldUp`). Sem carga anterior, fica 0 e
+    // não conta (não há de onde subir)
+    const topo = cronometrado(u) ? null : (u && q) || faixaDoTexto(slot.r)?.[1];
     const anteriorDoEx = ultima.find(l => l.id === slot.id && !l.sl && l.u === u && (!cronometrado(u) || l.q === q));
     const par = anteriorDoEx?.sets.find(Boolean);
     const tipo = cargaTipo(slot.id, ex);
-    return { id: slot.id, nome: ex.n, u, q: u && q, n: setsFor(slot), alvo,
+    return { id: slot.id, nome: ex.n, u, q: u && q, n: setsFor(slot), alvo, topo,
       carga: par?.[0] ?? 0, reps: par?.[1] ?? alvo ?? 0, passo: passoDaCarga(tipo), unidadeCarga: u ? 'kg' : CARGAS[tipo].rot };
   });
   const series = ultima.reduce((n, l) => n + l.sets.filter(Boolean).length, 0);
@@ -5118,9 +5174,9 @@ CTX.guardaRegistro = async function (data, r, modo, ajustes) {
     } else {
       const exercicios = modo === 'ajustar' ? ajustes : prescrito;
       for (const ex of exercicios) {
-        const reps = modo === 'ajustar' ? ex.reps : ex.alvo;
+        const reps = modo === 'ajustar' ? ex.reps : (ex.topo || ex.alvo);
         if (ex.nao || !(reps > 0)) continue;
-        const carga = modo === 'ajustar' ? ex.carga : 0;
+        const carga = modo === 'ajustar' ? ex.carga : (ex.carga || 0);
         linhas.push({ id: ex.id, u: ex.u, q: ex.q, sets: Array.from({ length: ex.n }, () => [carga, reps]) });
       }
     }

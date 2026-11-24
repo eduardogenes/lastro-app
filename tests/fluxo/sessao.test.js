@@ -563,7 +563,7 @@ test('ctx.editaLinha abre a edição de UMA linha, e ctx.cancelaEdicao a fecha',
                                          { carga: '60', reps: '8' },
                                          { carga: '55', reps: '8' }],
     'o formulário parte do que foi registrado, série por série');
-  assert.strictEqual(s.edicao.dores.length, 3, 'com os três marcadores de dor');
+  assert.strictEqual(s.edicao.dores.length, 4, 'com os quatro marcadores de dor (a lombar entrou em 24/11)');
 
   a.v('ctx.cancelaEdicao');
   assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, false, 'e fecha');

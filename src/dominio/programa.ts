@@ -812,7 +812,10 @@ export const CARGAS: Record<TipoCarga, Carga> = {
 export const DORES: { k: string; t: string }[] = [
   {k:'cotovelo', t:'cotovelo'},
   {k:'ombro',    t:'ombro anterior'},
-  {k:'patelar',  t:'patelar'}
+  {k:'patelar',  t:'patelar'},
+  // a lesão lombar do dono (o coach a tratou em fases, 23/11): a dor registrada
+  // na série chega ao treinador pelo espelho e pelo MCP
+  {k:'lombar',   t:'lombar'}
 ];
 
 export const MODAIS: string[] = ['bike', 'esteira inclinada', 'elíptico', 'remo'];

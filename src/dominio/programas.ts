@@ -532,6 +532,28 @@ export interface Revisao {
 }
 
 /**
+ * De que programa é uma entrada do registro sem `p` (as do build anterior, e
+ * as que só dizem a letra). Pela hora, o programa ativo naquele instante; mas
+ * se a letra da entrada não é dele e é de outro programa, é desse outro — o
+ * que ele mudou no treino A dois minutos depois de colar a v2.2 é do programa
+ * que tem o A, e não do que estava ativo (conferência de 24/11). Entre vários
+ * com a letra, o que estava ativo mais perto daquela hora.
+ */
+export function donoDaEntrada(S: ComProgramas, P: Programas, e: { t: number; day?: string }): string | null {
+  const ids = Object.keys(P.lista);
+  const naHora = ids.find(id => (P.lista[id].periodos || []).some(([a, b]) => e.t >= a && (b == null || e.t < b))) || null;
+  const d = e.day;
+  if (!d || d === '-') return naHora;
+  const tem = (id: string) => { const c = conteudoDe(S, id); return !!(c && c.prog && c.prog[d]); };
+  if (naHora && tem(naHora)) return naHora;
+  const comLetra = ids.filter(tem);
+  if (!comLetra.length) return naHora;
+  const distancia = (id: string) => Math.min(...(P.lista[id].periodos || []).map(([a, b]) =>
+    e.t < a ? a - e.t : b != null && e.t >= b ? e.t - b : 0).concat([Infinity]));
+  return comLetra.sort((x, y) => distancia(x) - distancia(y))[0];
+}
+
+/**
  * As revisões de um programa, a mais nova primeiro: o registro do programa
  * (`progLog`) no período dele. As entradas de uma mesma revisão do treinador
  * (uma por treino) viram uma linha só.
@@ -539,9 +561,7 @@ export interface Revisao {
 export function revisoesDoPrograma(S: ComProgramas, id: string): Revisao[] {
   const P = programasDe(S);
   if (!P || !P.lista[id]) return [];
-  const per = P.lista[id].periodos || [];
-  const dele = (e: EntradaProgLog & { p?: string }) => e.p ? e.p === id
-    : per.some(([a, b]) => e.t >= a && (b == null || e.t < b));
+  const dele = (e: EntradaProgLog & { p?: string }) => (e.p ? e.p : donoDaEntrada(S, P, e)) === id;
   const out: Revisao[] = [];
   (S.progLog || []).filter(e => e && dele(e)).sort((a, b) => a.t - b.t).forEach(e => {
     const doTreinador = /^revis[aã]o do treinador|^programa novo/i.test(e.txt || '');

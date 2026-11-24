@@ -47,6 +47,8 @@ export interface ExDaRevisao {
   lado?: 'lado' | 'perna';
   /** o tipo de carga, quando a linha diz ("carga: por lado"); só vale para exercício novo */
   car?: 'pino' | 'lado' | 'barra' | 'halter' | 'halter1' | 'corpo' | 'assist';
+  /** a linha trouxe `dica:` (a dica do texto, e não só as notas "por lado") */
+  temDica?: 1;
 }
 
 export interface DiaDaRevisao {
@@ -210,7 +212,7 @@ export function lerRevisao(texto: string): LeituraDaRevisao {
       // "bi-set com o de baixo" marca o bi-set e FICA na dica: nenhuma tela mostra o bi-set.
       // "não faça bi-set" não marca.
       if (!/\b(?:n[ãa]o|sem)\b[^;,.]*\bbi-?set\b/i.test(cue) && /\bbi-?set com o (?:de baixo|seguinte|pr[oó]ximo)\b/i.test(cue)) ex.bi = 1;
-      if (cue) ex.cue = cue;
+      if (cue) { ex.cue = cue; ex.temDica = 1; }
     }
     if (notas.length) ex.cue = notas.concat(ex.cue ? [ex.cue] : []).join('; ');
     if (sobra.length === 1 && /^[a-zà-ú ]+$/i.test(sobra[0])) ex.g = sobra[0].toLowerCase();
@@ -418,7 +420,7 @@ export interface SlotDoPrograma { id: string; s: number; r: string; d?: number; 
 /** Um treino do programa. */
 export interface TreinoDoPrograma { name?: string; tag?: string; aberto?: 1; ex: SlotDoPrograma[] }
 
-export type TipoDaMudanca = 'entra' | 'sai' | 'muda' | 'ordem' | 'dia' | 'nome' | 'aberto';
+export type TipoDaMudanca = 'entra' | 'sai' | 'muda' | 'ordem' | 'dia' | 'nome' | 'aberto' | 'carga' | 'dica';
 /** O que uma mudança de exercício mexe no slot. */
 export type CampoDoSlot = 's' | 'r' | 'rir' | 'd' | 'q' | 'bi';
 
@@ -443,6 +445,8 @@ export interface MudancaDaRevisao {
   texto: string;
   /** começa desmarcada: o treino que ele deixou de fora numa revisão anterior */
   desmarcada?: boolean;
+  /** `carga` e `dica`: o valor novo (o tipo de carga, o texto da dica) */
+  valor?: string;
 }
 
 function porIdDe(ex: SlotDoPrograma[] | undefined): Record<string, SlotDoPrograma> {
@@ -651,8 +655,52 @@ export function mudancasDoTreino(
                detalhe: detalhe,
                texto: 'a ordem dos exercícios muda: ' + ficam.map(nomeDe).join(', ') });
   }
-  const ordem: TipoDaMudanca[] = ['dia', 'entra', 'sai', 'nome', 'aberto', 'muda', 'ordem'];
+  const ordem: TipoDaMudanca[] = ['dia', 'entra', 'sai', 'nome', 'aberto', 'muda', 'ordem', 'carga', 'dica'];
   return out.sort((a, b) => ordem.indexOf(a.tipo) - ordem.indexOf(b.tipo));
+}
+
+/** O que o exercício É hoje para a pessoa: o tipo de carga efetivo e a dica. */
+export interface ExercicioDeAgora { car: string; cue: string }
+
+/**
+ * As mudanças que não são de um treino, mas do EXERCÍCIO (valem em todo treino
+ * em que ele aparece): o tipo de carga (`carga:`) e a dica (`dica:`), contra o
+ * que o exercício é hoje (`agora`, null = o exercício nasce com esta revisão,
+ * e já nasce com os dois). Uma por exercício, na ordem do texto; grupo `*`.
+ *
+ * A carga vira correção PESSOAL (o catálogo do sistema não muda: a carga de um
+ * id existente é identidade, docs/catalogo/00-desenho.md). Antes desta peça,
+ * as duas eram lidas e ignoradas em silêncio para o exercício que já existia.
+ */
+export function mudancasDosExercicios(
+  lida: LeituraDaRevisao, ids: Record<string, string>,
+  agora: (id: string) => ExercicioDeAgora | null,
+  nomeDe: (id: string) => string, nomeDaCarga: (car: string) => string
+): MudancaDaRevisao[] {
+  const out: MudancaDaRevisao[] = [];
+  const visto: Record<string, 1> = {};
+  lida.dias.forEach(function (d) {
+    d.ex.forEach(function (x) {
+      const id = ids[x.n];
+      if (!id || visto[id]) return;
+      visto[id] = 1;
+      const a = agora(id);
+      if (!a) return;
+      if (x.car && x.car !== a.car) {
+        const t = nomeDe(id) + ': carga ' + nomeDaCarga(a.car) + ' → ' + nomeDaCarga(x.car);
+        out.push({ k: '*:carga:' + id, dia: '*', tipo: 'carga', id: id, sinal: '~', valor: x.car,
+                   titulo: t, detalhe: 'Muda como o app lê a carga deste exercício; o que você registrou não muda.',
+                   texto: t });
+      }
+      // só a dica ESCRITA conta: as notas ("por perna") sozinhas não mudam a dica
+      if (x.temDica && x.cue && x.cue !== (a.cue || '')) {
+        out.push({ k: '*:dica:' + id, dia: '*', tipo: 'dica', id: id, sinal: '~', valor: x.cue,
+                   titulo: nomeDe(id) + ': dica nova', detalhe: x.cue,
+                   texto: 'dica de ' + nomeDe(id) + ': “' + x.cue + '”' });
+      }
+    });
+  });
+  return out;
 }
 
 /**
