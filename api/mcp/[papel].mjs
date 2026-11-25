@@ -1017,7 +1017,11 @@ var NOVOS_DA_V22 = [
   { n: "Eleva\xE7\xE3o lateral na polia inclinado para fora", g: "deltoide lateral", car: "pino", uni: 1, alt: ["Lean-away cable lateral raise"], equiv: ["elevacao-lateral-unilateral-no-cabo"] }
 ];
 var NOVOS_DO_SISTEMA = [
-  { n: "Barra fixa", g: "dorsal", car: "corpo", c: 1, mov: "puxada", eq: "corpo", mus: [["dorsal", 1], ["b\xEDceps", 0.5]], alt: ["Pull-up", "Barra fixa pronada", "Barra fixa livre"], equiv: ["barra-fixa-assistida-pegada-neutra", "pulldown-convergente", "puxada-alta-pegada-neutra"] }
+  { n: "Barra fixa", g: "dorsal", car: "corpo", c: 1, mov: "puxada", eq: "corpo", mus: [["dorsal", 1], ["b\xEDceps", 0.5]], alt: ["Pull-up", "Barra fixa pronada", "Barra fixa livre"], equiv: ["barra-fixa-assistida-pegada-neutra", "pulldown-convergente", "puxada-alta-pegada-neutra"] },
+  // 25/11/2026, com a mídia (Fase D): três do v3.0 que o catálogo não tinha
+  { n: "Prancha lateral", g: "abd\xF4men", car: "corpo", mov: "core", eq: "corpo", uni: 1, mus: [["abd\xF4men", 1]], alt: ["Side plank"], equiv: ["prancha", "pallof-press", "dead-bug"] },
+  { n: "Encolhimento Kelso apoiado", g: "trap\xE9zio", car: "halter", mov: "encolhimento", eq: "halteres", mus: [["trap\xE9zio", 1], ["costas espessura", 0.5]], alt: ["Kelso shrug", "Encolhimento Kelso"], equiv: ["encolhimento-com-halteres", "encolhimento-na-maquina", "encolhimento-no-smith"] },
+  { n: "Remada cavalinho apoiada pegada aberta", g: "costas espessura", car: "lado", c: 1, mov: "remada", eq: "maquina-anilha", mus: [["costas espessura", 1], ["delt posterior", 0.5], ["b\xEDceps", 0.25]], alt: ["Chest supported T-bar row wide grip", "Remada T apoiada pegada aberta"], equiv: ["remada-convergente-com-apoio-de-peito", "high-row-com-apoio-de-peito", "remada-na-maquina-com-apoio-de-peito"] }
 ];
 var ALT_NOMES = {
   "panturrilha-sentada": ["Panturrilha sentado", "Seated calf raise"],
@@ -1045,7 +1049,13 @@ var ALT_NOMES = {
   "pullover-na-polia-alta": ["Pullover na polia", "Cable pullover"],
   "crucifixo-inverso-no-cabo": ["Crucifixo inverso na polia", "Cable reverse fly"],
   "crossover-de-baixo-para-cima": ["Crucifixo na polia baixa para alta", "Low to high cable fly"],
-  "leg-press-45": ["Leg press 45 graus"]
+  "leg-press-45": ["Leg press 45 graus"],
+  // 25/11/2026 (Fase D): os nomes do v3.0 que são o mesmo exercício do catálogo
+  "rosca-martelo": ["Rosca martelo com halteres", "Hammer curl"],
+  "pullover-em-maquina": ["Pullover na m\xE1quina", "Machine pullover"],
+  "elevacao-lateral-no-cabo": ["Eleva\xE7\xE3o lateral na polia bilateral", "Eleva\xE7\xE3o lateral bilateral na polia"],
+  "chest-press-horizontal-convergente": ["Supino convergente", "Supino reto convergente"],
+  "remada-na-maquina-com-apoio-de-peito": ["Remada apoiada no peito"]
 };
 
 // src/dominio/catalogo-curadoria.ts
@@ -1197,6 +1207,44 @@ var CURADORIA = {
   "triceps-frances-com-halter": { equiv: ["extensao-unilateral-acima-da-cabeca", "extensao-de-triceps-acima-da-cabeca-no-cabo", "triceps-testa-com-barra-w"] },
   "triceps-testa-com-barra-w": { equiv: ["triceps-frances-com-halter", "extensao-de-triceps-acima-da-cabeca-no-cabo", "extensao-acima-da-cabeca-ou-maquina-de-triceps"] },
   "wall-balls": { equiv: ["thruster", "agachamento-goblet", "air-squat"] }
+};
+
+// src/dominio/catalogo-midia.ts
+var MIDIA = {
+  "supino-inclinado-no-smith": { video: { yt: "WP1VLAt8hbM", inicio: 82, fim: 113, canal: "Leandro Twin", idioma: "pt" } },
+  "barra-fixa": { video: { yt: "thg6cGXSlvY", inicio: 19, fim: 81, canal: "Leandro Twin", idioma: "pt" } },
+  "remada-na-maquina-com-apoio-de-peito": { video: { yt: "QyvIEdEHzHc", inicio: 70, fim: 97, canal: "Leandro Twin", idioma: "pt" } },
+  "chest-press-horizontal-convergente": { video: { yt: "bKSvckCwvh4", inicio: 32, fim: 86, canal: "La\xE9rcio Refundini - Aulas", idioma: "pt" } },
+  "elevacao-lateral-na-maquina": { video: { yt: "IwWvZ0rlNXs", inicio: 122, fim: 165, canal: "Leandro Twin", idioma: "pt" } },
+  "reverse-pec-deck": { video: { yt: "wjlX-5DTjBQ", inicio: 14, fim: 52, canal: "La\xE9rcio Refundini - Aulas", idioma: "pt" } },
+  "alongamento-do-flexor-do-quadril-ajoelhado": { video: { yt: "gqoPYLUgP48", inicio: 5, fim: 58, canal: "[P]rehab", idioma: "en" } },
+  "mobilidade-de-quadril-90-90": { video: { yt: "fmc0mIj6Ewc", inicio: 17, fim: 75, canal: "Ricardo Fisiologista", idioma: "pt" } },
+  "cadeira-flexora-sentada": { video: { yt: "ra3Sf4-RFr8", inicio: 86, fim: 131, canal: "La\xE9rcio Refundini - Aulas", idioma: "pt" } },
+  "belt-squat": { video: { yt: "04YYmk7R2G0", inicio: 160, fim: 245, canal: "Prof. Dr. Jo\xE3o Moura", idioma: "pt" } },
+  "elevacao-pelvica-na-maquina": { video: { yt: "CQebwTfJjas", inicio: 115, fim: 225, canal: "Tay Training", idioma: "pt" } },
+  "cadeira-extensora": { video: { yt: "el3oHblB5DM", inicio: 48, fim: 86, canal: "Leandro Twin", idioma: "pt" } },
+  "adutora": { video: { yt: "Wf602gn_9zU", inicio: 52, fim: 72, canal: "Leandro Twin", idioma: "pt" } },
+  "panturrilha-no-leg-press": { video: { yt: "wCXvfH_-BLg", inicio: 9, fim: 31, canal: "Leandro Twin", idioma: "pt" } },
+  "pallof-press": { video: { yt: "Wez6pSiwfJg", inicio: 4, fim: 28, canal: "CT Powerfit", idioma: "pt" } },
+  "prancha-lateral": { video: { yt: "2NjO5KrlVEM", inicio: 7, fim: 48, canal: "Rodrigo Zago Treinador", idioma: "pt" } },
+  "elevacao-lateral-com-halteres": { video: { yt: "ORparUDksUk", inicio: 24, fim: 75, canal: "Guilherme Stellbrink I FisioPrev", idioma: "pt" } },
+  "crossover-de-baixo-para-cima": { video: { yt: "SVVydit3uSw", inicio: 78, fim: 165, canal: "Thiago Gallina | Treinador", idioma: "pt" } },
+  "pullover-em-maquina": { video: { yt: "oxpAl14EYyc", inicio: 0, fim: 16, canal: "Renaissance Periodization", idioma: "en" } },
+  "triceps-acima-da-cabeca-na-polia-sentado": { video: { yt: "g7b_qYPJoOw", inicio: 70, fim: 120, canal: "ATLASTHETICS", idioma: "en" } },
+  "rosca-inclinada-com-halteres": { video: { yt: "Cv0zCtntyto", inicio: 20, fim: 58, canal: "Miqueias Alves Personal", idioma: "pt" } },
+  "triceps-testa-com-barra-w": { video: { yt: "zznCYBVZOVA", inicio: 28, fim: 68, canal: "Leandro Twin", idioma: "pt" } },
+  "rosca-scott-na-maquina": { video: { yt: "7vHwxXHBPMo", inicio: 56, fim: 94, canal: "Personal Maur\xEDcio Moraes", idioma: "pt" } },
+  "agachamento-bulgaro-com-halteres": { video: { yt: "IGf9fR4Y7Iw", inicio: 78, fim: 108, canal: "Leandro Twin", idioma: "pt" } },
+  "mesa-flexora-deitada": { video: { yt: "2-ULaRrQa7c", inicio: 58, fim: 108, canal: "Leandro Twin", idioma: "pt" } },
+  "abdutora": { video: { yt: "e2gmqTG1OgQ", inicio: 25, fim: 50, canal: "Leandro Twin", idioma: "pt" } },
+  "panturrilha-sentada": { video: { yt: "jMWs_p-W9gY", inicio: 20, fim: 62, canal: "Leandro Twin", idioma: "pt" } },
+  "dead-bug": { video: { yt: "0loS0bRNqfs", inicio: 33, fim: 77, canal: "Treinadora Sarah Castro", idioma: "pt" } },
+  "supino-inclinado-com-halteres": { video: { yt: "D3WuIh8spwg", inicio: 310, fim: 415, canal: "Fabricio Pacholok", idioma: "pt" } },
+  "puxada-alta-pegada-neutra": { video: { yt: "uAnrJBnxrZ0", inicio: 9, fim: 35, canal: "Treino Mestre", idioma: "pt" } },
+  "remada-cavalinho-apoiada-pegada-aberta": { video: { yt: "_1YANc2e3qw", inicio: 34, fim: 105, canal: "Lukas Rodrigues Treinador", idioma: "pt" } },
+  "elevacao-lateral-no-cabo": { video: { yt: "NBkMIWWkIKQ", inicio: 135, fim: 192, canal: "Physique Development", idioma: "en" } },
+  "encolhimento-kelso-apoiado": { video: { yt: "Qq1xT2Vs_SY", inicio: 3, fim: 29, canal: "All Strength Training", idioma: "en" } },
+  "rosca-martelo": { video: { yt: "OnNmaG_tZM4", inicio: 10, fim: 74, canal: "La\xE9rcio Refundini - Aulas", idioma: "pt" } }
 };
 
 // src/dominio/catalogo.ts
@@ -1385,6 +1433,11 @@ var SEMENTE = (function() {
     }
     if (c.conferido) delete e.cur;
   });
+  Object.keys(MIDIA).forEach(function(id) {
+    if (!ex[id]) throw new Error("semente: m\xEDdia para id inexistente " + id);
+    const m = limpaMidia(MIDIA[id]);
+    if (m) ex[id].midia = m;
+  });
   return { v: 0, ex, redir: {} };
 })();
 function paraExercicio(e) {
@@ -1416,6 +1469,32 @@ function resolveId(id, redir) {
     x = redir[x];
   }
   return visto[x] ? id : x;
+}
+function num(x) {
+  return typeof x === "number" && isFinite(x) ? x : void 0;
+}
+function txt(x) {
+  return typeof x === "string" ? x : "";
+}
+function urlBoa(x) {
+  return typeof x === "string" && /^https:\/\/[^\s]+$/.test(x);
+}
+function limpaMidia(bruto) {
+  if (!bruto || typeof bruto !== "object") return null;
+  const b = bruto;
+  const out = {};
+  const v = b.video;
+  if (v && typeof v === "object" && typeof v.yt === "string" && /^[A-Za-z0-9_-]{11}$/.test(v.yt)) {
+    const ini = num(v.inicio) || 0, fim = num(v.fim);
+    if (ini >= 0 && (fim == null || fim > ini)) {
+      out.video = { yt: v.yt, inicio: ini, fim: fim == null ? 0 : fim, canal: txt(v.canal), idioma: txt(v.idioma) };
+    }
+  }
+  const a = b.anim;
+  if (a && typeof a === "object" && urlBoa(a.inicio) && urlBoa(a.pico)) {
+    out.anim = { inicio: a.inicio, pico: a.pico, fonte: txt(a.fonte), licenca: txt(a.licenca), credito: txt(a.credito) };
+  }
+  return out.video || out.anim ? out : null;
 }
 
 // src/dominio/corpo.ts
@@ -2637,8 +2716,8 @@ var MODO = { alguem: "algu\xE9m tirou", sozinho: "sozinho" };
 function nivelDaFoto(f) {
   const n = f.cap && f.cap.nivel;
   if (!n || numero(n.lado) == null || numero(n.frente) == null) return "";
-  const txt = "de lado " + br(n.lado, 1) + "\xB0 \xB7 frente " + br(n.frente, 1) + "\xB0";
-  return noNivel(n) ? txt : txt + " (fora do n\xEDvel)";
+  const txt2 = "de lado " + br(n.lado, 1) + "\xB0 \xB7 frente " + br(n.frente, 1) + "\xB0";
+  return noNivel(n) ? txt2 : txt2 + " (fora do n\xEDvel)";
 }
 function padraoDaFoto(f) {
   const NOME = { nivel: "n\xEDvel", altura: "altura", distancia: "dist\xE2ncia", tremida: "pode ter tremido" };

@@ -284,3 +284,13 @@ Depois das revisões de dado e de design (24/11/2026):
 - Dado em `src/dominio/catalogo-curadoria.ts`, aplicado na semente (versão 3). Nunca muda id, carga nem grandeza; nenhum nome alternativo leva a dois exercícios (teste).
 - As 6 dicas de exercícios do código (HYROX/condicionamento) foram para o próprio `EX_BASE`, para o catálogo do sistema continuar igual ao do código nesses ids.
 - O banco recebe a curadoria por `supabase/migrations/20261125120000_catalogo_curadoria.sql` (UPDATE idempotente, só alt, musculos, dica, equivalentes e curadoria), gerado por `npm run catalogo:sql`. A semente continua `on conflict do nothing`.
+
+## Fase D: a mídia do exercício (decidido na implementação, 25/11/2026)
+
+- **Onde mora:** `midia` em cada exercício do catálogo do sistema (`src/dominio/catalogo-midia.ts`, coluna `midia jsonb` no banco). `video {yt, inicio, fim, canal, idioma}` é só o trecho da execução; `anim {inicio, pico, fonte, licenca, credito}` são as duas imagens. `limpaMidia` descarta o que vier ruim (id do YouTube inválido, fim antes do início, imagem sem https) sem derrubar o catálogo.
+- **Os vídeos** são os 34 escolhidos na pesquisa de 24/11 (o principal de cada um). Os nomes do v3.0 que são o mesmo exercício do catálogo viraram nomes alternativos (Remada apoiada no peito, Supino convergente, Pullover na máquina, Elevação lateral na polia bilateral, Rosca martelo com halteres); três que o catálogo não tinha entraram no sistema (Prancha lateral, Encolhimento Kelso apoiado, Remada cavalinho apoiada pegada aberta). Exercício pessoal acha a mídia pelo nome (`midiaDo`).
+- **Animações:** o código suporta, a semente vem sem. Entram depois do download autorizado pelo dono, das fontes livres (D6).
+- **Na tela:** com animação, o quadro largo 16:9 (até 26% da altura), que amplia ao toque; só com vídeo, um chip claro "Ver execução m:ss" acima do nome — o preto fica só no "Feito"; sem nada, como era. No bi-set, a animação dentro da estação (só a da vez se mexe) e os vídeos em chips abaixo do par.
+- **O vídeo** abre numa folha, no `youtube-nocookie`, já no trecho, **sem som** (decisão do dono) e repetindo, com os pontos-chave da pegada e da dica. Sem rede, o chip fica cinza e diz por quê. O service worker não toca no YouTube; as animações do programa ativo ficam no cache `lastro-midia` quando existirem.
+- **Sugerir uma mídia melhor** grava a sugestão só no aparelho (`lastro-sugestoes-midia-v1`, fora do estado sincronizado) e diz que foi para a curadoria. A fila de verdade é a Fase F, que passa a subir estas.
+- **Créditos:** Ajustes › Sobre; o canal do vídeo aparece no próprio player.

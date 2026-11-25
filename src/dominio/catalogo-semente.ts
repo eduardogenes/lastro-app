@@ -8,7 +8,7 @@
 
 import type { TipoCarga, Unidade } from './tipos';
 
-export const VERSAO_DA_SEMENTE = 3;
+export const VERSAO_DA_SEMENTE = 4;
 
 /** O padrão do movimento. `outro` é o que a regra não reconheceu. */
 export const MOVIMENTOS: Record<string, string> = {
@@ -103,7 +103,11 @@ export const NOVOS_DA_V22: NovoDoSistema[] = [
  *   v3.0 casou com ela. É outro exercício: peso do corpo, sem contrapeso.
  */
 export const NOVOS_DO_SISTEMA: NovoDoSistema[] = [
-  { n: 'Barra fixa', g: 'dorsal', car: 'corpo', c: 1, mov: 'puxada', eq: 'corpo', mus: [['dorsal', 1], ['bíceps', 0.5]], alt: ['Pull-up', 'Barra fixa pronada', 'Barra fixa livre'], equiv: ['barra-fixa-assistida-pegada-neutra', 'pulldown-convergente', 'puxada-alta-pegada-neutra'] }
+  { n: 'Barra fixa', g: 'dorsal', car: 'corpo', c: 1, mov: 'puxada', eq: 'corpo', mus: [['dorsal', 1], ['bíceps', 0.5]], alt: ['Pull-up', 'Barra fixa pronada', 'Barra fixa livre'], equiv: ['barra-fixa-assistida-pegada-neutra', 'pulldown-convergente', 'puxada-alta-pegada-neutra'] },
+  // 25/11/2026, com a mídia (Fase D): três do v3.0 que o catálogo não tinha
+  { n: 'Prancha lateral', g: 'abdômen', car: 'corpo', mov: 'core', eq: 'corpo', uni: 1, mus: [['abdômen', 1]], alt: ['Side plank'], equiv: ['prancha', 'pallof-press', 'dead-bug'] },
+  { n: 'Encolhimento Kelso apoiado', g: 'trapézio', car: 'halter', mov: 'encolhimento', eq: 'halteres', mus: [['trapézio', 1], ['costas espessura', 0.5]], alt: ['Kelso shrug', 'Encolhimento Kelso'], equiv: ['encolhimento-com-halteres', 'encolhimento-na-maquina', 'encolhimento-no-smith'] },
+  { n: 'Remada cavalinho apoiada pegada aberta', g: 'costas espessura', car: 'lado', c: 1, mov: 'remada', eq: 'maquina-anilha', mus: [['costas espessura', 1], ['delt posterior', 0.5], ['bíceps', 0.25]], alt: ['Chest supported T-bar row wide grip', 'Remada T apoiada pegada aberta'], equiv: ['remada-convergente-com-apoio-de-peito', 'high-row-com-apoio-de-peito', 'remada-na-maquina-com-apoio-de-peito'] }
 ];
 
 /**
@@ -138,5 +142,11 @@ export const ALT_NOMES: Record<string, string[]> = {
   'pullover-na-polia-alta': ['Pullover na polia', 'Cable pullover'],
   'crucifixo-inverso-no-cabo': ['Crucifixo inverso na polia', 'Cable reverse fly'],
   'crossover-de-baixo-para-cima': ['Crucifixo na polia baixa para alta', 'Low to high cable fly'],
-  'leg-press-45': ['Leg press 45 graus']
+  'leg-press-45': ['Leg press 45 graus'],
+  // 25/11/2026 (Fase D): os nomes do v3.0 que são o mesmo exercício do catálogo
+  'rosca-martelo': ['Rosca martelo com halteres', 'Hammer curl'],
+  'pullover-em-maquina': ['Pullover na máquina', 'Machine pullover'],
+  'elevacao-lateral-no-cabo': ['Elevação lateral na polia bilateral', 'Elevação lateral bilateral na polia'],
+  'chest-press-horizontal-convergente': ['Supino convergente', 'Supino reto convergente'],
+  'remada-na-maquina-com-apoio-de-peito': ['Remada apoiada no peito']
 };

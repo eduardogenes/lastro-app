@@ -1,0 +1,101 @@
+/* A MÍDIA DO EXERCÍCIO (Fase D, protótipo v2 aprovado em 25/11/2026).
+   O quadro largo é a imagem do movimento; o vídeo é um chip preto no canto.
+   Sem animação, a mídia é o botão do vídeo em largura cheia. Tudo em tokens. */
+
+/* ---- o quadro largo (16:9), que amplia ao toque ---- */
+.v3-mq { position: relative; width: 100%; margin-bottom: var(--e-5); flex: 0 0 auto; aspect-ratio: 16 / 9; max-height: 26svh; border-radius: var(--r-caixa);
+  background: var(--superficie); overflow: hidden; box-shadow: inset 0 0 0 var(--fio-fino) var(--divisoria); }
+.v3-mq.grande { max-height: none; margin-top: var(--e-4); }
+.v3-mq-toque { position: absolute; inset: 0; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.v3-mq.grande .v3-mq-toque { cursor: default; }
+.v3-mq img, .v3-mest img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.v3-mq-b, .v3-mest .v3-mq-b { animation: v3-mq-cruza 2.4s infinite; }
+.v3-mq-b.parado { animation: none; opacity: 0; }
+@keyframes v3-mq-cruza { 0%, 42% { opacity: 0 } 50%, 92% { opacity: 1 } 100% { opacity: 0 } }
+.v3-mq-qd { position: absolute; left: var(--e-4); bottom: var(--e-4); display: flex; align-items: center; gap: var(--e-2);
+  font: 600 12px/1 var(--f-texto); color: var(--texto-2); background: var(--fundo); border-radius: var(--r-pilula); padding: 6px 10px; }
+.v3-mq-qd i { width: 7px; height: 7px; border-radius: 50%; background: var(--divisoria); }
+.v3-mq-qd i:first-child { animation: v3-mq-p1 2.4s infinite; }
+.v3-mq-qd i:last-of-type { animation: v3-mq-p2 2.4s infinite; }
+@keyframes v3-mq-p1 { 0%, 49% { background: var(--texto) } 50%, 100% { background: var(--divisoria) } }
+@keyframes v3-mq-p2 { 0%, 49% { background: var(--divisoria) } 50%, 100% { background: var(--texto) } }
+.v3-mq.pausa .v3-mq-qd i { animation: none; }
+.v3-mq.pausa .v3-mq-qd i:first-child { background: var(--texto); }
+.v3-mq-pausa { position: absolute; right: var(--e-2); top: var(--e-2); width: var(--alvo); height: var(--alvo); border-radius: 50%;
+  display: grid; place-items: center; color: var(--texto-2); background: transparent; }
+.v3-mq-pausa svg { width: 18px; height: 18px; }
+
+/* ---- o chip do vídeo ---- */
+.v3 .v3-mchip { display: inline-flex; align-items: center; gap: var(--e-3); min-height: var(--alvo); padding: 0 var(--e-6) 0 var(--e-4);
+  border-radius: var(--r-pilula); background: var(--acao); color: var(--texto-sobre-acao); font: 700 15px/1 var(--f-titulo); }
+.v3 .v3-mchip svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.v3 .v3-mchip small { font: 600 13px/1 var(--f-texto); color: var(--assunto-treino); }
+.v3 .v3-mchip.sobre { position: absolute; right: var(--e-4); bottom: var(--e-4); }
+.v3 .v3-mchip.cinza { background: var(--superficie-quieta); color: var(--texto-2); font-weight: 600; }
+.v3 .v3-mchip.claro { background: var(--superficie); color: var(--texto); box-shadow: inset 0 0 0 var(--fio-fino) var(--divisoria);
+  min-width: 0; max-width: 100%; }
+.v3 .v3-mchip.claro span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v3 .v3-mchip.claro small { color: var(--texto-2); }
+
+/* ---- só vídeo: um chip claro sobre o nome (o preto é do "Feito": um só por tela) ---- */
+.v3 .v3-mvideo { display: inline-flex; align-self: flex-start; align-items: center; gap: var(--e-3); min-height: var(--alvo);
+  padding: 0 var(--e-6) 0 var(--e-4); margin-bottom: var(--e-4); border-radius: var(--r-pilula); background: var(--superficie);
+  color: var(--texto); box-shadow: inset 0 0 0 var(--fio-forte) var(--texto); font: 700 15px/1 var(--f-titulo); }
+.v3 .v3-mvideo svg { width: 18px; height: 18px; }
+.v3 .v3-mvideo small { font: 600 13px/1 var(--f-texto); color: var(--texto-2); }
+.v3 .v3-mvideo.cinza { box-shadow: none; background: var(--superficie-quieta); color: var(--texto-2); font: 600 14px/1.3 var(--f-texto); }
+
+/* ---- no bi-set: a animação da estação e os vídeos do par ---- */
+.v3-mest { position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; border-radius: var(--r-miniatura, 14px);
+  background: var(--fundo); overflow: hidden; margin-bottom: var(--e-2); }
+.v3-mest:not(.a) .v3-mq-b { animation: none; opacity: 0; }
+.v3-mpar { display: flex; gap: var(--e-3); flex-wrap: wrap; }
+.v3-mpar .v3-mchip { flex: 1 1 0; justify-content: flex-start; }
+
+/* ---- a folha do vídeo ---- */
+.v3-mplayer { margin-top: var(--e-4); position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--r-caixa); overflow: hidden; background: var(--superficie-quieta); }
+.v3-mplayer iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.v3-mplayer.off { display: flex; align-items: center; justify-content: center; gap: var(--e-3); padding: var(--e-6); text-align: center;
+  font: 600 14px/1.35 var(--f-texto); color: var(--texto-2); }
+.v3-mplayer.off svg { width: 20px; height: 20px; flex: 0 0 auto; }
+.v3-mtrecho { display: flex; justify-content: space-between; gap: var(--e-4); flex-wrap: wrap; margin-top: var(--e-4);
+  font: var(--t-legenda); color: var(--texto-legenda); }
+.v3-mtrecho b { color: var(--texto); }
+.v3-mpontos { list-style: none; margin: var(--e-5) 0 0; padding: var(--e-5) var(--e-6); display: grid; gap: var(--e-3);
+  background: var(--fundo); border-radius: var(--r-caixa); }
+.v3-mpontos li { display: flex; gap: var(--e-3); font: 500 15px/1.35 var(--f-texto); }
+.v3-mpontos i { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: var(--acao); color: var(--assunto-treino);
+  font: 800 12px/22px var(--f-titulo); font-style: normal; text-align: center; }
+.v3 .v3-mlink-b { display: flex; align-items: center; justify-content: center; gap: var(--e-3); min-height: var(--botao, 52px); width: 100%;
+  border-radius: var(--r-pilula); box-shadow: inset 0 0 0 var(--fio-forte) var(--texto); color: var(--texto); font: var(--t-botao); text-decoration: none; }
+.v3 .v3-mlink-b svg { width: 20px; height: 20px; }
+.v3-mlinks { display: flex; justify-content: center; gap: var(--e-7); flex-wrap: wrap; margin-top: var(--e-3); }
+.v3 .v3-mlinks a, .v3 .v3-mlinks button { min-height: var(--alvo); display: inline-flex; align-items: center; font: 600 14px var(--f-texto);
+  color: var(--texto-2); text-decoration: underline; text-underline-offset: 3px; background: none; }
+.v3-mfonte { margin: var(--e-3) 0 0; font: var(--t-legenda); color: var(--texto-legenda); }
+.v3-mfonte b { color: var(--texto-2); font-weight: 600; }
+
+/* ---- a folha ampliada ---- */
+.v3-mduas { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-4); margin-top: var(--e-4); }
+.v3-mduas figure { margin: 0; position: relative; aspect-ratio: 4 / 3; border-radius: var(--r-miniatura, 14px); overflow: hidden; background: var(--superficie); }
+.v3-mduas img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.v3-mduas figcaption { position: absolute; left: var(--e-3); bottom: var(--e-3); font: 600 12px/1 var(--f-texto); color: var(--texto-2);
+  background: var(--fundo); border-radius: var(--r-pilula); padding: 5px 9px; }
+
+/* ---- sugerir ---- */
+.v3-mcampo { display: grid; gap: var(--e-2); font: 600 13px/1.25 var(--f-texto); color: var(--texto-2); margin-top: var(--e-4); }
+.v3-mduas-c { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-4); }
+.v3-maviso { display: flex; gap: var(--e-4); align-items: flex-start; background: var(--assunto-feito); border-radius: var(--r-caixa);
+  padding: var(--e-5) var(--e-6); font: 600 15px/1.35 var(--f-texto); margin: 0; }
+.v3-maviso svg { width: 20px; height: 20px; flex: 0 0 auto; margin-top: 1px; }
+
+/* ---- os créditos (Ajustes › Sobre) ---- */
+.v3-creditos { display: grid; gap: var(--e-4); }
+.v3-creditos p { margin: 0; font: var(--t-apoio); color: var(--texto-2); }
+.v3-creditos b { color: var(--texto); font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+  .v3-mq-b, .v3-mest .v3-mq-b { animation: none !important; opacity: 0; }
+  .v3-mq-qd i { animation: none !important; }
+  .v3-mq-qd i:first-child { background: var(--texto); }
+}

@@ -28,6 +28,10 @@ test('um artefato só, sem dependência de runtime', async () => {
     // Namespaces XML (SVG, MathML, XHTML) são identificadores, não endereços:
     // o Preact usa createElementNS e o navegador nunca busca nada neles.
     .filter(function (u) { return !/^https?:\/\/www\.w3\.org\//.test(u); })
+    // O vídeo da execução (Fase D) é do YouTube, num iframe que só existe
+    // quando a pessoa toca "Ver execução": opcional, nunca preciso para o app
+    // funcionar (sem rede, o chip fica cinza). Não é código nem asset do app.
+    .filter(function (u) { return !/^https:\/\/(www\.youtube(-nocookie)?\.com|youtu\.be)\//.test(u); })
     .filter(nuvemDeDados);
   assert.deepStrictEqual(urls, [], 'nenhum endereço além da fonte e da nuvem');
   assert.ok(!/<script[^>]*\ssrc=/.test(HTML), 'nenhum script buscado à parte');

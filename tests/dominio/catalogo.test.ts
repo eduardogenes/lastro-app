@@ -463,3 +463,52 @@ test('o SQL de curadoria gerado está em dia e só faz UPDATE nas colunas permit
   });
   assert.ok(!/insert|delete|drop/i.test(sql.replace(/--.*$/gm, '')));
 });
+
+// ---------- a mídia (Fase D) ----------
+import { limpaMidia, midiaDo, deLinha as _deLinha, paraLinha as _paraLinha, indiceDeNomes as _indice } from '../../src/dominio/catalogo';
+import { MIDIA } from '../../src/dominio/catalogo-midia';
+import { readFileSync as _ler } from 'node:fs';
+import { describe, it, expect } from 'vitest';
+
+describe('mídia do exercício', () => {
+  it('a semente traz o vídeo dos 34 exercícios do v3.0, todos com id existente', () => {
+    expect(Object.keys(MIDIA).length).toBe(34);
+    for (const id of Object.keys(MIDIA)) {
+      expect(SEMENTE.ex[id], id).toBeTruthy();
+      expect(SEMENTE.ex[id].midia && SEMENTE.ex[id].midia.video, id).toBeTruthy();
+    }
+  });
+  it('limpaMidia aceita o bom e descarta o ruim sem derrubar nada', () => {
+    expect(limpaMidia({ video: { yt: 'IwWvZ0rlNXs', inicio: 10, fim: 40, canal: 'X', idioma: 'pt' } })!.video!.fim).toBe(40);
+    expect(limpaMidia({ video: { yt: 'curto', inicio: 0, fim: 9 } })).toBeNull();
+    expect(limpaMidia({ video: { yt: 'IwWvZ0rlNXs', inicio: 40, fim: 10 } })).toBeNull();
+    expect(limpaMidia({ anim: { inicio: 'http://x/a.webp', pico: 'https://x/b.webp' } })).toBeNull();
+    expect(limpaMidia({ anim: { inicio: 'https://x/a.webp', pico: 'https://x/b.webp', fonte: 'RepDB' } })!.anim!.fonte).toBe('RepDB');
+    expect(limpaMidia(null)).toBeNull();
+    expect(limpaMidia('lixo')).toBeNull();
+  });
+  it('a linha do banco vai e volta com a mídia', () => {
+    const e = SEMENTE.ex['elevacao-lateral-na-maquina'];
+    expect(_deLinha(_paraLinha(e))!.midia).toEqual(e.midia);
+  });
+  it('acha a mídia pelo id, pela união e pelo nome que o treinador usa', () => {
+    const nomes = _indice(SEMENTE);
+    expect(midiaDo(SEMENTE, nomes, 'elevacao-lateral-na-maquina')!.video!.yt).toBe('IwWvZ0rlNXs');
+    // exercício pessoal: o nome alternativo leva ao do sistema
+    expect(midiaDo(SEMENTE, nomes, 'crucifixo-inverso-no-peck-deck', 'Crucifixo inverso no peck deck')!.video!.yt).toBe('wjlX-5DTjBQ');
+    expect(midiaDo(SEMENTE, nomes, 'remada-apoiada-no-peito', 'Remada apoiada no peito')!.video!.yt).toBe('QyvIEdEHzHc');
+    // união: o id antigo enxerga a mídia do que ficou
+    const unido = { v: 1, ex: SEMENTE.ex, redir: { 'velho-id': 'elevacao-lateral-na-maquina' } };
+    expect(midiaDo(unido, nomes, 'velho-id')!.video!.yt).toBe('IwWvZ0rlNXs');
+    expect(midiaDo(SEMENTE, nomes, 'chest-press-inclinado-convergente', 'Chest press inclinado convergente')).toBeNull();
+  });
+  it('o SQL da mídia cria a coluna e só grava `midia`, para todos os que têm; a semente não depende da coluna', () => {
+    const sql = _ler('supabase/migrations/20261125130000_catalogo_midia.sql', 'utf8');
+    expect(sql).toMatch(/alter table public\.catalogo_exercicio add column if not exists midia jsonb;/);
+    const ups = sql.split('\n').filter(l => l.startsWith('update '));
+    expect(ups.length).toBe(Object.keys(SEMENTE.ex).filter(id => SEMENTE.ex[id].midia).length);
+    for (const l of ups) expect(l).toMatch(/^update public\.catalogo_exercicio set midia = '.*'::jsonb where id = '[a-z0-9-]+';$/);
+    const semente = _ler('supabase/migrations/20261123120100_catalogo_semente.sql', 'utf8');
+    expect(semente).not.toMatch(/midia/);
+  });
+});

@@ -62,7 +62,7 @@ import { PAUSA_DIAS, diasDesde, historico as _historico, historicoDeReferencia a
 import { MOTIVOS_FALTA, respondeFrequencia, uneFrequencia } from './dominio/frequencia';
 import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12, migraPlano13, reduzReferencias, corrigeApelidosErrados } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
-import { SEMENTE, exerciciosDoSistema, indiceDeNomes, comDiferenca, diferencaDaSemente, catalogoDasLinhas, chaveDoNome, maisNova, equipamentoDe, EQUIPAMENTOS } from './dominio/catalogo';
+import { SEMENTE, exerciciosDoSistema, indiceDeNomes, comDiferenca, diferencaDaSemente, catalogoDasLinhas, chaveDoNome, maisNova, equipamentoDe, EQUIPAMENTOS, midiaDo } from './dominio/catalogo';
 import { paresDoTreino, proximaDoPar, depoisDaSerie, separaPegada } from './dominio/biset';
 import { DB } from './infra/db';
 import {
@@ -6713,6 +6713,74 @@ function equipamentoDoEx(ex) {
   const id = (sis && sis.eq) || equipamentoDe(ex.n || '', ex.car || 'pino', ex.u);
   return EQUIPAMENTOS[id] ? { id: id, n: EQUIPAMENTOS[id].n } : null;
 }
+/** "1:22", para o trecho do vídeo. */
+function mmss(seg) { seg = Math.max(0, Math.round(seg || 0)); return Math.floor(seg / 60) + ':' + String(seg % 60).padStart(2, '0'); }
+/**
+ * A MÍDIA DO EXERCÍCIO (Fase D) na forma da tela: o vídeo de referência (só o
+ * trecho, sem som de saída, repetindo) e a animação de duas imagens, quando o
+ * catálogo tiver. Os pontos-chave saem da pegada e da dica do treinador. Nada
+ * aqui grava: é leitura do catálogo do sistema.
+ */
+function midiaDoExV3(ex, pg) {
+  if (!ex) return null;
+  const m = midiaDo(SISTEMA, NOMES_ALT, ex.id || '', ex.n);
+  if (!m) return null;
+  const out = { n: ex.n, pontos: [] };
+  if (m.video) {
+    const v = m.video, dur = v.fim > v.inicio ? v.fim - v.inicio : 0;
+    out.video = {
+      yt: v.yt, inicio: v.inicio, fim: v.fim, canal: v.canal, idioma: v.idioma,
+      dur: dur ? mmss(dur) : '', trecho: mmss(v.inicio) + (v.fim ? '–' + mmss(v.fim) : ''),
+      embed: 'https://www.youtube-nocookie.com/embed/' + v.yt + '?start=' + v.inicio + (v.fim ? '&end=' + v.fim : '') +
+        '&mute=1&playsinline=1&rel=0&modestbranding=1&autoplay=1&loop=1&playlist=' + v.yt,
+      url: 'https://www.youtube.com/watch?v=' + v.yt + '&t=' + v.inicio + 's',
+      inteiro: 'https://www.youtube.com/watch?v=' + v.yt
+    };
+  }
+  if (m.anim) out.anim = { inicio: m.anim.inicio, pico: m.anim.pico, credito: m.anim.credito, fonte: m.anim.fonte };
+  const p = pg || {};
+  if (p.pegada) out.pontos.push('Pegada: ' + p.pegada + '.');
+  if (p.pes) out.pontos.push('Pés: ' + p.pes + '.');
+  (p.dica || '').split(/;\s*|\.\s+/).map(function (t) { return t.trim().replace(/\.$/, ''); }).filter(Boolean).forEach(function (t) {
+    if (out.pontos.length < 3) out.pontos.push(t.charAt(0).toUpperCase() + t.slice(1) + '.');
+  });
+  out.pontos = out.pontos.slice(0, 3);
+  return out;
+}
+const CHAVE_SUGESTOES = 'lastro-sugestoes-midia-v1';
+/**
+ * "Sugerir um melhor": por ora a sugestão fica neste aparelho, com a hora, e a
+ * tela diz que foi para a curadoria. A fila de curadoria de verdade (todos os
+ * usuários, aprovação do moderador) é a Fase F; quando ela existir, estas
+ * sobem. Não entra no estado sincronizado.
+ */
+CTX.sugereMidia = function (sug) {
+  let lista = [];
+  try { lista = JSON.parse(localStorage.getItem(CHAVE_SUGESTOES) || '[]'); if (!Array.isArray(lista)) lista = []; } catch (e) { lista = []; }
+  lista.push(Object.assign({ t: Date.now() }, sug));
+  try { localStorage.setItem(CHAVE_SUGESTOES, JSON.stringify(lista.slice(-50))); } catch (e) { return false; }
+  return true;
+};
+CTX.abreVideo = function (m) { if (m && m.video) CTX.abreFolha({ k: 'video', m: m }); };
+CTX.ampliaMidia = function (m) { if (m) CTX.abreFolha({ k: 'ampliaMidia', m: m }); };
+CTX.sugereFolha = function (m) { CTX.abreFolha({ k: 'sugereMidia', m: m }); };
+/**
+ * Guarda no aparelho as animações do programa ativo, para a academia sem sinal:
+ * pede ao service worker (cache `lastro-midia`). Sem animação no catálogo, nada.
+ */
+function guardaMidiaDoPrograma() {
+  try {
+    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
+    const urls = [];
+    Object.keys(S.prog || {}).forEach(function (d) {
+      ((S.prog[d] && S.prog[d].ex) || []).forEach(function (sl) {
+        const m = midiaDo(SISTEMA, NOMES_ALT, sl.id, nomeEx(sl.id));
+        if (m && m.anim) urls.push(m.anim.inicio, m.anim.pico);
+      });
+    });
+    if (urls.length) navigator.serviceWorker.controller.postMessage({ tipo: 'guarda-midia', urls: urls });
+  } catch (e) { /* sem worker: sem cópia offline */ }
+}
 /** A pegada e os pés de um exercício: da dica do treinador, ou do catálogo. A dica volta sem eles. */
 function pegadaDoEx(ex) {
   const sp = separaPegada(ex && ex.cue);
@@ -8636,6 +8704,8 @@ if (ehBancada()) {
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('sw.js').catch(function () {});
+    // as animações do programa ativo, guardadas para a academia sem sinal
+    navigator.serviceWorker.ready.then(function () { setTimeout(guardaMidiaDoPrograma, 4000); }).catch(function () {});
   });
 }
 
@@ -15433,6 +15503,7 @@ CTX.focoV3 = function () {
     fim: false, i: f.i, k: f.k,
     par: parDoFoco(d, f),
     pegada: pg.pegada, pes: pg.pes,
+    midia: midiaDoExV3(ex, pg),
     ex: { n: ex.n, cue: pg.dica || '', faixa: ex.r || '', rir: ex.rir || '', series: setsFor(ex),
           unidade: vm.unidade === 'kg/lado' ? (tipo === 'halter' ? 'kg em cada mão' : 'kg por lado') : vm.unidade, medida: vm.medida,
           semCarga: tipo === 'corpo', seg: vm.seg, descanso: vm.descansoTxt, proximo: vm.proximo,
@@ -15506,6 +15577,7 @@ function parDoFoco(d, f) {
       semCarga: tipo === 'corpo', seg: !!un && cronometrado(un), medida: un ? ROTULO_UNIDADE[un] : 'repetições',
       lado: ex.lado || null,
       pegada: pg.pegada, pes: pg.pes,
+      midia: midiaDoExV3(ex, pg),
       equip: (equipamentoDoEx(ex) || {}).n || null
     };
   });

@@ -88,3 +88,27 @@ up.push('commit;');
 up.push('');
 writeFileSync(DESTINO_CURADORIA, up.join('\n'));
 console.log('escrito', DESTINO_CURADORIA, '(' + Object.keys(CURADORIA).length + ' exercícios)');
+
+// A mídia (Fase D, catalogo-midia.ts): coluna nova `midia` (jsonb) e um UPDATE
+// por exercício que tem vídeo ou animação. Roda depois da semente; pode rodar
+// de novo. A semente não leva a coluna: assim ela continua rodando num banco
+// que ainda não tem a `midia`.
+const DESTINO_MIDIA = resolve(__dirname, '../../supabase/migrations/20261125130000_catalogo_midia.sql');
+const md: string[] = [];
+md.push('-- GERADO por ferramentas/catalogo/gera-sql.ts (mídia, conteúdo versão ' + VERSAO_DA_SEMENTE + ').');
+md.push('-- Rode como moderador no SQL Editor do Supabase, DEPOIS da semente. Pode rodar de novo.');
+md.push('-- Cria a coluna `midia` e grava o vídeo de referência (trecho do YouTube) de cada exercício abaixo.');
+md.push('');
+md.push('begin;');
+md.push('');
+md.push('alter table public.catalogo_exercicio add column if not exists midia jsonb;');
+md.push('');
+const comMidia = Object.keys(SEMENTE.ex).filter(id => SEMENTE.ex[id].midia).sort();
+comMidia.forEach(function (id) {
+  md.push('update public.catalogo_exercicio set midia = ' + lit(JSON.stringify(SEMENTE.ex[id].midia)) + '::jsonb where id = ' + lit(id) + ';');
+});
+md.push('');
+md.push('commit;');
+md.push('');
+writeFileSync(DESTINO_MIDIA, md.join('\n'));
+console.log('escrito', DESTINO_MIDIA, '(' + comMidia.length + ' exercícios)');

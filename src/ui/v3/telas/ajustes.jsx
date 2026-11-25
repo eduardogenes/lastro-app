@@ -67,6 +67,12 @@ export function AjustesV3({ ctx }) {
         </div>
         <Apoio>{d.resumo}. Guardado em: {d.onde}.</Apoio>
       </Secao>
+      <Secao titulo="Sobre" nota="de onde vêm a imagem e o vídeo">
+        <div class="v3-creditos" data-a="ajustes-creditos">
+          <p><b>Vídeos dos exercícios.</b> Tocam no YouTube e são de cada canal, citado no próprio player. A escolha do trecho é da curadoria do Lastro.</p>
+          <p><b>Imagens dos exercícios.</b> De bases com licença livre, com o crédito de cada uma junto da imagem ampliada: RepDB (plano gratuito), Everkinetic · Workout Guide (CC BY-SA 4.0) e Wikimedia Commons (o autor e a licença de cada arquivo).</p>
+        </div>
+      </Secao>
       <Diagnostico entrou={n.dentro} />
       <Secao titulo="Recomeçar">
         <div>

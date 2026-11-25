@@ -10,6 +10,7 @@
 import { CorpoV3, FolhaComoMedir, FolhaLigarMedidas, MedirAgora } from './telas/corpo.jsx';
 import { FolhaBioV3, FolhaCorrigeMarca, MedidaV3, NaMesmaData, PesoV3 } from './telas/corpoconsulta.jsx';
 import { FolhaAulaTexto, FolhaDorEx, FolhaListaTreino, FolhaMenuSessaoV3, FolhaMudarEx, FolhaSeparaPar, PorEmDiaV3, TreinoEmFoco } from './telas/treino.jsx';
+import { FolhaVideo, FolhaAmpliaMidia, FolhaSugereMidia } from './telas/midia.jsx';
 import { ExercicioV3, FolhaFotoV3, FolhaRenomeiaEx, Progressao } from './telas/progressao.jsx';
 import { ProgramaV3, RevisaoV3 } from './telas/programa.jsx';
 import { ProgramasV3, ProgramaAbertoV3, FolhaReativaPrograma, FolhaRenomeiaPrograma, FolhaRevisaoDoPrograma, FolhaTreinoDoPrograma } from './telas/programas.jsx';
@@ -89,4 +90,5 @@ export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoCompara
   refeicaoDoPlano: FolhaRefeicaoDoPlano, alimentos: FolhaAlimentos, compras: FolhaCompras,
   agente: FolhaAgente, desconectaClaude: FolhaDesconectaClaude,
   reativaPrograma: FolhaReativaPrograma, renomeiaPrograma: FolhaRenomeiaPrograma, revisaoDoPrograma: FolhaRevisaoDoPrograma,
-  treinoDoPrograma: FolhaTreinoDoPrograma };
+  treinoDoPrograma: FolhaTreinoDoPrograma,
+  video: FolhaVideo, ampliaMidia: FolhaAmpliaMidia, sugereMidia: FolhaSugereMidia };

@@ -35,6 +35,14 @@ const LOCAIS = __LOCAIS__;
 const FOTOS = ['lastro-fotos', 'lastro-corpo', 'lastro-lousa', 'treino-fotos'];
 
 /**
+ * As ANIMAÇÕES dos exercícios do programa ativo (Fase D): imagens de outra
+ * origem (bases livres), guardadas para a academia sem sinal. A página pede
+ * (`guarda-midia`) e o worker serve daqui primeiro. O vídeo do YouTube NUNCA
+ * passa por aqui: é um iframe de outra origem, e o worker não o toca.
+ */
+const MIDIA = 'lastro-midia';
+
+/**
  * O MOTOR DA DETECÇÃO DO CORPO (`pose/`: o modelo e o MediaPipe, uns 20 MB).
  * Fica fora da instalação e do cache do build: baixa na primeira vez que a
  * câmera abre e mora aqui, com o nome da versão. Publicar o app não o baixa de
@@ -83,7 +91,7 @@ self.addEventListener('activate', function (e) {
       // build. O nome do cache do build muda a cada publicação, e apagar tudo
       // que não é o atual levaria junto fotos que não têm como ser refeitas.
       .then(ks => Promise.all(
-        ks.filter(k => k !== CACHE && k !== MOTOR && FOTOS.indexOf(k) < 0).map(k => caches.delete(k))))
+        ks.filter(k => k !== CACHE && k !== MOTOR && k !== MIDIA && FOTOS.indexOf(k) < 0).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -99,7 +107,16 @@ self.addEventListener('fetch', function (e) {
   // outra origem, e servi-la do cache devolveria um estado velho como se fosse
   // o da nuvem — o app fundiria contra o passado e reescreveria por cima do
   // presente. O que é dado vivo passa direto; o que é asset é que se cacheia.
-  if (!mesmaOrigem && !fonte) return;
+  if (!mesmaOrigem && !fonte) {
+    // só uma IMAGEM já guardada (animação do exercício) vem do aparelho; dado
+    // vivo, vídeo e o resto de fora seguem direto, como sempre
+    if (req.destination === 'image') {
+      e.respondWith(caches.open(MIDIA).then(function (c) {
+        return c.match(req.url).then(function (tem) { return tem || fetch(req); });
+      }));
+    }
+    return;
+  }
 
   // O motor da detecção: do cache dele, e da rede só na primeira vez
   if (mesmaOrigem && url.pathname.indexOf('/pose/') >= 0) {
@@ -143,4 +160,18 @@ self.addEventListener('fetch', function (e) {
       return cacheado || rede;
     })
   );
+});
+
+self.addEventListener('message', function (e) {
+  const d = e.data;
+  if (!d || d.tipo !== 'guarda-midia' || !Array.isArray(d.urls)) return;
+  const urls = d.urls.filter(function (u) { return typeof u === 'string' && /^https:\/\//.test(u); }).slice(0, 200);
+  e.waitUntil(caches.open(MIDIA).then(function (c) {
+    return Promise.all(urls.map(function (u) {
+      return c.match(u).then(function (tem) {
+        if (tem) return;
+        return fetch(u, { mode: 'no-cors' }).then(function (r) { if (r) return c.put(u, r); }).catch(function () {});
+      });
+    }));
+  }));
 });

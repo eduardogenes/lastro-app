@@ -13,6 +13,7 @@ import { Acoes, Apoio, Botao, Caixa, Cabecalho, Chave, Folha, Linha, Par, Pequen
 import { Regua } from '../regua.jsx';
 import { useAgora } from '../agora.js';
 import { podeDissolver } from '../../movimento.js';
+import { MidiaDaSerie, MidiaDaEstacao, VideosDoPar } from './midia.jsx';
 
 const virgula = n => String(Math.round(n * 100) / 100).replace('.', ',');
 const relogio = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
@@ -158,6 +159,7 @@ function Serie({ ctx, f }) {
         <button data-a="ja-fiz-mais" onClick={ctx.abrePorEmDia}>Já fiz mais do que anotei</button>
         <button data-a="historico-ex" onClick={() => ctx.abreExercicioV3(f.dia, f.i)}>Histórico</button>
       </>}>
+      <MidiaDaSerie ctx={ctx} m={f.midia} />
       <h1 class="v3-serie-n" tabindex="-1">{ex.n}</h1>
       {linha && <p class="v3-serie-q">{linha}</p>}
       <Pegada pegada={f.pegada} pes={f.pes} />
@@ -240,6 +242,7 @@ function ParCircuito({ ctx, f }) {
             aria-current={e.ativa ? 'step' : undefined}
             aria-label={e.ativa ? undefined : e.fechou ? e.n + ': todas as séries feitas' : 'Começar por ' + e.n + ' nesta rodada'}
             onClick={e.ativa ? undefined : ctx.trocaVezV3}>
+      <MidiaDaEstacao m={e.midia} ativa={e.ativa} />
       <span class="v3-est-k">{e.fora ? 'pulado' : e.fechou ? 'fechou · ' + (j + 1) : e.ativa ? 'agora · ' + (j + 1) : 'a seguir · ' + (j + 1)}</span>
       <b>{e.n}</b>
       <Pegada pegada={e.pegada} pes={e.pes} compacta />
@@ -280,6 +283,7 @@ function ParCircuito({ ctx, f }) {
         <span class="v3-ests-seta" aria-hidden="true">{ic.dir}</span>
         {estacao(p.estacoes[1], 1)}
       </div>
+      <VideosDoPar ctx={ctx} estacoes={p.estacoes} />
       {p.tempo
         ? <Cronometro segundos={reps} lados={!!eu.lado} />
         : <div class="v3-steps">

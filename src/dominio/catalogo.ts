@@ -22,6 +22,9 @@ import type { Exercicio, IdEx, TipoCarga, Unidade } from './tipos';
 import { ALT, EX_BASE, slugEx } from './programa';
 import { ALT_NOMES, EQUIPAMENTOS, MOVIMENTOS, NOVOS_DA_V22, NOVOS_DO_SISTEMA, VERSAO_DA_SEMENTE, type NovoDoSistema } from './catalogo-semente';
 import { CURADORIA } from './catalogo-curadoria';
+import { MIDIA, type MidiaDoEx } from './catalogo-midia';
+
+export type { MidiaDoEx, VideoDoEx, AnimDoEx } from './catalogo-midia';
 
 /** Músculo (o mesmo vocabulário do `g`) e a fração da série que ele recebe. */
 export type Musculo = [string, number];
@@ -58,6 +61,8 @@ export interface ExDoSistema {
   sub?: 1;
   /** algum dado foi preenchido por regra e espera o moderador */
   cur?: 1;
+  /** o vídeo de referência (trecho) e a animação, quando houver (Fase D) */
+  midia?: MidiaDoEx;
 }
 
 export interface CatalogoDoSistema {
@@ -253,6 +258,11 @@ export const SEMENTE: CatalogoDoSistema = (function () {
     }
     if (c.conferido) delete e.cur;
   });
+  Object.keys(MIDIA).forEach(function (id) {
+    if (!ex[id]) throw new Error('semente: mídia para id inexistente ' + id);
+    const m = limpaMidia(MIDIA[id]);
+    if (m) ex[id].midia = m;
+  });
   return { v: 0, ex: ex, redir: {} };
 })();
 
@@ -353,6 +363,8 @@ export function deLinha(r: Record<string, unknown>): ExDoSistema | null {
   if (r.pegada_pe) e.pegPe = 1;
   if (r.substituto) e.sub = 1;
   if (r.curadoria) e.cur = 1;
+  const m = limpaMidia(r.midia);
+  if (m) e.midia = m;
   return e;
 }
 
@@ -362,8 +374,47 @@ export function paraLinha(e: ExDoSistema): Record<string, unknown> {
     id: e.id, nome: e.n, alt: e.alt, movimento: e.mov, equipamento: e.eq, grupo: e.g, musculos: e.mus,
     carga: e.car, unidade: e.u || null, quantidade: e.q == null ? null : e.q, composto: e.c === 1,
     unilateral: e.uni === 1, equivalentes: e.equiv, dica: e.cue == null ? null : e.cue, pegada: e.peg || null,
-    pegada_pe: e.pegPe === 1, substituto: e.sub === 1, curadoria: e.cur === 1
+    pegada_pe: e.pegPe === 1, substituto: e.sub === 1, curadoria: e.cur === 1, midia: e.midia || null
   };
+}
+
+function urlBoa(x: unknown): x is string { return typeof x === 'string' && /^https:\/\/[^\s]+$/.test(x); }
+
+/**
+ * A mídia como o app aceita: vídeo com id do YouTube válido e trecho com fim
+ * depois do início; animação com as duas imagens em https. O que não passa
+ * some (o exercício fica sem aquela mídia), nunca derruba o catálogo.
+ */
+export function limpaMidia(bruto: unknown): MidiaDoEx | null {
+  if (!bruto || typeof bruto !== 'object') return null;
+  const b = bruto as { video?: Record<string, unknown>; anim?: Record<string, unknown> };
+  const out: MidiaDoEx = {};
+  const v = b.video;
+  if (v && typeof v === 'object' && typeof v.yt === 'string' && /^[A-Za-z0-9_-]{11}$/.test(v.yt)) {
+    const ini = num(v.inicio) || 0, fim = num(v.fim);
+    if (ini >= 0 && (fim == null || fim > ini)) {
+      out.video = { yt: v.yt, inicio: ini, fim: fim == null ? 0 : fim, canal: txt(v.canal), idioma: txt(v.idioma) };
+    }
+  }
+  const a = b.anim;
+  if (a && typeof a === 'object' && urlBoa(a.inicio) && urlBoa(a.pico)) {
+    out.anim = { inicio: a.inicio, pico: a.pico, fonte: txt(a.fonte), licenca: txt(a.licenca), credito: txt(a.credito) };
+  }
+  return out.video || out.anim ? out : null;
+}
+
+/**
+ * A mídia de um exercício do treino: pelo id (direto ou por união) e, se o id
+ * for pessoal, pelo nome — o nome principal de um do sistema ou um nome
+ * alternativo ("Crucifixo inverso no peck deck" → reverse-pec-deck).
+ */
+export function midiaDo(c: CatalogoDoSistema, nomes: Record<string, IdEx>, id: IdEx, nome?: string): MidiaDoEx | null {
+  const d = c.ex[resolveId(id, c.redir)];
+  if (d && d.midia) return d.midia;
+  if (!nome) return null;
+  const k = chaveDoNome(nome);
+  const porNome = c.ex[k] || (nomes[k] ? c.ex[resolveId(nomes[k], c.redir)] : null);
+  return (porNome && porNome.midia) || null;
 }
 
 /**
