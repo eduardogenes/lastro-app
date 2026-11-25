@@ -4,8 +4,14 @@
 //
 // Os vídeos vieram da pesquisa de 24/11 (~/lastro-rascunho/antigravity/
 // videos-v30.json, o principal de cada um, links conferidos) e entram como
-// semente; a curadoria de verdade (trocar, sugerir) é da Fase F. Animações
-// ainda não: dependem do download autorizado pelo dono (fontes livres, D6).
+// semente; a curadoria de verdade (trocar, sugerir) é da Fase F.
+//
+// Animações (25/11, download autorizado pelo dono): as imagens início e pico do
+// RepDB, plano gratuito (licença "RepDB — Free Tier License v1.0": uso dentro do
+// app, inclusive comercial, com o crédito "Exercise data by RepDB (repdb.co)";
+// proíbe redistribuir como dataset e usar em IA generativa). Por isso os
+// arquivos NÃO ficam no repositório (público): ficam no Supabase Storage, bucket
+// `midia`, pasta `anim/`, servidos só ao app. Ver ~/lastro-rascunho/midia/.
 //
 // Chave: o id do catálogo do sistema. O nome que o treinador usa leva até ele
 // pelo nome alternativo (ex.: "Crucifixo inverso no peck deck" → reverse-pec-deck).
@@ -52,3 +58,51 @@ export const MIDIA: Record<IdEx, MidiaDoEx> = {
   'encolhimento-kelso-apoiado': { video: { yt: 'Qq1xT2Vs_SY', inicio: 3, fim: 29, canal: 'All Strength Training', idioma: 'en' } },
   'rosca-martelo': { video: { yt: 'OnNmaG_tZM4', inicio: 10, fim: 74, canal: 'Laércio Refundini - Aulas', idioma: 'pt' } }
 };
+
+/** Onde moram as imagens: bucket público `midia` do projeto, pasta `anim/`. */
+export const BASE_ANIM = 'https://wetwqqrrgormwyktewlm.supabase.co/storage/v1/object/public/midia/anim/';
+export const CREDITO_REPDB = 'Exercise data by RepDB (repdb.co)';
+
+/** Exercícios com animação do RepDB (arquivo <id>-inicio.webp / <id>-pico.webp). */
+export const COM_ANIM_REPDB: IdEx[] = [
+  'supino-inclinado-no-smith',
+  'barra-fixa',
+  'remada-na-maquina-com-apoio-de-peito',
+  'chest-press-horizontal-convergente',
+  'elevacao-lateral-na-maquina',
+  'reverse-pec-deck',
+  'alongamento-do-flexor-do-quadril-ajoelhado',
+  'mobilidade-de-quadril-90-90',
+  'cadeira-flexora-sentada',
+  'elevacao-pelvica-na-maquina',
+  'cadeira-extensora',
+  'adutora',
+  'pallof-press',
+  'prancha-lateral',
+  'elevacao-lateral-com-halteres',
+  'triceps-acima-da-cabeca-na-polia-sentado',
+  'rosca-inclinada-com-halteres',
+  'triceps-testa-com-barra-w',
+  'rosca-scott-na-maquina',
+  'agachamento-bulgaro-com-halteres',
+  'mesa-flexora-deitada',
+  'abdutora',
+  'panturrilha-sentada',
+  'dead-bug',
+  'supino-inclinado-com-halteres',
+  'puxada-alta-pegada-neutra',
+  'elevacao-lateral-no-cabo',
+  'encolhimento-kelso-apoiado',
+  'rosca-martelo'
+];
+
+COM_ANIM_REPDB.forEach(function (id) {
+  const m = MIDIA[id] || (MIDIA[id] = {});
+  m.anim = {
+    inicio: BASE_ANIM + id + '-inicio.webp',
+    pico: BASE_ANIM + id + '-pico.webp',
+    fonte: 'RepDB',
+    licenca: 'RepDB Free Tier License v1.0',
+    credito: CREDITO_REPDB
+  };
+});

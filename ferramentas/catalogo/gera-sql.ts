@@ -97,7 +97,7 @@ const DESTINO_MIDIA = resolve(__dirname, '../../supabase/migrations/202611251300
 const md: string[] = [];
 md.push('-- GERADO por ferramentas/catalogo/gera-sql.ts (mídia, conteúdo versão ' + VERSAO_DA_SEMENTE + ').');
 md.push('-- Rode como moderador no SQL Editor do Supabase, DEPOIS da semente. Pode rodar de novo.');
-md.push('-- Cria a coluna `midia` e grava o vídeo de referência (trecho do YouTube) de cada exercício abaixo.');
+md.push('-- Cria a coluna `midia` e grava o vídeo (trecho do YouTube) e, quando houver, a animação (início e pico, no bucket `midia`) de cada exercício abaixo.');
 md.push('');
 md.push('begin;');
 md.push('');

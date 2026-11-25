@@ -8,7 +8,7 @@
 
 import type { TipoCarga, Unidade } from './tipos';
 
-export const VERSAO_DA_SEMENTE = 4;
+export const VERSAO_DA_SEMENTE = 5;
 
 /** O padrão do movimento. `outro` é o que a regra não reconheceu. */
 export const MOVIMENTOS: Record<string, string> = {

@@ -1,4 +1,4 @@
--- GERADO por ferramentas/catalogo/gera-sql.ts (curadoria, conteúdo versão 4).
+-- GERADO por ferramentas/catalogo/gera-sql.ts (curadoria, conteúdo versão 5).
 -- Rode como moderador no SQL Editor do Supabase, DEPOIS da semente. Pode rodar de novo.
 -- Muda só alt, musculos, dica, equivalentes e a marca de curadoria dos exercícios abaixo.
 

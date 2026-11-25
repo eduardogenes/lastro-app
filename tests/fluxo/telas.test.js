@@ -32,6 +32,14 @@ test('um artefato só, sem dependência de runtime', async () => {
     // quando a pessoa toca "Ver execução": opcional, nunca preciso para o app
     // funcionar (sem rede, o chip fica cinza). Não é código nem asset do app.
     .filter(function (u) { return !/^https:\/\/(www\.youtube(-nocookie)?\.com|youtu\.be)\//.test(u); })
+    // As imagens do exercício (início e pico, Fase D) vêm do bucket `midia`,
+    // pasta `anim/`, e são opcionais do mesmo jeito: sem rede e sem cache, a
+    // série mostra só o vídeo ou fica como antes. Recorte estreito: só essa
+    // pasta, nunca o Storage inteiro.
+    .filter(function (u) { return !/\.supabase\.co\/storage\/v1\/object\/public\/midia\/anim\/$/.test(u); })
+    // O crédito exigido pela licença das imagens é um LINK (Ajustes › Sobre):
+    // a pessoa toca e abre; o app nunca busca nada nele.
+    .filter(function (u) { return u !== 'https://repdb.co'; })
     .filter(nuvemDeDados);
   assert.deepStrictEqual(urls, [], 'nenhum endereço além da fonte e da nuvem');
   assert.ok(!/<script[^>]*\ssrc=/.test(HTML), 'nenhum script buscado à parte');

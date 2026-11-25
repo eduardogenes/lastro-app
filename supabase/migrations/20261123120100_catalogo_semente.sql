@@ -1,4 +1,4 @@
--- GERADO por ferramentas/catalogo/gera-sql.ts a partir da semente (conteúdo versão 4).
+-- GERADO por ferramentas/catalogo/gera-sql.ts a partir da semente (conteúdo versão 5).
 -- Não edite à mão: mude src/dominio/catalogo-semente.ts e rode `npm run catalogo:sql`.
 -- Rode DEPOIS de 20261123120000_catalogo.sql, no SQL Editor do Supabase.
 

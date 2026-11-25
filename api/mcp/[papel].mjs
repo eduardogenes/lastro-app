@@ -1246,6 +1246,49 @@ var MIDIA = {
   "encolhimento-kelso-apoiado": { video: { yt: "Qq1xT2Vs_SY", inicio: 3, fim: 29, canal: "All Strength Training", idioma: "en" } },
   "rosca-martelo": { video: { yt: "OnNmaG_tZM4", inicio: 10, fim: 74, canal: "La\xE9rcio Refundini - Aulas", idioma: "pt" } }
 };
+var BASE_ANIM = "https://wetwqqrrgormwyktewlm.supabase.co/storage/v1/object/public/midia/anim/";
+var CREDITO_REPDB = "Exercise data by RepDB (repdb.co)";
+var COM_ANIM_REPDB = [
+  "supino-inclinado-no-smith",
+  "barra-fixa",
+  "remada-na-maquina-com-apoio-de-peito",
+  "chest-press-horizontal-convergente",
+  "elevacao-lateral-na-maquina",
+  "reverse-pec-deck",
+  "alongamento-do-flexor-do-quadril-ajoelhado",
+  "mobilidade-de-quadril-90-90",
+  "cadeira-flexora-sentada",
+  "elevacao-pelvica-na-maquina",
+  "cadeira-extensora",
+  "adutora",
+  "pallof-press",
+  "prancha-lateral",
+  "elevacao-lateral-com-halteres",
+  "triceps-acima-da-cabeca-na-polia-sentado",
+  "rosca-inclinada-com-halteres",
+  "triceps-testa-com-barra-w",
+  "rosca-scott-na-maquina",
+  "agachamento-bulgaro-com-halteres",
+  "mesa-flexora-deitada",
+  "abdutora",
+  "panturrilha-sentada",
+  "dead-bug",
+  "supino-inclinado-com-halteres",
+  "puxada-alta-pegada-neutra",
+  "elevacao-lateral-no-cabo",
+  "encolhimento-kelso-apoiado",
+  "rosca-martelo"
+];
+COM_ANIM_REPDB.forEach(function(id) {
+  const m = MIDIA[id] || (MIDIA[id] = {});
+  m.anim = {
+    inicio: BASE_ANIM + id + "-inicio.webp",
+    pico: BASE_ANIM + id + "-pico.webp",
+    fonte: "RepDB",
+    licenca: "RepDB Free Tier License v1.0",
+    credito: CREDITO_REPDB
+  };
+});
 
 // src/dominio/catalogo.ts
 function sem(n) {

@@ -512,3 +512,18 @@ describe('mídia do exercício', () => {
     expect(semente).not.toMatch(/midia/);
   });
 });
+
+test('animações do RepDB: todo exercício com animação existe, aponta para o bucket midia e leva o crédito da licença', async () => {
+  const { COM_ANIM_REPDB, BASE_ANIM, CREDITO_REPDB } = await import('../../src/dominio/catalogo-midia');
+  const { SEMENTE: S } = await import('../../src/dominio/catalogo');
+  assert.ok(COM_ANIM_REPDB.length > 0);
+  for (const id of COM_ANIM_REPDB) {
+    const ex = S.ex[id];
+    assert.ok(ex, id);
+    const a = ex.midia && ex.midia.anim;
+    assert.ok(a, id);
+    assert.strictEqual(a!.inicio, BASE_ANIM + id + '-inicio.webp');
+    assert.strictEqual(a!.pico, BASE_ANIM + id + '-pico.webp');
+    assert.strictEqual(a!.credito, CREDITO_REPDB);
+  }
+});
