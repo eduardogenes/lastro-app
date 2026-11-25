@@ -184,9 +184,18 @@ Só depois que a tela `/autorizar` existir, para ninguém cair numa página vazi
 
 ## Ainda em aberto
 
-- Pasta `api/` simples ou Nitro: decidir no primeiro passo da etapa 1, testando o pacote com o `monta.ts`.
-- A versão de protocolo que o Claude negocia: medir no primeiro teste, pelo cabeçalho.
 - O formato da proposta de plano alimentar, para a etapa 3.
+- Medir na prévia: a versão do protocolo que o claude.ai pede no `initialize` (ou no cabeçalho), se ele registra um cliente por conector ou um só, e se o nome do conector vira o `client_name`.
+
+## Etapa 1, parte 1: decidido na implementação (24/11/2026)
+
+- **Pasta `api/` da Vercel, sem Nitro.** O projeto continua um Vite estático; a Vercel transforma `api/mcp/[papel].ts` numa função Node no formato Web (`export const POST = …`, Request → Response). Toda a lógica mora em `src/mcp/` e é testada sem rede (`tests/dominio/mcp.test.ts`); `api/` só monta as dependências reais.
+- **Sem SDK do MCP.** O servidor (`src/mcp/servidor.ts`) é JSON-RPC escrito à mão: `initialize`, `ping`, `tools/list`, `tools/call`, notificações com 202. Responde sempre JSON, sem SSE e sem sessão, o que serve às versões 2025-03-26, 2025-06-18 e 2025-11-25 (que começam por `initialize`) e à 2026-07-28 (sem `initialize`, versão no cabeçalho `MCP-Protocol-Version`). Versão desconhecida no cabeçalho: 400. Motivo: são quatro métodos, e nenhuma troca de versão de pacote muda a porta sem um teste ficar vermelho.
+- **Token conferido sem biblioteca.** `src/mcp/jwt.ts` confere o access token do Supabase pelo JWKS (`/auth/v1/.well-known/jwks.json`, ES256, WebCrypto): assinatura, `kid`, `iss` = `https://<ref>.supabase.co/auth/v1`, `aud` = `authenticated`, `exp`. A leitura usa o mesmo token no PostgREST (`estado?select=data`), então quem decide o que se lê continua sendo o RLS.
+- **Autorização da porta (RFC 9728).** Sem token válido: 401 com `WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/api/mcp/<papel>"`. O metadado (rota reescrita no `vercel.json` para `api/mcp/<papel>?metadado=1`) diz `resource` = a URL da porta e `authorization_servers` = o emissor do Supabase.
+- **Endpoints do consentimento (lidos no código do `supabase/auth`, `internal/api/api.go`):** `GET /auth/v1/oauth/authorizations/{id}` (com o token da pessoa) devolve `authorization_id`, `redirect_uri`, `client {id, name}`, `user {id, email}` e `scope`, ou só `redirect_url` quando já houve consentimento; `POST /auth/v1/oauth/authorizations/{id}/consent` com `{"action": "approve" | "deny"}` devolve `redirect_url`. Os grants ficam em `GET`/`DELETE /auth/v1/user/oauth/grants` (parte 2).
+- **Ferramentas por papel (`src/mcp/ferramentas.ts`)**, todas só de leitura (`readOnlyHint`), montadas do mesmo texto do espelho (`montaArquivos`): treinador lê `programa`, `mudancas`, `historico`, `series`, `exercicios`, `cardio`, `corpo`, `catalogo`; nutricionista lê `plano_alimentar`, `dias_de_comida`, `alimentos`, `corpo`; assistente lê `resumo`, `programa`, `mudancas`, `plano_alimentar`, `corpo`. Resposta cortada em 24 mil caracteres, com a dica de como pedir o resto. Os papéis ficam em `src/mcp/ferramentas.ts` (e não em `api/mcp/papeis.ts`), para entrarem na checagem de tipos e nos testes.
+- **A tela `/autorizar` é uma página à parte (`public/autorizar.html`)**, sem o bundle do app: abre no Safari, fora do app instalado, com sessão própria só daquela aba (`sessionStorage`), sem mexer na do app. Estados do protótipo: entrar, pedido geral "só lê", já permitido (redireciona sozinho), vencido, não carregou, recusado, permitido. O service worker deixa `/autorizar` e `/api/` passarem direto, para a página não ser gravada no cache como o `index.html`. Um teste confere que o endereço e a chave do projeto são os do `src/infra/supabase.ts`.
 
 ## Decidido pelo dono em 23/11/2026, depois do protótipo
 

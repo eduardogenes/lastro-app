@@ -111,6 +111,12 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
+  // A página de autorizar dos agentes (public/autorizar.html) e as portas do
+  // MCP (api/) passam direto. Sem isto, a navegação para /autorizar seria
+  // gravada no cache COMO o index.html, e o app abriria offline na página de
+  // consentimento.
+  if (mesmaOrigem && (/\/autorizar(\.html)?$/.test(url.pathname) || url.pathname.indexOf('/api/') === 0)) return;
+
   // Navegação sempre resolve para o index em cache: garante abrir offline
   if (req.mode === 'navigate') {
     e.respondWith(

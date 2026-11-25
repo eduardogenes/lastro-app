@@ -19,5 +19,5 @@
     "allowJs": true,
     "checkJs": false
   },
-  "include": ["src", "vite.config.js", "ferramentas/espelho/monta.ts"]
+  "include": ["src", "api", "vite.config.js", "ferramentas/espelho/monta.ts"]
 }

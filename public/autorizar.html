@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Autorizar · Lastro</title>
+<link rel="icon" href="./icone.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* /autorizar: a página de consentimento do servidor OAuth do Supabase para os
+   conectores do MCP (docs/mcp/00-desenho.md). Página à parte, sem o bundle do
+   app: abre no Safari, fora do app instalado. Tokens da direção 3, sempre claro. */
+:root {
+  color-scheme: light;
+  --fundo: #F6F3EC; --superficie: #FFFDF8; --quieta: #EBE6DA; --divisoria: #DFDACE; --contorno: #858073;
+  --texto: #0F0F0D; --texto-2: #56554E; --legenda: #62615A; --sobre-acao: #F6F3EC;
+  --treino: #D2F23A; --refeicao: #FF9A4D; --corpo: #D3C6FF; --semana: #BBDDFB; --feito: #BEEBD2; --atencao: #FF9A4D;
+  --f-titulo: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif;
+  --f-texto: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --margem: 20px; --alvo: 44px; --mola: cubic-bezier(.2,.9,.25,1);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--fundo); color: var(--texto); font: 400 16px/1.5 var(--f-texto); overscroll-behavior: none; }
+body { min-height: 100vh; min-height: 100svh; padding: env(safe-area-inset-top, 0px) max(0px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(0px, env(safe-area-inset-left, 0px)); }
+main { max-width: 440px; margin: 0 auto; padding-bottom: 40px; min-height: 100svh; display: flex; flex-direction: column; }
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+h1, h2, p { margin: 0; }
+:focus-visible { outline: 2.5px solid var(--texto); outline-offset: 3px; }
+svg.i { width: 22px; height: 22px; display: block; flex: 0 0 auto; }
+.marca { display: flex; align-items: center; gap: 8px; padding: 18px var(--margem) 0; font: 800 17px/1 var(--f-titulo); letter-spacing: -.02em; }
+.marca i { width: 26px; height: 26px; border-radius: 8px; background: var(--texto); display: grid; place-items: center; }
+.marca i::after { content: ''; width: 12px; height: 4px; border-radius: 2px; background: var(--treino); }
+.topo { padding: 22px var(--margem) 0; }
+.topo h1, .centro h1 { font: 800 36px/.98 var(--f-titulo); letter-spacing: -.04em; text-wrap: balance; }
+.topo p { font: 500 15px/1.38 var(--f-texto); color: var(--texto-2); margin-top: 10px; text-wrap: pretty; }
+.sec { padding: 18px var(--margem) 0; }
+.apoio { font: 500 14px/1.4 var(--f-texto); color: var(--texto-2); margin-top: 10px; text-wrap: pretty; overflow-wrap: anywhere; }
+.apoio b { color: var(--texto); }
+.quem { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.cliente { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--divisoria); font: 600 13px/1.25 var(--f-texto); color: var(--texto-2); max-width: 100%; }
+.cliente b { font: 700 15px var(--f-titulo); color: var(--texto); }
+.cliente i { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; background: var(--corpo); display: grid; place-items: center; font: 800 14px var(--f-titulo); font-style: normal; color: var(--texto); }
+.cliente span { overflow-wrap: anywhere; }
+.caixa { margin-top: 12px; border-radius: 22px; box-shadow: inset 0 0 0 2px var(--texto); padding: 12px 14px; background: var(--feito); display: flex; gap: 12px; align-items: flex-start; }
+.caixa p { font: 700 16px/1.25 var(--f-titulo); }
+.caixa p small { display: block; font: 500 13px/1.35 var(--f-texto); margin-top: 3px; }
+.caixa.erro { background: var(--atencao); }
+.papeis { margin-top: 12px; border-radius: 22px; background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--divisoria); }
+.papeis summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 16px; cursor: pointer; font: 700 15px/1.2 var(--f-titulo); }
+.papeis summary::-webkit-details-marker { display: none; }
+.papeis summary svg { width: 18px; height: 18px; transition: transform .2s var(--mola); }
+.papeis[open] summary svg { transform: rotate(90deg); }
+.lin { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 8px 16px; border-top: 1.5px solid var(--divisoria); }
+.lin-t { flex: 1; min-width: 0; }
+.lin-t b { display: block; font: 700 15px/1.15 var(--f-titulo); }
+.lin-t span { display: block; font: 500 13px/1.3 var(--f-texto); color: var(--legenda); margin-top: 2px; }
+.o { flex: 0 0 42px; width: 42px; height: 42px; border-radius: 50%; background: var(--quieta); display: grid; place-items: center; }
+.o svg { width: 20px; height: 20px; }
+.o.treino { background: var(--treino); } .o.refeicao { background: var(--refeicao); } .o.semana { background: var(--semana); } .o.feito { background: var(--feito); } .o.atencao { background: var(--atencao); }
+.acoes { display: flex; gap: 8px; margin-top: 18px; }
+.btn { flex: 1; min-height: 58px; padding: 0 18px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 10px; font: 700 18px/1 var(--f-titulo); letter-spacing: -.01em; transition: transform .15s var(--mola), opacity .15s; }
+.btn:active { transform: scale(.97); }
+.btn[disabled] { opacity: .55; cursor: default; }
+.btn.p { background: var(--texto); color: var(--sobre-acao); }
+.btn.c { flex: 0 1 auto; padding: 0 22px; box-shadow: inset 0 0 0 2px var(--texto); font-size: 16px; }
+.btn.c.cheio { flex: 1; }
+.saida { display: inline-flex; align-items: center; min-height: var(--alvo); font: 600 14px/1.2 var(--f-texto); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1.5px; }
+.rotulo { display: block; margin-top: 12px; font: 700 13px var(--f-texto); color: var(--texto-2); }
+.campo { display: block; width: 100%; min-height: 52px; margin-top: 4px; padding: 0 14px; border-radius: 16px; border: 1.5px solid var(--contorno); background: var(--superficie); font: 500 17px var(--f-texto); color: var(--texto); }
+.campo:focus-visible { outline: 2.5px solid var(--texto); outline-offset: 1px; }
+.msg { margin-top: 10px; font: 600 14px/1.35 var(--f-texto); color: var(--texto); min-height: 1.35em; }
+.centro { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 var(--margem) 40px; }
+.centro .o { flex: 0 0 56px; width: 56px; height: 56px; }
+.centro .o svg { width: 26px; height: 26px; }
+.centro h1 { margin-top: 18px; }
+.centro p { font: 500 15px/1.38 var(--f-texto); color: var(--texto-2); margin-top: 10px; }
+.gira { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid var(--divisoria); border-top-color: var(--texto); animation: gira .8s linear infinite; display: inline-block; vertical-align: -3px; margin-right: 8px; }
+@keyframes gira { to { transform: rotate(360deg); } }
+.entra { animation: entra .28s var(--mola) both; }
+@keyframes entra { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .gira { animation: none; } .entra { animation: none; } .btn { transition: none; } }
+h1[tabindex="-1"]:focus { outline: none; }
+.vis { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<main id="tela" aria-live="polite"><div class="marca"><i></i>Lastro</div><div class="centro"><p><span class="gira"></span>Abrindo o pedido…</p></div></main>
+<script>
+(function () {
+  'use strict';
+  // O mesmo projeto do app (src/infra/supabase.ts; um teste confere as duas cópias).
+  var URL_BASE = 'https://wetwqqrrgormwyktewlm.supabase.co';
+  var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldHdxcXJyZ29ybXd5a3Rld2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1OTQzMDIsImV4cCI6MjEwMzE3MDMwMn0.5Tdn3OW4khACuUvOdbcSWyK_UC3v8pm46mwB3MliAj0';
+  var IC = {"escudo": "M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z", "dir": "M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z", "ok": "M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z", "x": "M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z", "atencao": "M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z", "semrede": "M213.92,210.62a8,8,0,1,1-11.84,10.76l-52-57.15a60,60,0,0,0-57.41,7.24,8,8,0,1,1-9.42-12.93A75.43,75.43,0,0,1,128,144c1.28,0,2.55,0,3.82.1L104.9,114.49A108,108,0,0,0,61,135.31,8,8,0,0,1,49.73,134,8,8,0,0,1,51,122.77a124.27,124.27,0,0,1,41.71-21.66L69.37,75.4a155.43,155.43,0,0,0-40.29,24A8,8,0,0,1,18.92,87,171.87,171.87,0,0,1,58,62.86L42.08,45.38A8,8,0,1,1,53.92,34.62ZM128,192a12,12,0,1,0,12,12A12,12,0,0,0,128,192ZM237.08,87A172.3,172.3,0,0,0,106,49.4a8,8,0,1,0,2,15.87A158.33,158.33,0,0,1,128,64a156.25,156.25,0,0,1,98.92,35.37A8,8,0,0,0,237.08,87ZM195,135.31a8,8,0,0,0,11.24-1.3,8,8,0,0,0-1.3-11.24,124.25,124.25,0,0,0-51.73-24.2A8,8,0,1,0,150,114.24,108.12,108.12,0,0,1,195,135.31Z", "halter": "M248,120h-8V88a16,16,0,0,0-16-16H208V64a16,16,0,0,0-16-16H168a16,16,0,0,0-16,16v56H104V64A16,16,0,0,0,88,48H64A16,16,0,0,0,48,64v8H32A16,16,0,0,0,16,88v32H8a8,8,0,0,0,0,16h8v32a16,16,0,0,0,16,16H48v8a16,16,0,0,0,16,16H88a16,16,0,0,0,16-16V136h48v56a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16v-8h16a16,16,0,0,0,16-16V136h8a8,8,0,0,0,0-16ZM32,168V88H48v80Zm56,24H64V64H88V192Zm104,0H168V64h24V175.82c0,.06,0,.12,0,.18s0,.12,0,.18V192Zm32-24H208V88h16Z", "prato": "M72,88V40a8,8,0,0,1,16,0V88a8,8,0,0,1-16,0ZM216,40V224a8,8,0,0,1-16,0V176H152a8,8,0,0,1-8-8,268.75,268.75,0,0,1,7.22-56.88c9.78-40.49,28.32-67.63,53.63-78.47A8,8,0,0,1,216,40ZM200,53.9c-32.17,24.57-38.47,84.42-39.7,106.1H200ZM119.89,38.69a8,8,0,1,0-15.78,2.63L112,88.63a32,32,0,0,1-64,0l7.88-47.31a8,8,0,1,0-15.78-2.63l-8,48A8.17,8.17,0,0,0,32,88a48.07,48.07,0,0,0,40,47.32V224a8,8,0,0,0,16,0V135.32A48.07,48.07,0,0,0,128,88a8.17,8.17,0,0,0-.11-1.31Z", "bussola": "M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM172.42,72.84l-64,32a8.05,8.05,0,0,0-3.58,3.58l-32,64A8,8,0,0,0,80,184a8.1,8.1,0,0,0,3.58-.84l64-32a8.05,8.05,0,0,0,3.58-3.58l32-64a8,8,0,0,0-10.74-10.74ZM138,138,97.89,158.11,118,118l40.15-20.07Z"};
+  var CHAVE = 'lastro-autorizar-v1';
+
+  var tela = document.getElementById('tela');
+  var id = new URLSearchParams(location.search).get('authorization_id') || '';
+  var pedido = null; // detalhes do pedido, quando carregados
+
+  function ic(k) { return '<svg class="i" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="' + IC[k] + '"/></svg>'; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function host(u) { try { return new URL(u).host; } catch (e) { return ''; } }
+
+  // A sessão desta página fica só nesta aba (sessionStorage): não mexe na do app.
+  function sessao() { try { return JSON.parse(sessionStorage.getItem(CHAVE) || 'null'); } catch (e) { return null; } }
+  function guarda(s) { try { if (s) sessionStorage.setItem(CHAVE, JSON.stringify(s)); else sessionStorage.removeItem(CHAVE); } catch (e) {} }
+
+  function chama(caminho, init, token) {
+    init = init || {};
+    var h = { apikey: ANON, 'Content-Type': 'application/json', Accept: 'application/json' };
+    if (token) h.Authorization = 'Bearer ' + token;
+    init.headers = h;
+    return fetch(URL_BASE + caminho, init).then(function (r) {
+      return r.text().then(function (t) { var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {} return { status: r.status, ok: r.ok, j: j || {} }; });
+    });
+  }
+
+  function tokens(j) {
+    return { token: j.access_token, refresh: j.refresh_token, expira: Date.now() + (Number(j.expires_in) || 3600) * 1000, email: (j.user && j.user.email) || '' };
+  }
+
+  function renova(s) {
+    if (!s || !s.refresh) return Promise.resolve(null);
+    return chama('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: JSON.stringify({ refresh_token: s.refresh }) })
+      .then(function (r) { if (!r.ok) return null; var n = tokens(r.j); guarda(n); return n; }, function () { return null; });
+  }
+
+  function tokenValido() {
+    var s = sessao();
+    if (!s) return Promise.resolve(null);
+    if (s.expira - Date.now() > 60000) return Promise.resolve(s);
+    return renova(s);
+  }
+
+  function pinta(html, foco) {
+    tela.innerHTML = '<div class="marca"><i></i>Lastro</div>' + html;
+    tela.firstElementChild.nextElementSibling && tela.firstElementChild.nextElementSibling.classList.add('entra');
+    var alvo = foco ? tela.querySelector(foco) : tela.querySelector('h1');
+    if (alvo) { if (!alvo.hasAttribute('tabindex') && alvo.tagName === 'H1') alvo.setAttribute('tabindex', '-1'); alvo.focus({ preventScroll: true }); }
+  }
+
+  var PAPEIS = [
+    ['Treinador', 'halter', 'treino', 'treinos, descanso e falta, dores e corpo'],
+    ['Nutricionista', 'prato', 'refeicao', 'comida, plano, os 14 dias e corpo'],
+    ['Assistente', 'bussola', 'semana', 'um resumo de tudo e o que está pendente']
+  ];
+
+  function centro(cls, icone, titulo, texto, acoes) {
+    pinta('<div class="centro"><span class="o ' + cls + '">' + ic(icone) + '</span><h1>' + titulo + '</h1>' + (texto ? '<p>' + texto + '</p>' : '') + (acoes || '') + '</div>');
+  }
+
+  function vencido() {
+    centro('atencao', 'atencao', 'Este pedido não vale mais',
+      'Ele passou de 10 minutos ou já foi usado. Nada foi compartilhado. No Claude, conecte de novo: o pedido novo abre esta página outra vez.');
+  }
+
+  function falhou() {
+    centro('', 'semrede', 'O pedido não carregou', 'Sem conexão com o Lastro agora. Nada foi compartilhado. O pedido vale por 10 minutos.',
+      '<div class="acoes"><button class="btn p" id="denovo">Tentar de novo</button></div>');
+    document.getElementById('denovo').onclick = carrega;
+  }
+
+  function entrar(msg) {
+    pinta('<div class="topo"><h1>Entre para ver o pedido</h1>' +
+      '<p>O Claude pediu para ler o seu Lastro. Entre para decidir. Este navegador não usa a sessão do app instalado, por isso pede de novo.</p></div>' +
+      '<form class="sec" id="f" novalidate>' +
+      '<label class="rotulo" for="email">E-mail</label><input id="email" class="campo" type="email" autocomplete="username" inputmode="email" required>' +
+      '<label class="rotulo" for="senha">Senha</label><input id="senha" class="campo" type="password" autocomplete="current-password" required>' +
+      '<p class="msg" id="msg" role="alert">' + esc(msg || '') + '</p>' +
+      '<div class="acoes" style="margin-top:6px"><button class="btn p" id="ent" type="submit">Entrar</button></div>' +
+      '<p class="apoio">Depois de entrar, o pedido aparece aqui mesmo.</p></form>', '#email');
+    document.getElementById('f').onsubmit = function (e) {
+      e.preventDefault();
+      var email = document.getElementById('email').value.trim(), senha = document.getElementById('senha').value;
+      var bt = document.getElementById('ent'), m = document.getElementById('msg');
+      if (!email || !senha) { m.textContent = 'Preencha o e-mail e a senha.'; return; }
+      bt.disabled = true; bt.textContent = 'Entrando…'; m.textContent = '';
+      chama('/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email: email, password: senha }) }).then(function (r) {
+        if (!r.ok) { bt.disabled = false; bt.textContent = 'Entrar'; m.textContent = /invalid/i.test(r.j.error_description || r.j.msg || r.j.error_code || '') ? 'E-mail ou senha não conferem.' : 'Não deu para entrar agora. Tente de novo.'; return; }
+        guarda(tokens(r.j));
+        carrega();
+      }, function () { bt.disabled = false; bt.textContent = 'Entrar'; m.textContent = 'Sem conexão. Tente de novo.'; });
+    };
+  }
+
+  function volta(url, titulo, texto) {
+    centro('feito', 'ok', titulo, texto, '<div class="acoes"><a class="btn p" id="ir" href="' + esc(url) + '" style="text-decoration:none">Voltar ao Claude</a></div>' +
+      '<p class="apoio">Para desligar depois: no app, Ajustes › Agentes.</p>');
+    setTimeout(function () { location.assign(url); }, 600);
+  }
+
+  function mostraPedido(p) {
+    pedido = p;
+    var nome = (p.client && p.client.name) || 'Um aplicativo';
+    var destino = host(p.redirect_uri);
+    var conta = (p.user && p.user.email) || (sessao() || {}).email || '';
+    pinta('<div class="topo"><h1>' + (nome === 'Claude' ? 'O Claude' : esc(nome)) + ' quer ler o seu Lastro</h1>' +
+      '<div class="quem"><span class="cliente"><i>' + esc(nome.charAt(0).toUpperCase()) + '</i><span><b>' + esc(nome) + '</b>' + (destino ? ' · volta para ' + esc(destino) : '') + '</span></span></div></div>' +
+      '<div class="sec">' +
+      '<div class="caixa">' + ic('escudo') + '<p>Só lê. Nada no app muda.<small>Nenhum agente grava, muda ou apaga. A sua senha não vai para o Claude.</small></p></div>' +
+      '<details class="papeis"><summary>O que cada papel lê ' + ic('dir') + '</summary><div>' +
+      PAPEIS.map(function (x) { return '<div class="lin"><span class="o ' + x[2] + '">' + ic(x[1]) + '</span><span class="lin-t"><b>' + x[0] + '</b><span>' + x[3] + '</span></span></div>'; }).join('') +
+      '</div></details>' +
+      '<p class="apoio">Cada conector lê só a parte do papel dele.</p>' +
+      '<p class="msg" id="msg" role="alert"></p>' +
+      '<div class="acoes" style="margin-top:6px"><button class="btn p" id="sim">Permitir</button><button class="btn c" id="nao">Recusar</button></div>' +
+      (conta ? '<p class="apoio">Você entrou como <b>' + esc(conta) + '</b>. <button class="saida" id="sair">Não é você? Sair</button></p>' : '') +
+      '</div>');
+    document.getElementById('sim').onclick = function () { decide('approve'); };
+    document.getElementById('nao').onclick = function () { decide('deny'); };
+    var sair = document.getElementById('sair');
+    if (sair) sair.onclick = function () { guarda(null); entrar(); };
+  }
+
+  function decide(acao) {
+    var sim = document.getElementById('sim'), nao = document.getElementById('nao'), m = document.getElementById('msg');
+    sim.disabled = nao.disabled = true;
+    (acao === 'approve' ? sim : nao).textContent = acao === 'approve' ? 'Permitindo…' : 'Recusando…';
+    tokenValido().then(function (s) {
+      if (!s) { entrar('A sessão expirou. Entre de novo.'); return; }
+      return chama('/auth/v1/oauth/authorizations/' + encodeURIComponent(id) + '/consent', { method: 'POST', body: JSON.stringify({ action: acao }) }, s.token).then(function (r) {
+        if (r.ok && r.j.redirect_url) {
+          if (acao === 'approve') volta(r.j.redirect_url, 'Pronto. Pode voltar ao Claude.', 'O conector já pode ler. Se esta página não fechar sozinha, toque abaixo.');
+          else {
+            centro('', 'x', 'Recusado. Nada foi compartilhado.', 'O Claude recebe o aviso de que você não permitiu. Para tentar de novo, conecte outra vez no Claude.',
+              '<div class="acoes"><a class="btn c cheio" href="' + esc(r.j.redirect_url) + '" style="text-decoration:none">Voltar ao Claude</a></div>');
+            setTimeout(function () { location.assign(r.j.redirect_url); }, 1200);
+          }
+          return;
+        }
+        if (r.status === 404 || r.status === 400 || r.status === 410) { vencido(); return; }
+        if (r.status === 401) { entrar('A sessão expirou. Entre de novo.'); return; }
+        sim.disabled = nao.disabled = false; sim.textContent = 'Permitir'; nao.textContent = 'Recusar';
+        m.textContent = 'Não deu para responder agora. Tente de novo.';
+      });
+    }, function () {
+      sim.disabled = nao.disabled = false; sim.textContent = 'Permitir'; nao.textContent = 'Recusar';
+      m.textContent = 'Sem conexão. Tente de novo.';
+    });
+  }
+
+  function carrega() {
+    if (!id) { vencido(); return; }
+    tokenValido().then(function (s) {
+      if (!s) { entrar(); return; }
+      pinta('<div class="centro"><p><span class="gira"></span>Abrindo o pedido…</p></div>');
+      return chama('/auth/v1/oauth/authorizations/' + encodeURIComponent(id), { method: 'GET' }, s.token).then(function (r) {
+        if (r.status === 401) { guarda(null); entrar('A sessão expirou. Entre de novo.'); return; }
+        if (!r.ok) { if (r.status >= 500) falhou(); else vencido(); return; }
+        // já permitido antes, para os mesmos escopos: o Supabase aprova sozinho
+        if (r.j.redirect_url && !r.j.authorization_id) {
+          centro('feito', 'ok', 'Você já permitiu antes', '<span class="gira"></span>Voltando ao Claude…',
+            '<a class="saida" href="' + esc(r.j.redirect_url) + '">Voltar agora</a>');
+          setTimeout(function () { location.assign(r.j.redirect_url); }, 600);
+          return;
+        }
+        mostraPedido(r.j);
+      });
+    }).catch(falhou);
+  }
+
+  carrega();
+})();
+</script>
+</body>
+</html>
