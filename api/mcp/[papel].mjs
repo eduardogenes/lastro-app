@@ -500,17 +500,17 @@ var MOVIMENTOS_DE_BOX = [
   { n: "Kettlebell swing", car: "halter1", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 20, cue: "Quadril, n\xE3o ombro: o bra\xE7o s\xF3 acompanha o que o quadril lan\xE7ou." },
   { n: "Thruster", car: "halter", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 15, cue: "Agachamento e desenvolvimento no mesmo movimento, sem pausa no meio." },
   { n: "Devil press", car: "halter", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 10, cue: "Burpee com halteres e desenvolvimento no fim. Cara." },
-  { n: "Clean and jerk", car: "barra", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 10 },
-  { n: "Push press", car: "barra", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 12 },
+  { n: "Clean and jerk", car: "barra", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 10, cue: "Barra rente ao corpo na puxada e no encaixe: ela sobe reta, n\xE3o em arco. Encaixe com o cotovelo alto antes de empurrar para cima." },
+  { n: "Push press", car: "barra", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 12, cue: "O impulso vem de um meio agachamento curto e r\xE1pido, com o calcanhar no ch\xE3o. A barra sai junto com a extens\xE3o do joelho, sem pausa entre os dois." },
   { n: "Snatch com halter", car: "halter1", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 20, cue: "Alterna o bra\xE7o. O halter sobe pela linha do corpo, n\xE3o em arco." },
   // repetição sem carga — forçar um campo de peso aqui seria ruído
   { n: "Burpee", car: "corpo", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 20, cue: "Peito no ch\xE3o, salto no fim. Cad\xEAncia constante custa menos que arrancar e parar." },
   { n: "Box jump", car: "corpo", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 20, cue: "Descer com controle poupa mais tend\xE3o do que subir com for\xE7a." },
   { n: "Double under", car: "corpo", g: "", s: 1, r: "", c: 0, d: D_CURTO, u: "rep", q: 50, cue: "Punho, n\xE3o bra\xE7o. Corda de velocidade." },
-  { n: "Pula-corda", car: "corpo", g: "", s: 1, r: "", c: 0, d: D_CURTO, u: "rep", q: 100 },
-  { n: "Air squat", car: "corpo", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 30 },
-  { n: "Sit-up", car: "corpo", g: "", s: 1, r: "", c: 0, d: D_CURTO, u: "rep", q: 25 },
-  { n: "Mountain climber", car: "corpo", g: "", s: 1, r: "", c: 0, d: D_CURTO, u: "rep", q: 40 },
+  { n: "Pula-corda", car: "corpo", g: "", s: 1, r: "", c: 0, d: D_CURTO, u: "rep", q: 100, cue: "Salto baixo, na ponta do p\xE9. O giro vem do punho, com o cotovelo junto ao corpo." },
+  { n: "Air squat", car: "corpo", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "rep", q: 30, cue: "Peso no p\xE9 inteiro e joelho na dire\xE7\xE3o da ponta do p\xE9. Desce at\xE9 o quadril passar do joelho sem arredondar a lombar." },
+  { n: "Sit-up", car: "corpo", g: "", s: 1, r: "", c: 0, d: D_CURTO, u: "rep", q: 25, cue: "Sobe enrolando o tronco, sem puxar o pesco\xE7o com a m\xE3o. Desce com controle at\xE9 as costas tocarem o ch\xE3o." },
+  { n: "Mountain climber", car: "corpo", g: "", s: 1, r: "", c: 0, d: D_CURTO, u: "rep", q: 40, cue: "Quadril na linha do ombro, sem empinar. O joelho vem at\xE9 o peito em ritmo constante." },
   // distância sem carga
   { n: "Lunge", car: "corpo", g: "", s: 1, r: "", c: 1, d: D_CURTO, u: "m", q: 50, cue: "A vers\xE3o sem saco. Joelho tocando o ch\xE3o a cada passo." },
   // tempo — a janela é fixa e o que melhora é quanto sai dela
@@ -1048,6 +1048,157 @@ var ALT_NOMES = {
   "leg-press-45": ["Leg press 45 graus"]
 };
 
+// src/dominio/catalogo-curadoria.ts
+var CURADORIA = {
+  "abdominal-na-polia-alta-ajoelhado": { equiv: ["crunch-no-cabo-ou-maquina", "maquina-de-abdominal", "crunch-com-anilha-no-colo"] },
+  "abducao-deitado-com-caneleira": { equiv: ["abdutora", "abdutora-em-pe-na-polia", "passada-lateral-com-elastico"] },
+  "abdutora-em-pe-na-polia": { equiv: ["abdutora", "abducao-deitado-com-caneleira", "passada-lateral-com-elastico"] },
+  "adutora-em-pe-na-polia": { equiv: ["adutora", "agachamento-sumo-no-smith", "leg-press-com-pe-afastado"] },
+  "afundo-reverso-com-halteres": { alt: ["Dumbbell reverse lunge", "Passada reversa com halteres", "Afundo para tr\xE1s com halteres"], cue: "Passo para tr\xE1s longo, com o tronco levemente \xE0 frente. Sobe empurrando o calcanhar da perna da frente.", equiv: ["agachamento-bulgaro-com-halteres", "lunge", "lunges-com-sandbag"], conferido: 1 },
+  "agachamento-bulgaro-com-halteres": { alt: ["Bulgarian split squat", "Dumbbell Bulgarian split squat", "B\xFAlgaro com halteres", "Afundo b\xFAlgaro com halteres"], cue: "P\xE9 da frente longe o bastante para descer sem o calcanhar sair do ch\xE3o. A perna de tr\xE1s s\xF3 apoia: quem trabalha \xE9 a da frente.", equiv: ["afundo-reverso-com-halteres", "lunge", "agachamento-goblet"], conferido: 1 },
+  "agachamento-goblet": { alt: ["Goblet squat", "Agachamento ta\xE7a", "Dumbbell goblet squat"], cue: "Halter colado no peito e cotovelo por dentro dos joelhos no fundo. Tronco alto, sem o calcanhar sair do ch\xE3o.", equiv: ["agachamento-no-smith", "agachamento-hack", "leg-press"], conferido: 1 },
+  "agachamento-hack": { equiv: ["pendulum-squat", "agachamento-no-smith", "belt-squat"] },
+  "agachamento-sumo-no-smith": { mus: [["adutores", 1], ["gl\xFAteo", 0.5], ["quadr\xEDceps", 0.5]], alt: ["Sumo squat no Smith", "Smith machine sumo squat"], equiv: ["leg-press-com-pe-afastado", "adutora", "adutora-em-pe-na-polia"], conferido: 1 },
+  "air-squat": { cue: "Peso no p\xE9 inteiro e joelho na dire\xE7\xE3o da ponta do p\xE9. Desce at\xE9 o quadril passar do joelho sem arredondar a lombar.", equiv: ["agachamento-goblet", "wall-balls", "lunge"] },
+  "alongamento-do-flexor-do-quadril-ajoelhado": { alt: ["Half-kneeling hip flexor stretch", "Kneeling hip flexor stretch", "Alongamento do psoas ajoelhado"], cue: "Contraia o gl\xFAteo da perna de tr\xE1s e encaixe a pelve antes de levar o quadril \xE0 frente. Se a lombar arquear, ela rouba o alongamento.", conferido: 1 },
+  "assault-bike": { equiv: ["bike-erg", "remo-ergometro", "ski-erg"] },
+  "barra-fixa-assistida-pegada-neutra": { equiv: ["puxada-alta-pegada-neutra", "puxada-neutra-na-maquina", "pulldown-convergente"] },
+  "belt-squat": { equiv: ["agachamento-hack", "pendulum-squat", "leg-press"] },
+  "bike-erg": { equiv: ["assault-bike", "remo-ergometro", "corrida"] },
+  "box-jump": { equiv: ["burpee-broad-jump", "air-squat"] },
+  "burpee": { equiv: ["burpee-broad-jump", "mountain-climber", "devil-press"] },
+  "burpee-broad-jump": { equiv: ["burpee", "box-jump", "devil-press"] },
+  "cadeira-flexora-sentada-de-outro-modelo": { equiv: ["cadeira-flexora-sentada", "flexora-unilateral-em-pe", "mesa-flexora-deitada"] },
+  "clean-and-jerk": { cue: "Barra rente ao corpo na puxada e no encaixe: ela sobe reta, n\xE3o em arco. Encaixe com o cotovelo alto antes de empurrar para cima.", equiv: ["push-press", "snatch-com-halter", "thruster"] },
+  "coice-na-maquina": { equiv: ["elevacao-pelvica-na-maquina", "hip-thrust-no-smith", "elevacao-pelvica-com-barra"] },
+  "corrida": { equiv: ["remo-ergometro", "assault-bike", "bike-erg"] },
+  "crossover-na-polia-baixa": { equiv: ["crossover-de-baixo-para-cima", "crucifixo-inclinado-no-cabo", "peck-deck-com-banco-inclinado"] },
+  "crossover-na-polia-media": { equiv: ["pec-deck", "crucifixo-com-halteres", "peck-deck-unilateral"] },
+  "crucifixo-com-halteres": { equiv: ["crossover-na-polia-media", "pec-deck", "peck-deck-unilateral"] },
+  "crucifixo-inclinado-com-halteres": { equiv: ["crucifixo-inclinado-no-cabo", "peck-deck-com-banco-inclinado", "crossover-de-baixo-para-cima"] },
+  "crucifixo-inverso-com-halteres": { equiv: ["crucifixo-inverso-com-halteres-no-banco-inclinado", "reverse-fly-no-cabo", "reverse-pec-deck"] },
+  "crucifixo-inverso-com-halteres-no-banco-inclinado": { equiv: ["crucifixo-inverso-com-halteres", "reverse-pec-deck", "crucifixo-inverso-no-cabo"] },
+  "crunch-com-anilha-no-colo": { equiv: ["crunch-no-cabo-ou-maquina", "maquina-de-abdominal", "sit-up"] },
+  "dead-bug": { alt: ["Inseto morto"], cue: "Lombar colada no ch\xE3o do come\xE7o ao fim. Se ela descolar, encurte a amplitude de bra\xE7o e perna.", equiv: ["pallof-press", "prancha", "ab-wheel"], conferido: 1 },
+  "devil-press": { equiv: ["burpee", "snatch-com-halter", "thruster"] },
+  "double-under": { equiv: ["pula-corda", "mountain-climber"] },
+  "elevacao-de-pernas-no-banco": { equiv: ["elevacao-de-pernas-ou-reverse-crunch", "reverse-crunch-no-banco-declinado", "elevacao-de-pernas-suspenso"] },
+  "elevacao-de-pernas-suspenso": { equiv: ["elevacao-de-pernas-ou-reverse-crunch", "elevacao-de-pernas-no-banco", "reverse-crunch-no-banco-declinado"] },
+  "elevacao-frontal-bilateral-no-cabo": { equiv: ["elevacao-frontal-unilateral-no-cabo", "elevacao-frontal-na-maquina", "elevacao-frontal-com-halteres"] },
+  "elevacao-frontal-com-halteres": { equiv: ["elevacao-frontal-bilateral-no-cabo", "elevacao-frontal-unilateral-no-cabo", "elevacao-frontal-na-maquina"] },
+  "elevacao-frontal-na-maquina": { equiv: ["elevacao-frontal-unilateral-no-cabo", "elevacao-frontal-bilateral-no-cabo", "elevacao-frontal-com-halteres"] },
+  "elevacao-lateral-com-halteres": { equiv: ["elevacao-lateral-no-cabo", "elevacao-lateral-na-maquina", "elevacao-lateral-unilateral-no-cabo"] },
+  "elevacao-lateral-deitado-no-banco-inclinado": { equiv: ["elevacao-lateral-na-polia-inclinado-para-fora", "elevacao-lateral-unilateral-no-cabo", "elevacao-lateral-com-halteres"] },
+  "elevacao-lateral-na-polia-inclinado-para-fora": { alt: ["Lean-away cable lateral raise", "Lean-away lateral raise", "Eleva\xE7\xE3o lateral inclinada na polia"], cue: "Corpo inclinado e firme no apoio, sem balan\xE7ar para subir. O cotovelo lidera at\xE9 a altura do ombro.", conferido: 1 },
+  "elevacao-lateral-no-smith-unilateral": { equiv: ["elevacao-lateral-na-maquina", "elevacao-lateral-unilateral-no-cabo", "elevacao-lateral-com-halteres"] },
+  "elevacao-pelvica-com-barra": { equiv: ["hip-thrust-no-smith", "elevacao-pelvica-na-maquina", "coice-na-maquina"] },
+  "encolhimento-com-halteres": { equiv: ["encolhimento-na-maquina", "encolhimento-no-smith", "encolhimento-na-polia-baixa"] },
+  "encolhimento-na-polia-baixa": { equiv: ["encolhimento-na-maquina", "encolhimento-com-halteres", "encolhimento-no-smith"] },
+  "encolhimento-no-smith": { equiv: ["encolhimento-na-maquina", "encolhimento-com-halteres", "encolhimento-na-polia-baixa"] },
+  "extensao-unilateral-acima-da-cabeca": { equiv: ["triceps-frances-com-halter", "extensao-de-triceps-acima-da-cabeca-no-cabo", "triceps-acima-da-cabeca-na-polia-sentado"] },
+  "extensora-unilateral": { equiv: ["cadeira-extensora", "sissy-squat-na-maquina", "leg-press-com-pe-baixo"] },
+  "face-pull-na-polia-alta": { mus: [["delt posterior", 1], ["costas espessura", 0.25]], alt: ["Face pull", "Face pull na polia"], equiv: ["remada-alta-com-corda", "remada-para-deltoide-posterior-com-apoio-de-peito", "reverse-fly-no-cabo"], conferido: 1 },
+  "farmers-carry": { equiv: ["sled-pull", "lunges-com-sandbag"] },
+  "flexao-de-tornozelo-na-polia-baixa": { equiv: ["tibial-anterior", "tibial-na-maquina", "tibial-com-anilha-sentado"] },
+  "flexora-nordica-assistida": { equiv: ["mesa-flexora-deitada", "cadeira-flexora-sentada", "flexora-unilateral-deitada"] },
+  "flexora-unilateral-deitada": { equiv: ["mesa-flexora-deitada", "flexora-unilateral-em-pe", "cadeira-flexora-sentada"] },
+  "flexora-unilateral-em-pe": { equiv: ["cadeira-flexora-sentada", "mesa-flexora-deitada", "flexora-unilateral-deitada"] },
+  "good-morning-no-smith": { equiv: ["terra-romeno-no-smith", "terra-romeno-com-barra", "stiff-com-halteres"] },
+  "hip-thrust-no-smith": { equiv: ["elevacao-pelvica-na-maquina", "elevacao-pelvica-com-barra", "coice-na-maquina"] },
+  "kettlebell-swing": { equiv: ["snatch-com-halter", "stiff-com-halteres"] },
+  "leg-press-45": { equiv: ["leg-press", "leg-press-horizontal", "leg-press-vertical"] },
+  "leg-press-com-pe-afastado": { equiv: ["agachamento-sumo-no-smith", "adutora", "adutora-em-pe-na-polia"] },
+  "leg-press-com-pe-baixo": { equiv: ["leg-press", "agachamento-hack", "pendulum-squat"] },
+  "leg-press-horizontal": { equiv: ["leg-press", "leg-press-45", "leg-press-vertical"] },
+  "leg-press-vertical": { equiv: ["leg-press-45", "leg-press", "leg-press-horizontal"] },
+  "lunge": { equiv: ["lunges-com-sandbag", "afundo-reverso-com-halteres", "agachamento-bulgaro-com-halteres"] },
+  "lunges-com-sandbag": { equiv: ["lunge", "afundo-reverso-com-halteres", "agachamento-bulgaro-com-halteres"] },
+  "maquina-de-abdominal": { equiv: ["crunch-no-cabo-ou-maquina", "abdominal-na-polia-alta-ajoelhado", "crunch-com-anilha-no-colo"] },
+  "maquina-de-supino-inclinado": { equiv: ["chest-press-inclinado-convergente", "supino-inclinado-no-smith", "supino-inclinado-com-halteres"] },
+  "maquina-de-triceps-sentado": { equiv: ["extensao-acima-da-cabeca-ou-maquina-de-triceps", "pushdown", "triceps-testa-com-barra-w"] },
+  "mergulho-na-maquina-assistida": { mus: [["tr\xEDceps", 1], ["peito", 0.5], ["delt anterior", 0.5]], alt: ["Paralelas assistidas", "Assisted dip", "Assisted dip machine"], equiv: ["maquina-de-triceps-sentado", "pushdown", "triceps-barra-reta-na-polia"], conferido: 1 },
+  "mobilidade-de-quadril-90-90": { alt: ["90/90 hip mobility", "90/90 hip stretch", "Hip 90/90"], cue: "Tronco alto: a rota\xE7\xE3o vem do quadril, n\xE3o da coluna. Troque de lado sem apoiar as m\xE3os quando conseguir.", conferido: 1 },
+  "mountain-climber": { cue: "Quadril na linha do ombro, sem empinar. O joelho vem at\xE9 o peito em ritmo constante.", equiv: ["burpee", "pula-corda", "prancha"] },
+  "pallof-press": { alt: ["Pallof", "Cable Pallof press", "Pallof press na polia", "Antirrota\xE7\xE3o na polia"], cue: "O bra\xE7o estende e volta sem o tronco girar para o lado do cabo. Quadril e costelas travados: o trabalho \xE9 resistir.", equiv: ["dead-bug", "prancha", "prancha-com-peso"], conferido: 1 },
+  "panturrilha-em-pe-na-maquina": { equiv: ["panturrilha-em-pe", "panturrilha-na-maquina-em-pe", "panturrilha-no-leg-press"] },
+  "panturrilha-na-maquina-em-pe": { equiv: ["panturrilha-em-pe", "panturrilha-em-pe-na-maquina", "panturrilha-no-smith"] },
+  "panturrilha-no-hack": { equiv: ["panturrilha-em-pe", "panturrilha-no-smith", "panturrilha-no-leg-press"] },
+  "panturrilha-no-leg-press-com-joelho-flexionado": { equiv: ["panturrilha-sentada", "panturrilha-sentada-na-maquina", "panturrilha-sentada-no-smith"] },
+  "panturrilha-no-smith": { equiv: ["panturrilha-em-pe", "panturrilha-na-maquina-em-pe", "panturrilha-no-hack"] },
+  "panturrilha-sentada-na-maquina": { equiv: ["panturrilha-sentada", "panturrilha-sentada-no-smith", "panturrilha-no-leg-press-com-joelho-flexionado"] },
+  "panturrilha-sentada-no-smith": { equiv: ["panturrilha-sentada", "panturrilha-sentada-na-maquina", "panturrilha-no-leg-press-com-joelho-flexionado"] },
+  "panturrilha-unilateral-com-halter": { equiv: ["panturrilha-em-pe", "panturrilha-no-smith", "panturrilha-no-leg-press"] },
+  "passada-lateral-com-elastico": { equiv: ["abdutora", "abdutora-em-pe-na-polia", "abducao-deitado-com-caneleira"] },
+  "peck-deck-com-banco-inclinado": { equiv: ["crucifixo-inclinado-no-cabo", "crossover-de-baixo-para-cima", "crucifixo-inclinado-com-halteres"] },
+  "peck-deck-unilateral": { equiv: ["pec-deck", "crossover-na-polia-media", "crucifixo-com-halteres"] },
+  "prancha": { equiv: ["prancha-com-peso", "dead-bug", "ab-wheel"] },
+  "prancha-com-peso": { equiv: ["prancha", "ab-wheel", "pallof-press"] },
+  "pula-corda": { cue: "Salto baixo, na ponta do p\xE9. O giro vem do punho, com o cotovelo junto ao corpo.", equiv: ["double-under", "mountain-climber", "burpee"] },
+  "pullover-com-halter-no-banco": { mus: [["dorsal", 1], ["peito", 0.25]], alt: ["Dumbbell pullover", "Pullover com halter"], equiv: ["pullover-em-maquina", "pullover-em-maquina-ou-cabo", "pullover-na-polia-alta"], conferido: 1 },
+  "pullover-em-maquina": { equiv: ["pullover-em-maquina-ou-cabo", "pullover-na-polia-alta", "straight-arm-pulldown"] },
+  "pullover-na-polia-alta": { equiv: ["straight-arm-pulldown", "pullover-em-maquina-ou-cabo", "pullover-em-maquina"] },
+  "push-press": { cue: "O impulso vem de um meio agachamento curto e r\xE1pido, com o calcanhar no ch\xE3o. A barra sai junto com a extens\xE3o do joelho, sem pausa entre os dois.", equiv: ["thruster", "clean-and-jerk", "devil-press"] },
+  "pushdown-unilateral": { equiv: ["extensao-unilateral-de-triceps-no-cabo", "triceps-corda-na-polia", "pushdown"] },
+  "puxada-alta-pegada-aberta": { alt: ["Wide grip lat pulldown", "Puxada aberta", "Wide grip pulldown", "Puxada frontal aberta", "Puxada frontal pegada aberta"], cue: "Barra at\xE9 o peito alto com o cotovelo apontando para baixo. Inclina\xE7\xE3o pequena e fixa, sem balan\xE7o.", conferido: 1 },
+  "puxada-alta-pegada-neutra": { alt: ["Neutral grip lat pulldown", "Neutral grip pulldown", "Puxada frontal pegada neutra"], cue: "Peito alto e cotovelo descendo junto ao corpo. Sem jogar o tronco para tr\xE1s para completar a repeti\xE7\xE3o.", conferido: 1 },
+  "puxada-neutra-na-maquina": { equiv: ["puxada-alta-pegada-neutra", "pulldown-convergente", "puxada-neutra-no-cabo"] },
+  "puxada-neutra-no-cabo": { equiv: ["puxada-alta-pegada-neutra", "puxada-neutra-na-maquina", "pulldown-convergente"] },
+  "puxada-neutra-unilateral": { equiv: ["pulldown-unilateral", "puxada-unilateral-na-polia-alta", "remada-unilateral-na-polia-alta-ajoelhado"] },
+  "puxada-unilateral-na-polia-alta": { equiv: ["pulldown-unilateral", "puxada-neutra-unilateral", "remada-unilateral-na-polia-alta-ajoelhado"] },
+  "remada-aberta-na-maquina": { mus: [["delt posterior", 1], ["costas espessura", 0.5], ["b\xEDceps", 0.25]], equiv: ["remada-para-deltoide-posterior-com-apoio-de-peito", "remada-alta-com-corda", "face-pull-na-polia-alta"], conferido: 1 },
+  "remada-alta-com-corda": { mus: [["delt posterior", 1], ["trap\xE9zio", 0.5], ["costas espessura", 0.25]], equiv: ["face-pull-na-polia-alta", "remada-para-deltoide-posterior-com-apoio-de-peito", "remada-aberta-na-maquina"], conferido: 1 },
+  "remada-alta-na-maquina": { equiv: ["high-row-com-apoio-de-peito", "remada-na-polia-alta-sentado", "remada-cavalinho-pegada-larga"] },
+  "remada-baixa-na-polia-com-triangulo": { equiv: ["remada-sentada-pegada-neutra-fechada", "remada-para-dorsal-com-apoio-de-peito", "remada-unilateral-apoiada"] },
+  "remada-baixa-pegada-pronada": { equiv: ["remada-na-maquina-pegada-larga", "remada-horizontal-na-maquina", "remada-sentada-na-polia"] },
+  "remada-cavalinho": { equiv: ["remada-convergente-com-apoio-de-peito", "remada-na-maquina-com-apoio-de-peito", "remada-curvada-com-barra"] },
+  "remada-cavalinho-pegada-larga": { equiv: ["high-row-com-apoio-de-peito", "remada-na-maquina-pegada-larga", "remada-alta-na-maquina"] },
+  "remada-curvada-com-barra": { equiv: ["remada-cavalinho", "remada-convergente-com-apoio-de-peito", "remada-sentada-na-polia"] },
+  "remada-na-maquina-com-apoio-de-peito": { equiv: ["remada-convergente-com-apoio-de-peito", "remada-horizontal-na-maquina", "remada-cavalinho"] },
+  "remada-na-maquina-pegada-larga": { equiv: ["remada-baixa-pegada-pronada", "high-row-com-apoio-de-peito", "remada-horizontal-na-maquina"] },
+  "remada-na-polia-alta-sentado": { equiv: ["high-row-com-apoio-de-peito", "remada-alta-na-maquina", "remada-cavalinho-pegada-larga"] },
+  "remada-para-deltoide-posterior-com-apoio-de-peito": { mus: [["delt posterior", 1], ["costas espessura", 0.5], ["b\xEDceps", 0.25]], alt: ["Chest supported rear delt row", "Rear delt row"], conferido: 1 },
+  "remada-sentada-na-polia": { equiv: ["remada-horizontal-na-maquina", "remada-baixa-pegada-pronada", "remada-na-maquina-com-apoio-de-peito"] },
+  "remada-sentada-pegada-neutra-fechada": { equiv: ["remada-baixa-na-polia-com-triangulo", "remada-para-dorsal-com-apoio-de-peito", "remada-unilateral-apoiada"] },
+  "remada-unilateral-apoiada": { equiv: ["remada-para-dorsal-com-apoio-de-peito", "remada-baixa-na-polia-com-triangulo", "remada-sentada-pegada-neutra-fechada"] },
+  "remada-unilateral-na-polia-alta-ajoelhado": { equiv: ["puxada-unilateral-na-polia-alta", "pulldown-unilateral", "remada-unilateral-apoiada"] },
+  "remo-ergometro": { equiv: ["ski-erg", "assault-bike", "bike-erg"] },
+  "reverse-crunch-no-banco-declinado": { equiv: ["elevacao-de-pernas-ou-reverse-crunch", "elevacao-de-pernas-no-banco", "elevacao-de-pernas-suspenso"] },
+  "rollout-na-barra": { equiv: ["ab-wheel", "prancha-com-peso", "dead-bug"] },
+  "rosca-alternada-com-halteres": { equiv: ["rosca-direta-na-barra-w", "rosca-no-cabo", "rosca-inclinada-com-halteres"] },
+  "rosca-concentrada": { equiv: ["rosca-scott-na-maquina", "rosca-scott-no-cabo", "rosca-alternada-com-halteres"] },
+  "rosca-direta-na-barra-w": { equiv: ["rosca-no-cabo", "rosca-alternada-com-halteres", "rosca-scott-com-barra-w"] },
+  "rosca-inclinada-com-halteres": { equiv: ["rosca-bayesian-no-cabo", "rosca-alternada-com-halteres", "rosca-no-cabo"] },
+  "rosca-inversa-na-barra-w": { equiv: ["rosca-martelo", "rosca-martelo-na-corda", "rosca-martelo-cruzada"] },
+  "rosca-martelo-cruzada": { equiv: ["rosca-martelo", "rosca-martelo-na-corda", "rosca-inversa-na-barra-w"] },
+  "rosca-martelo-na-corda": { equiv: ["rosca-martelo", "rosca-martelo-cruzada", "rosca-inversa-na-barra-w"] },
+  "rosca-scott-com-barra-w": { equiv: ["rosca-scott-na-maquina", "rosca-scott-no-cabo", "rosca-direta-na-barra-w"] },
+  "rosca-scott-no-cabo": { equiv: ["rosca-scott-na-maquina", "rosca-scott-com-barra-w", "rosca-concentrada"] },
+  "sissy-squat-na-maquina": { equiv: ["cadeira-extensora", "extensora-unilateral", "leg-press-com-pe-baixo"] },
+  "sit-up": { cue: "Sobe enrolando o tronco, sem puxar o pesco\xE7o com a m\xE3o. Desce com controle at\xE9 as costas tocarem o ch\xE3o.", equiv: ["crunch-com-anilha-no-colo", "maquina-de-abdominal", "crunch-no-cabo-ou-maquina"] },
+  "ski-erg": { equiv: ["remo-ergometro", "assault-bike", "bike-erg"] },
+  "sled-pull": { equiv: ["sled-push", "remo-ergometro", "ski-erg"] },
+  "sled-push": { equiv: ["sled-pull", "lunges-com-sandbag", "assault-bike"] },
+  "snatch-com-halter": { equiv: ["kettlebell-swing", "devil-press", "clean-and-jerk"] },
+  "stiff-com-halteres": { alt: ["Dumbbell stiff-leg deadlift", "Stiff com halter", "Dumbbell stiff-legged deadlift"], cue: "Joelho quase estendido e fixo, halteres descendo rente \xE0 coxa. Desce s\xF3 at\xE9 onde a coluna fica neutra.", conferido: 1 },
+  "supino-inclinado-com-barra": { equiv: ["supino-inclinado-no-smith", "supino-inclinado-com-halteres", "maquina-de-supino-inclinado"] },
+  "supino-inclinado-com-halteres": { equiv: ["supino-inclinado-com-barra", "supino-inclinado-no-smith", "chest-press-inclinado-convergente"] },
+  "supino-no-smith": { equiv: ["supino-reto-na-maquina", "chest-press-horizontal-convergente", "supino-reto-com-halteres"] },
+  "supino-reto-com-halteres": { equiv: ["supino-reto-na-maquina", "supino-no-smith", "chest-press-horizontal-convergente"] },
+  "supino-reto-na-maquina": { equiv: ["chest-press-horizontal-convergente", "supino-no-smith", "supino-reto-com-halteres"] },
+  "terra-romeno-com-barra": { equiv: ["terra-romeno-no-smith", "terra-romeno-com-halteres", "stiff-com-halteres"] },
+  "terra-romeno-com-halteres": { equiv: ["stiff-com-halteres", "terra-romeno-no-smith", "terra-romeno-com-barra"] },
+  "thruster": { equiv: ["wall-balls", "push-press", "devil-press"] },
+  "tibial-com-anilha-sentado": { equiv: ["tibial-anterior", "tibial-na-maquina", "flexao-de-tornozelo-na-polia-baixa"] },
+  "tibial-na-maquina": { equiv: ["tibial-anterior", "flexao-de-tornozelo-na-polia-baixa", "tibial-com-anilha-sentado"] },
+  "triceps-acima-da-cabeca-na-polia-sentado": { alt: ["Seated overhead cable triceps extension", "Tr\xEDceps franc\xEAs na polia sentado", "Extens\xE3o de tr\xEDceps acima da cabe\xE7a na polia sentado"], cue: "Cotovelo apontado para a frente e parado; s\xF3 o antebra\xE7o se move. Desce at\xE9 alongar bem atr\xE1s da cabe\xE7a.", conferido: 1 },
+  "triceps-barra-reta-na-polia": { equiv: ["pushdown", "triceps-corda-na-polia", "maquina-de-triceps-sentado"] },
+  "triceps-coice-com-halter": { equiv: ["extensao-unilateral-de-triceps-no-cabo", "pushdown-unilateral", "triceps-corda-na-polia"] },
+  "triceps-corda-na-polia": { equiv: ["pushdown", "triceps-barra-reta-na-polia", "pushdown-unilateral"] },
+  "triceps-frances-com-halter": { equiv: ["extensao-unilateral-acima-da-cabeca", "extensao-de-triceps-acima-da-cabeca-no-cabo", "triceps-testa-com-barra-w"] },
+  "triceps-testa-com-barra-w": { equiv: ["triceps-frances-com-halter", "extensao-de-triceps-acima-da-cabeca-no-cabo", "extensao-acima-da-cabeca-ou-maquina-de-triceps"] },
+  "wall-balls": { equiv: ["thruster", "agachamento-goblet", "air-squat"] }
+};
+
 // src/dominio/catalogo.ts
 function sem(n) {
   return " " + String(n).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim() + " ";
@@ -1215,6 +1366,24 @@ var SEMENTE = (function() {
     ALT_NOMES[id].forEach(function(n) {
       if (ex[id].alt.indexOf(n) < 0) ex[id].alt.push(n);
     });
+  });
+  Object.keys(CURADORIA).forEach(function(id) {
+    const e = ex[id], c = CURADORIA[id];
+    if (!e) throw new Error("semente: curadoria para id inexistente " + id);
+    if (c.mus) e.mus = c.mus.map(function(m) {
+      return [m[0], m[1]];
+    });
+    if (c.alt) c.alt.forEach(function(n) {
+      if (e.alt.indexOf(n) < 0) e.alt.push(n);
+    });
+    if (c.cue != null && !e.cue) e.cue = c.cue;
+    if (c.equiv && !e.equiv.length) {
+      c.equiv.forEach(function(q) {
+        if (!ex[q]) throw new Error("semente: equivalente inexistente " + q + " em " + id);
+        if (q !== id && e.equiv.indexOf(q) < 0) e.equiv.push(q);
+      });
+    }
+    if (c.conferido) delete e.cur;
   });
   return { v: 0, ex, redir: {} };
 })();

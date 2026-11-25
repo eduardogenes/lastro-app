@@ -13,8 +13,10 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { EQUIPAMENTOS, MOVIMENTOS, SEMENTE, VERSAO_DA_SEMENTE, paraLinha } from '../../src/dominio/catalogo';
+import { CURADORIA } from '../../src/dominio/catalogo-curadoria';
 
 const DESTINO = resolve(__dirname, '../../supabase/migrations/20261123120100_catalogo_semente.sql');
+const DESTINO_CURADORIA = resolve(__dirname, '../../supabase/migrations/20261125120000_catalogo_curadoria.sql');
 
 function lit(v: unknown): string {
   if (v === null || v === undefined) return 'null';
@@ -60,3 +62,29 @@ linhas.push('');
 
 writeFileSync(DESTINO, linhas.join('\n'));
 console.log('escrito', DESTINO, '(' + ids.length + ' exercícios)');
+
+// A curadoria (catalogo-curadoria.ts) chega ao banco por UPDATE: a semente não
+// sobrescreve linha que já existe. Só as colunas que a curadoria toca, com o
+// valor final da semente: rodar de novo dá o mesmo resultado. Carga, grandeza e
+// id nunca entram aqui (o gatilho catalogo_carimba recusaria a troca).
+const up: string[] = [];
+up.push('-- GERADO por ferramentas/catalogo/gera-sql.ts (curadoria, conteúdo versão ' + VERSAO_DA_SEMENTE + ').');
+up.push('-- Rode como moderador no SQL Editor do Supabase, DEPOIS da semente. Pode rodar de novo.');
+up.push('-- Muda só alt, musculos, dica, equivalentes e a marca de curadoria dos exercícios abaixo.');
+up.push('');
+up.push('begin;');
+up.push('');
+Object.keys(CURADORIA).sort().forEach(function (id) {
+  const r = paraLinha(SEMENTE.ex[id]);
+  up.push('update public.catalogo_exercicio set alt = ' + arr(r.alt as string[]) +
+    ', musculos = ' + lit(JSON.stringify(r.musculos)) + '::jsonb' +
+    ', dica = ' + lit(r.dica) +
+    ', equivalentes = ' + arr(r.equivalentes as string[]) +
+    ', curadoria = ' + lit(r.curadoria) +
+    ' where id = ' + lit(id) + ';');
+});
+up.push('');
+up.push('commit;');
+up.push('');
+writeFileSync(DESTINO_CURADORIA, up.join('\n'));
+console.log('escrito', DESTINO_CURADORIA, '(' + Object.keys(CURADORIA).length + ' exercícios)');

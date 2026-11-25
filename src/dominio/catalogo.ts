@@ -21,6 +21,7 @@
 import type { Exercicio, IdEx, TipoCarga, Unidade } from './tipos';
 import { ALT, EX_BASE, slugEx } from './programa';
 import { ALT_NOMES, EQUIPAMENTOS, MOVIMENTOS, NOVOS_DA_V22, NOVOS_DO_SISTEMA, VERSAO_DA_SEMENTE, type NovoDoSistema } from './catalogo-semente';
+import { CURADORIA } from './catalogo-curadoria';
 
 /** Músculo (o mesmo vocabulário do `g`) e a fração da série que ele recebe. */
 export type Musculo = [string, number];
@@ -236,6 +237,21 @@ export const SEMENTE: CatalogoDoSistema = (function () {
   Object.keys(ALT_NOMES).forEach(function (id) {
     if (!ex[id]) throw new Error('semente: nome alternativo para id inexistente ' + id);
     ALT_NOMES[id].forEach(function (n) { if (ex[id].alt.indexOf(n) < 0) ex[id].alt.push(n); });
+  });
+  // a curadoria conferida (catalogo-curadoria.ts): nunca id, carga nem grandeza
+  Object.keys(CURADORIA).forEach(function (id) {
+    const e = ex[id], c = CURADORIA[id];
+    if (!e) throw new Error('semente: curadoria para id inexistente ' + id);
+    if (c.mus) e.mus = c.mus.map(function (m) { return [m[0], m[1]] as Musculo; });
+    if (c.alt) c.alt.forEach(function (n) { if (e.alt.indexOf(n) < 0) e.alt.push(n); });
+    if (c.cue != null && !e.cue) e.cue = c.cue;
+    if (c.equiv && !e.equiv.length) {
+      c.equiv.forEach(function (q) {
+        if (!ex[q]) throw new Error('semente: equivalente inexistente ' + q + ' em ' + id);
+        if (q !== id && e.equiv.indexOf(q) < 0) e.equiv.push(q);
+      });
+    }
+    if (c.conferido) delete e.cur;
   });
   return { v: 0, ex: ex, redir: {} };
 })();

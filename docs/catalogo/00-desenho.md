@@ -277,3 +277,10 @@ Depois das revisões de dado e de design (24/11/2026):
 - **Barra fixa livre no catálogo** (`barra-fixa`, peso do corpo). O v3.0 dizia "Barra fixa" e casava com a assistida. A semente sobe para a versão 2; o SQL da semente ganhou só essa linha (`on conflict do nothing`, pode rodar de novo).
 - **Apelido errado apagado por migração** (`corrigeApelidosErrados`, roda sempre, idempotente): "Barra fixa" → assistida, gravado quando a livre ainda não existia. A lápide sai do dado (carimbo do apelido + 1). Não há troca automática no programa: colar o v3.0 de novo como revisão mostra "assistida sai, Barra fixa entra", e a pessoa confirma. O histórico não muda de lugar (unir é da etapa 3).
 - **Referência de carga sem as entradas de carga 0** (`historicoDeReferencia`): o "como o prescrito" antes da Fase A gravava carga 0. Em exercício com carga (não corpo, assistida ou por tempo), essas entradas não servem de referência (sugestão, "da última vez", valor das séries, progressão). Continuam no histórico e na pausa.
+
+## Curadoria de 25/11/2026
+
+- Proposta pelo Antigravity e conferida pelo Opus item a item: 19 exercícios (músculos com fração e nomes alternativos; os 12 da v2.2 saem da marca de curadoria) e 146 (dica para quem não tinha, equivalentes para quem não tinha).
+- Dado em `src/dominio/catalogo-curadoria.ts`, aplicado na semente (versão 3). Nunca muda id, carga nem grandeza; nenhum nome alternativo leva a dois exercícios (teste).
+- As 6 dicas de exercícios do código (HYROX/condicionamento) foram para o próprio `EX_BASE`, para o catálogo do sistema continuar igual ao do código nesses ids.
+- O banco recebe a curadoria por `supabase/migrations/20261125120000_catalogo_curadoria.sql` (UPDATE idempotente, só alt, musculos, dica, equivalentes e curadoria), gerado por `npm run catalogo:sql`. A semente continua `on conflict do nothing`.

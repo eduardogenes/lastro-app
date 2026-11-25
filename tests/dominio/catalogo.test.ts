@@ -420,3 +420,46 @@ test('o espelho mostra os apelidos em treino/exercicios.md', async () => {
   const linha = md.split('\n').find(l => l.indexOf('`elevacao-pelvica-na-maquina`') >= 0)!;
   assert.match(linha, /“Hip thrust máquina”/);
 });
+
+// ---------- curadoria (25/11/2026) ----------
+import { CURADORIA } from '../../src/dominio/catalogo-curadoria';
+
+test('todo equivalente do catálogo aponta para um exercício que existe, e não para si mesmo', () => {
+  Object.keys(SEMENTE.ex).forEach(id => {
+    SEMENTE.ex[id].equiv.forEach(q => {
+      assert.ok(SEMENTE.ex[q], id + ' → equivalente inexistente ' + q);
+      assert.notStrictEqual(q, id, id + ' é equivalente de si mesmo');
+    });
+  });
+});
+
+test('a curadoria entra na semente sem mudar id, carga nem grandeza, e nenhum nome alternativo leva a dois exercícios', () => {
+  const dono: Record<string, string> = {};
+  Object.keys(SEMENTE.ex).forEach(id => {
+    const e = SEMENTE.ex[id];
+    [e.n].concat(e.alt).forEach(n => {
+      const k = slugEx(n);
+      assert.ok(!dono[k] || dono[k] === id, '"' + n + '" leva a ' + dono[k] + ' e a ' + id);
+      dono[k] = id;
+    });
+  });
+  Object.keys(CURADORIA).forEach(id => {
+    const c = CURADORIA[id], e = SEMENTE.ex[id];
+    if (c.mus) assert.deepStrictEqual(JSON.stringify(e.mus), JSON.stringify(c.mus));
+    if (c.cue) assert.ok(e.cue, id + ' sem dica');
+    if (c.conferido) assert.strictEqual(e.cur, undefined, id + ' continua marcado para curadoria');
+    if (EX_BASE[id]) assert.strictEqual(e.car, EX_BASE[id].car, id + ' mudou a carga');
+  });
+  assert.strictEqual(SEMENTE.ex['mergulho-na-maquina-assistida'].mus[0][0], 'tríceps');
+  assert.ok(SEMENTE.ex['agachamento-goblet'].alt.includes('Agachamento taça'));
+});
+
+test('o SQL de curadoria gerado está em dia e só faz UPDATE nas colunas permitidas', () => {
+  const sql = readFileSync('supabase/migrations/20261125120000_catalogo_curadoria.sql', 'utf8');
+  const ups = sql.split('\n').filter(l => l.startsWith('update '));
+  assert.strictEqual(ups.length, Object.keys(CURADORIA).length);
+  ups.forEach(l => {
+    assert.ok(!/ carga =| unidade =| id =/.test(l.replace(/ where id = .*$/, '')), 'coluna proibida: ' + l.slice(0, 80));
+  });
+  assert.ok(!/insert|delete|drop/i.test(sql.replace(/--.*$/gm, '')));
+});

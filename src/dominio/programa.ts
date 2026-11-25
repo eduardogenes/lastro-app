@@ -608,18 +608,18 @@ export const MOVIMENTOS_DE_BOX: ExercicioPrescrito[] = [
   {n:'Kettlebell swing', car:'halter1', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:20, cue:'Quadril, não ombro: o braço só acompanha o que o quadril lançou.'},
   {n:'Thruster', car:'halter', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:15, cue:'Agachamento e desenvolvimento no mesmo movimento, sem pausa no meio.'},
   {n:'Devil press', car:'halter', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:10, cue:'Burpee com halteres e desenvolvimento no fim. Cara.'},
-  {n:'Clean and jerk', car:'barra', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:10},
-  {n:'Push press', car:'barra', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:12},
+  {n:'Clean and jerk', car:'barra', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:10, cue:'Barra rente ao corpo na puxada e no encaixe: ela sobe reta, não em arco. Encaixe com o cotovelo alto antes de empurrar para cima.'},
+  {n:'Push press', car:'barra', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:12, cue:'O impulso vem de um meio agachamento curto e rápido, com o calcanhar no chão. A barra sai junto com a extensão do joelho, sem pausa entre os dois.'},
   {n:'Snatch com halter', car:'halter1', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:20, cue:'Alterna o braço. O halter sobe pela linha do corpo, não em arco.'},
 
   // repetição sem carga — forçar um campo de peso aqui seria ruído
   {n:'Burpee', car:'corpo', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:20, cue:'Peito no chão, salto no fim. Cadência constante custa menos que arrancar e parar.'},
   {n:'Box jump', car:'corpo', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:20, cue:'Descer com controle poupa mais tendão do que subir com força.'},
   {n:'Double under', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:50, cue:'Punho, não braço. Corda de velocidade.'},
-  {n:'Pula-corda', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:100},
-  {n:'Air squat', car:'corpo', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:30},
-  {n:'Sit-up', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:25},
-  {n:'Mountain climber', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:40},
+  {n:'Pula-corda', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:100, cue:'Salto baixo, na ponta do pé. O giro vem do punho, com o cotovelo junto ao corpo.'},
+  {n:'Air squat', car:'corpo', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:30, cue:'Peso no pé inteiro e joelho na direção da ponta do pé. Desce até o quadril passar do joelho sem arredondar a lombar.'},
+  {n:'Sit-up', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:25, cue:'Sobe enrolando o tronco, sem puxar o pescoço com a mão. Desce com controle até as costas tocarem o chão.'},
+  {n:'Mountain climber', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:40, cue:'Quadril na linha do ombro, sem empinar. O joelho vem até o peito em ritmo constante.'},
 
   // distância sem carga
   {n:'Lunge', car:'corpo', g:'', s:1, r:'', c:1, d:D_CURTO, u:'m', q:50, cue:'A versão sem saco. Joelho tocando o chão a cada passo.'},
