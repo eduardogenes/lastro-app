@@ -15571,6 +15571,10 @@ function parDoFoco(d, f) {
     }
     return {
       i: j, n: ex.n, series: e.series, feitas: feitas, pontos: pontos, fora: e.fora,
+      // as séries feitas, com o texto: tocar numa delas corrige (CTX.serieParaCorrigirV3)
+      feitasTxt: (function () { const dr = draftPeek(j); const out = [];
+        for (let k = 0; k < e.series; k++) if (dr && dr.s[k] && dr.s[k][1] != null) out.push({ k: k, txt: textoDaSerieV3(dr.s[k]) });
+        return out; })(),
       ativa: j === f.i, fechou: feitas >= e.series,
       carga: v.carga, reps: v.reps, antes: v.antes,
       unidade: un ? ROTULO_UNIDADE[un] : (CARGAS[tipo].rot === 'kg/lado' ? (tipo === 'halter' ? 'kg em cada mão' : 'kg por lado') : CARGAS[tipo].rot),
@@ -15987,6 +15991,82 @@ CTX.fazSerieV3 = function (carga, reps) {
   view.focoV3 = r ? { i: r.lado === 'a' ? par.a : par.b, k: r.k } : null;
   render();
 };
+// ---------- CORRIGIR UMA SÉRIE FEITA, sem sair do treino ----------
+// "Anotei 32,5 × 8, passei para a próxima e vi que era 30 × 8." Tocar na série
+// feita abre a correção no lugar. A gravação é a porta de sempre (`anotaSerie`):
+// corrigir uma série que já estava registrada não dispara o descanso, e o
+// descanso que estiver correndo continua. O foco fica onde estava: quem corrige
+// a série 1 enquanto faz a 3 volta para a 3.
+
+/** A série feita `k` do exercício `i` do dia em tela, com o que a folha precisa. */
+CTX.serieParaCorrigirV3 = function (i, k) {
+  const d = view.day;
+  const P = d && treino(d);
+  const ex = P && P.ex[i];
+  if (!ex) return null;
+  const dr = draftPeek(i);
+  const s = dr && dr.s[k];
+  if (!s || s[1] == null) return null;
+  const key = logKey(d, i);
+  const tipo = cargaTipo(key, ex);
+  const vm = vmExercicio(d, i, ex);
+  return {
+    i: i, k: k, n: ex.n, serie: k + 1, series: setsFor(ex),
+    carga: s[0] != null ? s[0] : 0, reps: s[1], rir: s[2] != null ? s[2] : null,
+    semCarga: tipo === 'corpo', seg: !!vm.seg,
+    unidade: vm.unidade === 'kg/lado' ? (tipo === 'halter' ? 'kg em cada mão' : 'kg por lado') : vm.unidade,
+    medida: vm.medida === 'reps' ? 'repetições' : vm.medida,
+    passoCarga: passoDaCarga(tipo),
+    txt: textoDaSerieV3(s)
+  };
+};
+function textoDaSerieV3(s) { return s && s[1] != null ? (s[0] ? fmtNum(s[0]).replace('.', ',') + ' × ' : '') + s[1] : ''; }
+/** O foco de agora, preso: corrigir (ou apagar) outra série não muda a série em que ele está. */
+function prendeFocoV3() {
+  if (view.focoV3) return null;
+  const f = CTX.focoV3();
+  return f && !f.fim ? { i: f.i, k: f.k } : null;
+}
+function voltaSerieV3(i, k, antes, foco) {
+  const e = draftOf(i);
+  e.s[k] = antes ? antes.slice() : [null, null];
+  projeta(i); atualizaEstado(); queueSave();
+  if (foco) view.focoV3 = foco;
+  render();
+}
+CTX.salvaCorrecaoV3 = function (i, k, carga, reps, rir) {
+  const atual = CTX.serieParaCorrigirV3(i, k);
+  if (!atual) return false;
+  const e = draftOf(i);
+  const antes = e.s[k].slice();
+  const foco = prendeFocoV3();
+  anotaSerie(i, k, 0, atual.semCarga && !(carga > 0) ? 0 : carga);
+  anotaSerie(i, k, 1, reps);
+  if (rir !== undefined) {
+    e.s[k][2] = rir == null ? null : Math.max(0, Math.min(5, rir));
+    projeta(i); queueSave();
+  }
+  if (foco) view.focoV3 = foco;
+  render();
+  const mudou = JSON.stringify(antes) !== JSON.stringify(e.s[k]);
+  if (mudou) avisoComAcao('Série ' + (k + 1) + ' corrigida: ' + textoDaSerieV3(e.s[k]) + '.', 'Desfazer', function () { voltaSerieV3(i, k, antes, foco); });
+  return true;
+};
+CTX.apagaSerieV3 = function (i, k) {
+  const atual = CTX.serieParaCorrigirV3(i, k);
+  if (!atual) return false;
+  const e = draftOf(i);
+  const antes = e.s[k].slice();
+  const foco = prendeFocoV3();
+  anotaSerie(i, k, 0, null);
+  anotaSerie(i, k, 1, null);
+  if (e.s[k]) e.s[k][2] = null;
+  projeta(i); atualizaEstado(); queueSave();
+  if (foco) view.focoV3 = foco;
+  render();
+  avisoComAcao('Série ' + (k + 1) + ' apagada.', 'Desfazer', function () { voltaSerieV3(i, k, antes, foco); });
+  return true;
+};
 /** "Sobraram quantas?": o RIR da série que acabou, no descanso. */
 CTX.rirDaUltimaV3 = function (v) {
   const u = view.ultimaV3;
@@ -16000,7 +16080,7 @@ CTX.ultimaV3 = function () {
   const s = dr && dr.s[u.k];
   const ex = treino(view.day).ex[u.i];
   const par = parAtivoDe(view.day, u.i);
-  return s ? { n: ex.n, serie: u.k + 1, rir: s[2] != null ? s[2] : null, txt: (s[0] ? fmtNum(s[0]).replace('.', ',') + ' × ' : '') + s[1],
+  return s ? { i: u.i, k: u.k, n: ex.n, serie: u.k + 1, rir: s[2] != null ? s[2] : null, txt: (s[0] ? fmtNum(s[0]).replace('.', ',') + ' × ' : '') + s[1],
                equip: (equipamentoDoEx(ex) || {}).n || null, par: par ? par.n : null } : null;
 };
 /** "Mudar este exercício": o que o cartão antigo oferecia, para a folha nova. */

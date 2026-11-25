@@ -9,7 +9,7 @@
 
 import { useState } from 'preact/hooks';
 import { ic } from '../icones.jsx';
-import { Acoes, Apoio, Botao, Caixa, Cabecalho, Chave, Folha, Linha, Par, Pequeno, Respostas, Saida, Secao, Segmentos, TelaDeAcao } from '../base.jsx';
+import { Acoes, Apoio, Botao, Caixa, Cabecalho, Chave, Folha, Linha, Pequeno, Respostas, Saida, Secao, Segmentos, TelaDeAcao } from '../base.jsx';
 import { Regua } from '../regua.jsx';
 import { useAgora } from '../agora.js';
 import { podeDissolver } from '../../movimento.js';
@@ -74,11 +74,13 @@ function SegsDoTreino({ f }) {
  * As séries deste exercício, em fichas: as feitas com o número, a de agora em
  * destaque, as que vêm só com o número da ordem.
  */
-function Feitas({ f }) {
+function Feitas({ ctx, f }) {
   return (
     <div class="v3-feitas" aria-label={'Séries de ' + f.ex.n}>
       {f.estados.map(e => e.feita
-        ? <span key={e.k} class={'f v3-n' + (e.k === f.k ? ' a' : '')}>{ic.ok}{e.txt}</span>
+        ? <button key={e.k} type="button" class={'f v3-n' + (e.k === f.k ? ' a' : '')} data-a={'corrige-serie-' + (e.k + 1)}
+                  aria-label={'Corrigir série ' + (e.k + 1) + ': ' + e.txt}
+                  onClick={() => ctx.abreFolha({ k: 'corrigeSerie', i: f.i, s: e.k })}>{ic.ok}{e.txt}</button>
         : e.k === f.k ? <span key={e.k} class="a v3-n">série {e.k + 1}</span>
         : <span key={e.k} class="v3-n">{e.k + 1}</span>)}
     </div>
@@ -110,10 +112,11 @@ function Serie({ ctx, f }) {
   const [carga, setCarga] = useState(f.carga);
   const [reps, setReps] = useState(f.reps);
   const [sobe, setSobe] = useState(null);
-  const [qual, setQual] = useState('reps');
+  // a régua fica a um toque no número: para saltos grandes (de 20 para 60 kg)
+  const [regua, setRegua] = useState(null);
   const ex = f.ex;
   const comCarga = !ex.semCarga;
-  const aceitaSubir = () => { setCarga(f.sobe); setSobe(true); setQual('carga'); };
+  const aceitaSubir = () => { setCarga(f.sobe); setSobe(true); };
   // "reps" é a abreviação do dado; na tela, a palavra inteira
   const medida = ex.medida === 'reps' ? 'repetições' : ex.medida;
   const faixa = ex.faixa ? ex.faixa.replace(/-/g, '–') + ' ' + medida : '';
@@ -150,7 +153,7 @@ function Serie({ ctx, f }) {
     <TelaDeAcao cor="treino" topo={<Topo ctx={ctx} f={f} />} segs={<SegsDoTreino f={f} />}
       antes={<>
         {!aviso && f.k === 0 && ex.cue && <p class="v3-dica"><b>Treinador:</b> {ex.cue}</p>}
-        <Feitas f={f} />
+        <Feitas ctx={ctx} f={f} />
         {aviso}
       </>}
       pe={<Botao grande data-a="serie-feita" onClick={() => ctx.fazSerieV3(carga, reps)}>{ic.ok} {f.jaFeita ? 'Corrigir' : 'Feito'}</Botao>}
@@ -163,28 +166,51 @@ function Serie({ ctx, f }) {
       <h1 class="v3-serie-n" tabindex="-1">{ex.n}</h1>
       {linha && <p class="v3-serie-q">{linha}</p>}
       <Pegada pegada={f.pegada} pes={f.pes} />
-      {comCarga
-        ? <Par escolhido={qual} aoEscolher={setQual} itens={[
-            { k: 'carga', rotulo: ex.unidade, valor: virgula(carga) },
-            { k: 'reps', rotulo: medida, valor: reps }]} />
-        : <Par escolhido="reps" aoEscolher={() => {}} itens={[{ k: 'reps', rotulo: medida, valor: reps }]} />}
-      {comCarga && qual === 'carga'
-        ? <Regua key="carga" min={0} max={Math.max(60, Math.ceil(carga * 2 / 10) * 10)} passo={f.passoCarga} cada={f.passoCarga >= 2.5 ? 10 : 5}
-                 largura={16} valor={carga} aoMudar={setCarga} rotulo={'carga em ' + ex.unidade} passos={false} />
-        : <Regua key="reps" min={1} max={Math.max(30, reps + 15)} passo={1} cada={5} largura={30} valor={reps} aoMudar={setReps}
-                 rotulo={medida} passos={false} />}
+      <CargaEReps comCarga={comCarga} unidade={ex.unidade} medida={medida} passoCarga={f.passoCarga}
+                  carga={carga} setCarga={setCarga} reps={reps} setReps={setReps} regua={regua} setRegua={setRegua} id="serie" />
       <p class="v3-serie-ant">{f.antes ? <>da última vez: <span class="v3-n">{f.antes}</span></> : 'exercício novo: sem histórico'}</p>
     </TelaDeAcao>
   );
 }
 
-/** Um número com − e + grandes, para a mão que segura a alça do aparelho. */
-function Passo({ rotulo, valor, txt, passo, min = 0, aoMudar, id }) {
-  const muda = d => aoMudar(Math.max(min, Math.round((valor + d) * 100) / 100));
+/**
+ * CARGA E REPETIÇÃO com − e + (o mesmo controle do par): um toque muda um
+ * passo do equipamento. Tocar no número abre a régua embaixo, para quem quer
+ * pular muito de uma vez; tocar de novo fecha.
+ */
+function CargaEReps({ comCarga, unidade, medida, passoCarga, carga, setCarga, reps, setReps, regua, setRegua, id }) {
+  const alterna = k => setRegua(regua === k ? null : k);
   return (
-    <div class="v3-step" role="group" aria-label={rotulo}>
+    <>
+      <div class="v3-steps">
+        {comCarga && <Passo id={id + '-carga'} rotulo={unidade} valor={carga} txt={virgula(carga)} passo={passoCarga} aoMudar={setCarga}
+                            aoTocarValor={() => alterna('carga')} reguaAberta={regua === 'carga'} />}
+        <Passo id={id + '-reps'} rotulo={medida} valor={reps} passo={1} min={1} aoMudar={setReps}
+               aoTocarValor={() => alterna('reps')} reguaAberta={regua === 'reps'} />
+      </div>
+      {regua === 'carga' && comCarga &&
+        <Regua key="carga" min={0} max={Math.max(60, Math.ceil(carga * 2 / 10) * 10)} passo={passoCarga} cada={passoCarga >= 2.5 ? 10 : 5}
+               largura={16} valor={carga} aoMudar={setCarga} rotulo={'carga em ' + unidade} passos={false} />}
+      {regua === 'reps' &&
+        <Regua key="reps" min={1} max={Math.max(30, reps + 15)} passo={1} cada={5} largura={30} valor={reps} aoMudar={setReps}
+               rotulo={medida} passos={false} />}
+    </>
+  );
+}
+
+/** Um número com − e + grandes, para a mão que segura a alça do aparelho. */
+function Passo({ rotulo, valor, txt, passo, min = 0, aoMudar, id, aoTocarValor, reguaAberta }) {
+  // por função: dois toques seguidos, antes do desenho, somam os dois passos
+  const muda = d => aoMudar(v => Math.max(min, Math.round((v + d) * 100) / 100));
+  const mostra = txt != null ? txt : valor;
+  return (
+    <div class={'v3-step' + (reguaAberta ? ' r' : '')} role="group" aria-label={rotulo}>
       <small>{rotulo}</small>
-      <output class="v3-step-v v3-n" aria-live="polite" id={id}>{txt != null ? txt : valor}</output>
+      {aoTocarValor
+        ? <button type="button" class="v3-step-v v3-n" data-a={id + '-regua'} aria-expanded={!!reguaAberta}
+                  aria-label={mostra + ' ' + rotulo + (reguaAberta ? '. Fechar a régua' : '. Abrir a régua para mudar mais de uma vez')}
+                  onClick={aoTocarValor}><output aria-live="polite" id={id}>{mostra}</output></button>
+        : <output class="v3-step-v v3-n" aria-live="polite" id={id}>{mostra}</output>}
       <div class="v3-step-b">
         <button data-a={id + '-menos'} aria-label={'Menos ' + virgula(passo) + ' em ' + rotulo} disabled={valor - passo < min} onClick={() => muda(-passo)}>−</button>
         <button data-a={id + '-mais'} aria-label={'Mais ' + virgula(passo) + ' em ' + rotulo} onClick={() => muda(passo)}>+</button>
@@ -284,6 +310,7 @@ function ParCircuito({ ctx, f }) {
         {estacao(p.estacoes[1], 1)}
       </div>
       <VideosDoPar ctx={ctx} estacoes={p.estacoes} />
+      <FeitasDoPar ctx={ctx} estacoes={p.estacoes} />
       {p.tempo
         ? <Cronometro segundos={reps} lados={!!eu.lado} />
         : <div class="v3-steps">
@@ -293,6 +320,61 @@ function ParCircuito({ ctx, f }) {
       <p class="v3-serie-ant">{f.antes ? <>da última vez: <span class="v3-n">{f.antes}</span></> : 'exercício novo: sem histórico'}</p>
       {f.k === 0 && ex.cue && <p class="v3-dica"><b>Treinador:</b> {ex.cue}</p>}
     </TelaDeAcao>
+  );
+}
+
+/** As séries feitas de cada estação do par: tocar numa delas corrige. */
+function FeitasDoPar({ ctx, estacoes }) {
+  const com = estacoes.filter(e => e.feitasTxt && e.feitasTxt.length);
+  if (!com.length) return null;
+  return (
+    <div class="v3-feitas-par" data-a="par-feitas">
+      {com.map(e => (
+        <div key={e.i} class="v3-feitas" aria-label={'Séries feitas de ' + e.n}>
+          <span class="v3-feitas-n">{e.n}</span>
+          {e.feitasTxt.map(s => (
+            <button key={s.k} type="button" class="f v3-n" data-a={'corrige-par-' + e.i + '-' + (s.k + 1)}
+                    aria-label={'Corrigir ' + e.n + ', série ' + (s.k + 1) + ': ' + s.txt}
+                    onClick={() => ctx.abreFolha({ k: 'corrigeSerie', i: e.i, s: s.k })}>{ic.ok}{s.txt}</button>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * CORRIGIR UMA SÉRIE FEITA, no lugar: os números de agora, − e + do
+ * equipamento, o RIR se ele tiver sido dito. Salvar volta para a série em que
+ * se estava, com o descanso correndo; Apagar tem Desfazer no aviso.
+ */
+export function FolhaCorrigeSerie({ ctx, f }) {
+  const s = ctx.serieParaCorrigirV3(f.i, f.s);
+  const [carga, setCarga] = useState(s ? s.carga : 0);
+  const [reps, setReps] = useState(s ? s.reps : 1);
+  const [rir, setRir] = useState(s ? s.rir : null);
+  const [regua, setRegua] = useState(null);
+  if (!s) return null;
+  const salva = () => { ctx.fechaFolha(); ctx.salvaCorrecaoV3(s.i, s.k, carga, reps, rir); };
+  const apaga = () => { ctx.fechaFolha(); ctx.apagaSerieV3(s.i, s.k); };
+  return (
+    <Folha titulo={'Corrigir a série ' + s.serie} sub={s.n + ' · anotada ' + s.txt} aoFechar={ctx.fechaFolha}>
+      <div class="v3-corrige">
+        <CargaEReps comCarga={!s.semCarga || s.carga > 0} unidade={s.unidade} medida={s.medida} passoCarga={s.passoCarga}
+                    carga={carga} setCarga={setCarga} reps={reps} setReps={setReps} regua={regua} setRegua={setRegua} id="corrige" />
+        {!s.seg && (
+          <div class="v3-corrige-rir">
+            <small>sobraram (opcional)</small>
+            <Respostas rotulo={'Repetições que sobraram na série ' + s.serie} valor={rir} aoResponder={v => setRir(rir === v ? null : v)}
+                       opcoes={[0, 1, 2, 3, 4].map(n => ({ k: n, t: n === 4 ? '4+' : String(n) }))} />
+          </div>
+        )}
+      </div>
+      <Acoes>
+        <Botao cheio data-a="corrige-salva" onClick={salva}>Salvar a série {s.serie}</Botao>
+        <Botao tipo="contorno" cheio data-a="corrige-apaga" onClick={apaga}>Apagar esta série</Botao>
+      </Acoes>
+    </Folha>
   );
 }
 
@@ -336,6 +418,11 @@ function Descanso({ ctx, des }) {
           <p>Sobraram quantas repetições? Se quiser dizer.</p>
           <Respostas sobreFundo rotulo={'Repetições que sobraram em ' + u.n + ', série ' + u.serie} valor={u.rir} aoResponder={ctx.rirDaUltimaV3}
                      opcoes={[0, 1, 2, 3, 4].map(n => ({ k: n, t: n === 4 ? '4+' : String(n) }))} />
+          <button type="button" class="v3-corrige-link" data-a="desc-corrige"
+                  aria-label={'Corrigir a série ' + u.serie + ' de ' + u.n + ': ' + u.txt}
+                  onClick={() => ctx.abreFolha({ k: 'corrigeSerie', i: u.i, s: u.k })}>
+            Série {u.serie}: <span class="v3-n">{u.txt}</span> · <b>corrigir</b>
+          </button>
         </div>
       )}
       {prox && !prox.fim && prox.par && u && u.par === prox.par.n && u.equip && prox.ex.equip && u.equip !== prox.ex.equip && (

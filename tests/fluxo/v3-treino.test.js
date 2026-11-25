@@ -29,18 +29,16 @@ async function emFoco(opcoes) {
 }
 // direto do histórico gravado (S.logs), com a sessão em curso
 const historicoDoA0 = a => a.E(`JSON.stringify(S.logs[logKey(view.day, 0)])`);
-// a série tem UMA régua: o par escolhe o que ela muda (1 = carga, 2 = repetição),
-// e a seta do teclado anda um passo nela
+// a série é registrada com − e + (o mesmo controle do par); tocar no número
+// abre a régua embaixo, para saltos grandes (1 = carga, 2 = repetição)
 const maisNa = async (a, qual, n = 1) => {
-  a.clicar(qual === 1 ? '[data-a="par-carga"]' : '[data-a="par-reps"]');
-  await a.esperar(5);
   for (let i = 0; i < n; i++) {
-    a.E(`document.querySelector('.v3-regua-r').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))`);
+    a.clicar(qual === 1 ? '[data-a="serie-carga-mais"]' : '[data-a="serie-reps-mais"]');
     await a.esperar(5);
   }
 };
-// o par diz o que "Feito" vai gravar
-const noPar = a => (a.texto('[data-a="par-carga"]') || '') + ' × ' + (a.texto('[data-a="par-reps"]') || '');
+// o que "Feito" vai gravar
+const noPar = a => (a.texto('#serie-carga') || '') + ' × ' + (a.texto('#serie-reps') || '');
 
 test('a série feita entra pelo caminho de sempre: rascunho, histórico e sessão aberta, e o descanso toma a tela', async () => {
   const a = await emFoco();
@@ -75,19 +73,20 @@ test('a série feita entra pelo caminho de sempre: rascunho, histórico e sessã
   a.fechar();
 });
 
-test('o par e a régua dizem o que a carga conta, por lado ou em cada mão', async () => {
+test('o − / + e a régua dizem o que a carga conta, por lado ou em cada mão', async () => {
   const a = await emFoco();
-  a.clicar('[data-a="par-carga"]');
+  a.clicar('[data-a="serie-carga-regua"]');   // tocar no número abre a régua
+  await a.esperar(5);
   for (const [tipo, unidade, falada] of [['lado', 'kg por lado', 'quilos por lado'], ['halter', 'kg em cada mão', 'quilos em cada mão']]) {
     a.E(`S.carga[logKey(view.day, 0)] = '${tipo}'; render()`);
     await a.esperar();
-    assert.match(a.texto('[data-a="par-carga"]'), new RegExp(unidade));
+    assert.match(a.texto('.v3-step small'), new RegExp(unidade));
     assert.ok(a.$('[role="slider"]').getAttribute('aria-valuetext').endsWith(falada));
   }
   a.fechar();
 });
 
-test('a régua muda a carga antes de gravar, e corrigir uma série feita não abre outra', async () => {
+test('o − / + muda a carga antes de gravar, e corrigir uma série feita não abre outra', async () => {
   const a = await emFoco();
   await maisNa(a, 1, 2);                       // 60 → 65 (passo de 2,5)
   await maisNa(a, 2, 1);                       // 8 → 9
@@ -124,7 +123,7 @@ test('todas no topo da faixa da última vez: pergunta se sobe, e subir põe a ca
   assert.ok(/Subir para/.test(a.texto('[data-a="sugestao-subir"]')), a.texto('[data-a="sugestao-subir"]'));
   a.clicar('[data-a="sobe-sobe"]');
   await a.esperar();
-  assert.ok(new RegExp(String(f.sobe).replace('.', ',')).test(a.texto('[data-a="par-carga"]')), noPar(a));
+  assert.ok(new RegExp(String(f.sobe).replace('.', ',')).test(a.texto('#serie-carga')), noPar(a));
   assert.ok(!a.$('[data-a="sugestao-subir"]'), 'respondida, sai');
   a.fechar();
 });

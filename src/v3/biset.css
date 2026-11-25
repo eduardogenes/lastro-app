@@ -108,3 +108,24 @@
 
 /* o "Feito → …" cabe na largura: o destino encolhe, o botão não */
 .v3-circ .v3-acao-pe > .v3-btn { min-width: 0; overflow: hidden; }
+
+/* ---- corrigir uma série feita (hotfix de 25/11) ---- */
+/* o número do − / + é tocável: abre a régua embaixo, para saltos grandes */
+.v3 button.v3-step-v { background: none; color: inherit; padding: 2px var(--e-3); border-radius: var(--r-quadro); min-height: 44px; min-width: 64px;
+  box-shadow: inset 0 -2px 0 var(--contorno); }
+.v3 button.v3-step-v output { font: inherit; }
+.v3-step.r { box-shadow: inset 0 0 0 var(--fio-forte) var(--texto); }
+.v3-steps + .v3-regua { margin-top: var(--e-3); }
+/* a série feita é tocável: o alvo cresce para 44 px sem mudar a ficha */
+.v3 .v3-feitas > button.f { position: relative; cursor: pointer; }
+.v3 .v3-feitas > button.f::after { content: ""; position: absolute; inset: -5px -2px; }
+.v3 .v3-feitas > button.f:active { transform: scale(.97); }
+.v3-feitas-par { display: grid; gap: var(--e-2); margin-top: var(--e-3); }
+.v3-feitas-par .v3-feitas { margin-top: 0; align-items: center; }
+.v3-feitas-n { font: var(--t-rotulo); color: var(--texto-2); max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v3-corrige { display: grid; gap: var(--e-4); margin: var(--e-3) 0 var(--e-5); }
+.v3-corrige-rir { display: grid; gap: var(--e-2); }
+.v3-corrige-rir small { font: var(--t-rotulo); color: var(--texto-2); }
+.v3 .v3-corrige-link { margin-top: var(--e-3); min-height: 44px; padding: 0 var(--e-3); background: none; color: var(--texto); font: 500 15px/1.2 var(--f-texto); }
+.v3 .v3-corrige-link b { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .v3 .v3-feitas > button.f:active { transform: none; } }
