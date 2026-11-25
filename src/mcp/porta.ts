@@ -1,11 +1,12 @@
 // Uma porta do MCP por papel: /api/mcp/treinador, /api/mcp/nutricionista,
-// /api/mcp/assistente (docs/mcp/00-desenho.md). Função da Vercel no formato Web
-// (Request → Response); toda a lógica está em src/mcp/, testada sem rede.
+// /api/mcp/assistente (docs/mcp/00-desenho.md). Função da Vercel no formato Web.
+// A Vercel roda api/mcp/[papel].mjs, GERADO daqui por `npm run mcp:porta` (um arquivo só:
+// o Node em ESM não resolve os imports sem extensão do resto de src/).
 
-import { ANON, URL_BASE } from '../../src/infra/supabase';
-import { chavesDoProjeto, confereToken } from '../../src/mcp/jwt';
-import { ehPapel } from '../../src/mcp/ferramentas';
-import { atende } from '../../src/mcp/servidor';
+import { ANON, URL_BASE } from '../infra/supabase';
+import { chavesDoProjeto, confereToken } from './jwt';
+import { ehPapel } from './ferramentas';
+import { atende } from './servidor';
 
 const EMISSOR = URL_BASE + '/auth/v1';
 const chaves = chavesDoProjeto(EMISSOR + '/.well-known/jwks.json');
