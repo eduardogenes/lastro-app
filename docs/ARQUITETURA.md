@@ -200,7 +200,8 @@ S = {
   },
   aulas: [{ id, nome, t, m, mov: [] }],                         // modelos de aula de box
 
-  sessao: { day, inicio, ultima, sid, manual, pausadoEm, pausas: [], pulados: [] },
+  sessao: { day, inicio, ultima, sid, manual, pausadoEm, pausas: [], pulados: [],
+            separar: [] },               // slots da estação 1 dos pares (bi-set) separados só hoje (dominio/biset.ts)
   draft: null,                          // buffer de digitação da sessão aberta
   deload: false,
   cardio: [{ t, m: 'bike', min: 25, i: 'moderado' }],

@@ -41,6 +41,7 @@ export function TreinoEmFoco({ ctx }) {
   if (!f) return null;
   if (f.fim) return <FimDoTreino ctx={ctx} f={f} />;
   // uma montagem por série: a régua parte do valor daquela série
+  if (f.par) return <ParCircuito key={f.dia + '-' + f.i + '-' + f.k} ctx={ctx} f={f} />;
   return <Serie key={f.dia + '-' + f.i + '-' + f.k} ctx={ctx} f={f} />;
 }
 
@@ -79,6 +80,21 @@ function Feitas({ f }) {
         ? <span key={e.k} class={'f v3-n' + (e.k === f.k ? ' a' : '')}>{ic.ok}{e.txt}</span>
         : e.k === f.k ? <span key={e.k} class="a v3-n">série {e.k + 1}</span>
         : <span key={e.k} class="v3-n">{e.k + 1}</span>)}
+    </div>
+  );
+}
+
+/**
+ * A PEGADA E OS PÉS, numa linha com ícone sob o nome: o que o treinador
+ * escreveu ("pegada: neutra na corda") ou, sem isso, o que o catálogo sabe.
+ * O resto da dica segue no "Treinador:".
+ */
+function Pegada({ pegada, pes, compacta }) {
+  if (!pegada && !pes) return null;
+  return (
+    <div class={'v3-peg' + (compacta ? ' p' : '')}>
+      {pegada && <p><span class="v3-peg-i" aria-hidden="true">{ic.mao}</span><span><span class="so-leitor">Pegada: </span>{pegada}</span></p>}
+      {pes && <p><span class="v3-peg-i" aria-hidden="true">{ic.pe}</span><span><span class="so-leitor">Pés: </span>{pes}</span></p>}
     </div>
   );
 }
@@ -144,6 +160,7 @@ function Serie({ ctx, f }) {
       </>}>
       <h1 class="v3-serie-n" tabindex="-1">{ex.n}</h1>
       {linha && <p class="v3-serie-q">{linha}</p>}
+      <Pegada pegada={f.pegada} pes={f.pes} />
       {comCarga
         ? <Par escolhido={qual} aoEscolher={setQual} itens={[
             { k: 'carga', rotulo: ex.unidade, valor: virgula(carga) },
@@ -156,6 +173,139 @@ function Serie({ ctx, f }) {
                  rotulo={medida} passos={false} />}
       <p class="v3-serie-ant">{f.antes ? <>da última vez: <span class="v3-n">{f.antes}</span></> : 'exercício novo: sem histórico'}</p>
     </TelaDeAcao>
+  );
+}
+
+/** Um número com − e + grandes, para a mão que segura a alça do aparelho. */
+function Passo({ rotulo, valor, txt, passo, min = 0, aoMudar, id }) {
+  const muda = d => aoMudar(Math.max(min, Math.round((valor + d) * 100) / 100));
+  return (
+    <div class="v3-step" role="group" aria-label={rotulo}>
+      <small>{rotulo}</small>
+      <output class="v3-step-v v3-n" aria-live="polite" id={id}>{txt != null ? txt : valor}</output>
+      <div class="v3-step-b">
+        <button data-a={id + '-menos'} aria-label={'Menos ' + virgula(passo) + ' em ' + rotulo} disabled={valor - passo < min} onClick={() => muda(-passo)}>−</button>
+        <button data-a={id + '-mais'} aria-label={'Mais ' + virgula(passo) + ' em ' + rotulo} onClick={() => muda(passo)}>+</button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * O CRONÔMETRO DO PAR COM TEMPO (alongamento 40 s por lado): começa no toque,
+ * conta, e no fim do primeiro lado passa sozinho para o outro.
+ */
+function Cronometro({ segundos, lados }) {
+  const agora = useAgora();
+  const [fim, setFim] = useState(null);
+  const [lado, setLado] = useState(0);
+  const nomes = lados ? ['Esquerda', 'Direita'] : null;
+  const falta = fim ? Math.max(0, fim - agora) : segundos * 1000;
+  if (fim && falta === 0) {
+    if (nomes && lado === 0) { setLado(1); setFim(null); try { navigator.vibrate && navigator.vibrate(200); } catch (e) { /* sem vibração */ } }
+    else { setFim(null); setLado(nomes ? 2 : 1); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) { /* idem */ } }
+  }
+  const acabou = nomes ? lado > 1 : lado > 0;
+  return (
+    <div class="v3-cron" role="group" aria-label="Cronômetro">
+      {nomes && <div class="v3-cron-l">{nomes.map((n, j) => <span key={n} class={j === lado ? 'a' : j < lado ? 'f' : ''}>{j < lado ? ic.ok : null}{n}</span>)}</div>}
+      <div class="v3-cron-t v3-n" role="timer" aria-live="off">{acabou ? 'Pronto' : relogio(falta)}</div>
+      {!acabou && <Pequeno contorno data-a="cron-comeca" onClick={() => setFim(fim ? null : Date.now() + segundos * 1000)}>
+        {fim ? 'Parar' : (nomes ? 'Começar ' + nomes[lado].toLowerCase() : 'Começar') + ' · ' + segundos + ' s'}</Pequeno>}
+    </div>
+  );
+}
+
+/**
+ * O PAR EM CIRCUITO (bi-set, protótipo de 24/11): as duas estações lado a lado,
+ * com o mesmo tamanho; a da vez em destaque, a outra a um toque (aparelho
+ * ocupado: começa por ela). A grade de rodadas mostra o par inteiro. O
+ * registro é com − e +, para uma mão. "Feito" diz para onde vai.
+ */
+function ParCircuito({ ctx, f }) {
+  const p = f.par;
+  const eu = p.estacoes[p.lado === 'a' ? 0 : 1];
+  const outra = p.estacoes[p.lado === 'a' ? 1 : 0];
+  const [carga, setCarga] = useState(f.carga);
+  const [reps, setReps] = useState(f.reps);
+  const ex = f.ex;
+  const comCarga = !ex.semCarga && !p.tempo;
+  const medida = ex.medida === 'reps' ? 'repetições' : ex.medida;
+  const falhou = ctx.naoGuardado();
+  const q = p.sozinha ? (outra.fechou ? outra.n + ' já fechou: esta é sozinha' : 'só esta estação nesta rodada')
+    : p.rodada === p.rodadas ? 'última rodada · alternando' : 'alternando, sem pausa no meio';
+  const estacao = (e, j) => (
+    <button key={e.i} class={'v3-est' + (e.ativa ? ' a' : '') + (e.fechou ? ' ok' : '') + (e.fora ? ' fora' : '')}
+            data-a={'par-est-' + (j + 1)} disabled={e.ativa || e.fechou || e.fora}
+            aria-current={e.ativa ? 'step' : undefined}
+            aria-label={e.ativa ? undefined : e.fechou ? e.n + ': todas as séries feitas' : 'Começar por ' + e.n + ' nesta rodada'}
+            onClick={e.ativa ? undefined : ctx.trocaVezV3}>
+      <span class="v3-est-k">{e.fora ? 'pulado' : e.fechou ? 'fechou · ' + (j + 1) : e.ativa ? 'agora · ' + (j + 1) : 'a seguir · ' + (j + 1)}</span>
+      <b>{e.n}</b>
+      <Pegada pegada={e.pegada} pes={e.pes} compacta />
+      <span class="v3-est-v v3-n">{e.fechou ? e.series + ' de ' + e.series : e.semCarga && !(e.carga > 0) ? e.reps + (e.seg ? ' s' : '') : <>{virgula(e.carga)}<small> {e.unidade.split(' ')[0]}</small> × {e.reps}</>}</span>
+    </button>
+  );
+  return (
+    <TelaDeAcao cor="fundo" cima classe="v3-circ" topo={<Topo ctx={ctx} f={f} />} segs={<SegsDoTreino f={f} />}
+      antes={falhou && (
+        <Caixa tom="atencao" data-a="serie-falhou" titulo="A série não foi guardada." nota="O aparelho recusou a gravação. Os números continuam aqui.">
+          <Pequeno cheio data-a="serie-tenta" onClick={ctx.tentaGravar}>Tentar de novo</Pequeno>
+          <Pequeno data-a="serie-copia" onClick={ctx.copiaRegistro}>Copiar em texto</Pequeno>
+        </Caixa>
+      )}
+      pe={<Botao grande data-a="serie-feita" onClick={() => ctx.fazSerieV3(comCarga ? carga : (ex.semCarga ? 0 : carga), reps)}>
+        {ic.ok} {f.jaFeita ? 'Corrigir' : 'Feito'}
+        {!f.jaFeita && <small class="v3-par-dep">{ic.seta}<span>{p.depois.k === 'segue' ? p.depois.n : 'descanso ' + comEspaco(p.depois.txt)}</span></small>}
+      </Botao>}
+      links={<>
+        <button data-a="mudar-ex" onClick={() => ctx.abreFolha({ k: 'mudarEx', i: f.i })}>Mudar</button>
+        <button data-a="par-separa" onClick={() => ctx.abreFolha({ k: 'separaPar', i: f.i })}>Separar hoje</button>
+        <button data-a="historico-ex" onClick={() => ctx.abreExercicioV3(f.dia, f.i)}>Histórico</button>
+      </>}>
+      <div class="v3-par-h">
+        <span class="v3-par-id">{ic.gira}Par {p.n}</span>
+        <span class="v3-par-q">{q}</span>
+      </div>
+      <h1 class="so-leitor" tabindex="-1">{ex.n}, série {f.k + 1} de {ex.series}</h1>
+      <div class="v3-rod" role="img" aria-label={'Rodada ' + p.rodada + ' de ' + p.rodadas + '. ' + p.estacoes.map(e => e.n + ': ' + e.feitas + ' de ' + e.series).join('. ')}>
+        {p.estacoes.map(e => (
+          <div key={e.i} class="v3-rod-l"><b>{e.n}</b>
+            <span class="v3-pts">{e.pontos.map((t, k) => <i key={k} class={t} />)}</span></div>
+        ))}
+        <div class="v3-rod-t"><span>rodada {p.rodada} de {p.rodadas}</span><span>descanso de {comEspaco(p.descanso)} depois da estação 2</span></div>
+      </div>
+      <div class="v3-ests">
+        {estacao(p.estacoes[0], 0)}
+        <span class="v3-ests-seta" aria-hidden="true">{ic.dir}</span>
+        {estacao(p.estacoes[1], 1)}
+      </div>
+      {p.tempo
+        ? <Cronometro segundos={reps} lados={!!eu.lado} />
+        : <div class="v3-steps">
+            {comCarga && <Passo id="par-carga" rotulo={eu.unidade} valor={carga} txt={virgula(carga)} passo={f.passoCarga} aoMudar={setCarga} />}
+            <Passo id="par-reps" rotulo={medida} valor={reps} passo={1} min={1} aoMudar={setReps} />
+          </div>}
+      <p class="v3-serie-ant">{f.antes ? <>da última vez: <span class="v3-n">{f.antes}</span></> : 'exercício novo: sem histórico'}</p>
+      {f.k === 0 && ex.cue && <p class="v3-dica"><b>Treinador:</b> {ex.cue}</p>}
+    </TelaDeAcao>
+  );
+}
+
+/** Separar o par só hoje: viram dois exercícios comuns, cada um com o seu descanso. */
+export function FolhaSeparaPar({ ctx, f }) {
+  const foco = ctx.focoV3();
+  const p = foco && foco.par;
+  if (!p) return null;
+  const [a, b] = p.estacoes;
+  return (
+    <Folha titulo="Separar o par só hoje?" sub={a.n + ' e ' + b.n + ' viram dois exercícios comuns neste treino, cada um com o seu descanso. O programa continua com o par.'}
+           aoFechar={ctx.fechaFolha}>
+      <Acoes>
+        <Botao cheio data-a="par-separa-sim" onClick={() => { ctx.fechaFolha(); ctx.separaParV3(f.i, true); }}>Separar hoje</Botao>
+        <Botao tipo="contorno" cheio data-a="par-separa-nao" onClick={ctx.fechaFolha}>Manter o par</Botao>
+      </Acoes>
+    </Folha>
   );
 }
 
@@ -175,7 +325,7 @@ function Descanso({ ctx, des }) {
         <Pequeno contorno data-a="desc-menos" onClick={() => ctx.ajustaDescanso(-15)} aria-label="Tirar 15 segundos">−15 s</Pequeno>
         <Pequeno contorno data-a="desc-mais" onClick={() => ctx.ajustaDescanso(15)} aria-label="Somar 15 segundos">+15 s</Pequeno>
       </>}>
-      <h1 class="v3-desc-r" tabindex="-1">descanso</h1>
+      <h1 class="v3-desc-r" tabindex="-1">{prox && prox.par && u && u.par === prox.par.n ? 'descanso do par ' + prox.par.n : 'descanso'}</h1>
       <div class="v3-desc-t v3-n" role="timer" aria-live="off" aria-label={falta > 0 ? 'faltam ' + porExtenso(falta) : 'descanso acabou'}>{falta > 0 ? relogio(falta) : 'Já!'}</div>
       {u && (
         <div class="v3-sobrou">
@@ -184,7 +334,23 @@ function Descanso({ ctx, des }) {
                      opcoes={[0, 1, 2, 3, 4].map(n => ({ k: n, t: n === 4 ? '4+' : String(n) }))} />
         </div>
       )}
-      {prox && !prox.fim && (
+      {prox && !prox.fim && prox.par && u && u.par === prox.par.n && u.equip && prox.ex.equip && u.equip !== prox.ex.equip && (
+        <p class="v3-troca" data-a="desc-troca">{ic.troca}<span>Troca de aparelho: <b>{prox.ex.equip}</b> · {prox.ex.n}</span></p>
+      )}
+      {prox && !prox.fim && prox.par ? (
+        <div class="v3-prox v3-prox-par" data-a="desc-par">
+          <div class="v3-prox-t">
+            <span>a seguir · par {prox.par.n} · rodada {prox.par.rodada} de {prox.par.rodadas}</span>
+            {prox.par.estacoes.filter(e => !e.fora && !e.fechou).map(e => (
+              <div key={e.i} class={'v3-prox-l' + (e.ativa ? ' a' : '')}>
+                <b>{e.n}</b>
+                <span class="v3-n">{e.semCarga && !(e.carga > 0) ? e.reps : virgula(e.carga) + ' × ' + e.reps}{e.antes ? <small>última: {e.antes}</small> : null}</span>
+              </div>
+            ))}
+          </div>
+          {agua && <Pequeno data-a="desc-agua" onClick={ctx.maisUmCopo}>Água +1</Pequeno>}
+        </div>
+      ) : prox && !prox.fim && (
         <div class="v3-prox">
           <div class="v3-prox-t">
             <span>a seguir · série {prox.k + 1} de {prox.ex.series}</span>
@@ -331,12 +497,26 @@ export function FolhaListaTreino({ ctx }) {
     <Folha titulo={l.nome} sub={l.exercicios.reduce((n, x) => n + x.feitas, 0) + ' de ' + l.exercicios.reduce((n, x) => n + x.series, 0) + ' séries. Toque num exercício para ir até ele.'}
            aoFechar={() => ctx.fechaFolha()}>
       <div class="v3-lista-t">
-        {l.exercicios.map(x => (
-          <Linha key={x.i} marca={x.feito ? ic.ok : x.i + 1} marcaTom={x.feito ? 'f' : x.atual ? 'a' : null} titulo={x.n} quieta={x.pulado} semSeta
-                 apoio={x.pulado ? 'pulado hoje' : x.series + (x.series === 1 ? ' série' : ' séries') + ' · ' + x.feitas + (x.feitas === 1 ? ' feita' : ' feitas')}
-                 data-a={'lista-ex-' + x.i} aria-label={x.n + (x.atual ? ', agora' : x.feito ? ', feito' : '') + '. Ir para este exercício'}
-                 aoTocar={() => { ctx.fechaFolha(); ctx.setFocoV3(x.i, x.feito ? 0 : x.proxima); }} />
-        ))}
+        {l.exercicios.map((x, j) => {
+          const linha = y => (
+            <Linha key={y.i} marca={y.feito ? ic.ok : y.i + 1} marcaTom={y.feito ? 'f' : y.atual ? 'a' : null} titulo={y.n} quieta={y.pulado} semSeta
+                   apoio={y.pulado ? 'pulado hoje' : y.series + (y.series === 1 ? ' série' : ' séries') + ' · ' + y.feitas + (y.feitas === 1 ? ' feita' : ' feitas') + (y.par && y.par.separado ? ' · sozinho hoje' : '')}
+                   data-a={'lista-ex-' + y.i} aria-label={y.n + (y.atual ? ', agora' : y.feito ? ', feito' : '') + '. Ir para este exercício'}
+                   aoTocar={() => { ctx.fechaFolha(); ctx.setFocoV3(y.i, y.feito ? 0 : y.proxima); }} />
+          );
+          if (x.par && x.par.lado === 'b') return null;
+          if (!x.par) return linha(x);
+          const y = l.exercicios[j + 1];
+          const agora = x.atual || (y && y.atual);
+          return (
+            <div key={'par-' + x.par.n} class={'v3-par-bl' + (agora ? ' a' : '') + (x.par.separado ? ' sep' : '')} data-a={'lista-par-' + x.par.n}
+                 role="group" aria-label={'Par ' + x.par.n + (x.par.separado ? ', separado hoje' : ', alternando')}>
+              <p class="v3-par-bl-h">{ic.gira}<b>Par {x.par.n}</b><span>{x.par.separado ? 'separado hoje' : agora ? 'agora · alternando' : 'alternando · ' + l.descansoDoPar(x.par.n) + ' depois do par'}</span></p>
+              {linha(x)}
+              {y && linha(y)}
+            </div>
+          );
+        })}
       </div>
       {l.deload && <Chave titulo={l.deload.rotulo} apoio={l.deload.detalhe} ligada={l.deload.ligado} data-a="lista-deload"
                           aoMudar={on => ctx.setDeload(on)} />}
@@ -425,7 +605,8 @@ export function FolhaMudarEx({ ctx, f }) {
         marca={ic.troca} semSeta data-a={'troca-' + indicado.id} aoTocar={faz(() => a.setAlt(f.i, indicado.id))} />}
       <Linha titulo="Trocar por outro" apoio="buscar no catálogo" marca={ic.troca} semSeta data-a="mudar-trocar" aoTocar={() => ctx.abreCatalogoV3(f.i)} />
       {m.podeMaisSerie && <Linha titulo="Mais uma série" apoio={<>{m.series} {ic.seta} {m.series + 1}</>} aria-label={'Mais uma série, de ' + m.series + ' para ' + (m.series + 1)} marca={ic.mais} semSeta data-a="mudar-mais" aoTocar={faz(() => a.maisUmaSerie(f.i))} />}
-      {m.proximo && <Linha titulo={'Fazer ' + m.proximo + ' antes'} apoio="o aparelho está ocupado" marca={ic.fim} semSeta data-a="mudar-antes" aoTocar={faz(() => a.fazAntesOProximo(f.i))} />}
+      {m.parSeparado && <Linha titulo={'Juntar o par ' + m.parSeparado.n + ' de novo'} apoio="volta a alternar com o par" marca={ic.gira} semSeta data-a="mudar-junta-par" aoTocar={faz(() => ctx.separaParV3(f.i, false))} />}
+      {m.proximo && !m.parSeparado && <Linha titulo={'Fazer ' + m.proximo + ' antes'} apoio="o aparelho está ocupado" marca={ic.fim} semSeta data-a="mudar-antes" aoTocar={faz(() => a.fazAntesOProximo(f.i))} />}
       <Linha titulo={m.pulado ? 'Desfazer o pulo' : 'Pular hoje'} apoio={m.pulado ? 'volta para a fila' : 'fica anotado como pulado'} marca={ic.pula} semSeta data-a="mudar-pular" aoTocar={faz(() => a.pularEx(f.i))} />
       <Linha titulo="O aparelho" apoio="a foto, para achar o mesmo" marca={ic.camera} semSeta data-a="mudar-foto" aoTocar={faz(() => ctx.abreFotoDoAparelhoV3(m.id))} />
       <Linha titulo="Senti dor aqui" apoio={m.regraDor ? 'anota e mostra o que o treinador manda fazer' : 'anota a região no exercício'} marca={ic.atencao} semSeta data-a="mudar-dor" aoTocar={() => ctx.trocaFolha({ k:'dorEx', i:f.i }, true)} />

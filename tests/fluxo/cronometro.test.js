@@ -152,13 +152,23 @@ test('bi-set encadeia em vez de descansar', async () => {
   a.E('S.prog.E.ex[4].bi = 1; S.prog.E.ex[5].bi = 2;');
   a.v('render');
 
+  // O PAR É UM CIRCUITO (dominio/biset.ts): estação 1 → estação 2 → descanso
+  // do par → volta. Antes eram todas as séries do primeiro e depois todas do
+  // segundo, sem nunca alternar.
   a.v('toggle', 4);
-  for (let k = 0; k < 2; k++) a.preencher(4, k, 15, 12);
-  assert.strictEqual(a.vista().open, 5, 'vai direto para o próximo do par');
-  assert.strictEqual(a.vJ('ctx.descansoV3'), null, 'sem pausa no meio do par');
+  a.v('ctx.setFocoV3', 4, 0);
+  a.v('ctx.fazSerieV3', 15, 12);
+  assert.strictEqual(a.vJ('ctx.descansoV3'), null, 'sem pausa no meio da rodada');
+  assert.strictEqual(a.vJ('ctx.focoV3').i, 5, 'a série em foco é a da estação 2, rodada 1');
+  assert.ok(a.vJ('ctx.focoV3').par, 'a tela é a do par');
 
-  for (let k = 0; k < 2; k++) a.preencher(5, k, 20, 12);
-  assert.ok(a.vJ('ctx.descansoV3'), 'o descanso é no segundo');
+  a.v('ctx.fazSerieV3', 20, 12);
+  const d = a.vJ('ctx.descansoV3');
+  assert.ok(d, 'a rodada fechou: descanso do par');
+  assert.match(d.rotulo, /par 1/, 'o descanso é o do par');
+  a.v('stopTimer');
+  assert.strictEqual(a.vJ('ctx.focoV3').i, 4, 'volta para a estação 1, rodada 2');
+  assert.strictEqual(a.vJ('ctx.focoV3').k, 1);
   a.fechar();
 });
 

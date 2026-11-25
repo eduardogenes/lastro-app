@@ -61,7 +61,8 @@ import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
 import { MOTIVOS_FALTA, respondeFrequencia, uneFrequencia } from './dominio/frequencia';
 import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12, migraPlano13, reduzReferencias } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
-import { SEMENTE, exerciciosDoSistema, indiceDeNomes, comDiferenca, diferencaDaSemente, catalogoDasLinhas, chaveDoNome, maisNova } from './dominio/catalogo';
+import { SEMENTE, exerciciosDoSistema, indiceDeNomes, comDiferenca, diferencaDaSemente, catalogoDasLinhas, chaveDoNome, maisNova, equipamentoDe, EQUIPAMENTOS } from './dominio/catalogo';
+import { paresDoTreino, proximaDoPar, depoisDaSerie, separaPegada } from './dominio/biset';
 import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
@@ -6555,8 +6556,18 @@ function autoTimer(i, k, e, jaRegistrada) {
   // O bi-set não descansa entre as suas séries — é essa a definição. O primeiro
   // encadeia direto no segundo, e só quando o exercício acabou; nas séries do
   // meio não há pausa a cronometrar.
-  if (ex.bi === 1) {
-    if (k === ult) proximoDoBiset(i);
+  // O BI-SET É UM CIRCUITO (dominio/biset.ts): estação 1 → estação 2 →
+  // descanso do par (o da estação 2) → volta. Sem pausa entre as estações da
+  // mesma rodada; a série que sobra, sozinha, descansa o próprio tempo.
+  const par = parAtivoDe(view.day, i);
+  if (par) {
+    const lado = i === par.a ? 'a' : 'b';
+    const depois = depoisDaSerie(lado, k, estacaoDe(par.a), estacaoDe(par.b));
+    const outra = lado === 'a' ? par.b : par.a;
+    if (depois === 'segue') { proximoDoBiset(outra); return; }
+    const exD = depois === 'par' ? treino(view.day).ex[par.b] : ex;
+    startTimer(descOf(exD), 'descanso do par ' + par.n + ' · rodada ' + (k + 1));
+    if (k === ult) avancaExercicio(i);
     return;
   }
   startTimer(descOf(ex), 'descanso · série ' + (k + 1) + ' · ' + ex.n);
@@ -6590,12 +6601,57 @@ function avancaExercicio(i) {
   mostraExercicio(prox);
 }
 
-function proximoDoBiset(i) {
-  const prox = treino(view.day).ex[i+1];
+/** A outra estação do par, sem pausa. `j` é a posição dela no treino. */
+function proximoDoBiset(j) {
+  const prox = treino(view.day).ex[j];
   if (!prox) return;
-  view.open = i+1; view.swapOpen = null;
+  // no treino em foco a série seguinte já é a da outra estação (`serieEmFoco`);
+  // no cartão antigo, ela abre
+  if (!view.modoSessao) { view.open = j; view.swapOpen = null; }
   render();
-  toast('Sem pausa: vá direto para ' + prox.n.replace(' (bi-set)','') + '.');
+  if (!view.modoSessao) toast('Sem pausa: vá direto para ' + prox.n.replace(' (bi-set)','') + '.');
+}
+
+// ---------- o par (bi-set) do treino de hoje ----------
+/** As estações 1 dos pares separados hoje ("Separar hoje"), por posição no treino do dia. */
+function separadosHoje(d) {
+  const s = S.sessao, t = treino(d);
+  if (!s || !s.separar || !s.separar.length || !t) return [];
+  const out = [];
+  t.ex.forEach(function (_, i) { if (s.separar.indexOf(slotDe(d, i)) >= 0) out.push(i); });
+  return out;
+}
+/** Os pares do treino `d`, com os separados de hoje marcados. */
+function paresDe(d) {
+  const t = treino(d);
+  return paresDoTreino(t ? t.ex : [], separadosHoje(d));
+}
+/** O par ATIVO (não separado hoje) em que a posição `i` está, ou null. */
+function parAtivoDe(d, i) {
+  const p = paresDe(d).de[i];
+  return p && !p.separado ? p : null;
+}
+/** O que o circuito precisa saber da estação `i` do dia em tela. */
+function estacaoDe(i) {
+  const ex = treino(view.day).ex[i];
+  const dr = draftPeek(i);
+  return { series: setsFor(ex), cheia: function (k) { return serieCheia(dr, k); }, fora: ehPulado(i) };
+}
+/** O equipamento de um exercício, para o aviso de troca de aparelho: "Polia". */
+function equipamentoDoEx(ex) {
+  if (!ex) return null;
+  const sis = SISTEMA.ex[ex.id] || SISTEMA.ex[ex.orig];
+  const id = (sis && sis.eq) || equipamentoDe(ex.n || '', ex.car || 'pino', ex.u);
+  return EQUIPAMENTOS[id] ? { id: id, n: EQUIPAMENTOS[id].n } : null;
+}
+/** A pegada e os pés de um exercício: da dica do treinador, ou do catálogo. A dica volta sem eles. */
+function pegadaDoEx(ex) {
+  const sp = separaPegada(ex && ex.cue);
+  return {
+    pegada: sp.pegada || (ex && ex.peg && !ex.pegPe && !sp.pes ? ex.peg : null),
+    pes: sp.pes || (ex && ex.peg && ex.pegPe && !sp.pegada ? ex.peg : null),
+    dica: sp.resto
+  };
 }
 
 /**
@@ -9110,10 +9166,13 @@ CTX.programaAbertoV3 = function () {
   let com = 0, todos = 0;
   const treinos = letras.map(function (k) {
     const t = c.prog[k];
-    const ex = (t.ex || []).map(function (sl) {
+    const pares = paresDoTreino(t.ex || []).de;
+    const ex = (t.ex || []).map(function (sl, j) {
       const h = tem(sl.id);
       todos++; if (h) com++;
+      const pr = pares[j];
       return { id: sl.id, n: nomeEx(sl.id), hist: h, apoio: h ? (ultimaCargaDe(sl.id) || 'com histórico') : 'começa do zero',
+               par: pr ? { n: pr.n, lado: j === pr.a ? 'a' : 'b', descanso: fmtDesc(descOf(t.ex[pr.b])) } : null,
                prescricao: sl.s + ' × ' + (sl.u && sl.q ? sl.q + ' ' + sl.u : sl.r || '') + (sl.rir ? ' · RIR ' + sl.rir : '') };
     });
     const vezes = (S.done || []).filter(function (s) { return s && s.day === k && !s.livre && programaDaSessao(S, s) === id; }).length;
@@ -15188,7 +15247,16 @@ function serieEmFoco(d) {
   const f = view.focoV3;
   if (f && P.ex[f.i] && f.k < setsFor(P.ex[f.i])) return f;
   const estados = estadosDoDia(d);
+  const pares = paresDe(d).de;
   for (let i = 0; i < P.ex.length; i++) {
+    // o par ativo anda em circuito: rodada a rodada, estação 1 e estação 2
+    const par = pares[i];
+    if (par && !par.separado && par.a === i) {
+      const r = proximaDoPar(estacaoDe(par.a), estacaoDe(par.b));
+      if (r) return { i: r.lado === 'a' ? par.a : par.b, k: r.k };
+      i = par.b;
+      continue;
+    }
     if (ehPulado(i) || estados[i] === 'feito') continue;
     const dr = draftPeek(i);
     const ns = setsFor(P.ex[i]);
@@ -15214,18 +15282,19 @@ CTX.focoV3 = function () {
   const dr = draftPeek(f.i);
   const agora = dr && dr.s[f.k] ? dr.s[f.k] : [null, null];
   const ant = lastSet(key, f.k);
-  // de onde a régua parte: o que já está anotado, a mesma série da última vez,
-  // a série anterior de hoje, ou o começo da faixa do treinador
-  const anteriorHoje = f.k > 0 && dr && dr.s[f.k - 1] ? dr.s[f.k - 1] : null;
   const fx = faixaDoTexto(ex.r);
-  const carga = agora[0] != null ? agora[0] : ant && ant[0] != null ? ant[0] : anteriorHoje && anteriorHoje[0] != null ? anteriorHoje[0] : 0;
-  const reps = agora[1] != null ? agora[1] : ant && ant[1] != null ? ant[1] : anteriorHoje && anteriorHoje[1] != null ? anteriorHoje[1] : (fx ? fx[0] : 10);
+  const v0 = valoresDaSerie(d, f.i, f.k);
+  const carga = v0.carga, reps = v0.reps;
+  const pg = pegadaDoEx(ex);
   const sobe = vm.up && f.k === 0 && agora[0] == null ? proximaCarga(ant ? ant[0] : null, tipo) : null;
   return Object.assign(base, {
     fim: false, i: f.i, k: f.k,
-    ex: { n: ex.n, cue: ex.cue || '', faixa: ex.r || '', rir: ex.rir || '', series: setsFor(ex),
+    par: parDoFoco(d, f),
+    pegada: pg.pegada, pes: pg.pes,
+    ex: { n: ex.n, cue: pg.dica || '', faixa: ex.r || '', rir: ex.rir || '', series: setsFor(ex),
           unidade: vm.unidade === 'kg/lado' ? (tipo === 'halter' ? 'kg em cada mão' : 'kg por lado') : vm.unidade, medida: vm.medida,
-          semCarga: tipo === 'corpo', seg: vm.seg, descanso: vm.descansoTxt, proximo: vm.proximo },
+          semCarga: tipo === 'corpo', seg: vm.seg, descanso: vm.descansoTxt, proximo: vm.proximo,
+          equip: (equipamentoDoEx(ex) || {}).n || null },
     estados: vm.linhas.map(function (l, k) {
       return { k: k, feita: l.valor[1] != null, antes: l.antes,
                txt: l.valor[1] != null ? (l.valor[0] ? fmtNum(l.valor[0]).replace('.', ',') + ' × ' : '') + l.valor[1] : null };
@@ -15243,6 +15312,106 @@ CTX.focoV3 = function () {
       intervaloLongo(S.sessao.ultima, Date.now(), vm.descanso)
       ? { minutos: Math.round((Date.now() - S.sessao.ultima) / 60000) } : null
   });
+};
+/**
+ * De onde a série parte: o que já está anotado, a mesma série da última vez, a
+ * série anterior de hoje, ou o começo da faixa do treinador.
+ */
+function valoresDaSerie(d, i, k) {
+  const ex = treino(d).ex[i];
+  const dr = draftPeek(i);
+  const agora = dr && dr.s[k] ? dr.s[k] : [null, null];
+  const ant = lastSet(logKey(d, i), k);
+  const anteriorHoje = k > 0 && dr && dr.s[k - 1] ? dr.s[k - 1] : null;
+  const fx = faixaDoTexto(ex.r);
+  return {
+    carga: agora[0] != null ? agora[0] : ant && ant[0] != null ? ant[0] : anteriorHoje && anteriorHoje[0] != null ? anteriorHoje[0] : 0,
+    reps: agora[1] != null ? agora[1] : ant && ant[1] != null ? ant[1] : anteriorHoje && anteriorHoje[1] != null ? anteriorHoje[1] : (fx ? fx[0] : 10),
+    antes: ant ? (ant[0] ? fmtNum(ant[0]).replace('.', ',') + ' × ' : '') + ant[1] : null
+  };
+}
+/**
+ * O PAR da série em foco, para a tela de circuito: as duas estações com o
+ * mesmo peso, a grade de rodadas (um ponto por série de cada uma) e o que vem
+ * depois desta série ("→ Rosca inclinada" ou "→ descanso 75 s").
+ */
+function parDoFoco(d, f) {
+  const par = parAtivoDe(d, f.i);
+  if (!par) return null;
+  const P = treino(d);
+  const lado = f.i === par.a ? 'a' : 'b';
+  const est = [par.a, par.b].map(function (j) {
+    const ex = P.ex[j];
+    const e = estacaoDe(j);
+    const tipo = cargaTipo(logKey(d, j), ex);
+    const un = unidadeDe(ex);
+    const kVal = j === f.i ? f.k : (proximaDoPar(estacaoDe(par.a), estacaoDe(par.b)) || {}).k;
+    const kk = kVal != null && kVal < e.series ? kVal : Math.min(f.k, e.series - 1);
+    const v = valoresDaSerie(d, j, kk);
+    const pg = pegadaDoEx(ex);
+    let feitas = 0;
+    const pontos = [];
+    for (let k = 0; k < e.series; k++) {
+      const ch = e.cheia(k);
+      if (ch) feitas++;
+      pontos.push(ch ? 'f' : (j === f.i && k === f.k) ? 'a' : '');
+    }
+    return {
+      i: j, n: ex.n, series: e.series, feitas: feitas, pontos: pontos, fora: e.fora,
+      ativa: j === f.i, fechou: feitas >= e.series,
+      carga: v.carga, reps: v.reps, antes: v.antes,
+      unidade: un ? ROTULO_UNIDADE[un] : (CARGAS[tipo].rot === 'kg/lado' ? (tipo === 'halter' ? 'kg em cada mão' : 'kg por lado') : CARGAS[tipo].rot),
+      semCarga: tipo === 'corpo', seg: !!un && cronometrado(un), medida: un ? ROTULO_UNIDADE[un] : 'repetições',
+      lado: ex.lado || null,
+      pegada: pg.pegada, pes: pg.pes,
+      equip: (equipamentoDoEx(ex) || {}).n || null
+    };
+  });
+  const eu = est[lado === 'a' ? 0 : 1];
+  // o que vem depois desta série, se ela for guardada agora
+  const ea = estacaoDe(par.a), eb = estacaoDe(par.b);
+  const simula = function (e, j) {
+    if (j !== f.i) return e;
+    return { series: e.series, fora: e.fora, cheia: function (k) { return k === f.k || e.cheia(k); } };
+  };
+  const depois = depoisDaSerie(lado, f.k, simula(ea, par.a), simula(eb, par.b));
+  const outra = est[lado === 'a' ? 1 : 0];
+  const descSeg = descOf(depois === 'par' ? P.ex[par.b] : P.ex[f.i]);
+  return {
+    n: par.n, lado: lado,
+    rodada: f.k + 1, rodadas: Math.max(est[0].fora ? 0 : est[0].series, est[1].fora ? 0 : est[1].series),
+    estacoes: est,
+    depois: depois === 'segue' ? { k: 'segue', n: outra.n } : { k: 'descanso', s: descSeg, txt: fmtDesc(descSeg) },
+    sozinha: !outra.fora && f.k >= outra.series,
+    descanso: fmtDesc(descOf(P.ex[par.b])),
+    tempo: !!eu.seg
+  };
+}
+/** Tocar a outra estação: ela passa a ser a da vez (o aparelho da primeira está ocupado). */
+CTX.trocaVezV3 = function () {
+  const f = CTX.focoV3();
+  if (!f || !f.par) return;
+  const outra = f.par.estacoes[f.par.lado === 'a' ? 1 : 0];
+  if (outra.fora || outra.fechou) return;
+  let k = f.k < outra.series && outra.pontos[f.k] !== 'f' ? f.k : outra.pontos.indexOf('');
+  if (k < 0) return;
+  view.focoV3 = { i: outra.i, k: k };
+  render();
+};
+/** "Separar hoje": o par vira dois exercícios comuns só neste treino; de novo, junta. */
+CTX.separaParV3 = async function (i, separar) {
+  const d = view.day;
+  const p = paresDe(d).de[i];
+  if (!p) return;
+  const s = S.sessao || abreSessaoVazia();
+  if (!s.separar) s.separar = [];
+  const chave = slotDe(d, p.a);
+  const j = s.separar.indexOf(chave);
+  if (separar && j < 0) s.separar.push(chave);
+  if (!separar && j >= 0) s.separar.splice(j, 1);
+  view.focoV3 = null;
+  await save(); render();
+  toast(separar ? 'Par ' + p.n + ' separado hoje. Cada um com o seu descanso.' : 'Par ' + p.n + ' junto de novo.');
 };
 /**
  * A PROGRESSÃO (visual novo): os exercícios de um treino agrupados em
@@ -15596,7 +15765,12 @@ CTX.fazSerieV3 = function (carga, reps) {
   anotaSerie(f.i, f.k, 0, corpo && !(carga > 0) ? 0 : carga);
   anotaSerie(f.i, f.k, 1, reps);
   view.ultimaV3 = { i: f.i, k: f.k, dia: f.dia };
-  view.focoV3 = null;
+  // No par, a próxima é a do MESMO par (a outra estação, ou a rodada seguinte),
+  // mesmo que ele tenha vindo ao par fora da ordem do treino. Fora do par, o
+  // foco volta a ser "a primeira que falta".
+  const par = parAtivoDe(f.dia, f.i);
+  const r = par ? proximaDoPar(estacaoDe(par.a), estacaoDe(par.b)) : null;
+  view.focoV3 = r ? { i: r.lado === 'a' ? par.a : par.b, k: r.k } : null;
   render();
 };
 /** "Sobraram quantas?": o RIR da série que acabou, no descanso. */
@@ -15611,7 +15785,9 @@ CTX.ultimaV3 = function () {
   const dr = draftPeek(u.i);
   const s = dr && dr.s[u.k];
   const ex = treino(view.day).ex[u.i];
-  return s ? { n: ex.n, serie: u.k + 1, rir: s[2] != null ? s[2] : null, txt: (s[0] ? fmtNum(s[0]).replace('.', ',') + ' × ' : '') + s[1] } : null;
+  const par = parAtivoDe(view.day, u.i);
+  return s ? { n: ex.n, serie: u.k + 1, rir: s[2] != null ? s[2] : null, txt: (s[0] ? fmtNum(s[0]).replace('.', ',') + ' × ' : '') + s[1],
+               equip: (equipamentoDoEx(ex) || {}).n || null, par: par ? par.n : null } : null;
 };
 /** "Mudar este exercício": o que o cartão antigo oferecia, para a folha nova. */
 CTX.mudarExV3 = function (i) {
@@ -15621,6 +15797,7 @@ CTX.mudarExV3 = function (i) {
   const vm = vmExercicio(d, i, P.ex[i]);
   return { i: i, id: P.ex[i].id, nome: vm.nome, nomeOriginal: vm.nomeOriginal, series: setsFor(P.ex[i]), pulado: vm.pulado, podeMaisSerie: vm.podeMaisSerie,
            proximo: vm.proximo, troca: vm.troca, temTroca: vm.temTroca, dores: vm.dores, dorBloqueia: vm.dorBloqueia,
+           parSeparado: (function () { const p = paresDe(d).de[i]; return p && p.separado ? { n: p.n } : null; })(),
            regraDor: S.primeiraVez ? null : RULES.find(r => r.k === 'atenção').p[1] };
 };
 /** A lista do treino: cada exercício com o que foi feito, e a primeira série que falta dele. */
@@ -15630,15 +15807,22 @@ CTX.listaV3 = function () {
   if (!P) return null;
   const estados = estadosDoDia(d);
   const f = serieEmFoco(d);
+  const pares = paresDe(d).de;
   return {
     nome: 'Treino ' + d, deload: itemDoDeload(d), sessaoAberta: !!S.sessao,
+    descansoDoPar: function (n) { const p = paresDe(d).pares.filter(function (x) { return x.n === n; })[0]; return p ? fmtDesc(descOf(P.ex[p.b])) : ''; },
     exercicios: P.ex.map(function (ex, i) {
       const dr = draftPeek(i);
       const ns = setsFor(ex);
       let feitas = 0, prox = null;
       for (let k = 0; k < ns; k++) { if (serieCheia(dr, k)) feitas++; else if (prox == null) prox = k; }
+      const par = pares[i];
+      const pontos = [];
+      for (let k = 0; k < ns; k++) pontos.push(serieCheia(dr, k) ? 'f' : (f && f.i === i && f.k === k) ? 'a' : '');
       return { i: i, n: ex.n, feitas: feitas, series: ns, pulado: ehPulado(i), feito: estados[i] === 'feito',
-               atual: !!(f && f.i === i), proxima: prox == null ? 0 : prox };
+               atual: !!(f && f.i === i), proxima: prox == null ? 0 : prox, pontos: pontos,
+               par: par ? { n: par.n, lado: i === par.a ? 'a' : 'b', separado: par.separado } : null,
+               equip: (equipamentoDoEx(ex) || {}).n || null };
     })
   };
 };

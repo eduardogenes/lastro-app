@@ -174,8 +174,17 @@ export function ProgramaAbertoV3({ ctx }) {
                 {ic.baixo}
               </button>
               {t.aberto && <div class="v3-exl">
-                {t.ex.map(e => <div class="ex" key={e.id}><span class="v3-lin-t"><b>{e.n}</b><span>{e.apoio}</span></span>
-                  {p.ativo && <span class={'v3-selo ' + (e.hist ? 'hist' : 'novo')}>{e.hist ? <>{ic.ok}com histórico</> : 'novo'}</span>}</div>)}
+                {t.ex.map((e, j) => {
+                  const linha = x => <div class="ex" key={x.id + '-' + j}><span class="v3-lin-t"><b>{x.n}</b><span>{x.apoio}</span></span>
+                    {p.ativo && <span class={'v3-selo ' + (x.hist ? 'hist' : 'novo')}>{x.hist ? <>{ic.ok}com histórico</> : 'novo'}</span>}</div>;
+                  if (e.par && e.par.lado === 'b') return null;
+                  if (!e.par) return linha(e);
+                  const y = t.ex[j + 1];
+                  return <div class="v3-par-bl" key={'par-' + e.par.n} role="group" aria-label={'Par ' + e.par.n + ', alternando'}>
+                    <p class="v3-par-bl-h">{ic.gira}<b>Par {e.par.n}</b><span>alternando · {e.par.descanso} depois do par</span></p>
+                    {linha(e)}{y && linha(y)}
+                  </div>;
+                })}
               </div>}
             </div>
           ))}
