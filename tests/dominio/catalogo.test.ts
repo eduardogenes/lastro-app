@@ -244,7 +244,7 @@ test('apelido e nome exato em treinos diferentes vão os DOIS para o mesmo exerc
     'Treino SC · Peito\n- ' + EX_BASE[alvo].n + ' · 4 x 6-10 · RIR 1 · 2:30 · peito superior';
   const lida = lerRevisao(texto);
   const casa = casaNomes(lida, catalogoDaTela(), {}, { apelidos: { [chaveDoNome('Supino inclinado no Smith 30°')]: alvo }, alt: ALT });
-  assert.deepStrictEqual(casa['Supino inclinado no Smith 30°'], { k: 'igual', id: alvo });
+  assert.deepStrictEqual(casa['Supino inclinado no Smith 30°'], { k: 'igual', id: alvo, por: 'apelido' });
   assert.deepStrictEqual(casa[EX_BASE[alvo].n], { k: 'igual', id: alvo });
   assert.deepStrictEqual(nomesNoMesmoId(lida, casa), [], 'treinos diferentes: não é aviso');
 });
@@ -261,7 +261,7 @@ test('o apelido vem antes do id do nome (inverter os passos fica vermelho)', () 
   // pullover em máquina, que é o que ele usa
   const lida = lerRevisao('Treino A · Costas\n- Pullover na polia alta · 3 x 12');
   const casa = casaNomes(lida, catalogoDaTela(), {}, { apelidos: { 'pullover-na-polia-alta': 'pullover-em-maquina' }, alt: ALT });
-  assert.deepStrictEqual(casa['Pullover na polia alta'], { k: 'igual', id: 'pullover-em-maquina' });
+  assert.deepStrictEqual(casa['Pullover na polia alta'], { k: 'igual', id: 'pullover-em-maquina', por: 'apelido' });
 });
 
 test('o palpite não propõe um id que a certeza já levou', () => {

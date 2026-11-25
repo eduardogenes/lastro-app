@@ -172,7 +172,7 @@ export function RevisaoV3({ ctx }) {
     <Secao key={q.nome}>
       <Pergunta pergunta={q.resposta === 'outro' ? '“' + q.nome + '” é outro exercício.'
                 : '“' + q.nome + '” é ' + q.candidato + (q.resposta ? '.' : '?')}
-                nota={q.candidato + ' ' + q.series + q.lugar + '.'}
+                nota={(q.porApelido && q.resposta === 'mesma' ? 'Pelo que você respondeu antes. ' : '') + q.candidato + ' ' + q.series + q.lugar + '.'}
                 respostas={[{ k: 'mesma', t: 'É o mesmo' }, { k: 'outro', t: 'É outro' }]}
                 valor={q.resposta} aoResponder={k => ctx.respondeRevisao(q.nome, k)} />
     </Secao>
@@ -321,9 +321,10 @@ function DecidirV3({ ctx, r, falha }) {
       {r.problemas && r.problemas.length > 0 && <div class="v3-pad">{r.problemas.map(p => <Apoio key={p.linha}>“{p.linha}”: {p.motivo}.</Apoio>)}</div>}
       {r.perguntas.length > 0 && (
         <div class="v3-bloq" id="revisao-bloq" tabindex="-1">
-          <div class="v3-bloq-h"><h2>{faltam ? (novo ? 'Antes de começar' : 'Antes de aplicar') : 'Respondido'}</h2><small class={faltam ? undefined : 'ok'}>{faltam ? respostas(faltam) : 'pronto'}</small></div>
+          <div class="v3-bloq-h"><h2>{faltam ? (novo ? 'Antes de começar' : 'Antes de aplicar') : (r.perguntas.every(q => q.porApelido) ? 'Como você respondeu antes' : 'Respondido')}</h2><small class={faltam ? undefined : 'ok'}>{faltam ? respostas(faltam) : 'pronto'}</small></div>
           {r.perguntas.map(q => q.resposta ? (
-            <div class="v3-q1 feita" key={q.nome}>{ic.ok}<p>“{q.nome}” {q.resposta === 'mesma' ? <><b>é</b> {q.artigo} {q.candidato}</> : <>é <b>outro</b> exercício</>}</p>
+            <div class="v3-q1 feita" key={q.nome}>{ic.ok}<p>“{q.nome}” {q.resposta === 'mesma' ? <><b>é</b> {q.artigo} {q.candidato}</> : <>é <b>outro</b> exercício</>}
+              {q.porApelido && q.resposta === 'mesma' && <small>pelo que você respondeu antes</small>}</p>
               <button data-a={'revisao-muda-' + q.nome} aria-label={'Mudar a resposta sobre ' + q.nome} onClick={() => ctx.respondeRevisao(q.nome, null)}>mudar</button></div>
           ) : (
             <div class="v3-q1" key={q.nome}><p>“{q.nome}” é {q.artigo} {q.candidato}?</p>

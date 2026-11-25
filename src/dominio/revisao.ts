@@ -276,8 +276,8 @@ export function parecenca(a: string, b: string): number {
 }
 
 export type Correspondencia =
-  | { k: 'igual'; id: string }
-  | { k: 'pergunta'; id: string; por: 'nome' | 'lugar' }
+  | { k: 'igual'; id: string; por?: 'apelido' }
+  | { k: 'pergunta'; id: string; por: 'nome' | 'lugar' | 'apelido' }
   | { k: 'novo' };
 
 export interface ExDoCatalogo { n: string; g?: string; arq?: 1 }
@@ -295,7 +295,8 @@ export interface NomesConhecidos {
  * Para cada nome da revisão, o que o app propõe:
  *
  * - **igual**: o nome é um apelido dele, o de um exercício do catálogo (mesmo
- *   id) ou um nome alternativo do catálogo do sistema. Não pergunta.
+ *   id) ou um nome alternativo do catálogo do sistema. Não pergunta. O que veio
+ *   do apelido leva `por: 'apelido'` (a resposta que ele deu antes).
  * - **pergunta**: há um candidato, por nome parecido ou por LUGAR — o
  *   exercício do mesmo treino que a revisão deixa de fora, na mesma posição ou
  *   do mesmo grupo. "Hip thrust máquina" não tem palavra em comum com
@@ -321,16 +322,18 @@ export function casaNomes(
   const usados: Record<string, 1> = {};
   const apelidos = (nomes && nomes.apelidos) || {};
   const alt = (nomes && nomes.alt) || {};
-  const certo = function (n: string, id: string | undefined, vivo: boolean) {
+  const certo = function (n: string, id: string | undefined, vivo: boolean, apelido?: boolean) {
     if (out[n] || !id || !catalogo[id] || (vivo && catalogo[id].arq)) return;
-    out[n] = { k: 'igual', id: id }; usados[id] = 1;
+    out[n] = apelido ? { k: 'igual', id: id, por: 'apelido' } : { k: 'igual', id: id }; usados[id] = 1;
   };
   const passo = function (f: (x: ExDaRevisao) => void) { rev.dias.forEach(function (d) { d.ex.forEach(f); }); };
 
   // 0) o apelido dele: um nome que ele já disse ser tal exercício. Vem antes do
   //    id do nome porque é decisão dele, e a semente pode ter ganhado um
-  //    exercício com o id daquele nome depois que ele decidiu.
-  passo(function (x) { certo(x.n, apelidos[slugEx(x.n)], false); });
+  //    exercício com o id daquele nome depois que ele decidiu. Marcado
+  //    `por: 'apelido'`: a tela mostra a resposta de antes, e ele pode mudá-la
+  //    (uma resposta errada não pode ficar escondida para sempre).
+  passo(function (x) { certo(x.n, apelidos[slugEx(x.n)], false, true); });
 
   // 1) o id do próprio nome
   passo(function (x) { certo(x.n, slugEx(x.n), false); });

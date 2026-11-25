@@ -4009,6 +4009,17 @@ CTX.leRevisao = function () {
   view.revisao.lida = lida;
   view.revisao.casa = casaNomes(lida, catalogoParaRevisao(), baseTreinador(), { apelidos: mapaDeApelidos(), alt: NOMES_ALT });
   view.revisao.respostas = {};
+  view.revisao.recusados = {};
+  // O nome que ele já respondeu numa revisão de antes (o apelido) vira pergunta
+  // JÁ respondida: a tela mostra "é o X" com "mudar". Uma resposta errada
+  // ("Elevação lateral na polia bilateral" é a puxada unilateral) não pode
+  // ficar escondida, e sem isto não havia como desfazê-la depois do aviso.
+  Object.keys(view.revisao.casa).forEach(function (n) {
+    const c = view.revisao.casa[n];
+    if (c.k !== 'igual' || c.por !== 'apelido') return;
+    view.revisao.casa[n] = { k: 'pergunta', id: c.id, por: 'apelido' };
+    view.revisao.respostas[n] = 'mesma';
+  });
   // as mudanças começam marcadas; desmarcar é o que fica de fora. O treino que
   // ele deixou de fora numa revisão anterior começa desmarcado, como ele escolheu
   view.revisao.fora = {};
@@ -4065,6 +4076,23 @@ CTX.respondeRevisao = function (nome, r) {
   }
   if (!view.revisao || (r !== 'mesma' && r !== 'outro')) return;
   const rev = view.revisao;
+  // "é outro" numa resposta de antes (o apelido): o nome volta a ser lido sem
+  // ela — o catálogo pode ter outro candidato (nova pergunta) ou o nome é dele
+  // mesmo. O apelido errado sai na gravação, com lápide (`criaDaRevisao`).
+  const c0 = rev.casa && rev.casa[nome];
+  if (r === 'outro' && c0 && c0.k === 'pergunta' && c0.por === 'apelido') {
+    rev.recusados = Object.assign({}, rev.recusados, { [nome]: c0.id });
+    const alt = alternativaSemApelido(rev, nome, c0.id);
+    if (alt) {
+      const antes = CTX.revisao().grupos;
+      rev.casa = Object.assign({}, rev.casa, { [nome]: alt });
+      const resp = Object.assign({}, rev.respostas);
+      if (alt.respondida) resp[nome] = 'mesma'; else delete resp[nome];
+      rev.respostas = resp;
+      rev.gruposAntes = Object.assign({}, rev.gruposAntes, { [nome]: antes });
+      render(); return;
+    }
+  }
   const anteriores = rev.respostas[nome] ? CTX.revisao().grupos : rev.gruposAntes && rev.gruposAntes[nome];
   if (rev.gruposAntes) delete rev.gruposAntes[nome];
   rev.respostas = Object.assign({}, rev.respostas, { [nome]: r });
@@ -4078,6 +4106,25 @@ CTX.respondeRevisao = function (nome, r) {
   }
   render();
 };
+
+/**
+ * O que o nome seria sem a resposta de antes (o apelido recusado): outro
+ * candidato do catálogo vira pergunta (ou resposta certa, se o nome é o id de
+ * um exercício); sem candidato, `null` — fica "é outro", e o exercício nasce
+ * novo. O id recusado nunca volta como candidato.
+ */
+function alternativaSemApelido(rev, nome, recusado) {
+  const cat = catalogoParaRevisao(); delete cat[recusado];
+  const ap = mapaDeApelidos(); delete ap[chaveDoNome(nome)];
+  const alt = Object.assign({}, NOMES_ALT);
+  Object.keys(alt).forEach(function (k) { if (alt[k] === recusado) delete alt[k]; });
+  const c = casaNomes(rev.lida, cat, baseTreinador(), { apelidos: ap, alt: alt })[nome];
+  // o "lugar" (o que sai do mesmo treino) é palpite fraco depois de uma
+  // recusa explícita: sem nome parecido, o exercício é dele, novo
+  if (!c || c.k === 'novo' || c.id === recusado || (c.k === 'pergunta' && c.por === 'lugar')) return null;
+  if (c.k === 'igual') return { k: 'pergunta', id: c.id, por: 'nome', respondida: true };
+  return { k: 'pergunta', id: c.id, por: c.por };
+}
 
 /** "o Supino", "a Cadeira flexora": o artigo pelo fim da primeira palavra (a pergunta da revisão). */
 function artigoDe(nome) {
@@ -4177,6 +4224,7 @@ CTX.revisao = function () {
         perguntas.push({ nome: x.n, candidato: exDe(c.id).n, artigo: artigoDe(exDe(c.id).n), series: seriesDoExercicio(c.id),
                          lugar: c.por === 'lugar' ? ' e ocupa este lugar no treino ' + d.dia : '',
                          noPrograma: ondeNoPrograma(c.id),
+                         porApelido: c.por === 'apelido',
                          resposta: r.respostas[x.n] || null });
       }
       if (!CAT[ids[x.n]]) novos[x.n] = 1;
@@ -4316,14 +4364,24 @@ function criaDaRevisao(r, ids) {
   // O Desfazer tira os que esta revisão gravou (`apelidosDaRevisao`).
   S.apelidos = Object.assign({}, S.apelidos || {});
   const apelidosDaRevisao = [];
+  // A resposta de antes que ele trocou ("é outro" no apelido): o apelido sai,
+  // com lápide, antes de o laço abaixo gravar a resposta nova (se houver). O
+  // `antes` guardado é o apelido de antes, e o Desfazer o devolve.
+  Object.keys(r.recusados || {}).forEach(function (nome) {
+    const k = chaveDoNome(nome), velho = S.apelidos[k];
+    if (!k || !velho || velho.id !== r.recusados[nome] || ids[nome] === velho.id) return;
+    apelidosDaRevisao.push({ k: k, antes: velho });
+    delete S.apelidos[k];
+    lapide(chaveDeApelido(k));
+  });
   Object.keys(ids).forEach(function (nome) {
     const k = chaveDoNome(nome), id = ids[nome];
     if (!k || k === id || NOMES_ALT[k] === id) return;
     if (!catAntes[id] || criados.indexOf(id) >= 0) return;
     if (catAntes[k] && !catAntes[k].arq) return;
     if (S.apelidos[k] && S.apelidos[k].id === id) return;
-    apelidosDaRevisao.push({ k: k, antes: S.apelidos[k] || null });
-    S.apelidos[k] = { id: id, m: Date.now(), n: nome };
+    if (!apelidosDaRevisao.some(function (a) { return a.k === k; })) apelidosDaRevisao.push({ k: k, antes: S.apelidos[k] || null });
+    S.apelidos[k] = { id: id, m: depoisDe(S.apagados && S.apagados[chaveDeApelido(k)]), n: nome };
   });
   return { criados: criados, apelidosDaRevisao: apelidosDaRevisao, catAntes: catAntes };
 }
@@ -4339,7 +4397,7 @@ CTX.incorporaRevisao = async function (evento) {
   // Ao recusar a revisão, o programa volta com a mesma prioridade na fusão.
   const marcas = { mtime: S.mtime, carimbosEm: S.carimbosEm, carimbos: S.carimbos && { ...S.carimbos } };
   const impressoesAntes = { ...impressoes };
-  const antes = JSON.stringify({ ex: S.ex, apelidos: S.apelidos, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog, carga: S.carga });
+  const antes = JSON.stringify({ ex: S.ex, apelidos: S.apelidos, apagados: S.apagados || {}, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog, carga: S.carga });
 
   const { criados, apelidosDaRevisao } = criaDaRevisao(r, ids);
 
@@ -4404,7 +4462,7 @@ CTX.incorporaRevisao = async function (evento) {
     Object.assign(S, marcas);
     impressoes = impressoesAntes;
     const v = JSON.parse(antes);
-    S.ex = v.ex; S.apelidos = v.apelidos; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog; S.carga = v.carga;
+    S.ex = v.ex; S.apelidos = v.apelidos; S.apagados = v.apagados; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog; S.carga = v.carga;
     montaCatalogo();
     r.falhou = true;
     render();
@@ -4455,7 +4513,7 @@ CTX.incorporaRevisao = async function (evento) {
     // devolve); o que ela sobrescreveu volta ao que era
     S.apelidos = Object.assign({}, S.apelidos || {});
     apelidosDaRevisao.forEach(function (a) {
-      if (a.antes) S.apelidos[a.k] = { id: a.antes.id, m: depoisDe(S.apagados && S.apagados[chaveDeApelido(a.k)]) };
+      if (a.antes) S.apelidos[a.k] = Object.assign({}, a.antes, { m: depoisDe(S.apagados && S.apagados[chaveDeApelido(a.k)]) });
       else { delete S.apelidos[a.k]; lapide(chaveDeApelido(a.k)); }
     });
     montaCatalogo();
@@ -4481,7 +4539,7 @@ async function comecaProgramaNovo(evento, r, vm) {
   const { ids } = idsDaRevisao(r);
   const marcas = { mtime: S.mtime, carimbosEm: S.carimbosEm, carimbos: S.carimbos && { ...S.carimbos } };
   const impressoesAntes = { ...impressoes };
-  const antes = JSON.stringify({ ex: S.ex, apelidos: S.apelidos, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog, programas: S.programas });
+  const antes = JSON.stringify({ ex: S.ex, apelidos: S.apelidos, apagados: S.apagados || {}, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog, programas: S.programas });
   const doAntes = programasDe(S) ? S.programas.lista[S.programas.ativo].nome : null;
   const { criados, apelidosDaRevisao } = criaDaRevisao(r, ids);
   const agora = Date.now();
@@ -4506,7 +4564,7 @@ async function comecaProgramaNovo(evento, r, vm) {
     Object.assign(S, marcas);
     impressoes = impressoesAntes;
     const v = JSON.parse(antes);
-    S.ex = v.ex; S.apelidos = v.apelidos; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog; S.programas = v.programas;
+    S.ex = v.ex; S.apelidos = v.apelidos; S.apagados = v.apagados; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog; S.programas = v.programas;
     montaCatalogo();
     view.day = nextDay();
     r.falhou = true;
@@ -4535,7 +4593,7 @@ async function comecaProgramaNovo(evento, r, vm) {
     criados.forEach(function (x) { if (S.ex[x] && !usado(x)) S.ex[x] = Object.assign({}, S.ex[x], { arq: 1, m: Date.now() }); });
     S.apelidos = Object.assign({}, S.apelidos || {});
     apelidosDaRevisao.forEach(function (a) {
-      if (a.antes) S.apelidos[a.k] = { id: a.antes.id, m: depoisDe(S.apagados && S.apagados[chaveDeApelido(a.k)]) };
+      if (a.antes) S.apelidos[a.k] = Object.assign({}, a.antes, { m: depoisDe(S.apagados && S.apagados[chaveDeApelido(a.k)]) });
       else { delete S.apelidos[a.k]; lapide(chaveDeApelido(a.k)); }
     });
     montaCatalogo();

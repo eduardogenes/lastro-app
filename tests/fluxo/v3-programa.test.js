@@ -709,7 +709,11 @@ test('a resposta "é o mesmo" vira apelido: o mesmo texto, colado de novo, não 
   a.v('ctx.textoDaRevisao', { value: TEXTO });
   a.clicar('[data-a="revisao-le"]');
   await a.esperar();
-  assert.deepStrictEqual(a.vJ('ctx.revisao').perguntas, [], 'ele já respondeu');
+  // ele já respondeu: não pergunta de novo, mas mostra a resposta de antes, que dá para mudar
+  const ps = a.vJ('ctx.revisao').perguntas;
+  assert.deepStrictEqual(ps.map(q => [q.nome, q.resposta, q.porApelido]), [['Hip thrust máquina', 'mesma', true]]);
+  assert.strictEqual(a.vJ('ctx.revisao').falta, false, 'nada bloqueia');
+  assert.match(a.E('document.body.textContent'), /[Pp]elo que você respondeu antes/, 'a tela diz de onde veio');
   a.fechar();
 });
 
@@ -746,6 +750,66 @@ test('o Desfazer da revisão tira o apelido que ela gravou, com lápide que cheg
   const fundido = funde(outro, JSON.parse(JSON.stringify(aqui)), Date.now() + 1000).estado;
   assert.strictEqual((fundido.apelidos || {})['hip-thrust-maquina'], undefined);
   a.fechar();
+});
+
+test('A4.3: a resposta de antes (o apelido) dá para mudar: o apelido sai com lápide, o treino troca, e o Desfazer devolve', async () => {
+  const { funde: funde13 } = await import('../dominio/fixtures/sincronia-build13');
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  const le = async () => {
+    a.v('ctx.abreRevisao'); await a.esperar();
+    a.v('ctx.textoDaRevisao', { value: TEXTO });
+    a.clicar('[data-a="revisao-le"]'); await a.esperar();
+  };
+  // 1ª revisão: ele responde "é o mesmo" — fica o apelido
+  await le();
+  a.v('ctx.respondeRevisao', 'Hip thrust máquina', 'mesma'); await a.esperar();
+  await a.v('ctx.incorporaRevisao'); await a.esperar(120);
+  assert.strictEqual(a.E('S.apelidos["hip-thrust-maquina"].id'), 'elevacao-pelvica-na-maquina');
+  const outro = JSON.parse(JSON.stringify(a.gravado()));
+  // 2ª leitura: a resposta de antes aparece respondida; ele muda para "é outro"
+  await le();
+  assert.deepStrictEqual(a.vJ('ctx.revisao').perguntas.map(q => [q.resposta, q.porApelido]), [['mesma', true]]);
+  a.v('ctx.respondeRevisao', 'Hip thrust máquina', 'outro'); await a.esperar();
+  // o catálogo tem outro candidato (a elevação pélvica com barra): pergunta nova, nunca a recusada
+  let ps = a.vJ('ctx.revisao').perguntas;
+  assert.strictEqual(ps.length, 1);
+  assert.notStrictEqual(ps[0].candidato, a.E('CAT["elevacao-pelvica-na-maquina"].n'), 'a recusada não volta');
+  assert.strictEqual(ps[0].resposta, null, 'e ele responde');
+  a.v('ctx.respondeRevisao', 'Hip thrust máquina', 'outro'); await a.esperar();
+  const ms = a.vJ('ctx.revisao').grupos.flatMap(g => g.mudancas).map(m => m.titulo).join(' | ');
+  assert.match(ms, /Elevação pélvica na máquina sai/, ms);
+  assert.match(ms, /Hip thrust máquina entra/, ms);
+  a.clicar('[data-a="revisao-aplica"]'); await a.esperar(120);
+  let aqui = a.gravado();
+  assert.strictEqual(aqui.apelidos['hip-thrust-maquina'], undefined, 'o apelido errado saiu');
+  assert.ok(aqui.apagados['apelido:hip-thrust-maquina'], 'com lápide');
+  assert.ok(aqui.prog.B.ex.some(x => x.id === 'hip-thrust-maquina'), 'o exercício dele entrou no B');
+  assert.ok(!aqui.prog.B.ex.some(x => x.id === 'elevacao-pelvica-na-maquina'), 'o errado saiu');
+  // a lápide mata o apelido do outro aparelho, no build atual e passando pelo anterior
+  const f13 = funde13(JSON.parse(JSON.stringify(outro)), JSON.parse(JSON.stringify(aqui)), Date.now() + 1000).estado;
+  const f = funde(f13, JSON.parse(JSON.stringify(aqui)), Date.now() + 2000).estado;
+  assert.strictEqual((f.apelidos || {})['hip-thrust-maquina'], undefined, 'não ressuscita');
+  // ler de novo: não pergunta pelo apelido (ele saiu) e acha o exercício dele pelo nome
+  await le();
+  assert.deepStrictEqual(a.vJ('ctx.revisao').perguntas, []);
+  a.v('ctx.fechaRevisao'); await a.esperar();
+  a.fechar();
+  // Desfazer devolve o apelido de antes, vivo depois da lápide
+  const b = await app({ aba: 'agora' });
+  await b.pronto();
+  const leB = async () => { b.v('ctx.abreRevisao'); await b.esperar(); b.v('ctx.textoDaRevisao', { value: TEXTO }); b.clicar('[data-a="revisao-le"]'); await b.esperar(); };
+  await leB(); b.v('ctx.respondeRevisao', 'Hip thrust máquina', 'mesma'); await b.esperar();
+  await b.v('ctx.incorporaRevisao'); await b.esperar(120);
+  await leB(); b.v('ctx.respondeRevisao', 'Hip thrust máquina', 'outro'); await b.esperar();
+  b.v('ctx.respondeRevisao', 'Hip thrust máquina', 'outro'); await b.esperar();
+  b.clicar('[data-a="revisao-aplica"]'); await b.esperar(120);
+  assert.strictEqual(b.gravado().apelidos['hip-thrust-maquina'], undefined);
+  b.clicar('[data-a="aviso-acao"]'); await b.esperar(80);
+  aqui = b.gravado();
+  assert.strictEqual(aqui.apelidos['hip-thrust-maquina'].id, 'elevacao-pelvica-na-maquina', 'voltou');
+  assert.ok(aqui.apelidos['hip-thrust-maquina'].m > aqui.apagados['apelido:hip-thrust-maquina'], 'mais novo que a lápide');
+  b.fechar();
 });
 
 test('"é outro" não grava apelido: o exercício novo é criado pela própria revisão', async () => {
