@@ -182,3 +182,46 @@ it('cada ferramenta tem nome igual à chave e esquema fechado', () => {
     expect(f.entrada.additionalProperties).toBe(false);
   }
 });
+
+describe('parte 2: a chave "Pode ler" e o rastro', () => {
+  const chamada = { jsonrpc: '2.0', id: 9, method: 'tools/call', params: { name: 'programa', arguments: {} } };
+
+  it('papel desligado não lê: nem o estado é lido, e a resposta diz onde ligar', async () => {
+    const { d, token, leituras } = await montagem();
+    const registros: unknown[] = [];
+    d.papelLigado = async () => false;
+    d.registra = async (_t, r) => { registros.push(r); };
+    const j = await (await atende(pede(chamada, token), d)).json();
+    expect(j.result.isError).toBe(true);
+    expect(j.result.content[0].text).toContain('Ajustes › Agentes');
+    expect(leituras.length).toBe(0);
+    expect(registros.length).toBe(0);
+  });
+
+  it('papel ligado lê e grava uma linha do rastro com o papel, a ferramenta e o cliente do token', async () => {
+    const { d, par } = await montagem();
+    const token = await assina(par, reivindicacoes({ client_id: 'cli-123' }));
+    const registros: Array<Record<string, unknown>> = [];
+    d.papelLigado = async () => true;
+    d.registra = async (t, r) => { expect(t).toBe(token); registros.push(r as unknown as Record<string, unknown>); };
+    const j = await (await atende(pede({ ...chamada, params: { name: 'programa', arguments: { qual: 'ativo' } } }, token), d)).json();
+    expect(j.result.isError).toBe(false);
+    expect(registros).toEqual([{ papel: 'treinador', ferramenta: 'programa', resumo: 'qual: ativo', cliente: 'cli-123' }]);
+  });
+
+  it('falhar ao gravar o rastro ou ao ler a chave não derruba a leitura', async () => {
+    const { d, token } = await montagem();
+    d.papelLigado = async () => { throw new Error('banco fora'); };
+    d.registra = async () => { throw new Error('banco fora'); };
+    const j = await (await atende(pede(chamada, token), d)).json();
+    expect(j.result.isError).toBe(false);
+  });
+
+  it('listar ferramentas não grava rastro', async () => {
+    const { d, token } = await montagem();
+    let n = 0;
+    d.registra = async () => { n++; };
+    await atende(pede({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, token), d);
+    expect(n).toBe(0);
+  });
+});

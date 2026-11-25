@@ -31,7 +31,24 @@ export interface Dependencias {
   confere: (token: string) => Promise<Reivindicacoes | null>;
   /** o `estado.data` da pessoa, lido com o token dela (RLS) */
   lerEstado: (token: string) => Promise<unknown>;
+  /**
+   * Se o papel está ligado para a pessoa (a chave "Pode ler" de Ajustes ›
+   * Agentes). Sem a função, ou se a leitura falhar, conta como ligado: a chave
+   * é da própria pessoa, e um banco fora do ar não deve parecer "desligado".
+   */
+  papelLigado?: (token: string, papel: IdPapel) => Promise<boolean>;
+  /** grava o rastro de uma leitura (tabela `acessos`); falhar não atrapalha a resposta */
+  registra?: (token: string, r: Acesso) => Promise<void>;
   agora?: () => number;
+}
+
+/** Uma linha do rastro: quem leu o quê. Para sempre (decisão do dono, 23/11/2026). */
+export interface Acesso { papel: IdPapel; ferramenta: string; resumo: string; cliente: string | null }
+
+/** O que a ferramenta pediu, em poucas palavras, para a lista "o que leram". */
+export function resumoDoPedido(args: Record<string, unknown>): string {
+  const partes = Object.keys(args).filter(k => args[k] != null && args[k] !== '').map(k => k + ': ' + String(args[k]).slice(0, 40));
+  return partes.join(', ').slice(0, 200);
 }
 
 const CORS = {
@@ -76,7 +93,7 @@ function listaDeFerramentas(papel: IdPapel) {
   });
 }
 
-async function responde(p: Pedido, d: Dependencias, token: string, versao: string): Promise<unknown | null> {
+async function responde(p: Pedido, d: Dependencias, token: string, versao: string, quem: Reivindicacoes): Promise<unknown | null> {
   const temId = p.id !== undefined && p.id !== null;
   if (typeof p.method !== 'string') return temId ? erro(p.id, -32600, 'pedido inválido') : null;
   if (!temId) return null; // notificação (ex.: notifications/initialized): nada a responder
@@ -97,13 +114,21 @@ async function responde(p: Pedido, d: Dependencias, token: string, versao: strin
       const nome = typeof p.params?.name === 'string' ? p.params.name : '';
       if (PAPEIS[d.papel].ferramentas.indexOf(nome) < 0) return erro(p.id, -32602, 'ferramenta desconhecida nesta porta: ' + nome);
       const args = p.params?.arguments && typeof p.params.arguments === 'object' ? p.params.arguments as Record<string, unknown> : {};
+      let ligado = true;
+      if (d.papelLigado) { try { ligado = await d.papelLigado(token, d.papel); } catch { ligado = true; } }
+      if (!ligado) return ok(p.id, { content: [{ type: 'text', text: 'A pessoa desligou o acesso do ' + PAPEIS[d.papel].nome.toLowerCase() + ' em Ajustes › Agentes, no app. Peça para ela ligar de novo se precisar ler.' }], isError: true });
       let estado: unknown;
       try { estado = await d.lerEstado(token); } catch (e) {
         return ok(p.id, { content: [{ type: 'text', text: 'Não deu para ler o Lastro agora (' + String((e as Error)?.message || e) + '). Tente de novo em instantes.' }], isError: true });
       }
       if (estado == null) return ok(p.id, { content: [{ type: 'text', text: 'Esta conta ainda não tem nada salvo no Lastro.' }], isError: false });
       const arq = arquivosDoEstado(estado, (d.agora || Date.now)());
-      return ok(p.id, { content: [{ type: 'text', text: FERRAMENTAS[nome].roda(arq, args) }], isError: false });
+      const texto = FERRAMENTAS[nome].roda(arq, args);
+      if (d.registra) {
+        const cliente = typeof quem.client_id === 'string' ? quem.client_id : null;
+        try { await d.registra(token, { papel: d.papel, ferramenta: nome, resumo: resumoDoPedido(args), cliente }); } catch { /* o rastro não derruba a leitura */ }
+      }
+      return ok(p.id, { content: [{ type: 'text', text: texto }], isError: false });
     }
     default:
       void versao;
@@ -131,9 +156,9 @@ export async function atende(req: Request, d: Dependencias): Promise<Response> {
 
   const extra: Record<string, string> = versao ? { 'MCP-Protocol-Version': versao } : {};
   if (Array.isArray(corpo)) {
-    const rs = (await Promise.all(corpo.map(p => responde(p as Pedido, d, token, versao)))).filter(r => r != null);
+    const rs = (await Promise.all(corpo.map(p => responde(p as Pedido, d, token, versao, quem)))).filter(r => r != null);
     return rs.length ? json(rs, 200, extra) : new Response(null, { status: 202, headers: CORS });
   }
-  const r = await responde(corpo as Pedido, d, token, versao);
+  const r = await responde(corpo as Pedido, d, token, versao, quem);
   return r == null ? new Response(null, { status: 202, headers: CORS }) : json(r, 200, extra);
 }

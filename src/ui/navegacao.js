@@ -119,6 +119,8 @@ export function camadasAbertas(view, passoInicial) {
   if (view.camera) c.push('camera');
   // Ajustes é destino e não lugar: um botão no canto do Agora.
   if (view.ajustes) c.push('ajustes');
+  // Ajustes › Agentes: por cima de Ajustes.
+  if (view.agentes) c.push('agentes');
   // As folhas ficam por cima de qualquer destino: elas cobrem o que houver.
   (view.pilha || []).forEach(function (f, i) { c.push('folha:' + i); });
   // O PAINEL DE PARE é a camada mais alta de todas, porque é ele que está

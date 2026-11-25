@@ -138,6 +138,9 @@ async function todasAsLinhas(caminho: string, h: Record<string, string>): Promis
   }
 }
 
+export interface AcessoDoAgente { papel: string; ferramenta: string; resumo: string; cliente: string | null; em: string }
+export interface GrantDoAgente { client: { id: string; name?: string }; scopes?: string[]; granted_at?: string }
+
 export interface LinhaDoEstado {
   v: number;
   data: unknown;
@@ -274,6 +277,59 @@ export const NUVEM = {
    * um catálogo cortado perderia ids (que a validação recusaria, mas o app
    * ficaria preso na semente). Cada página confere o total do Content-Range.
    */
+  /**
+   * Os agentes (Ajustes › Agentes, docs/mcp/00-desenho.md): o que leram desde
+   * `desde` (tabela `acessos`), a chave "Pode ler" por papel (tabela `agentes`)
+   * e os clientes OAuth que a pessoa permitiu (grants do Supabase). Sem as
+   * tabelas (SQL ainda não aplicado), as leituras vêm vazias, não com erro.
+   */
+  async agentes(desde: string, limite = 200): Promise<Resultado<{ acessos: AcessoDoAgente[]; ligados: Record<string, boolean>; grants: GrantDoAgente[] }>> {
+    const t = await token();
+    if (!t.ok) return t;
+    const h = { Authorization: 'Bearer ' + t.v.token };
+    try {
+      const [ra, rl, rg] = await Promise.all([
+        chama('/rest/v1/acessos?select=papel,ferramenta,resumo,cliente,em&em=gte.' + encodeURIComponent(desde) + '&order=em.desc&limit=' + limite, { method: 'GET', headers: h }),
+        chama('/rest/v1/agentes?select=papel,ligado', { method: 'GET', headers: h }),
+        chama('/auth/v1/user/oauth/grants', { method: 'GET', headers: h })
+      ]);
+      if (ra.status === 401 || rg.status === 401) return falha('auth', 'a sessão expirou, entre de novo');
+      const acessos = ra.ok ? await ra.json() as AcessoDoAgente[] : [];
+      const ligados: Record<string, boolean> = {};
+      if (rl.ok) (await rl.json() as { papel: string; ligado: boolean }[]).forEach(function (x) { ligados[x.papel] = x.ligado !== false; });
+      const grants = rg.ok ? (await rg.json() as GrantDoAgente[]) : [];
+      return { ok: true, v: { acessos: Array.isArray(acessos) ? acessos : [], ligados: ligados, grants: Array.isArray(grants) ? grants : [] } };
+    } catch (e) { return falha('rede', 'sem conexão'); }
+  },
+
+  /** Liga ou desliga a leitura de um papel (upsert na tabela `agentes`). */
+  async ligaAgente(papel: string, ligado: boolean): Promise<Resultado<true>> {
+    const t = await token();
+    if (!t.ok) return t;
+    try {
+      const r = await chama('/rest/v1/agentes?on_conflict=dono,papel', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + t.v.token, Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({ papel: papel, ligado: ligado, em: new Date().toISOString() })
+      });
+      if (r.status === 401) return falha('auth', 'a sessão expirou, entre de novo');
+      if (!r.ok) return falha('servidor', 'não deu para guardar (' + r.status + ')');
+      return { ok: true, v: true };
+    } catch (e) { return falha('rede', 'sem conexão'); }
+  },
+
+  /** Revoga a permissão de um cliente OAuth (o conector do Claude). Sem volta. */
+  async revogaGrant(clienteId: string): Promise<Resultado<true>> {
+    const t = await token();
+    if (!t.ok) return t;
+    try {
+      const r = await chama('/auth/v1/user/oauth/grants?client_id=' + encodeURIComponent(clienteId), { method: 'DELETE', headers: { Authorization: 'Bearer ' + t.v.token } });
+      if (r.status === 401) return falha('auth', 'a sessão expirou, entre de novo');
+      if (!r.ok && r.status !== 404) return falha('servidor', 'não deu para desconectar (' + r.status + ')');
+      return { ok: true, v: true };
+    } catch (e) { return falha('rede', 'sem conexão'); }
+  },
+
   async catalogo(vLocal: number): Promise<Resultado<CatalogoBruto | null>> {
     const t = await token();
     if (!t.ok) return t;

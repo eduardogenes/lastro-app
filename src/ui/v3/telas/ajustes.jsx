@@ -40,6 +40,11 @@ export function AjustesV3({ ctx }) {
           </>
         )}
       </Secao>
+      {n.dentro && (
+        <Secao titulo="Agentes" nota="pelo Claude">
+          <div><Linha titulo="Agentes de IA" apoio="quem lê o seu Lastro e o que leu" data-a="ajustes-agentes" aoTocar={ctx.abreAgentes} /></div>
+        </Secao>
+      )}
       <Secao titulo="O que aparece" nota="o treino fica sempre">
         <div>
           {PARTES.map(p => <Chave key={p[0]} titulo={p[1]} apoio={p[2]} ligada={ctx.moduloLigado(p[0])} data-a={'ajustes-' + p[0]} aoMudar={on => ctx.ligaModulo(p[0], on)} />)}

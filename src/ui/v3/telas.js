@@ -19,6 +19,7 @@ import { DiasV3, ResponderDias } from './telas/dias.jsx';
 import { FolhaAplicar, FolhaMusculos, RetrospectivaV3, SemanaV3 } from './telas/semana.jsx';
 import { FolhaAlimentos, FolhaCompras, FolhaRefeicaoDoPlano, PlanoV3 } from './telas/plano.jsx';
 import { AjustesV3, FolhaColarCopia } from './telas/ajustes.jsx';
+import { AgentesV3, FolhaAgente, FolhaDesconectaClaude } from './telas/agentes.jsx';
 import { FolhaCatalogo } from './telas/catalogo.jsx';
 import { FolhaEditaAlimentoV3, FolhaEditaRefeicaoV3, FolhaSeletorV3 } from './telas/comida.jsx';
 import { DiaAbertoV3, FolhaPoeODiaGeralV3, FolhaPoeODiaV3, FolhaSeriePassada, RegistrarPassadoV3, SessaoPassadaV3 } from './telas/diaaberto.jsx';
@@ -72,6 +73,7 @@ export const DESTINOS_V3 = {
   revisao: RevisaoV3,
   responderDias: ResponderDias,
   ajustes: AjustesV3,
+  agentes: AgentesV3,
   // antes da Fase 5: o dia, a sessão passada, o treino que não foi anotado
   dia: DiaAbertoV3,
   sessao: SessaoPassadaV3,
@@ -85,5 +87,6 @@ export const FOLHAS_V3 = { aviso: FolhaAviso, preparo: FolhaPreparo, fotoCompara
   registroTreino: FolhaRegistroTreino, ajustarRegistro: FolhaAjustarRegistro, registrar: FolhaRegistrar, cardio: FolhaCardioV3, dia: FolhaTipoDoDia, poeODia: FolhaPoeODiaV3, poeODiaGeral: FolhaPoeODiaGeralV3, seriePassada: FolhaSeriePassada,
   editaRefeicao: FolhaEditaRefeicaoV3, seletor: FolhaSeletorV3, editaAlimento: FolhaEditaAlimentoV3, catalogo: FolhaCatalogo, foto: FolhaFotoV3, refeicao: FolhaRefeicaoV3, comiOutra: FolhaComiOutra, oQueAparece: FolhaOQueAparece, musculos: FolhaMusculos, aplicar: FolhaAplicar, colarCopia: FolhaColarCopia,
   refeicaoDoPlano: FolhaRefeicaoDoPlano, alimentos: FolhaAlimentos, compras: FolhaCompras,
+  agente: FolhaAgente, desconectaClaude: FolhaDesconectaClaude,
   reativaPrograma: FolhaReativaPrograma, renomeiaPrograma: FolhaRenomeiaPrograma, revisaoDoPrograma: FolhaRevisaoDoPrograma,
   treinoDoPrograma: FolhaTreinoDoPrograma };

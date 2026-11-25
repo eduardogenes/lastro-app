@@ -202,3 +202,12 @@ Só depois que a tela `/autorizar` existir, para ninguém cair numa página vazi
 - **O rastro de leitura fica para sempre.** A tabela `acessos` não apaga nada; a tela "Agentes" mostra os últimos 7 dias e o resto sob demanda.
 - **O Hoje não avisa quando um agente lê.** O rastro fica só em Ajustes › Agentes.
 - **A página de autorizar sai geral na etapa 1.** A versão que diz o papel (intermediário nosso antes do Supabase) fica para depois.
+
+## Etapa 1, parte 2 (24/11/2026): o rastro e a tela Agentes
+
+- **Tabelas** em `supabase/migrations/20261124120000_agentes.sql` (o dono aplica no SQL Editor):
+  - `acessos`: uma linha por ferramenta chamada (papel, ferramenta, resumo do pedido, `client_id` do token, instante). Para sempre: sem UPDATE nem DELETE. A pessoa só lê e grava as próprias linhas.
+  - `agentes`: a chave "Pode ler" por papel. Sem linha = ligado.
+- **A porta grava com o token da pessoa** (sem chave de serviço). Falhar ao gravar o rastro ou ao ler a chave não derruba a leitura; a chave lida como `false` faz a porta recusar a ferramenta com o aviso de onde ligar. Sem as tabelas aplicadas, tudo segue como antes (ligado, sem rastro).
+- **Tela Ajustes › Agentes** (só com conta): papéis com a última leitura, folha por papel com a chave "Pode ler" (com Desfazer), o que lê e o que não lê, as leituras dos últimos 7 dias (as mais antigas sob demanda) e o endereço copiável; "Desconectar o Claude" revoga todos os grants (`DELETE /auth/v1/user/oauth/grants?client_id=…`, lido no código do `supabase/auth`), com confirmação; vazio com os passos e os três endereços.
+- **Limite:** o Supabase não diz qual papel cada grant serve; por isso "Desconectar" é para os três, e "ainda não leu" vale para o papel que ainda não chamou nenhuma ferramenta.

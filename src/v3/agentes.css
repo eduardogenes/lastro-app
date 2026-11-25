@@ -1,0 +1,27 @@
+/* AJUSTES › AGENTES (telas/agentes.jsx). Só tokens. */
+.v3-lin-o.treino { background: var(--assunto-treino); }
+.v3-lin-o.refeicao { background: var(--assunto-refeicao); }
+.v3-lin-o.semana { background: var(--assunto-semana); }
+.v3-lin-o.apagado { background: var(--superficie-quieta); color: var(--texto-legenda); }
+.v3-ag-vazio { font: var(--t-heroi-fino); margin: var(--e-4) 0 0; text-wrap: balance; }
+.v3-ag-passos { margin: 0; padding: 0 0 0 var(--e-7); display: grid; gap: var(--e-4); font: var(--t-texto); }
+.v3-ag-passos li { padding-left: var(--e-2); }
+.v3-ag-end { display: flex; align-items: center; gap: var(--e-5); min-height: var(--alvo); padding: var(--e-3) 0; border-top: var(--fio-fino) solid var(--divisoria); }
+.v3-ag-end:first-child { border-top: 0; }
+.v3-ag-end .v3-lin-t { flex: 1 1 auto; min-width: 0; }
+.v3-ag-url { font-family: ui-monospace, Menlo, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v3-ag-copia { flex: 0 0 auto; min-height: var(--alvo); padding: 0 var(--e-6); border-radius: var(--r-pilula); border: var(--fio-forte) solid var(--contorno); background: var(--superficie); color: var(--texto); font: 700 15px var(--f-texto); display: inline-flex; align-items: center; gap: var(--e-2); }
+.v3-ag-copia svg { width: 16px; height: 16px; }
+.v3-ag-copia.ok { border-color: var(--texto); }
+.v3-ag-copia:focus-visible { outline: var(--fio-forte) solid var(--texto); outline-offset: 2px; }
+.v3-ag-nao { color: var(--texto-2); }
+.v3-ag-desl { opacity: .45; }
+.v3-ag-dia { margin: var(--e-6) 0 var(--e-2); font: 700 12px var(--f-texto); letter-spacing: .06em; text-transform: uppercase; color: var(--texto-legenda); }
+.v3-ag-leu { display: flex; gap: var(--e-5); padding: var(--e-3) 0; border-top: var(--fio-fino) solid var(--divisoria); font: var(--t-texto); }
+.v3-ag-leu time { flex: 0 0 52px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.v3-ag-leu p { margin: 0; min-width: 0; }
+.v3-ag-sec { margin-top: var(--e-8); }
+.v3-ag-sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e-5); margin-bottom: var(--e-3); }
+.v3-ag-sec-h h3 { margin: 0; font: var(--t-secao); }
+.v3-ag-sec-h small { font: var(--t-rotulo); color: var(--texto-legenda); }
+.v3-ag-sec .v3-ef { margin-top: 0; }

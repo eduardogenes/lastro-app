@@ -24,16 +24,16 @@ function b64urlJson(s) {
 async function confereToken(token, o) {
   const partes = token.split(".");
   if (partes.length !== 3) return null;
-  const cab = b64urlJson(partes[0]);
+  const cab2 = b64urlJson(partes[0]);
   const corpo = b64urlJson(partes[1]);
-  if (!cab || !corpo || cab.alg !== "ES256" || typeof cab.kid !== "string") return null;
+  if (!cab2 || !corpo || cab2.alg !== "ES256" || typeof cab2.kid !== "string") return null;
   let chaves2;
   try {
     chaves2 = await o.chaves();
   } catch {
     return null;
   }
-  const jwk = chaves2.find((k) => k.kid === cab.kid && k.kty === "EC" && k.crv === "P-256");
+  const jwk = chaves2.find((k) => k.kid === cab2.kid && k.kty === "EC" && k.crv === "P-256");
   if (!jwk || !jwk.x || !jwk.y) return null;
   try {
     const chave = await crypto.subtle.importKey(
@@ -2183,17 +2183,17 @@ function exercicios(b, ctx) {
       return nomeEx(b, a).localeCompare(nomeEx(b, c), "pt-BR");
     });
   };
-  const cab = ["| Exerc\xEDcio | id | Grupo | Carregamento | Mede | Sess\xF5es registradas | Aparelho | Tamb\xE9m chamado de |", "|---|---|---|---|---|---|---|---|"];
+  const cab2 = ["| Exerc\xEDcio | id | Grupo | Carregamento | Mede | Sess\xF5es registradas | Aparelho | Tamb\xE9m chamado de |", "|---|---|---|---|---|---|---|---|"];
   const L = cabeca("Exerc\xEDcios", [
     "Os exerc\xEDcios do programa e todos os que t\xEAm hist\xF3rico. O `id` \xE9 a chave usada em `series.csv`.",
     'Carregamento diz como a carga \xE9 digitada: "anilha por lado" e "barra livre" s\xE3o o peso de UM lado; "halter em cada m\xE3o" \xE9 o de UMA m\xE3o. O app nunca converte.',
     '"Tamb\xE9m chamado de" s\xE3o os apelidos: o nome que o treinador escreveu numa revis\xE3o e que a pessoa disse ser este exerc\xEDcio. O app l\xEA esse nome como este id.'
   ]);
-  L.push("## No programa atual", "", ...cab, ...ordem([...noPrograma]).map(linha), "");
+  L.push("## No programa atual", "", ...cab2, ...ordem([...noPrograma]).map(linha), "");
   const fora = ordem([...todos].filter(function(id) {
     return !noPrograma.has(id);
   }));
-  if (fora.length) L.push("## Fora do programa atual", "", "Do programa do treinador, de sess\xF5es antigas ou trocados no caminho.", "", ...cab, ...fora.map(linha), "");
+  if (fora.length) L.push("## Fora do programa atual", "", "Do programa do treinador, de sess\xF5es antigas ou trocados no caminho.", "", ...cab2, ...fora.map(linha), "");
   return L.join("\n");
 }
 function aulas(b, ctx) {
@@ -2783,7 +2783,7 @@ function semAcento(s) {
 }
 function filtraCsv(csv2, args, campoTexto, padrao) {
   const linhas = csv2.trim().split("\n");
-  const cab = linhas.shift() || "";
+  const cab2 = linhas.shift() || "";
   const busca = semAcento(texto(args[campoTexto]));
   const desde = texto(args.desde);
   const limite = inteiro(args.limite, padrao, 2e3);
@@ -2793,7 +2793,7 @@ function filtraCsv(csv2, args, campoTexto, padrao) {
   const total = corpo.length;
   corpo = corpo.slice(-limite);
   const nota = total > corpo.length ? "\n[mostrando as " + corpo.length + " mais recentes de " + total + '; use "desde" ou "limite"]' : "";
-  return [cab].concat(corpo).join("\n") + nota;
+  return [cab2].concat(corpo).join("\n") + nota;
 }
 var SEM_ENTRADA = { type: "object", properties: {}, additionalProperties: false };
 var DESDE = { type: "string", description: "data inicial, AAAA-MM-DD" };
@@ -2928,6 +2928,10 @@ function arquivosDoEstado(estado, agora) {
 var VERSOES = ["2026-07-28", "2025-11-25", "2025-06-18", "2025-03-26"];
 var VERSAO_PADRAO = "2025-06-18";
 var VERSAO_DO_SERVIDOR = "1.0.0";
+function resumoDoPedido(args) {
+  const partes = Object.keys(args).filter((k) => args[k] != null && args[k] !== "").map((k) => k + ": " + String(args[k]).slice(0, 40));
+  return partes.join(", ").slice(0, 200);
+}
 var CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -2969,7 +2973,7 @@ function listaDeFerramentas(papel) {
     };
   });
 }
-async function responde(p, d, token, versao) {
+async function responde(p, d, token, versao, quem) {
   const temId = p.id !== void 0 && p.id !== null;
   if (typeof p.method !== "string") return temId ? erro(p.id, -32600, "pedido inv\xE1lido") : null;
   if (!temId) return null;
@@ -2991,6 +2995,15 @@ async function responde(p, d, token, versao) {
       const nome = typeof p.params?.name === "string" ? p.params.name : "";
       if (PAPEIS[d.papel].ferramentas.indexOf(nome) < 0) return erro(p.id, -32602, "ferramenta desconhecida nesta porta: " + nome);
       const args = p.params?.arguments && typeof p.params.arguments === "object" ? p.params.arguments : {};
+      let ligado = true;
+      if (d.papelLigado) {
+        try {
+          ligado = await d.papelLigado(token, d.papel);
+        } catch {
+          ligado = true;
+        }
+      }
+      if (!ligado) return ok(p.id, { content: [{ type: "text", text: "A pessoa desligou o acesso do " + PAPEIS[d.papel].nome.toLowerCase() + " em Ajustes \u203A Agentes, no app. Pe\xE7a para ela ligar de novo se precisar ler." }], isError: true });
       let estado;
       try {
         estado = await d.lerEstado(token);
@@ -2999,7 +3012,15 @@ async function responde(p, d, token, versao) {
       }
       if (estado == null) return ok(p.id, { content: [{ type: "text", text: "Esta conta ainda n\xE3o tem nada salvo no Lastro." }], isError: false });
       const arq = arquivosDoEstado(estado, (d.agora || Date.now)());
-      return ok(p.id, { content: [{ type: "text", text: FERRAMENTAS[nome].roda(arq, args) }], isError: false });
+      const texto2 = FERRAMENTAS[nome].roda(arq, args);
+      if (d.registra) {
+        const cliente = typeof quem.client_id === "string" ? quem.client_id : null;
+        try {
+          await d.registra(token, { papel: d.papel, ferramenta: nome, resumo: resumoDoPedido(args), cliente });
+        } catch {
+        }
+      }
+      return ok(p.id, { content: [{ type: "text", text: texto2 }], isError: false });
     }
     default:
       void versao;
@@ -3026,10 +3047,10 @@ async function atende(req, d) {
   }
   const extra = versao ? { "MCP-Protocol-Version": versao } : {};
   if (Array.isArray(corpo)) {
-    const rs = (await Promise.all(corpo.map((p) => responde(p, d, token, versao)))).filter((r2) => r2 != null);
+    const rs = (await Promise.all(corpo.map((p) => responde(p, d, token, versao, quem)))).filter((r2) => r2 != null);
     return rs.length ? json(rs, 200, extra) : new Response(null, { status: 202, headers: CORS });
   }
-  const r = await responde(corpo, d, token, versao);
+  const r = await responde(corpo, d, token, versao, quem);
   return r == null ? new Response(null, { status: 202, headers: CORS }) : json(r, 200, extra);
 }
 
@@ -3044,6 +3065,20 @@ async function lerEstado(token) {
   const linhas = await r.json();
   return Array.isArray(linhas) && linhas[0] ? linhas[0].data ?? null : null;
 }
+var cab = (token, extra = {}) => ({ apikey: ANON, Authorization: "Bearer " + token, ...extra });
+async function papelLigado(token, papel) {
+  const r = await fetch(URL_BASE + "/rest/v1/agentes?select=ligado&papel=eq." + encodeURIComponent(papel) + "&limit=1", { headers: cab(token, { Accept: "application/json" }) });
+  if (!r.ok) return true;
+  const linhas = await r.json();
+  return !(Array.isArray(linhas) && linhas[0] && linhas[0].ligado === false);
+}
+async function registra(token, a) {
+  await fetch(URL_BASE + "/rest/v1/acessos", {
+    method: "POST",
+    headers: cab(token, { "Content-Type": "application/json", Prefer: "return=minimal" }),
+    body: JSON.stringify(a)
+  });
+}
 async function porta(req) {
   const url = new URL(req.url);
   const papel = url.pathname.replace(/\/+$/, "").split("/").pop() || "";
@@ -3055,7 +3090,9 @@ async function porta(req) {
     urlDoMetadado: url.origin + "/.well-known/oauth-protected-resource/api/mcp/" + papel,
     servidorDeAutorizacao: EMISSOR,
     confere: (t) => confereToken(t, { chaves, emissor: EMISSOR, audiencia: "authenticated" }),
-    lerEstado
+    lerEstado,
+    papelLigado,
+    registra
   });
 }
 var GET = porta;

@@ -33,6 +33,7 @@ import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
 import { DESTINOS_V3, FOLHAS_V3 } from './ui/v3/telas.js';
+import { estadoDosAgentes, resumoDosAgentes } from './dominio/agentes';
 import { ligado, fitaLigada, comModulo, comFita, normalizaModulos } from './dominio/modulos';
 import { DIAS_NA_LIXEIRA, chaveDaLixeira, diasRestantes, nomeNaLixeira, ordemDaLixeira, pastaDaLixeira, vencidos as vencidosDaLixeira } from './dominio/lixeira';
 import { LugarNaPilha, FolhaDaPilha } from './ui/v3/camada.js';
@@ -2990,6 +2991,7 @@ const CTX = {
     // linhas acima fazem isso há mais tempo e têm a mesma dívida; não é razão
     // para repeti-la em duas novas.
     if (view.modoSessao) CTX.fechaModoDeSessao();
+    if (view.agentes) CTX.fechaAgentes();
     if (view.ajustes) CTX.fechaAjustes();
 
     // A correção de "chegar em TREINO abria um treino qualquer" saiu daqui com
@@ -3012,7 +3014,7 @@ const CTX = {
   emTelaCheia: function () {
     return !!(passoInicial() || view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.evolucao || view.medida || view.medidas || view.galeria || view.diaAberto || view.ajuste || view.camera ||
-              view.ajustes || view.modoSessao || view.porEmDia || view.revisao || view.programas || view.fotos || view.noTempo || view.naMesmaData || view.progressao || view.responderDias);
+              view.ajustes || view.agentes || view.modoSessao || view.porEmDia || view.revisao || view.programas || view.fotos || view.noTempo || view.naMesmaData || view.progressao || view.responderDias);
   },
 
 
@@ -8901,6 +8903,7 @@ const FECHA_CAMADA = {
   pare:      function () { respondePare(false); },
   camera:    function () { CTX.fechaCamera(); },
   ajustes:   function () { CTX.fechaAjustes(); },
+  agentes:   function () { CTX.fechaAgentes(); },
   ajuste:    function () { CTX.fechaAjuste(); },
   protocolo: function () { CTX.fechaProtocolo(); },
   passos:    function () { CTX.fechaPassosDasFotos(); },
@@ -14986,6 +14989,78 @@ CTX.fechaAjustes = function () {
   // desenha, depois rola: ver `fechaModoDeSessao`
   render();
   saiDoDestino('ajustes');
+};
+
+// ---------- AJUSTES › AGENTES (docs/mcp/00-desenho.md, etapa 1, parte 2) ----------
+// Lido da nuvem a cada abertura: as tabelas `acessos` e `agentes` e os grants
+// do Supabase. Nada disso entra no estado nem sincroniza: é da conta.
+const SETE_DIAS = 7 * 864e5;
+let agentesDados = null; // { acessos, ligados, grants }
+function enderecoDoAgente(k) { return location.origin + '/api/mcp/' + k; }
+async function carregaAgentes(tudo) {
+  const v = view.agentes; if (!v) return;
+  v.carregando = true; v.erro = null; render();
+  const desde = new Date(tudo ? 0 : Date.now() - SETE_DIAS).toISOString();
+  const r = await NUVEM.agentes(desde, tudo ? 1000 : 200);
+  if (view.agentes !== v) return;
+  v.carregando = false;
+  if (!r.ok) { v.erro = r.erro === 'rede' ? 'Sem conexão. Os agentes só aparecem com internet.' : r.msg; render(); return; }
+  agentesDados = r.v; v.tudo = !!tudo;
+  render();
+}
+CTX.abreAgentes = function () {
+  if (view.agentes) return;
+  view.agentes = { carregando: true, erro: null, tudo: false, copiado: null, desconectando: false };
+  agentesDados = null;
+  entraNoDestino('agentes');
+  render();
+  carregaAgentes(false);
+};
+CTX.fechaAgentes = function () {
+  if (!view.agentes) return;
+  view.agentes = null;
+  render();
+  saiDoDestino('agentes');
+};
+CTX.recarregaAgentes = function () { carregaAgentes(view.agentes && view.agentes.tudo); };
+CTX.agentesDesdeOComeco = function () { carregaAgentes(true); };
+CTX.agentesV3 = function () {
+  const v = view.agentes || {};
+  const out = { carregando: !!v.carregando, erro: v.erro || null, tudo: !!v.tudo, copiado: v.copiado || null, desconectando: !!v.desconectando, papeis: null, vazio: false, resumo: '' };
+  if (!agentesDados) return out;
+  const papeis = estadoDosAgentes(agentesDados.acessos, agentesDados.ligados, Date.now());
+  out.papeis = papeis;
+  out.vazio = !agentesDados.grants.length && !papeis.some(function (p) { return p.leu; });
+  out.resumo = resumoDosAgentes(papeis);
+  return out;
+};
+CTX.ligaAgente = async function (k, on) {
+  if (!agentesDados) return;
+  const antes = agentesDados.ligados[k] !== false;
+  agentesDados.ligados[k] = on; render();
+  const r = await NUVEM.ligaAgente(k, on);
+  if (!r.ok) { agentesDados.ligados[k] = antes; render(); toast(r.erro === 'rede' ? 'Sem conexão: a chave não mudou.' : 'Não deu para guardar: a chave não mudou.'); return; }
+  const nome = { treinador: 'O treinador', nutricionista: 'O nutricionista', assistente: 'O assistente' }[k] || k;
+  avisoComAcao(on ? nome + ' pode ler de novo.' : nome + ' não lê mais nada.', 'Desfazer', function () { CTX.ligaAgente(k, antes); });
+};
+CTX.copiaEnderecoDoAgente = function (k) {
+  const url = enderecoDoAgente(k);
+  const fim = function () { if (view.agentes) { view.agentes.copiado = k; render(); } };
+  try { navigator.clipboard.writeText(url).then(fim, function () { toast(url); }); } catch (e) { toast(url); }
+};
+CTX.desconectaClaude = async function () {
+  const v = view.agentes; if (!v || !agentesDados) return;
+  v.desconectando = true; render();
+  let falhou = 0;
+  for (const g of agentesDados.grants) {
+    const r = await NUVEM.revogaGrant(g.client && g.client.id);
+    if (!r.ok) falhou++;
+  }
+  v.desconectando = false;
+  CTX.fechaFolha();
+  if (falhou) toast('Não deu para desconectar tudo. Tente de novo.');
+  else toast('Claude desconectado. As leituras continuam guardadas.');
+  carregaAgentes(v.tudo);
 };
 
 
