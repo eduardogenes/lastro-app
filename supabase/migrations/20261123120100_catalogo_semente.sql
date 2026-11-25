@@ -1,4 +1,4 @@
--- GERADO por ferramentas/catalogo/gera-sql.ts a partir da semente (conteúdo versão 1).
+-- GERADO por ferramentas/catalogo/gera-sql.ts a partir da semente (conteúdo versão 2).
 -- Não edite à mão: mude src/dominio/catalogo-semente.ts e rode `npm run catalogo:sql`.
 -- Rode DEPOIS de 20261123120000_catalogo.sql, no SQL Editor do Supabase.
 
@@ -62,6 +62,7 @@ insert into public.catalogo_exercicio (id, nome, alt, movimento, equipamento, gr
   ('air-squat', 'Air squat', '{}'::text[], 'agachamento', 'corpo', '', '[]'::jsonb, 'corpo', 'rep', 30, true, false, '{}'::text[], null, null, false, false, false),
   ('alongamento-do-flexor-do-quadril-ajoelhado', 'Alongamento do flexor do quadril ajoelhado', array['Half-kneeling hip flexor stretch']::text[], 'mobilidade', 'corpo', '', '[]'::jsonb, 'corpo', null, null, false, true, '{}'::text[], '', null, false, false, true),
   ('assault-bike', 'Assault bike', '{}'::text[], 'condicionamento', 'ergometro', '', '[]'::jsonb, 'corpo', 'cal', 15, false, false, '{}'::text[], 'Braço e perna juntos. A caloria sobe com a potência, e o ritmo dela não converte para metro.', null, false, false, false),
+  ('barra-fixa', 'Barra fixa', array['Pull-up', 'Barra fixa pronada', 'Barra fixa livre']::text[], 'puxada', 'corpo', 'dorsal', '[["dorsal",1],["bíceps",0.5]]'::jsonb, 'corpo', null, null, true, false, array['barra-fixa-assistida-pegada-neutra', 'pulldown-convergente', 'puxada-alta-pegada-neutra']::text[], '', null, false, false, true),
   ('barra-fixa-assistida-pegada-neutra', 'Barra fixa assistida pegada neutra', '{}'::text[], 'puxada', 'maquina-pino', 'dorsal', '[["dorsal",1],["bíceps",0.5]]'::jsonb, 'pino', null, null, true, false, '{}'::text[], 'Peso do corpo, escápula mais livre.', null, false, true, false),
   ('belt-squat', 'Belt squat', '{}'::text[], 'agachamento', 'maquina-anilha', 'quadríceps', '[["quadríceps",1],["glúteo",0.5]]'::jsonb, 'lado', null, null, true, false, '{}'::text[], 'Considerado pelo treinador para a mesma função. Tira a carga da coluna.', null, false, true, false),
   ('bike-erg', 'Bike erg', '{}'::text[], 'condicionamento', 'ergometro', '', '[]'::jsonb, 'corpo', 'cal', 15, false, false, '{}'::text[], 'Cadência constante vale mais que arrancada.', null, false, false, false),

@@ -55,11 +55,11 @@ import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
 import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, REGRA_DA_FITA, REGRA_DA_DOBRA, MEDIDAS_DE_DOBRA, ORDEM_DE_MEDIR, CONFERIR_ACIMA, doMeio, mediaDaFita, pedeTerceira, passoDaLeitura, naMesmaData, pesoDaSemana, medidaDoCorpo, ondeMediu,
          mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
-import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
+import { PAUSA_DIAS, diasDesde, historico as _historico, historicoDeReferencia as _historicoDeReferencia, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor, proximaCarga, estadoDaProgressao } from './dominio/progressao';
 import { MOTIVOS_FALTA, respondeFrequencia, uneFrequencia } from './dominio/frequencia';
-import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12, migraPlano13, reduzReferencias } from './dominio/migracoes';
+import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12, migraPlano13, reduzReferencias, corrigeApelidosErrados } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { SEMENTE, exerciciosDoSistema, indiceDeNomes, comDiferenca, diferencaDaSemente, catalogoDasLinhas, chaveDoNome, maisNova, equipamentoDe, EQUIPAMENTOS } from './dominio/catalogo';
 import { paresDoTreino, proximaDoPar, depoisDaSerie, separaPegada } from './dominio/biset';
@@ -638,6 +638,7 @@ function migraEstado() {
   migraPlano13(S);
   // não é plano: roda sempre, e é idempotente (dominio/migracoes.ts)
   reduzReferencias(S);
+  corrigeApelidosErrados(S);
   garanteProgramaERotacao();
   // não é plano: cria `S.programas` uma vez, de forma determinística (dominio/programas.ts)
   if (garanteProgramas(S)) programasNovos = S.programas && S.programas.separados ? 'separou' : 'criou';
@@ -1456,6 +1457,14 @@ async function encerraDeVerdade(dia, feitas, resumoMods, comTelaDeFim) {
 
 // entradas da sessão aberta não servem de referência para elas mesmas
 function historico(key) { return _historico(S.logs, key, S.sessao); }
+// A referência de carga ignora as entradas antigas com carga 0 do "como o
+// prescrito" (ver `historicoDeReferencia`). Pausa e dor seguem o histórico cru.
+function temCargaDeReferencia(key) {
+  const ex = exDe(key);
+  const t = cargaTipo(key, ex);
+  return t !== 'corpo' && t !== 'assist' && !(ex && ex.u);
+}
+function historicoRef(key) { return _historicoDeReferencia(historico(key), temCargaDeReferencia(key)); }
 
 // ---------- sincronização ----------
 // A verdade continua sendo o aparelho. Isto é RÉPLICA: tudo funciona sem rede,
@@ -2255,8 +2264,8 @@ function marcos() {
 function pausaEx(key) { return _pausaEx(historico(key)); }
 
 function dorSeguida(key) { return _dorSeguida(historico(key)); }
-function lastSet(key, k) { return _lastSet(historico(key), k); }
-function lastOf(d,i){ const h = historico(id(d,i)); return h.length ? h[h.length-1] : null; }
+function lastSet(key, k) { return _lastSet(historicoRef(key), k); }
+function lastOf(d,i){ const h = historicoRef(id(d,i)); return h.length ? h[h.length-1] : null; }
 function cargaTipo(key, ex) {
   if (S.carga && S.carga[key]) return S.carga[key];
   return (ex && ex.car) || 'pino';
@@ -2504,7 +2513,7 @@ function vmExercicio(d, i, ex) {
   const alt = altOf(i);
   const key = logKey(d, i);
   const dr = draftPeek(i);
-  const l = historico(key).slice(-1)[0] || null;
+  const l = historicoRef(key).slice(-1)[0] || null;
   const ns = setsFor(ex);
   const un = unidadeDe(ex);
   const seg = !!un;
@@ -6024,7 +6033,7 @@ async function importText(txt) {
   if (comConta) {
     S = funde(atual, S, Date.now()).estado;
     normalizaEstado();
-    reduzReferencias(S);
+    reduzReferencias(S); corrigeApelidosErrados(S);
   }
   garanteProgramaERotacao();
   delete view.escolhasIniciais;
@@ -9082,7 +9091,7 @@ function previstosPorSemana() {
 }
 /** A carga da última vez, para "com histórico": "57,5 kg/lado". */
 function ultimaCargaDe(id) {
-  const h = (S.logs[id] || []).filter(function (l) { return (l.sets || []).some(Boolean); });
+  const h = _historicoDeReferencia(S.logs[id] || [], temCargaDeReferencia(id)).filter(function (l) { return (l.sets || []).some(Boolean); });
   const l = h[h.length - 1];
   if (!l) return null;
   const c = Math.max.apply(null, l.sets.filter(Boolean).map(function (p) { return +p[0] || 0; }));
@@ -15430,7 +15439,7 @@ CTX.progressaoV3 = function () {
   const grupos = { subir: [], rep: [], parado: [] };
   if (P) P.ex.forEach(function (ex, i) {
     const key = logKey(p.dia, i);
-    const h = historico(key);
+    const h = historicoRef(key);
     const e = estadoDaProgressao(h, Object.assign({}, ex, { s: setsFor(ex) }), pausaEx(key));
     if (!e) return;
     const u = h[h.length - 1];
@@ -15455,7 +15464,7 @@ CTX.exercicioV3 = function () {
   const tipo = cargaTipo(key, ex);
   const ns = setsFor(ex);
   const topo = topReps(ex.r || '');
-  const e = estadoDaProgressao(historico(key), Object.assign({}, ex, { s: ns }), pausaEx(key));
+  const e = estadoDaProgressao(historicoRef(key), Object.assign({}, ex, { s: ns }), pausaEx(key));
   const u = h[h.length - 1], a = h[0];
   const un = CARGAS[tipo].rot;
   let passo = null;

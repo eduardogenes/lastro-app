@@ -271,3 +271,9 @@ Depois das revisões de dado e de design (24/11/2026):
 - **"Como o prescrito" conta para a sugestão de carga** (decisão do dono, 23/11): cada série vale a carga da última vez no topo da faixa. Antes, gravava carga 0 na faixa de baixo, o que nunca contava e zerava a referência.
 - **Lombar** entrou na lista de dores.
 - Fica para depois: no modo "programa novo", a carga e a dica de exercícios que já existem não são oferecidas (a tela não mostra mudanças nesse modo).
+
+## Fase A4: achados do primeiro teste do MCP (24/11/2026)
+
+- **Barra fixa livre no catálogo** (`barra-fixa`, peso do corpo). O v3.0 dizia "Barra fixa" e casava com a assistida. A semente sobe para a versão 2; o SQL da semente ganhou só essa linha (`on conflict do nothing`, pode rodar de novo).
+- **Apelido errado apagado por migração** (`corrigeApelidosErrados`, roda sempre, idempotente): "Barra fixa" → assistida, gravado quando a livre ainda não existia. A lápide sai do dado (carimbo do apelido + 1). Não há troca automática no programa: colar o v3.0 de novo como revisão mostra "assistida sai, Barra fixa entra", e a pessoa confirma. O histórico não muda de lugar (unir é da etapa 3).
+- **Referência de carga sem as entradas de carga 0** (`historicoDeReferencia`): o "como o prescrito" antes da Fase A gravava carga 0. Em exercício com carga (não corpo, assistida ou por tempo), essas entradas não servem de referência (sugestão, "da última vez", valor das séries, progressão). Continuam no histórico e na pausa.

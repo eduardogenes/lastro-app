@@ -8,7 +8,7 @@
 
 import type { TipoCarga, Unidade } from './tipos';
 
-export const VERSAO_DA_SEMENTE = 1;
+export const VERSAO_DA_SEMENTE = 2;
 
 /** O padrão do movimento. `outro` é o que a regra não reconheceu. */
 export const MOVIMENTOS: Record<string, string> = {
@@ -94,6 +94,16 @@ export const NOVOS_DA_V22: NovoDoSistema[] = [
   { n: 'Dead bug', g: 'core', car: 'corpo' },
   { n: 'Tríceps acima da cabeça na polia sentado', g: 'tríceps', car: 'pino', alt: ['Seated overhead cable triceps extension'], equiv: ['extensao-de-triceps-acima-da-cabeca-no-cabo'] },
   { n: 'Elevação lateral na polia inclinado para fora', g: 'deltoide lateral', car: 'pino', uni: 1, alt: ['Lean-away cable lateral raise'], equiv: ['elevacao-lateral-unilateral-no-cabo'] }
+];
+
+/**
+ * Exercícios que faltavam no catálogo e entraram depois da v2.2 (a semente de
+ * 23/11 cobria o código e a v2.2). Mesmo cuidado: id do próprio nome.
+ * - Barra fixa (24/11/2026): o catálogo só tinha a assistida, e "Barra fixa" do
+ *   v3.0 casou com ela. É outro exercício: peso do corpo, sem contrapeso.
+ */
+export const NOVOS_DO_SISTEMA: NovoDoSistema[] = [
+  { n: 'Barra fixa', g: 'dorsal', car: 'corpo', c: 1, mov: 'puxada', eq: 'corpo', mus: [['dorsal', 1], ['bíceps', 0.5]], alt: ['Pull-up', 'Barra fixa pronada', 'Barra fixa livre'], equiv: ['barra-fixa-assistida-pegada-neutra', 'pulldown-convergente', 'puxada-alta-pegada-neutra'] }
 ];
 
 /**

@@ -904,3 +904,36 @@ export function reduzReferencias(S: Estado): number {
   });
   return n;
 }
+
+/**
+ * Apelidos que apontam para o exercício errado porque o certo ainda não existia
+ * no catálogo quando a pessoa respondeu "é o mesmo". Não é plano: roda sempre,
+ * é idempotente e só apaga o apelido exatamente como listado.
+ *
+ * - "Barra fixa" → assistida (24/11/2026): o catálogo não tinha a barra fixa
+ *   livre; agora tem (`barra-fixa`). Sem o apelido, a próxima revisão casa o
+ *   nome com o exercício certo e mostra a troca para a pessoa confirmar. O
+ *   histórico não muda de lugar (unir é da etapa 3).
+ *
+ * A lápide sai do DADO (o carimbo do apelido + 1), não do relógio: dois
+ * aparelhos que migram o mesmo estado gravam igual, e o apelido não volta na
+ * fusão.
+ */
+const APELIDOS_ERRADOS: Record<string, string> = {
+  'barra-fixa': 'barra-fixa-assistida-pegada-neutra'
+};
+export function corrigeApelidosErrados(S: Estado): number {
+  const ap = (S as unknown as { apelidos?: Record<string, { id?: string; m?: number }> }).apelidos;
+  if (!ap || typeof ap !== 'object') return 0;
+  let n = 0;
+  Object.keys(APELIDOS_ERRADOS).forEach(function (k) {
+    const a = ap[k];
+    if (!a || a.id !== APELIDOS_ERRADOS[k]) return;
+    delete ap[k];
+    const apagados = ((S as unknown as { apagados?: Record<string, number> }).apagados ||= {});
+    const chave = 'apelido:' + k;
+    apagados[chave] = Math.max(apagados[chave] || 0, (a.m || 0) + 1);
+    n++;
+  });
+  return n;
+}

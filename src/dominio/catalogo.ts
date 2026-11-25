@@ -20,7 +20,7 @@
 
 import type { Exercicio, IdEx, TipoCarga, Unidade } from './tipos';
 import { ALT, EX_BASE, slugEx } from './programa';
-import { ALT_NOMES, EQUIPAMENTOS, MOVIMENTOS, NOVOS_DA_V22, VERSAO_DA_SEMENTE, type NovoDoSistema } from './catalogo-semente';
+import { ALT_NOMES, EQUIPAMENTOS, MOVIMENTOS, NOVOS_DA_V22, NOVOS_DO_SISTEMA, VERSAO_DA_SEMENTE, type NovoDoSistema } from './catalogo-semente';
 
 /** Músculo (o mesmo vocabulário do `g`) e a fração da série que ele recebe. */
 export type Musculo = [string, number];
@@ -228,7 +228,7 @@ export const SEMENTE: CatalogoDoSistema = (function () {
       if (para !== de.id && ex[para] && de.equiv.indexOf(para) < 0) de.equiv.push(para);
     });
   });
-  NOVOS_DA_V22.forEach(function (x) {
+  NOVOS_DA_V22.concat(NOVOS_DO_SISTEMA).forEach(function (x) {
     const e = doTexto(x);
     if (ex[e.id]) throw new Error('semente: ' + e.id + ' já existe no código');
     ex[e.id] = e;

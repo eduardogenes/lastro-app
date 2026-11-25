@@ -31,6 +31,22 @@ export function historico(
 }
 
 /**
+ * O histórico que serve de REFERÊNCIA de carga (sugestão, "da última vez",
+ * valor sugerido nas séries). Antes de 24/11/2026, marcar "como o prescrito"
+ * gravava carga 0 nas séries; num exercício que tem carga, essa entrada não diz
+ * nada sobre o peso e puxava a referência para zero. Ela continua no histórico
+ * (nada é apagado) e conta como treino feito; só não serve de referência.
+ * Sem carga própria (peso do corpo, assistida, cardio por tempo) zero é valor.
+ */
+export function historicoDeReferencia(h: Log[], temCarga: boolean): Log[] {
+  if (!temCarga) return h;
+  return h.filter(function (l) {
+    const feitas = (l.sets || []).filter(Boolean) as Array<[number, number, number?]>;
+    return !feitas.length || feitas.some(function (x) { return +x[0] > 0; });
+  });
+}
+
+/**
  * Placeholder daquela série: o valor mais recente registrado naquela posição.
  * Anda para trás no histórico porque a última sessão pode ter menos séries.
  */

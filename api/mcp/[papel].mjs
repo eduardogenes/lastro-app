@@ -1016,6 +1016,9 @@ var NOVOS_DA_V22 = [
   { n: "Tr\xEDceps acima da cabe\xE7a na polia sentado", g: "tr\xEDceps", car: "pino", alt: ["Seated overhead cable triceps extension"], equiv: ["extensao-de-triceps-acima-da-cabeca-no-cabo"] },
   { n: "Eleva\xE7\xE3o lateral na polia inclinado para fora", g: "deltoide lateral", car: "pino", uni: 1, alt: ["Lean-away cable lateral raise"], equiv: ["elevacao-lateral-unilateral-no-cabo"] }
 ];
+var NOVOS_DO_SISTEMA = [
+  { n: "Barra fixa", g: "dorsal", car: "corpo", c: 1, mov: "puxada", eq: "corpo", mus: [["dorsal", 1], ["b\xEDceps", 0.5]], alt: ["Pull-up", "Barra fixa pronada", "Barra fixa livre"], equiv: ["barra-fixa-assistida-pegada-neutra", "pulldown-convergente", "puxada-alta-pegada-neutra"] }
+];
 var ALT_NOMES = {
   "panturrilha-sentada": ["Panturrilha sentado", "Seated calf raise"],
   "panturrilha-em-pe": ["Standing calf raise"],
@@ -1202,7 +1205,7 @@ var SEMENTE = (function() {
       if (para !== de.id && ex[para] && de.equiv.indexOf(para) < 0) de.equiv.push(para);
     });
   });
-  NOVOS_DA_V22.forEach(function(x) {
+  NOVOS_DA_V22.concat(NOVOS_DO_SISTEMA).forEach(function(x) {
     const e = doTexto(x);
     if (ex[e.id]) throw new Error("semente: " + e.id + " j\xE1 existe no c\xF3digo");
     ex[e.id] = e;
